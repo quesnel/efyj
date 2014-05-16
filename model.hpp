@@ -34,8 +34,8 @@ namespace efyj {
 
     struct scalevalue
     {
-        scalevalue(const std::string& name)
-            : name(name)
+        scalevalue(const std::string& name, group_set::iterator group)
+            : name(name), group(group)
         {}
 
         std::string name;
@@ -48,6 +48,21 @@ namespace efyj {
         std::string low;
         std::string entered;
         std::string consist;
+
+        bool empty() const noexcept
+        {
+            return low.empty() and entered.empty() and consist.empty();
+        }
+    };
+
+    struct scales
+    {
+        scales()
+            : order(true)
+        {}
+
+        bool order;
+        std::vector <scalevalue> scale;
     };
 
     struct attribute
@@ -58,20 +73,24 @@ namespace efyj {
 
         std::string name;
         std::string description;
-        std::vector <scalevalue> scale;
+        scales scale;
         function functions;
         std::vector <std::string> options;
-        std::vector <std::deque <attribute>::pointer> children;
+        std::vector <attribute*> children;
     };
-
-    typedef std::deque <attribute>::pointer attribute_id;
 
     struct dexi
     {
+        dexi()
+            : attribute(0)
+        {}
+
+        std::string name;
+        std::string description;
         std::vector <std::string> options;
         group_set group;
         std::deque <attribute> attributes;
-        attribute_id child;
+        attribute *attribute;
     };
 
     bool operator==(const dexi& lhs, const dexi& rhs);

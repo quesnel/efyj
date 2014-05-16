@@ -22,6 +22,7 @@
 #include "model.hpp"
 #include "parser.hpp"
 #include "print.hpp"
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
 
@@ -38,7 +39,11 @@ namespace {
         bool ret = false;
 
         try {
-            efyj::parse(filepath, dexi_data);
+            std::ifstream is(filepath);
+            if (not is)
+                throw std::invalid_argument(std::string("unknown file ") +
+                                            filepath);
+            efyj::read(is, dexi_data);
             ret = true;
         } catch (const std::bad_alloc& e) {
             efyj::print(std::cerr, dRED, "fail to allocate memory: ", dNORMAL, e.what());

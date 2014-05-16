@@ -47,6 +47,7 @@ if (CATCH_INCLUDE_DIR)
 
   add_executable(test_basic tests/test_basic.cpp)
   target_link_libraries(test_basic efyj_corelib ${efyj_LINK_LIBRARIES})
+  add_definitions(-DEXAMPLES_DIR="${CMAKE_SOURCE_DIR}/tests")
   add_test(NAME test_basic COMMAND test_basic)
 else ()
   message(STATUS " not found catch.hpp. Unit test disabled")

@@ -22,17 +22,63 @@
 #include "parser.hpp"
 #include "model.hpp"
 #include "dbg.hpp"
+#include <sstream>
 
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-TEST_CASE("test equality", "[model")
+TEST_CASE("test empty object equality", "[model]")
 {
-    dInfo("Test equality");
-
     efyj::dexi x1;
     efyj::dexi x2(x1);
 
     bool is_equal = x1 == x2;
+
     REQUIRE(is_equal == true);
 }
+
+TEST_CASE("test empty object read/write", "[model]")
+{
+    efyj::dexi x1, x2;
+
+    {
+        std::string result;
+        {
+            std::ostringstream os;
+            efyj::write(os, x1);
+            result = os.str();
+        }
+
+        {
+            std::istringstream is(result);
+            efyj::read(is, x2);
+        }
+    }
+
+    bool is_equal = x1 == x2;
+    REQUIRE(is_equal == true);
+}
+
+#if defined EXAMPLES_DIR && defined __unix__
+#include <unistd.h>
+
+TEST_CASE("test classic dexi file", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
+        "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi", "Nursery.dxi",
+        "Shuttle.dxi"};
+
+    for (const auto& filepath : filepaths) {
+        dInfo("Now we check:", filepath);
+
+        std::ifstream is(filepath);
+        REQUIRE(is.is_open());
+
+        efyj::dexi dex;
+        REQUIRE_NOTHROW(efyj::read(is, dex));
+    }
+}
+#endif

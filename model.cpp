@@ -33,7 +33,7 @@ namespace efyj {
         return lhs.options == rhs.options &&
             lhs.group == rhs.group &&
             lhs.attributes == rhs.attributes &&
-            rhs.child == rhs.child;
+            rhs.attribute == rhs.attribute;
     }
 
 }

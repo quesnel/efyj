@@ -21,6 +21,7 @@
 
 #include "model.hpp"
 #include "parser.hpp"
+#include "utils.hpp"
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -34,28 +35,9 @@
 
 namespace {
 
-    struct scope_exit
-    {
-        scope_exit(std::function <void (void)> fct)
-            : fct(fct)
-        {}
-
-        ~scope_exit()
-        {
-            fct();
-        }
-
-        std::function <void (void)> fct;
-    };
-
-    enum class stack_identifier {
-        DEXi, OPTION, SETTINGS, ATTRIBUTE, NAME, DESCRIPTION, SCALE, SCALEVALUE,
-        GROUP, FUNCTION, LOW, ENTERED, CONSIST
-    };
-
     struct str_compare
     {
-        bool operator()(const char* lhs, const char* rhs) const
+        bool operator()(const char* lhs, const char* rhs) const noexcept
         {
             return std::strcmp(lhs, rhs) == 0;
         }
@@ -63,7 +45,7 @@ namespace {
 
     struct str_hash
     {
-        size_t operator()(const char* str) const
+        size_t operator()(const char* str) const noexcept
         {
             size_t hash = 0;
             int c;
@@ -75,302 +57,451 @@ namespace {
         }
     };
 
-    std::string stack_identifier_to_str(stack_identifier id)
+    struct dexi_reader
     {
-        switch (id) {
-        case stack_identifier::DEXi:
-            return "DEXi";
-        case stack_identifier::OPTION:
-            return "OPTION";
-        case stack_identifier::SETTINGS:
-            return "SETTINGS";
-        case stack_identifier::ATTRIBUTE:
-            return "ATTRIBUTE";
-        case stack_identifier::NAME:
-            return "NAME";
-        case stack_identifier::DESCRIPTION:
-            return "DESCRIPTION";
-        case stack_identifier::SCALE:
-            return "SCALE";
-        case stack_identifier::SCALEVALUE:
-            return "SCALEVALUE";
-        case stack_identifier::GROUP:
-            return "GROUP";
-        case stack_identifier::FUNCTION:
-            return "FUNCTION";
-        case stack_identifier::LOW:
-            return "LOW";
-        case stack_identifier::ENTERED:
-            return "ENTERED";
-        case stack_identifier::CONSIST:
-            return "CONSIST";
+        dexi_reader(std::istream& is, efyj::dexi& dex) noexcept
+            : is(is), dex(dex)
+        {
         }
 
-        throw std::logic_error("Remove a stupid GCC 4.8 warning");
-    }
+        void read(std::size_t buffer_size)
+        {
+            XML_Parser parser = XML_ParserCreate(NULL);
+            efyj::scope_exit parser_free([&parser]() {XML_ParserFree(parser);});
 
-    stack_identifier str_to_stack_identifier(const char* name)
-    {
-        static const std::unordered_map <const char*, stack_identifier,
-                     str_hash, str_compare> stack_identifier_map(
-                         {{"DEXi", stack_identifier::DEXi},
-                         {"OPTION", stack_identifier::OPTION},
-                         {"SETTINGS", stack_identifier::SETTINGS},
-                         {"ATTRIBUTE", stack_identifier::ATTRIBUTE},
-                         {"NAME", stack_identifier::NAME},
-                         {"DESCRIPTION", stack_identifier::DESCRIPTION},
-                         {"SCALE", stack_identifier::SCALE},
-                         {"SCALEVALUE", stack_identifier::SCALEVALUE},
-                         {"GROUP", stack_identifier::GROUP},
-                         {"FUNCTION", stack_identifier::FUNCTION},
-                         {"LOW", stack_identifier::LOW},
-                         {"ENTERED", stack_identifier::ENTERED},
-                         {"CONSIST", stack_identifier::CONSIST}});
+            parser_data data(parser, dex);
 
-        try {
-            return stack_identifier_map.at(name);
-        } catch (const std::exception& e) {
-            throw std::invalid_argument(std::string("Unknown element ") + name);
+            XML_SetElementHandler(parser, dexi_reader::start_element,
+                                  dexi_reader::end_element);
+            XML_SetCharacterDataHandler(parser, dexi_reader::character_data);
+            XML_SetUserData(parser, reinterpret_cast <void*>(&data));
+
+            while (is.good() and not is.eof()) {
+                char *buffer = (char*)XML_GetBuffer(parser, buffer_size);
+                if (not buffer)
+                    throw std::bad_alloc();
+
+                is.read(buffer, buffer_size);
+
+                if (not ::XML_ParseBuffer(parser, is.gcount(), is.eof()))
+                    throw efyj::xml_parse_error(
+                        data.error_message,
+                        XML_GetCurrentLineNumber(parser),
+                        XML_GetCurrentColumnNumber(parser),
+                        XML_GetErrorCode(parser));
+            }
         }
-    }
 
-    struct parser_data
-    {
-        parser_data(XML_Parser parser, efyj::dexi& data)
-            : parser(parser), dexi(data)
-        {}
+    private:
+        std::istream& is;
+        efyj::dexi& dex;
 
-        XML_Parser parser;
-        std::string error_message;
-        efyj::dexi& dexi;
-        std::stack <stack_identifier> stack;
-        std::string char_data;
+        enum class stack_identifier {
+            DEXi, LINE, OPTION, SETTINGS, REPORTS, ATTRIBUTE, NAME, DESCRIPTION,
+            SCALE, ORDER, SCALEVALUE, GROUP, FUNCTION, LOW, ENTERED, CONSIST
+        };
+
+        std::string stack_identifier_to_str(stack_identifier id)
+        {
+            switch (id) {
+            case stack_identifier::DEXi:
+                return "DEXi";
+            case stack_identifier::LINE:
+                return "LINE";
+            case stack_identifier::OPTION:
+                return "OPTION";
+            case stack_identifier::SETTINGS:
+                return "SETTINGS";
+            case stack_identifier::REPORTS:
+                return "REPORTS";
+            case stack_identifier::ATTRIBUTE:
+                return "ATTRIBUTE";
+            case stack_identifier::NAME:
+                return "NAME";
+            case stack_identifier::DESCRIPTION:
+                return "DESCRIPTION";
+            case stack_identifier::SCALE:
+                return "SCALE";
+            case stack_identifier::ORDER:
+                return "ORDER";
+            case stack_identifier::SCALEVALUE:
+                return "SCALEVALUE";
+            case stack_identifier::GROUP:
+                return "GROUP";
+            case stack_identifier::FUNCTION:
+                return "FUNCTION";
+            case stack_identifier::LOW:
+                return "LOW";
+            case stack_identifier::ENTERED:
+                return "ENTERED";
+            case stack_identifier::CONSIST:
+                return "CONSIST";
+            }
+
+            throw std::logic_error("Remove a stupid GCC 4.8 warning");
+        }
+
+        static stack_identifier str_to_stack_identifier(const char* name)
+        {
+            static const std::unordered_map <const char*, stack_identifier,
+                         str_hash, str_compare> stack_identifier_map(
+                             {{"DEXi", stack_identifier::DEXi},
+                             {"LINE", stack_identifier::LINE},
+                             {"OPTION", stack_identifier::OPTION},
+                             {"SETTINGS", stack_identifier::SETTINGS},
+                             {"REPORTS", stack_identifier::REPORTS},
+                             {"ATTRIBUTE", stack_identifier::ATTRIBUTE},
+                             {"NAME", stack_identifier::NAME},
+                             {"DESCRIPTION", stack_identifier::DESCRIPTION},
+                             {"SCALE", stack_identifier::SCALE},
+                             {"ORDER", stack_identifier::ORDER},
+                             {"SCALEVALUE", stack_identifier::SCALEVALUE},
+                             {"GROUP", stack_identifier::GROUP},
+                             {"FUNCTION", stack_identifier::FUNCTION},
+                             {"LOW", stack_identifier::LOW},
+                             {"ENTERED", stack_identifier::ENTERED},
+                             {"CONSIST", stack_identifier::CONSIST}});
+
+            try {
+                return stack_identifier_map.at(name);
+            } catch (const std::exception& e) {
+                throw std::invalid_argument(std::string("Unknown element ") + name);
+            }
+        }
+
+        struct parser_data
+        {
+            parser_data(XML_Parser parser, efyj::dexi& data)
+                : parser(parser), dexi(data)
+            {}
+
+            XML_Parser parser;
+            std::string error_message;
+            efyj::dexi& dexi;
+            std::stack <stack_identifier> stack;
+            std::string char_data;
+        };
+
+        static void stack_identifier_is_parent(const std::stack <stack_identifier>& stack,
+                                               std::initializer_list <stack_identifier> list)
+        {
+            if (not stack.empty()) {
+                for (stack_identifier id : list)
+                    if (id == stack.top())
+                        return;
+            }
+
+            throw std::invalid_argument("Bad parent");
+        }
+
+        static void start_element(void *data, const char *element,
+                                  const char **attribute) noexcept
+        {
+            (void)attribute;
+            parser_data *pd = reinterpret_cast <parser_data*>(data);
+            pd->char_data.clear();
+
+            try {
+                stack_identifier id = str_to_stack_identifier(element);
+
+                switch (id) {
+                case stack_identifier::DEXi:
+                    if (!pd->stack.empty())
+                        throw std::invalid_argument("Bad parent");
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::LINE:
+                    stack_identifier_is_parent(pd->stack,
+                                               {stack_identifier::DESCRIPTION});
+                    break;
+                case stack_identifier::OPTION:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
+                                               stack_identifier::ATTRIBUTE});
+                    break;
+                case stack_identifier::SETTINGS:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::REPORTS:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::SETTINGS});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::ATTRIBUTE:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
+                                               stack_identifier::ATTRIBUTE});
+                    pd->stack.push(id);
+                    pd->dexi.attributes.emplace_back("unaffected attribute");
+                    break;
+                case stack_identifier::NAME:
+                    stack_identifier_is_parent(pd->stack,
+                                               {stack_identifier::DEXi,
+                                               stack_identifier::ATTRIBUTE,
+                                               stack_identifier::SCALEVALUE});
+                    break;
+                case stack_identifier::DESCRIPTION:
+                    stack_identifier_is_parent(pd->stack,
+                                               {stack_identifier::DEXi,
+                                               stack_identifier::ATTRIBUTE,
+                                               stack_identifier::SCALEVALUE});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::SCALE:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::ORDER:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALE});
+                    break;
+                case stack_identifier::SCALEVALUE:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALE});
+                    pd->stack.push(id);
+                    pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue",
+                                                                  pd->dexi.group.end());
+                    break;
+                case stack_identifier::GROUP:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALEVALUE});
+                    break;
+                case stack_identifier::FUNCTION:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::LOW:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    break;
+                case stack_identifier::ENTERED:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    break;
+                case stack_identifier::CONSIST:
+                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    break;
+                }
+            } catch (const std::exception& e) {
+                pd->error_message = e.what();
+                XML_StopParser(pd->parser, XML_FALSE);
+            }
+        }
+
+        static void end_element(void *data, const char *element) noexcept
+        {
+            parser_data* pd = reinterpret_cast <parser_data*>(data);
+
+            try {
+                stack_identifier id = str_to_stack_identifier(element);
+
+                switch (id) {
+                case stack_identifier::DEXi:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::LINE:
+                    break;
+                case stack_identifier::OPTION:
+                    if (pd->stack.top() == stack_identifier::DEXi)
+                        pd->dexi.options.emplace_back(pd->char_data);
+                    else if (pd->stack.top() == stack_identifier::ATTRIBUTE)
+                        pd->dexi.attributes.back().options.emplace_back(pd->char_data);
+                    else
+                        throw std::invalid_argument("bad stack");
+                    break;
+                case stack_identifier::SETTINGS:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::REPORTS:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::ATTRIBUTE:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::NAME:
+                    if (pd->stack.top() == stack_identifier::ATTRIBUTE)
+                        pd->dexi.attributes.back().name.assign(pd->char_data);
+                    else if (pd->stack.top() == stack_identifier::DEXi)
+                        pd->dexi.name.assign(pd->char_data);
+                    else if (pd->stack.top() == stack_identifier::SCALEVALUE)
+                        pd->dexi.attributes.back().scale.scale.back().name.assign(pd->char_data);
+                    break;
+                case stack_identifier::DESCRIPTION:
+                    if (pd->stack.top() != stack_identifier::DESCRIPTION)
+                        throw std::invalid_argument("DESCRIPTION");
+
+                    pd->stack.pop();
+
+                    if (pd->stack.top() == stack_identifier::ATTRIBUTE)
+                        pd->dexi.attributes.back().description.assign(pd->char_data);
+                    else if (pd->stack.top() == stack_identifier::DEXi)
+                        pd->dexi.description.assign(pd->char_data);
+                    else if (pd->stack.top() == stack_identifier::SCALEVALUE)
+                        pd->dexi.attributes.back().scale.scale.back().description.assign(pd->char_data);
+                    break;
+                case stack_identifier::SCALE:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::ORDER:
+                    if (pd->char_data == "NONE")
+                        pd->dexi.attributes.back().scale.order = false;
+                    break;
+                case stack_identifier::SCALEVALUE:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::GROUP:
+                    if (pd->stack.top() == stack_identifier::SCALEVALUE) {
+                        auto it = pd->dexi.group.find(pd->char_data);
+
+                        if (it == pd->dexi.group.end())
+                            it = pd->dexi.group.insert(pd->char_data).first;
+
+                        pd->dexi.attributes.back().scale.scale.back().group = it;
+                    }
+                    break;
+                case stack_identifier::FUNCTION:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::LOW:
+                    if (pd->stack.top() == stack_identifier::FUNCTION)
+                        pd->dexi.attributes.back().functions.low = pd->char_data;
+                    break;
+                case stack_identifier::ENTERED:
+                    if (pd->stack.top() == stack_identifier::FUNCTION)
+                        pd->dexi.attributes.back().functions.entered = pd->char_data;
+                    break;
+                case stack_identifier::CONSIST:
+                    if (pd->stack.top() == stack_identifier::FUNCTION)
+                        pd->dexi.attributes.back().functions.consist = pd->char_data;
+                    break;
+                }
+            } catch (const std::exception& e) {
+                pd->error_message = e.what();
+                XML_StopParser(pd->parser, XML_FALSE);
+            }
+        }
+
+        static void character_data(void *data, const XML_Char *s, int len) noexcept
+        {
+            parser_data* pd = reinterpret_cast <parser_data*>(data);
+
+            try {
+                pd->char_data.append(s, len);
+            } catch (const std::exception& e) {
+                pd->error_message = "Bad alloc";
+                XML_StopParser(pd->parser, XML_FALSE);
+            }
+        }
     };
 
-    void stack_identifier_is_parent(const std::stack <stack_identifier>& stack,
-                                    std::initializer_list <stack_identifier> list)
+    struct dexi_writer
     {
-        if (not stack.empty()) {
-            for (stack_identifier id : list)
-                if (id == stack.top())
-                    return;
+        dexi_writer(std::ostream& os, const efyj::dexi& dexi_data) noexcept
+            : os(os), dex(dexi_data), space(0)
+        {}
+
+        void write()
+        {
+            write_dexi();
         }
 
-        throw std::invalid_argument("Bad parent");
-    }
+    private:
+        std::ostream& os;
+        const efyj::dexi& dex;
+        std::size_t space;
 
-    void start_element(void *data, const char *element,
-                       const char **attribute) noexcept
-    {
-        (void)attribute;
-        parser_data *pd = reinterpret_cast <parser_data*>(data);
-        pd->char_data.clear();
-
-        try {
-            stack_identifier id = str_to_stack_identifier(element);
-
-            switch (id) {
-            case stack_identifier::DEXi:
-                if (!pd->stack.empty())
-                    throw std::invalid_argument("Bad parent");
-                pd->stack.push(id);
-                break;
-            case stack_identifier::OPTION:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
-                                           stack_identifier::ATTRIBUTE});
-                break;
-            case stack_identifier::SETTINGS:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi});
-                pd->stack.push(id);
-                break;
-            case stack_identifier::ATTRIBUTE:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
-                                           stack_identifier::ATTRIBUTE});
-                pd->stack.push(id);
-                pd->dexi.attributes.emplace_back("unaffected attribute");
-                break;
-            case stack_identifier::NAME:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE,
-                                           stack_identifier::SCALEVALUE});
-                break;
-            case stack_identifier::DESCRIPTION:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE,
-                                           stack_identifier::SCALEVALUE});
-                break;
-            case stack_identifier::SCALE:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
-                pd->stack.push(id);
-                break;
-            case stack_identifier::SCALEVALUE:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::SCALE});
-                pd->stack.push(id);
-                pd->dexi.attributes.back().scale.emplace_back("unaffected scalevalue");
-                break;
-            case stack_identifier::GROUP:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::SCALEVALUE});
-                break;
-            case stack_identifier::FUNCTION:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
-                pd->stack.push(id);
-                break;
-            case stack_identifier::LOW:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
-                break;
-            case stack_identifier::ENTERED:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
-                break;
-            case stack_identifier::CONSIST:
-                stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
-                break;
-            }
-        } catch (const std::exception& e) {
-            pd->error_message = e.what();
-            XML_StopParser(pd->parser, XML_FALSE);
+        void write_dexi_option(const std::vector <std::string>& opts)
+        {
+            for (const auto& opt : opts)
+                os << std::setw(space) << "<OPTION>" << opt << "</OPTION>\n";
         }
-    }
 
-    void end_element(void *data, const char *element) noexcept
-    {
-        parser_data* pd = reinterpret_cast <parser_data*>(data);
+        void write_dexi_attribute(const efyj::attribute& att)
+        {
+            os << std::setw(space) << "<ATTRIBUTE>\n";
 
-        try {
-            stack_identifier id = str_to_stack_identifier(element);
+            space += 2;
 
-            switch (id) {
-            case stack_identifier::DEXi:
-                pd->stack.pop();
-                break;
-            case stack_identifier::OPTION:
-                if (pd->stack.top() == stack_identifier::DEXi)
-                    pd->dexi.options.emplace_back(pd->char_data);
-                else if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().options.emplace_back(pd->char_data);
-                else
-                    throw std::invalid_argument("bad stack");
-                break;
-            case stack_identifier::SETTINGS:
-                pd->stack.pop();
-                break;
-            case stack_identifier::ATTRIBUTE:
-                pd->stack.pop();
-                break;
-            case stack_identifier::NAME:
-                if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().name.assign(pd->char_data);
-                else if (pd->stack.top() == stack_identifier::SCALEVALUE)
-                    pd->dexi.attributes.back().scale.back().name.assign(pd->char_data);
-                break;
-            case stack_identifier::DESCRIPTION:
-                if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().description.assign(pd->char_data);
-                if (pd->stack.top() == stack_identifier::SCALEVALUE)
-                    pd->dexi.attributes.back().scale.back().description.assign(pd->char_data);
-                break;
-            case stack_identifier::SCALE:
-                pd->stack.pop();
-                break;
-            case stack_identifier::SCALEVALUE:
-                pd->stack.pop();
-                break;
-            case stack_identifier::GROUP:
-                if (pd->stack.top() == stack_identifier::SCALEVALUE) {
-                    auto it = pd->dexi.group.find(pd->char_data);
+            os << std::setw(space) << "<NAME>" << att.name << "</NAME>\n"
+                << std::setw(space) << "<DESCRIPTION>" << att.description << "</DESCRIPTION>\n"
+                << std::setw(space) << "<SCALE>";
 
-                    if (it == pd->dexi.group.end())
-                        it = pd->dexi.group.insert(pd->char_data).first;
+            space += 2;
 
-                    pd->dexi.attributes.back().scale.back().group = it;
+            if (not att.scale.scale.empty() and not att.scale.order)
+                os << std::setw(space) << "<ORDER>NONE</ORDER>\n";
+
+            for (const auto& sv : att.scale.scale) {
+                os << std::setw(space) << "<SCALEVALUE>"
+                    << std::setw(space + 2) << "<NAME>" << sv.name << "</NAME>\n";
+
+                if (not sv.description.empty())
+                    os << std::setw(space + 2) << "<DESCRIPTION>"
+                        << sv.description << "</DESCRIPTION>\n";
+
+                if (sv.group != dex.group.end())
+                    os << std::setw(space + 2) << "<GROUP>"
+                        << *sv.group << "</GROUP>\n";
+
+                os << std::setw(space) << "</SCALEVALUE>";
+
+                space += 2;
+                if (not att.functions.empty()) {
+                    os << std::setw(space) << "<FUNCTION>";
+
+                    if (not att.functions.low.empty())
+                        os << std::setw(space + 2) << "<LOW>"
+                            << att.functions.low << "</LOW>\n";
+
+                    if (not att.functions.entered.empty())
+                        os << std::setw(space + 2) << "<ENTERED>"
+                            << att.functions.entered<< "</ENTERED>\n";
+
+                    if (not att.functions.consist.empty())
+                        os << std::setw(space + 2) << "<CONSIST>"
+                            << att.functions.consist << "</CONSIST>\n";
+
+                    os << std::setw(space) << "</FUNCTION>";
                 }
-                break;
-            case stack_identifier::FUNCTION:
-                pd->stack.pop();
-                break;
-            case stack_identifier::LOW:
-                if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.low = pd->char_data;
-                break;
-            case stack_identifier::ENTERED:
-                if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.entered = pd->char_data;
-                break;
-            case stack_identifier::CONSIST:
-                if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.consist = pd->char_data;
-                break;
+                space -= 2;
+
+                if (not att.options.empty())
+                    write_dexi_option(att.options);
             }
-        } catch (const std::exception& e) {
-            pd->error_message = e.what();
-            XML_StopParser(pd->parser, XML_FALSE);
+            space -= 2;
+
+            os << std::setw(space + 2) << "</SCALE>";
+
+            space += 2;
+            for (const auto& child : att.children)
+                write_dexi_attribute(*child);
+            space -= 2;
+
+            os << std::setw(space) << "</ATTRIBUTE>\n";
         }
-    }
 
-    void character_data(void *data, const XML_Char *s, int len) noexcept
-    {
-        parser_data* pd = reinterpret_cast <parser_data*>(data);
+        void write_dexi()
+        {
+            os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                << "<DEXi>\n";
 
-        try {
-            pd->char_data.append(s, len);
-        } catch (const std::exception& e) {
-            pd->error_message = "Bad alloc";
-            XML_StopParser(pd->parser, XML_FALSE);
+            space = 2;
+            write_dexi_option(dex.options);
+
+            if (dex.attribute)
+                write_dexi_attribute(*(dex.attribute));
+
+            os << "</DEXi>\n";
         }
-    }
-
-    void parse_dexi(std::istream& is, efyj::dexi& dexi_data,
-                    std::size_t buffer_size)
-    {
-        XML_Parser parser = XML_ParserCreate(NULL);
-        scope_exit parser_free([&parser]() {XML_ParserFree(parser);});
-
-        parser_data data(parser, dexi_data);
-
-        XML_SetElementHandler(parser, ::start_element, ::end_element);
-        XML_SetCharacterDataHandler(parser, ::character_data);
-        XML_SetUserData(parser, reinterpret_cast <void*>(&data));
-
-        while (is.good() and not is.eof()) {
-            char *buffer = (char*)XML_GetBuffer(parser, buffer_size);
-            if (not buffer)
-                throw std::bad_alloc();
-
-            is.read(buffer, buffer_size);
-
-            if (not ::XML_ParseBuffer(parser, is.gcount(), is.eof()))
-                throw efyj::xml_parse_error(
-                    data.error_message,
-                    XML_GetCurrentLineNumber(parser),
-                    XML_GetCurrentColumnNumber(parser),
-                    XML_GetErrorCode(parser));
-        }
-    }
-
-    void write_dexi_option(std::ostream& os, const std::vector <std::string>& options,
-                           std::size_t space = 0)
-    {
-        for (const auto& opt : options)
-            os << std::setw(space) << "<OPTION>" << opt << "</OPTION>\n";
-    }
-
-    void write_dexi(std::ostream& os, const efyj::dexi& dexi_data)
-    {
-        os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            << "<DEXi>\n";
-
-        write_dexi_option(os, dexi_data.options, 2);
-
-        os << "</DEXi>\n";
-    }
+    };
 }
 
 namespace efyj
 {
-    void parse(const std::string& filepath, dexi& dexi_data)
+    void read(std::istream& is, dexi& dexi_data)
     {
-        std::ifstream file(filepath);
+        dexi_reader dr(is, dexi_data);
 
-        if (not file)
-            throw std::invalid_argument(filepath);
+        dr.read(4096u);
+    }
 
-        parse_dexi(file, dexi_data, 4096u);
+    void write(std::ostream& os, const dexi& dexi_data)
+    {
+        dexi_writer dw(os, dexi_data);
+
+        dw.write();
     }
 }

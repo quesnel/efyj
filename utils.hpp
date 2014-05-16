@@ -19,49 +19,27 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_PARSER_HPP
-#define INRA_EFYj_PARSER_HPP
+#ifndef INRA_EFYj_UTILS_HPP
+#define INRA_EFYj_UTILS_HPP
 
-#include <string>
-#include <stdexcept>
-#include "model.hpp"
+#include <functional>
 
 namespace efyj {
 
-    struct xml_parse_error : std::logic_error
+    struct scope_exit
     {
-        xml_parse_error(const std::string& msg, int line, int column, int error)
-            : std::logic_error(msg), line(line), column(column),
-            internal_error_code(error)
+        scope_exit(std::function <void (void)> fct)
+            : fct(fct)
         {}
 
-        int line, column;
-        int internal_error_code;
+        ~scope_exit()
+        {
+            fct();
+        }
+
+        std::function <void (void)> fct;
     };
 
-    /**
-     * Parse an XML DEXi file and fill the @e dexi_data structure.
-     *
-     * @exception @e std::bad_alloc
-     * @exception @e std::invalid_argument
-     * @exception @e efyj::xml_parse_error
-     *
-     * @param filepath
-     * @param dexi_data
-     */
-    void read(std::istream& is, dexi& dexi_data);
-
-    /**
-     * Write an XML DEXi file fril the @e dexi_data object.
-     *
-     * @exception @e std::bad_alloc
-     * @exception @e std::invalid_argument
-     * @exception @e efyj::xml_parse_error
-     *
-     * @param filepath
-     * @param dexi_data
-     */
-    void write(std::ostream& os, const dexi& dexi_data);
 }
 
 #endif
