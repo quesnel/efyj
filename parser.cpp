@@ -24,7 +24,6 @@
 #include "utils.hpp"
 #include <fstream>
 #include <functional>
-#include <iomanip>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -410,80 +409,86 @@ namespace {
         const efyj::dexi& dex;
         std::size_t space;
 
+        std::string make_space() const
+        {
+            return std::move(std::string(space, ' '));
+        }
+
+        std::string make_space(std::size_t adding) const
+        {
+            return std::move(std::string(space + adding, ' '));
+        }
+
         void write_dexi_option(const std::vector <std::string>& opts)
         {
             for (const auto& opt : opts)
-                os << std::setw(space) << "<OPTION>" << opt << "</OPTION>\n";
+                os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
         }
 
         void write_dexi_attribute(const efyj::attribute& att)
         {
-            os << std::setw(space) << "<ATTRIBUTE>\n";
+            os << make_space() << "<ATTRIBUTE>\n";
 
             space += 2;
-
-            os << std::setw(space) << "<NAME>" << att.name << "</NAME>\n"
-                << std::setw(space) << "<DESCRIPTION>" << att.description << "</DESCRIPTION>\n"
-                << std::setw(space) << "<SCALE>";
+            os << make_space() << "<NAME>" << att.name << "</NAME>\n"
+                << make_space() << "<DESCRIPTION>" << att.description << "</DESCRIPTION>\n"
+                << make_space() << "<SCALE>\n";
 
             space += 2;
-
             if (not att.scale.scale.empty() and not att.scale.order)
-                os << std::setw(space) << "<ORDER>NONE</ORDER>\n";
+                os << make_space() << "<ORDER>NONE</ORDER>\n";
 
             for (const auto& sv : att.scale.scale) {
-                os << std::setw(space) << "<SCALEVALUE>"
-                    << std::setw(space + 2) << "<NAME>" << sv.name << "</NAME>\n";
+                os << make_space() << "<SCALEVALUE>\n"
+                    << make_space(2) << "<NAME>" << sv.name << "</NAME>\n";
 
                 if (not sv.description.empty())
-                    os << std::setw(space + 2) << "<DESCRIPTION>"
+                    os << make_space(2) << "<DESCRIPTION>"
                         << sv.description << "</DESCRIPTION>\n";
 
                 if (sv.group != dex.group.end())
-                    os << std::setw(space + 2) << "<GROUP>"
+                    os << make_space(2) << "<GROUP>"
                         << *sv.group << "</GROUP>\n";
 
-                os << std::setw(space) << "</SCALEVALUE>";
-
-                space += 2;
-                if (not att.functions.empty()) {
-                    os << std::setw(space) << "<FUNCTION>";
-
-                    if (not att.functions.low.empty())
-                        os << std::setw(space + 2) << "<LOW>"
-                            << att.functions.low << "</LOW>\n";
-
-                    if (not att.functions.entered.empty())
-                        os << std::setw(space + 2) << "<ENTERED>"
-                            << att.functions.entered<< "</ENTERED>\n";
-
-                    if (not att.functions.consist.empty())
-                        os << std::setw(space + 2) << "<CONSIST>"
-                            << att.functions.consist << "</CONSIST>\n";
-
-                    os << std::setw(space) << "</FUNCTION>";
-                }
-                space -= 2;
-
-                if (not att.options.empty())
-                    write_dexi_option(att.options);
+                os << make_space() << "</SCALEVALUE>\n";
             }
             space -= 2;
 
-            os << std::setw(space + 2) << "</SCALE>";
+            os << make_space() << "</SCALE>\n";
 
-            space += 2;
+            if (not att.functions.empty()) {
+                os << make_space() << "<FUNCTION>\n";
+
+                if (not att.functions.low.empty())
+                    os << make_space(2) << "<LOW>"
+                        << att.functions.low << "</LOW>\n";
+
+                if (not att.functions.entered.empty())
+                    os << make_space(2) << "<ENTERED>"
+                        << att.functions.entered<< "</ENTERED>\n";
+
+                if (not att.functions.consist.empty())
+                    os << make_space(2) << "<CONSIST>"
+                        << att.functions.consist << "</CONSIST>\n";
+
+                os << make_space() << "</FUNCTION>\n";
+            }
+
+            if (not att.options.empty())
+                write_dexi_option(att.options);
+
             for (const auto& child : att.children)
                 write_dexi_attribute(*child);
             space -= 2;
 
-            os << std::setw(space) << "</ATTRIBUTE>\n";
+            os << make_space() << "</ATTRIBUTE>\n";
         }
 
         void write_dexi()
         {
             os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                << "<DEXi>\n";
+                << "<DEXi>\n"
+                << "  <NAME>" << dex.name << "</NAME>\n";
 
             space = 2;
             write_dexi_option(dex.options);

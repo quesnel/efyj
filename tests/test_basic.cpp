@@ -23,6 +23,7 @@
 #include "model.hpp"
 #include "dbg.hpp"
 #include <sstream>
+#include <cstdlib>
 
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
@@ -78,6 +79,57 @@ TEST_CASE("test classic dexi file", "[model]")
         efyj::dexi dex;
         REQUIRE_NOTHROW(efyj::read(is, dex));
     }
+}
+
+std::ofstream make_temporary(std::string& name)
+{
+    static const char *names[] = { "TMPDIR", "TMP", "TEMP" };
+    static const int names_size = sizeof(names) / sizeof(names[0]);
+    std::string ret;
+
+    // TODO replace X with random bits
+    // transform_if(...);
+
+    for (int i = 0; i != names_size and ret.empty(); ++i)
+        if (::getenv(names[i]))
+            ret = ::getenv(names[i]);
+
+    if (ret.empty())
+        ret = "/tmp";
+
+    ret += "/" + name;
+    name = ret;
+
+    return std::move(std::ofstream(ret));
+}
+
+TEST_CASE("test car.dxi load/save/load", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi car;
+    std::string outputfile("CarXXXXXXXX.dxi");
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, car));
+
+        std::ofstream os(make_temporary(outputfile));
+        REQUIRE(os.is_open());
+        REQUIRE_NOTHROW(efyj::write(os, car));;
+    }
+
+    efyj::dexi car2;
+
+    {
+        std::ifstream is(outputfile);
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, car2));
+    }
+
+    REQUIRE(car == car2);
 }
 
 TEST_CASE("test Car.dxi", "[model]")
