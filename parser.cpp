@@ -179,6 +179,7 @@ namespace {
             std::string error_message;
             efyj::dexi& dexi;
             std::stack <stack_identifier> stack;
+            std::stack <efyj::attribute*> attributes_stack;
             std::string char_data;
         };
 
@@ -231,6 +232,11 @@ namespace {
                                                stack_identifier::ATTRIBUTE});
                     pd->stack.push(id);
                     pd->dexi.attributes.emplace_back("unaffected attribute");
+                    if (pd->attributes_stack.empty())
+                        pd->dexi.child = &pd->dexi.attributes.back();
+                    else
+                        pd->attributes_stack.top()->children.push_back(&pd->dexi.attributes.back());
+                    pd->attributes_stack.push(&pd->dexi.attributes.back());
                     break;
                 case stack_identifier::NAME:
                     stack_identifier_is_parent(pd->stack,
@@ -310,6 +316,7 @@ namespace {
                     break;
                 case stack_identifier::ATTRIBUTE:
                     pd->stack.pop();
+                    pd->attributes_stack.pop();
                     break;
                 case stack_identifier::NAME:
                     if (pd->stack.top() == stack_identifier::ATTRIBUTE)
@@ -481,8 +488,8 @@ namespace {
             space = 2;
             write_dexi_option(dex.options);
 
-            if (dex.attribute)
-                write_dexi_attribute(*(dex.attribute));
+            if (dex.child)
+                write_dexi_attribute(*(dex.child));
 
             os << "</DEXi>\n";
         }

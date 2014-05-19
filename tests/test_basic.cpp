@@ -30,11 +30,9 @@
 TEST_CASE("test empty object equality", "[model]")
 {
     efyj::dexi x1;
-    efyj::dexi x2(x1);
+    efyj::dexi x2;
 
-    bool is_equal = x1 == x2;
-
-    REQUIRE(is_equal == true);
+    REQUIRE(x1 == x2);
 }
 
 TEST_CASE("test empty object read/write", "[model]")
@@ -81,4 +79,77 @@ TEST_CASE("test classic dexi file", "[model]")
         REQUIRE_NOTHROW(efyj::read(is, dex));
     }
 }
+
+TEST_CASE("test Car.dxi", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi car;
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, car));
+    }
+
+    REQUIRE(car.attributes.size() == 10u);
+    REQUIRE(car.child);
+    REQUIRE(car.child->name == "CAR");
+    REQUIRE(car.child->children.size() == 2u);
+    REQUIRE(car.child->children[0]->name == "PRICE");
+    REQUIRE(car.child->children[0]->children.size() == 2u);
+    REQUIRE(car.child->children[0]->children[0]->name == "BUY.PRICE");
+    REQUIRE(car.child->children[0]->children[0]->children.empty() == true);
+    REQUIRE(car.child->children[0]->children[1]->name == "MAINT.PRICE");
+    REQUIRE(car.child->children[0]->children[1]->children.empty() == true);
+    REQUIRE(car.child->children[1]->name == "TECH.CHAR.");
+    REQUIRE(car.child->children[1]->children.size() == 2u);
+    REQUIRE(car.child->children[1]->children[0]->name == "COMFORT");
+    REQUIRE(car.child->children[1]->children[0]->children.size() == 3u);
+    REQUIRE(car.child->children[1]->children[0]->children[0]->name == "#PERS");
+    REQUIRE(car.child->children[1]->children[0]->children[0]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[0]->children[1]->name == "#DOORS");
+    REQUIRE(car.child->children[1]->children[0]->children[1]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[0]->children[2]->name == "LUGGAGE");
+    REQUIRE(car.child->children[1]->children[0]->children[2]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[1]->name == "SAFETY");
+    REQUIRE(car.child->children[1]->children[1]->children.empty() == true);
+}
+
+TEST_CASE("test multiple Car.dexi", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi src, dst;
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, src));
+    }
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, dst));
+    }
+
+    REQUIRE(src == dst);
+
+    efyj::dexi dst2;
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, dst2));
+    }
+
+    REQUIRE(dst2 == dst);
+    REQUIRE(dst2.child);
+    dst2.child->name = "change";
+
+    REQUIRE(dst2 != dst);
+}
+
 #endif

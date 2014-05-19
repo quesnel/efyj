@@ -30,12 +30,23 @@ namespace efyj {
 
     bool operator==(const dexi& lhs, const dexi& rhs)
     {
-        return lhs.options == rhs.options &&
-            lhs.group == rhs.group &&
-            lhs.attributes == rhs.attributes &&
-            rhs.attribute == rhs.attribute;
+        if (not (lhs.options == rhs.options &&
+                 lhs.group == rhs.group &&
+                 lhs.attributes == rhs.attributes))
+            return false;
+
+        if (lhs.child and rhs.child)
+            return (*lhs.child) == (*rhs.child);
+
+        if (lhs.child == nullptr and rhs.child == nullptr)
+            return true;
+
+        return false;
     }
 
+    bool operator!=(const dexi& lhs, const dexi& rhs)
+    {
+        return not (lhs == rhs);
+    }
 }
-
 

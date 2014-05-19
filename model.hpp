@@ -82,18 +82,24 @@ namespace efyj {
     struct dexi
     {
         dexi()
-            : attribute(0)
+            : child(nullptr)
         {}
+
+        dexi(const dexi& other) = delete;
+        dexi(dexi&& other) = delete;
+        dexi& operator=(const dexi& other) = delete;
+        dexi& operator=(dexi&& other) = delete;
 
         std::string name;
         std::string description;
         std::vector <std::string> options;
         group_set group;
         std::deque <attribute> attributes;
-        attribute *attribute;
+        attribute *child;
     };
 
     bool operator==(const dexi& lhs, const dexi& rhs);
+    bool operator!=(const dexi& lhs, const dexi& rhs);
 }
 
 #endif
