@@ -81,6 +81,28 @@ TEST_CASE("test classic dexi file", "[model]")
     }
 }
 
+TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi car;
+    std::stringstream ss;
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, car));
+        REQUIRE_NOTHROW(efyj::write(ss, car));;
+    }
+
+    efyj::dexi car2;
+    REQUIRE_NOTHROW(efyj::read(ss, car2));
+
+    REQUIRE(car == car2);
+}
+
+#if (GCC_VERSION >= 40900) or (defined __clang__)
 std::ofstream make_temporary(std::string& name)
 {
     static const char *names[] = { "TMPDIR", "TMP", "TEMP" };
@@ -103,7 +125,7 @@ std::ofstream make_temporary(std::string& name)
     return std::move(std::ofstream(ret));
 }
 
-TEST_CASE("test car.dxi load/save/load", "[model]")
+TEST_CASE("test car.dxi load/save/load via file", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
@@ -131,6 +153,7 @@ TEST_CASE("test car.dxi load/save/load", "[model]")
 
     REQUIRE(car == car2);
 }
+#endif
 
 TEST_CASE("test Car.dxi", "[model]")
 {
