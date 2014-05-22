@@ -20,8 +20,55 @@
  */
 
 #include "model.hpp"
+#include <algorithm>
 
 namespace efyj {
+
+    void attribute::fill_utility_function()
+    {
+        std::vector <std::uint_fast8_t> child_max_value(children.size(), 0u);
+        std::transform(children.begin(), children.end(),
+                       child_max_value.begin(),
+                       std::mem_fn(&attribute::scale_size));
+
+        std::vector <std::size_t> iter(children.size(), 0u);
+        bool end = false;
+
+        std::size_t id = 0;
+        do {
+            std::size_t key = 0;
+            for (std::size_t i = 0, e = iter.size(); i != e; ++i) {
+                key *= 10;
+                key += iter[i];
+            }
+            utility_function.emplace(key, functions.low[id] - '0');
+
+            std::size_t current = child_max_value.size() - 1;
+
+            do {
+                iter[current]++;
+                if (iter[current] >= child_max_value[current]) {
+                    iter[current] = 0;
+
+                    if (current == 0) {
+                        end = true;
+                        break;
+                    } else {
+                        --current;
+                    }
+                } else
+                    break;
+            } while (not end);
+            ++id;
+        } while (not end);
+    }
+
+    void dexi::init()
+    {
+        for (auto& att : attributes)
+            if (not att.is_basic())
+                att.fill_utility_function();
+    }
 
     bool operator==(const attribute& lhs, const attribute& rhs)
     {

@@ -23,13 +23,16 @@
 #define INRA_EFYj_MODEL_HPP
 
 #include <deque>
+#include <map>
 #include <set>
 #include <string>
+#include <stdexcept>
 #include <vector>
 #include <cstdint>
 
 namespace efyj {
 
+    typedef std::uint_fast8_t scale_id;
     typedef std::set <std::string> group_set;
 
     struct scalevalue
@@ -63,26 +66,73 @@ namespace efyj {
 
         bool order;
         std::vector <scalevalue> scale;
+
+        std::size_t size() const noexcept
+        {
+            return scale.size();
+        }
     };
 
     struct attribute
     {
         attribute(const std::string& name)
-            : name(name)
+            : parent(nullptr)
+              , position_in_parent(0)
+              , value(0)
+              , parent_is_solvable(0)
+              , name(name)
         {}
 
+        std::size_t size() const noexcept
+        {
+            return children.size();
+        }
+
+        std::uint_fast8_t scale_size() const noexcept
+        {
+#ifndef NDEBUG
+            if (scale.size() > 9u)
+                throw std::overflow_error("attribute scale_size too big");
+
+#endif
+            return scale.size();
+        }
+
+        bool is_basic() const noexcept
+        {
+            return children.empty();
+        }
+
+        void push_back(attribute *child)
+        {
+            children.emplace_back(child);
+            child->position_in_parent = children.size();
+            child->parent = this;
+        }
+
+        void fill_utility_function();
+
+        attribute *parent;
+        std::size_t position_in_parent;
+        std::size_t value;
+        std::size_t parent_is_solvable;
         std::string name;
         std::string description;
         scales scale;
         function functions;
         std::vector <std::string> options;
         std::vector <attribute*> children;
+        std::map <std::uint32_t, std::uint_fast8_t> utility_function;
     };
 
     struct dexi
     {
         dexi()
-            : child(nullptr)
+            : child(nullptr),
+            problem_size(1),
+            basic_scale_number(0),
+            scale_number(0),
+            scalevalue_number(0)
         {}
 
         dexi(const dexi& other) = delete;
@@ -90,12 +140,19 @@ namespace efyj {
         dexi& operator=(const dexi& other) = delete;
         dexi& operator=(dexi&& other) = delete;
 
+        void init();
+
         std::string name;
         std::string description;
         std::vector <std::string> options;
         group_set group;
         std::deque <attribute> attributes;
         attribute *child;
+
+        std::size_t problem_size;
+        std::size_t basic_scale_number;
+        std::size_t scale_number;
+        std::size_t scalevalue_number;
     };
 
     bool operator==(const dexi& lhs, const dexi& rhs);

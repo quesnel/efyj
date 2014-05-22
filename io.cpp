@@ -188,10 +188,11 @@ namespace {
                     pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE});
                     pd->stack.push(id);
                     pd->dexi.attributes.emplace_back("unaffected attribute");
-                    if (pd->attributes_stack.empty())
+                    if (pd->attributes_stack.empty()) {
                         pd->dexi.child = &pd->dexi.attributes.back();
-                    else
-                        pd->attributes_stack.top()->children.push_back(&pd->dexi.attributes.back());
+                    } else {
+                        pd->attributes_stack.top()->push_back(&pd->dexi.attributes.back());
+                    }
                     pd->attributes_stack.push(&pd->dexi.attributes.back());
                     break;
                 case stack_identifier::NAME:
@@ -266,6 +267,12 @@ namespace {
                     break;
                 case stack_identifier::ATTRIBUTE:
                     pd->stack.pop();
+                    if (pd->attributes_stack.top()->children.empty()) {
+                        pd->dexi.basic_scale_number++;
+                        pd->dexi.scalevalue_number += pd->attributes_stack.top()->scale.scale.size();
+                        pd->dexi.problem_size *= pd->attributes_stack.top()->scale.scale.size();
+                    }
+
                     pd->attributes_stack.pop();
                     break;
                 case stack_identifier::NAME:
@@ -291,6 +298,7 @@ namespace {
                     break;
                 case stack_identifier::SCALE:
                     pd->stack.pop();
+                    pd->dexi.scale_number++;
                     break;
                 case stack_identifier::ORDER:
                     if (pd->char_data == "NONE")

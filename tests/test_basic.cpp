@@ -22,8 +22,16 @@
 #include "dbg.hpp"
 #include "io.hpp"
 #include "model.hpp"
+#include "solver.hpp"
 #include <sstream>
 #include <cstdlib>
+
+#if defined(__unix__)
+#include <unistd.h>
+#elif defined(__WIN32__)
+#include <io.h>
+#include <stdio.h>
+#endif
 
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
@@ -103,26 +111,34 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
 }
 
 #if (GCC_VERSION >= 40900) or (defined __clang__)
-std::ofstream make_temporary(std::string& name)
+std::ofstream make_temporary(std::string& name, bool remove = true)
 {
     static const char *names[] = { "TMPDIR", "TMP", "TEMP" };
     static const int names_size = sizeof(names) / sizeof(names[0]);
-    std::string ret;
+    std::string filename;
 
     // TODO replace X with random bits
     // transform_if(...);
 
-    for (int i = 0; i != names_size and ret.empty(); ++i)
+    for (int i = 0; i != names_size and filename.empty(); ++i)
         if (::getenv(names[i]))
-            ret = ::getenv(names[i]);
+            filename = ::getenv(names[i]);
 
-    if (ret.empty())
-        ret = "/tmp";
+    if (filename.empty())
+        filename = "/tmp";
 
-    ret += "/" + name;
-    name = ret;
+    filename += "/" + name;
+    name = filename;
+    std::ofstream os(filename);
+    if (os && remove) {
+#if defined(__unix__)
+        ::unlink(filename.c_str());
+#elif defined(__WIN32__)
+        ::_unlink(filename.c_str());
+#endif
+    }
 
-    return std::move(std::ofstream(ret));
+    return std::move(os);
 }
 
 TEST_CASE("test car.dxi load/save/load via file", "[model]")
@@ -138,7 +154,7 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(efyj::read(is, car));
 
-        std::ofstream os(make_temporary(outputfile));
+        std::ofstream os(make_temporary(outputfile, false));
         REQUIRE(os.is_open());
         REQUIRE_NOTHROW(efyj::write(os, car));;
     }
@@ -225,6 +241,79 @@ TEST_CASE("test multiple Car.dexi", "[model]")
     dst2.child->name = "change";
 
     REQUIRE(dst2 != dst);
+}
+
+TEST_CASE("test solver Car", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi model;
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, model));
+    }
+
+    REQUIRE(model.problem_size == 972u);
+    REQUIRE(model.basic_scale_number == 6u);
+    REQUIRE(model.scale_number == 10u);
+    REQUIRE(model.scalevalue_number == 19u);
+}
+
+TEST_CASE("test basic solver for Car", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi model;
+
+    {
+        std::ifstream is("Car.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, model));
+    }
+
+    REQUIRE(model.problem_size == 972u);
+    REQUIRE(model.basic_scale_number == 6u);
+    REQUIRE(model.scale_number == 10u);
+    REQUIRE(model.scalevalue_number == 19u);
+
+    efyj::solver_basic si(model);
+    REQUIRE(si.solve({1, 2, 2, 2, 2, 2}) == 3);
+    REQUIRE(si.solve({1, 1, 2, 2, 2, 1}) == 2);
+
+    efyj::solver_hash sh(model);
+    REQUIRE(sh.solve({1, 2, 2, 2, 2, 2}) == 3);
+    REQUIRE(sh.solve({1, 1, 2, 2, 2, 1}) == 2);
+
+    efyj::solver_bigmem sb(model);
+    REQUIRE(sb.solve({1, 2, 2, 2, 2, 2}) == 3);
+    REQUIRE(sb.solve({1, 1, 2, 2, 2, 1}) == 2);
+}
+
+TEST_CASE("test solver IPMSIM_PV", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi model;
+
+    {
+        std::ifstream is("IPSIM_PV_simulation1-1.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, model));
+    }
+
+    efyj::solver_bigmem si(model);
+
+    REQUIRE(model.problem_size == 279936u);
+    REQUIRE(model.basic_scale_number == 14u);
+    REQUIRE(model.scale_number == 21u);
+    REQUIRE(model.scalevalue_number == 35u);
+    //REQUIRE(si.solve({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) == -1);
+    //REQUIRE(si.solve({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}) == -1);
 }
 
 #endif
