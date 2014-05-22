@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
+#include "io.hpp"
 #include "model.hpp"
-#include "parser.hpp"
 #include "utils.hpp"
 #include <fstream>
 #include <functional>

@@ -29,7 +29,8 @@ endmacro ()
 pkg_config_library(LIBEXPAT expat)
 
 set(efyj_MAIN_SRCS main.cpp)
-set(efyj_CORE_SRCS model.cpp model.hpp parser.cpp parser.hpp print.hpp)
+set(efyj_CORE_SRCS dbg.hpp io.cpp io.hpp model.cpp model.hpp print.hpp
+  utils.hpp)
 
 add_library(efyj_corelib STATIC ${efyj_CORE_SRCS})
 
