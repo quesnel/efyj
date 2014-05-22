@@ -140,19 +140,19 @@ namespace {
             std::stack <stack_identifier> stack;
             std::stack <efyj::attribute*> attributes_stack;
             std::string char_data;
+
+            void is_parent(std::initializer_list <stack_identifier> list)
+            {
+                if (not stack.empty()) {
+                    for (stack_identifier id : list)
+                        if (id == stack.top())
+                            return;
+                }
+
+                throw std::invalid_argument("Bad parent");
+            }
         };
 
-        static void stack_identifier_is_parent(const std::stack <stack_identifier>& stack,
-                                               std::initializer_list <stack_identifier> list)
-        {
-            if (not stack.empty()) {
-                for (stack_identifier id : list)
-                    if (id == stack.top())
-                        return;
-            }
-
-            throw std::invalid_argument("Bad parent");
-        }
 
         static void start_element(void *data, const char *element,
                                   const char **attribute) noexcept
@@ -171,24 +171,21 @@ namespace {
                     pd->stack.push(id);
                     break;
                 case stack_identifier::LINE:
-                    stack_identifier_is_parent(pd->stack,
-                                               {stack_identifier::DESCRIPTION});
+                    pd->is_parent({stack_identifier::DESCRIPTION});
                     break;
                 case stack_identifier::OPTION:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
-                                               stack_identifier::ATTRIBUTE});
+                    pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE});
                     break;
                 case stack_identifier::SETTINGS:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi});
+                    pd->is_parent({stack_identifier::DEXi});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::REPORTS:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::SETTINGS});
+                    pd->is_parent({stack_identifier::SETTINGS});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::ATTRIBUTE:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::DEXi,
-                                               stack_identifier::ATTRIBUTE});
+                    pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE});
                     pd->stack.push(id);
                     pd->dexi.attributes.emplace_back("unaffected attribute");
                     if (pd->attributes_stack.empty())
@@ -198,46 +195,40 @@ namespace {
                     pd->attributes_stack.push(&pd->dexi.attributes.back());
                     break;
                 case stack_identifier::NAME:
-                    stack_identifier_is_parent(pd->stack,
-                                               {stack_identifier::DEXi,
-                                               stack_identifier::ATTRIBUTE,
-                                               stack_identifier::SCALEVALUE});
+                    pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE, stack_identifier::SCALEVALUE});
                     break;
                 case stack_identifier::DESCRIPTION:
-                    stack_identifier_is_parent(pd->stack,
-                                               {stack_identifier::DEXi,
-                                               stack_identifier::ATTRIBUTE,
-                                               stack_identifier::SCALEVALUE});
+                    pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE, stack_identifier::SCALEVALUE});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::SCALE:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
+                    pd->is_parent({stack_identifier::ATTRIBUTE});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::ORDER:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALE});
+                    pd->is_parent({stack_identifier::SCALE});
                     break;
                 case stack_identifier::SCALEVALUE:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALE});
+                    pd->is_parent({stack_identifier::SCALE});
                     pd->stack.push(id);
                     pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue",
                                                                   pd->dexi.group.end());
                     break;
                 case stack_identifier::GROUP:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::SCALEVALUE});
+                    pd->is_parent({stack_identifier::SCALEVALUE});
                     break;
                 case stack_identifier::FUNCTION:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::ATTRIBUTE});
+                    pd->is_parent({stack_identifier::ATTRIBUTE});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::LOW:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    pd->is_parent({stack_identifier::FUNCTION});
                     break;
                 case stack_identifier::ENTERED:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    pd->is_parent({stack_identifier::FUNCTION});
                     break;
                 case stack_identifier::CONSIST:
-                    stack_identifier_is_parent(pd->stack, {stack_identifier::FUNCTION});
+                    pd->is_parent({stack_identifier::FUNCTION});
                     break;
                 }
             } catch (const std::exception& e) {
