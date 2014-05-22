@@ -100,46 +100,6 @@ namespace {
             SCALE, ORDER, SCALEVALUE, GROUP, FUNCTION, LOW, ENTERED, CONSIST
         };
 
-        std::string stack_identifier_to_str(stack_identifier id)
-        {
-            switch (id) {
-            case stack_identifier::DEXi:
-                return "DEXi";
-            case stack_identifier::LINE:
-                return "LINE";
-            case stack_identifier::OPTION:
-                return "OPTION";
-            case stack_identifier::SETTINGS:
-                return "SETTINGS";
-            case stack_identifier::REPORTS:
-                return "REPORTS";
-            case stack_identifier::ATTRIBUTE:
-                return "ATTRIBUTE";
-            case stack_identifier::NAME:
-                return "NAME";
-            case stack_identifier::DESCRIPTION:
-                return "DESCRIPTION";
-            case stack_identifier::SCALE:
-                return "SCALE";
-            case stack_identifier::ORDER:
-                return "ORDER";
-            case stack_identifier::SCALEVALUE:
-                return "SCALEVALUE";
-            case stack_identifier::GROUP:
-                return "GROUP";
-            case stack_identifier::FUNCTION:
-                return "FUNCTION";
-            case stack_identifier::LOW:
-                return "LOW";
-            case stack_identifier::ENTERED:
-                return "ENTERED";
-            case stack_identifier::CONSIST:
-                return "CONSIST";
-            }
-
-            throw std::logic_error("Remove a stupid GCC 4.8 warning");
-        }
-
         static stack_identifier str_to_stack_identifier(const char* name)
         {
             static const std::unordered_map <const char*, stack_identifier,
