@@ -1,0 +1,26 @@
+Here's a short list of things we can do
+=======================================
+
+efyj
+----
+
+- Add a global class, efyj::environment for example, to store global
+  state like verbose|quiet mode, terminal output stream with color
+  etc. Use std::shared\_ptr and std::make\_shared to store the global
+  class or static pointer.
+
+Solver & Cache
+--------------
+
+- Add an MPI and a thread mode for every solver and cache
+
+- Refactor source code. Some algorithms duplicated.
+
+- Bigmem and hash are cache, perhaps rename/refactor them.
+
+Parser
+------
+
+- Convert efjy::dexi::options from std::vector <std::string> into
+  std::vector <std::uint8_t> in order to represent correctly the
+  option.
