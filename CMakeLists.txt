@@ -30,9 +30,9 @@ pkg_config_library(LIBEXPAT expat)
 pkg_config_library(LIBEIGEN3 eigen3)
 
 set(efyj_MAIN_SRCS main.cpp)
-set(efyj_CORE_SRCS dbg.hpp io.cpp io.hpp model.cpp model.hpp print.hpp
-  solver-basic.cpp solver-bigmem.cpp solver-hash.cpp solver.hpp
-  utils.hpp)
+set(efyj_CORE_SRCS dbg.hpp io.cpp io.hpp model.cpp model.hpp print.cpp
+  print.hpp solver-basic.cpp solver-bigmem.cpp solver-hash.cpp
+  solver.hpp utils.hpp)
 
 add_library(efyj_corelib STATIC ${efyj_CORE_SRCS})
 

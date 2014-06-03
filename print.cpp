@@ -19,28 +19,31 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_PRINT_HPP
-#define INRA_EFYj_PRINT_HPP
-
-#include <string>
-#include <cstdint>
-#include <cinttypes>
-
-#define dWHITE "\x1b[37;1m"
-#define dRED "\x1b[31;1m"
-#define dYELLOW "\x1b[33;1m"
-#define dCYAN "\x1b[36;1m"
-#define dNORMAL "\x1b[0;m"
-
-#if defined __GNUC__
-#define EFYJ_GCC_PRINTF(format__, args__) __attribute__ ((format (printf, format__, args__)))
-#endif
+#include "print.hpp"
+#include <vector>
+#include <cstdio>
+#include <cstdarg>
 
 namespace efyj {
 
-    std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+    std::string stringf(const char* format, ...)
+    {
+        std::vector <char> buffer(1024, '\0');
+        int sz;
+        va_list ap;
+
+        for (;;) {
+            va_start(ap, format);
+            sz = std::vsnprintf(buffer.data(), buffer.size(), format, ap);
+            va_end(ap);
+
+            if (sz < 0)
+                return std::move(std::string());
+            else if (static_cast <std::size_t>(sz) < buffer.size())
+                return std::move(std::string(buffer.data(), buffer.size()));
+            else
+                buffer.resize(sz + 1);
+        }
+    }
 
 }
-
-#endif
-

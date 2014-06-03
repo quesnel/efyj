@@ -21,6 +21,7 @@
 
 #include "solver.hpp"
 #include "dbg.hpp"
+#include "print.hpp"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
 #include <vector>
@@ -76,9 +77,9 @@ namespace efyj {
                 result.resize(std::pow(2, binary_scale_value_size), -1);
             } catch (const std::bad_alloc&) {
                 throw std::logic_error(
-                    std::string("failed to allocate ") +
-                    std::to_string(std::pow(
-                            2, binary_scale_value_size) / 1024 / 1024) + "GB");
+                    efyj::stringf("failed to allocate %f GB",
+                                  std::pow(2, binary_scale_value_size) / 1024 /
+                                  1024) + "GB");
             }
 
             std::vector <std::size_t> high_level(model.basic_scale_number);

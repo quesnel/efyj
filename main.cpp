@@ -30,7 +30,7 @@ namespace {
 
     void usage() noexcept
     {
-        efyj::print(std::cout, "dexi [files...]\n");
+        std::cout << "dexi [files...]\n";
     }
 
     bool process(const std::string& filepath) noexcept
@@ -41,19 +41,19 @@ namespace {
         try {
             std::ifstream is(filepath);
             if (not is)
-                throw std::invalid_argument(std::string("unknown file ") +
-                                            filepath);
+                throw std::invalid_argument(
+                    efyj::stringf("unknown file %s", filepath.c_str()));
             efyj::read(is, dexi_data);
             ret = true;
         } catch (const std::bad_alloc& e) {
-            efyj::print(std::cerr, dRED, "fail to allocate memory: ", dNORMAL, e.what());
+            std::cerr << dRED << "fail to allocate memory: " << dNORMAL << e.what();
         } catch (const std::invalid_argument& e) {
-            efyj::print(std::cerr, dRED, "bad argument: ", dNORMAL, e.what());
+            std::cerr << dRED << "bad argument: " << dNORMAL << e.what();
         } catch (const efyj::xml_parse_error& e) {
-            efyj::print(std::cerr, dRED, "fail to parse file ", filepath, " in (",
-                        e.line, ", ", e.column, "): ", dNORMAL, e.what());
+            std::cerr << dRED << "fail to parse file " << filepath << " in ("
+                << e.line << " << " << e.column << "): " << dNORMAL << e.what();
         } catch (const std::exception& e) {
-            efyj::print(std::cerr, dRED, "unknown failure: ", dNORMAL,  e.what());
+            std::cerr << dRED << "unknown failure: " << dNORMAL <<  e.what();
         }
 
         return ret;
@@ -73,10 +73,10 @@ int main(int argc, char *argv[])
         usage();
     } else {
         for (int i = 1; i < argc; ++i) {
-            efyj::print(std::cout, "Processing [", dYELLOW, argv[i], dNORMAL, "] ");
+            std::cout << "Processing [" << dYELLOW << argv[i] << dNORMAL << "] ";
             if (not process(argv[i]))
                 ret = EXIT_FAILURE;
-            efyj::print(std::cout, "\n");
+            std::cout << "\n";
         }
     }
 

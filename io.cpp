@@ -21,6 +21,7 @@
 
 #include "io.hpp"
 #include "model.hpp"
+#include "print.hpp"
 #include "utils.hpp"
 #include <fstream>
 #include <functional>
@@ -124,7 +125,8 @@ namespace {
             try {
                 return stack_identifier_map.at(name);
             } catch (const std::exception& e) {
-                throw std::invalid_argument(std::string("Unknown element ") + name);
+                throw std::invalid_argument(
+                    efyj::stringf("Unknown element: %s ", name));
             }
         }
 

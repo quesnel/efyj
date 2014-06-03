@@ -19,53 +19,31 @@
  * SOFTWARE.
  */
 
-#include "solver.hpp"
 #include "dbg.hpp"
+#include "solver.hpp"
+#include "print.hpp"
 #include <algorithm>
 #include <numeric>
 #include <vector>
 #include <string>
 #include <cmath>
 #include <map>
-#include <cinttypes>
-#include <cstdio>
-#include <cstdarg>
 #include <stack>
 
 namespace {
 
-    std::string print_c_str(const char* format, ...)
-    {
-        std::vector <char> buffer(1024, '\0');
-        int sz;
-        va_list ap;
-
-        for (;;) {
-            va_start(ap, format);
-            sz = std::vsnprintf(buffer.data(), buffer.size(), format, ap);
-            va_end(ap);
-
-            if (sz < 0)
-                return std::move(std::string());
-            else if (static_cast <std::size_t>(sz) < buffer.size())
-                return std::move(std::string(buffer.data(), buffer.size()));
-            else
-                buffer.resize(sz + 1);
-        }
-    }
-
     std::string format_error_msg(const efyj::attribute& att, std::uint32_t key)
     {
         return std::move(
-            print_c_str("Unknown solution " PRIu32 " for attribute %s",
-                        key, att.name.c_str()));
+            efyj::stringf("Unknown solution %" PRIu32 " for attribute %s",
+                          key, att.name.c_str()));
     }
 
     std::string format_error_msg(const std::vector <std::uint8_t>& options)
     {
         return std::move(
-            print_c_str("Too many option in vector (" PRIuMAX ")",
-                        options.size()));
+            efyj::stringf("Too many option in vector (%" PRIuMAX ")",
+                          options.size()));
     }
 
     std::uint_fast8_t utility_function_get_value(efyj::attribute& att)
