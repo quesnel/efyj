@@ -285,8 +285,22 @@ TEST_CASE("test basic solver for Car", "[model]")
     REQUIRE(si.solve({1, 1, 2, 2, 2, 1}) == 2);
 
     efyj::solver_hash sh(model);
-    REQUIRE(sh.solve({1, 2, 2, 2, 2, 2}) == 3);
-    REQUIRE(sh.solve({1, 1, 2, 2, 2, 1}) == 2);
+
+    {
+        std::vector <std::uint8_t> opt_3({1, 2, 2, 2, 2, 2});
+        REQUIRE(sh.solve(opt_3) == 3);
+
+        std::vector <std::uint8_t> opt_2({1, 1, 2, 2, 2, 1});
+        REQUIRE(sh.solve(opt_2) == 2);
+    }
+
+    {
+        std::string opt_3("122222");
+        REQUIRE(sh.solve(opt_3) == 3);
+
+        std::string opt_2("112221");
+        REQUIRE(sh.solve(opt_2) == 2);
+    }
 
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve({1, 2, 2, 2, 2, 2}) == 3);

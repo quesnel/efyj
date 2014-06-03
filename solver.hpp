@@ -56,6 +56,7 @@ namespace efyj {
         ~solver_bigmem();
 
         std::int8_t solve(const std::vector <std::uint8_t>& options);
+        std::int8_t solve(std::size_t options);
 
         struct solver_bigmem_impl;
         std::unique_ptr <solver_bigmem_impl> impl;
@@ -67,6 +68,7 @@ namespace efyj {
         ~solver_hash();
 
         std::int8_t solve(const std::vector <std::uint8_t>& options);
+        std::int8_t solve(const std::string& options);
 
         struct solver_hash_impl;
         std::unique_ptr <solver_hash_impl> impl;

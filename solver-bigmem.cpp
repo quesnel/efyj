@@ -60,7 +60,7 @@ namespace efyj {
         std::size_t binary_scale_value_size;
         std::vector <std::uint8_t> binary_scales; /* number of scale value for each
                                                      scale. */
-        std::deque <std::int8_t> result;
+        std::vector <std::int8_t> result;
 
         solver_bigmem_impl(dexi& model)
             : binary_scale_value_size(0)
@@ -146,5 +146,10 @@ namespace efyj {
     std::int8_t solver_bigmem::solve(const std::vector <std::uint8_t>& options)
     {
         return impl->at(options);
+    }
+
+    std::int8_t solver_bigmem::solve(std::size_t options)
+    {
+        return impl->result.at(options);
     }
 }

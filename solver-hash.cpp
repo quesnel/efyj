@@ -20,8 +20,10 @@
  */
 
 #include "solver.hpp"
+#include "print.hpp"
 #include <algorithm>
 #include <unordered_map>
+#include <iostream>
 
 namespace {
 
@@ -100,7 +102,18 @@ namespace efyj {
 
         auto it = impl->hash.find(key);
         if (it == impl->hash.end())
-            throw solver_error("Unknown result");
+            throw solver_error(
+                stringf("Unknown result for key: %s", key.c_str()));
+
+        return it->second;
+    }
+
+    std::int8_t solver_hash::solve(const std::string& options)
+    {
+        auto it = impl->hash.find(options);
+        if (it == impl->hash.end())
+            throw solver_error(
+                stringf("Unknown result for key: %s", options.c_str()));
 
         return it->second;
     }
