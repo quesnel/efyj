@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_PRINT_HPP
 #define INRA_EFYj_PRINT_HPP
 
+#include "visibility.hpp"
 #include <string>
 #include <cstdint>
 #include <cinttypes>
@@ -38,7 +39,7 @@
 
 namespace efyj {
 
-    std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+    EFYJ_API std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 
 }
 

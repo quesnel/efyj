@@ -22,13 +22,14 @@
 #ifndef INRA_EFYj_PARSER_HPP
 #define INRA_EFYj_PARSER_HPP
 
+#include "model.hpp"
+#include "visibility.hpp"
 #include <string>
 #include <stdexcept>
-#include "model.hpp"
 
 namespace efyj {
 
-    struct xml_parse_error : std::logic_error
+    struct EFYJ_API xml_parse_error : std::logic_error
     {
         xml_parse_error(const std::string& msg, int line, int column, int error)
             : std::logic_error(msg), line(line), column(column),
@@ -49,7 +50,7 @@ namespace efyj {
      * @param filepath
      * @param dexi_data
      */
-    void read(std::istream& is, dexi& dexi_data);
+    EFYJ_API void read(std::istream& is, dexi& dexi_data);
 
     /**
      * Write an XML DEXi file fril the @e dexi_data object.
@@ -61,7 +62,7 @@ namespace efyj {
      * @param filepath
      * @param dexi_data
      */
-    void write(std::ostream& os, const dexi& dexi_data);
+    EFYJ_API void write(std::ostream& os, const dexi& dexi_data);
 }
 
 #endif

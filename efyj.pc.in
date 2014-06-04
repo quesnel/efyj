@@ -1,0 +1,12 @@
+prefix=@efyj_PKGCONFIG_PREFIXPATH@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@efyj_PKGCONFIG_LIBDIR@
+sharedlibdir=${libdir}
+includedir=${prefix}/include/efyj-@efyj_STABLEVERSION@
+
+Name: efyj
+Description: A DEX solver
+Requires: expat eigen3
+Version: @efyj_VERSION@
+Libs:	-L${libdir} -lefyj-@efyj_STABLEVERSION@
+Cflags: -I${includedir}/efyj-@efyj_STABLEVERSION@

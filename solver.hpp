@@ -23,6 +23,7 @@
 #define INRA_EFYj_SOLVER_HPP
 
 #include "model.hpp"
+#include "visibility.hpp"
 #include <memory>
 
 namespace efyj {
@@ -41,7 +42,7 @@ namespace efyj {
         {}
     };
 
-    struct solver_basic
+    struct EFYJ_API solver_basic
     {
         solver_basic(dexi& model);
 
@@ -50,7 +51,7 @@ namespace efyj {
         dexi& model;
     };
 
-    struct solver_bigmem
+    struct EFYJ_API solver_bigmem
     {
         solver_bigmem(dexi& model);
 
@@ -62,7 +63,7 @@ namespace efyj {
         std::vector <std::int8_t> result;
     };
 
-    struct solver_hash
+    struct EFYJ_API solver_hash
     {
         solver_hash(dexi& model);
         ~solver_hash();
