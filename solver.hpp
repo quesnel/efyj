@@ -53,13 +53,13 @@ namespace efyj {
     struct solver_bigmem
     {
         solver_bigmem(dexi& model);
-        ~solver_bigmem();
 
         std::int8_t solve(const std::vector <std::uint8_t>& options);
         std::int8_t solve(std::size_t options);
 
-        struct solver_bigmem_impl;
-        std::unique_ptr <solver_bigmem_impl> impl;
+        std::size_t binary_scale_value_size;
+        std::vector <std::uint8_t> binary_scales;
+        std::vector <std::int8_t> result;
     };
 
     struct solver_hash

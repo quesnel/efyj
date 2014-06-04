@@ -33,37 +33,24 @@ namespace {
     unsigned long make_key(const std::vector <std::uint8_t>& options,
                            const std::vector <uint8_t>& bits)
     {
-        boost::dynamic_bitset <> db;
+        unsigned long ret = 0;
+        std::size_t indice = 0;
 
-        for (int i = options.size() - 1; i >= 0; --i) {
-            boost::dynamic_bitset <> opt_to_db(bits[i], options[i]);
-
-#ifndef NDEBUG
-            // TODO remove
-            if (opt_to_db.to_ulong() != options[i])
-                throw std::logic_error("how");
-#endif
-
-            for (int j = 0, ej = opt_to_db.size(); j != ej; ++j)
-                db.push_back(opt_to_db[j]);
+        for (std::size_t i = 0, e = bits.size(); i != e; ++i) {
+            ret += (options[i] << indice);
+            indice += std::floor(std::log2(bits[i]) + 1);
         }
 
-        return db.to_ulong();
+        return ret;
     }
 
 }
 
 namespace efyj {
 
-    struct solver_bigmem::solver_bigmem_impl
+    solver_bigmem::solver_bigmem(dexi& model)
+        : binary_scale_value_size(0)
     {
-        std::size_t binary_scale_value_size;
-        std::vector <std::uint8_t> binary_scales; /* number of scale value for each
-                                                     scale. */
-        std::vector <std::int8_t> result;
-
-        solver_bigmem_impl(dexi& model)
-            : binary_scale_value_size(0)
         {
             for (const auto& att : model.attributes) {
                 if (att.children.empty()) {
@@ -97,7 +84,8 @@ namespace efyj {
             bool end = false;
 
             do {
-                set(options, basic.solve(options));
+                unsigned long key = ::make_key(options, binary_scales);
+                result[key] = basic.solve(options);
 
                 std::size_t current = model.basic_scale_number - 1;
                 do {
@@ -116,40 +104,17 @@ namespace efyj {
                 } while (not end);
             } while (not end);
         };
-
-        std::int8_t& at(const std::vector <std::uint8_t>& options)
-        {
-            if (options.size() != binary_scales.size())
-                throw std::logic_error("options.size() != scales.size()");
-
-            unsigned long key = ::make_key(options, binary_scales);
-
-            return result.at(key);
-        }
-
-
-        void set(const std::vector <std::uint8_t>& options, std::uint8_t value)
-        {
-            at(options) = value;
-        }
-    };
-
-    solver_bigmem::solver_bigmem(dexi& model)
-        : impl(new solver_bigmem::solver_bigmem_impl(model))
-    {
-    }
-
-    solver_bigmem::~solver_bigmem()
-    {
     }
 
     std::int8_t solver_bigmem::solve(const std::vector <std::uint8_t>& options)
     {
-        return impl->at(options);
+        unsigned long key = ::make_key(options, binary_scales);
+
+        return result[key];
     }
 
     std::int8_t solver_bigmem::solve(std::size_t options)
     {
-        return impl->result.at(options);
+        return result[options];
     }
 }

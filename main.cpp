@@ -89,7 +89,7 @@ namespace {
         std::size_t indice = 0;
 
         for (std::size_t i = 0, e = high_level.size(); i != e; ++i) {
-            options += (distribution(rng) % high_level[i]) * std::pow(2, indice);
+            options += ((distribution(rng) % high_level[i]) << indice);
             indice += std::floor(std::log2(high_level[i]) + 1);
         }
     }
