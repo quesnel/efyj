@@ -23,6 +23,7 @@
 #include "model.hpp"
 #include "solver.hpp"
 #include "print.hpp"
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -195,14 +196,31 @@ namespace {
             time_result[5] = std::chrono::system_clock::now() - start;
         }
 
+        auto min_max = std::minmax_element(time_result.begin() + 1, time_result.end(),
+                                           [](std::chrono::duration <double>& a,
+                                              std::chrono::duration <double>& b)
+                                           {
+                                               return a.count() < b.count();
+                                           });
+
         std::cout << "Time elapsed to:\n"
                   << "- read model........ : " << time_result[0].count() << "s\n"
                   << "- get response for random " << run_number << " options:\n"
-                  << "  - basic solver.............. : " << time_result[1].count() << "s\n"
-                  << "  - hash cache................ : " << time_result[2].count() << "s\n"
-                  << "  - hash cache (string)....... : " << time_result[3].count() << "s\n"
-                  << "  - big memory cache.......... : " << time_result[4].count() << "s\n"
-                  << "  - big memory cache (binary). : " << time_result[5].count() << "s\n"
+                  << "  - basic solver.............. : "
+                  << ((time_result[1].count() == min_max.first->count()) ? dCYAN : ((time_result[1].count() == min_max.second->count()) ? dRED : ""))
+                  << time_result[1].count() << "s (" << (run_number / (1000000 * time_result[1].count())) << " million op/s)\n" << dNORMAL
+                  << "  - hash cache................ : "
+                  << ((time_result[2].count() == min_max.first->count()) ? dCYAN : ((time_result[2].count() == min_max.second->count()) ? dRED : ""))
+                  << time_result[2].count() << "s (" << (run_number / (1000000 * time_result[2].count())) << " million op/s)\n" << dNORMAL
+                  << "  - hash cache (string)....... : "
+                  << ((time_result[3].count() == min_max.first->count()) ? dCYAN : ((time_result[3].count() == min_max.second->count()) ? dRED : ""))
+                  << time_result[3].count() << "s (" << (run_number / (1000000 * time_result[3].count())) << " million op/s)\n" << dNORMAL
+                  << "  - big memory cache.......... : "
+                  << ((time_result[4].count() == min_max.first->count()) ? dCYAN : ((time_result[4].count() == min_max.second->count()) ? dRED : ""))
+                  << time_result[4].count() << "s (" << (run_number / (1000000 * time_result[4].count())) << " million op/s)\n" << dNORMAL
+                  << "  - big memory cache (binary). : "
+                  << ((time_result[5].count() == min_max.first->count()) ? dCYAN : ((time_result[5].count() == min_max.second->count()) ? dRED : ""))
+                  << time_result[5].count() << "s (" << (run_number / (1000000 * time_result[5].count())) << " million op/s)\n" << dNORMAL
                   << "\n";
     }
 }
