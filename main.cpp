@@ -47,6 +47,14 @@ namespace {
                   << std::endl;
     }
 
+    void show_model(const efyj::dexi& model)
+    {
+        std::cout << "(attribute: " << model.attributes.size()
+                  << ", basic attribute: " << model.basic_scale_number
+                  << ", problem size: " << model.problem_size
+                  << ")" << std::endl;
+    }
+
     void process(const std::string& filepath)
     {
         efyj::dexi dexi_data;
@@ -57,6 +65,8 @@ namespace {
                 efyj::stringf("unknown file %s", filepath.c_str()));
 
         efyj::read(is, dexi_data);
+
+        show_model(dexi_data);
     }
 
     void generate_new_options(std::vector <std::uint8_t>& options,
@@ -114,6 +124,8 @@ namespace {
 
             time_result[0] = std::chrono::system_clock::now() - start;
         }
+
+        show_model(model);
 
         std::vector <std::size_t> high_level(model.basic_scale_number);
         int i = 0;
