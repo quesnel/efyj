@@ -97,8 +97,9 @@ namespace {
         efyj::dexi& dex;
 
         enum class stack_identifier {
-            DEXi, LINE, OPTION, SETTINGS, REPORTS, ATTRIBUTE, NAME, DESCRIPTION,
-            SCALE, ORDER, SCALEVALUE, GROUP, FUNCTION, LOW, ENTERED, CONSIST
+            DEXi, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS, ATTRIBUTE, NAME,
+            DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP, FUNCTION, LOW,
+            ENTERED, CONSIST
         };
 
         static stack_identifier str_to_stack_identifier(const char* name)
@@ -109,6 +110,7 @@ namespace {
                              {"LINE", stack_identifier::LINE},
                              {"OPTION", stack_identifier::OPTION},
                              {"SETTINGS", stack_identifier::SETTINGS},
+                             {"FONTSIZE", stack_identifier::FONTSIZE},
                              {"REPORTS", stack_identifier::REPORTS},
                              {"ATTRIBUTE", stack_identifier::ATTRIBUTE},
                              {"NAME", stack_identifier::NAME},
@@ -180,6 +182,10 @@ namespace {
                     break;
                 case stack_identifier::SETTINGS:
                     pd->is_parent({stack_identifier::DEXi});
+                    pd->stack.push(id);
+                    break;
+                case stack_identifier::FONTSIZE:
+                    pd->is_parent({stack_identifier::SETTINGS});
                     pd->stack.push(id);
                     break;
                 case stack_identifier::REPORTS:
@@ -262,6 +268,9 @@ namespace {
                         throw std::invalid_argument("bad stack");
                     break;
                 case stack_identifier::SETTINGS:
+                    pd->stack.pop();
+                    break;
+                case stack_identifier::FONTSIZE:
                     pd->stack.pop();
                     break;
                 case stack_identifier::REPORTS:
