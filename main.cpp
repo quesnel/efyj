@@ -268,7 +268,6 @@ int main(int argc, char *argv[])
             else
                 process(argv[i]);
 
-            i++;
             std::cout << "\n";
         } catch (const std::bad_alloc& e) {
             std::cerr << dRED << "fail to allocate memory: " << dNORMAL << e.what()
@@ -288,6 +287,7 @@ int main(int argc, char *argv[])
                 std::endl;
             ret = EXIT_FAILURE;
         }
+        i++;
     }
 
     return ret;
