@@ -43,7 +43,7 @@ namespace {
     {
         return std::move(
             efyj::stringf("Too many option in vector (%" PRIuMAX ")",
-                          options.size()));
+                          static_cast <std::uintmax_t>(options.size())));
     }
 
     std::uint_fast8_t utility_function_get_value(efyj::attribute& att)
