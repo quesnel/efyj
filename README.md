@@ -7,16 +7,17 @@ The software is released under the MIT license. See the COPYING file.
 
 ## Requirements
 
-* libexpat (≥ 2.0)
+* libexpat (≥ 2)
 * boost (≥ 1.50)
-* cmake (≥ 2.8.0)
+* eigen3 (≥ 3)
+* cmake (≥ 2.8)
 * make (≥ 1.8)
 * c++ compiler (gcc ≥ 4.8, clang ≥ 3.3, intel icc (≥ 11.0).
 
 For recent Debian and Ubuntu derivatives (remove clang to only use gcc):
 
     apt-get install build-essential cmake clang libexpat1-dev \
-                    libboost-dev
+                    libboost-dev libeigen3-dev
 
 ## Compilation
 
