@@ -35,7 +35,7 @@ namespace {
             if (opt > 9)
                 throw efyj::solver_option_error("options must be [0-9]");
 
-            ret += std::to_string(opt);
+            ret += ('0' + opt);
         }
 
         return std::move(ret);
