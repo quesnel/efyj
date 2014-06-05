@@ -21,6 +21,7 @@
 
 #include "model.hpp"
 #include <algorithm>
+#include <functional>
 
 namespace efyj {
 
