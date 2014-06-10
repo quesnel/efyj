@@ -307,7 +307,30 @@ TEST_CASE("test basic solver for Car", "[model]")
     REQUIRE(sb.solve({1, 1, 2, 2, 2, 1}) == 2);
 }
 
-TEST_CASE("test solver IPMSIM_PV", "[model]")
+TEST_CASE("test basic solver for Enterprise", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+
+    efyj::dexi model;
+
+    {
+        std::ifstream is("Enterprise.dxi");
+        REQUIRE(is.is_open());
+        REQUIRE_NOTHROW(efyj::read(is, model));
+    }
+
+    efyj::solver_basic si(model);
+    REQUIRE(si.solve({2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1}) == 1);
+
+    efyj::solver_hash sh(model);
+    REQUIRE(sh.solve("200020001111") == 1);
+
+    efyj::solver_bigmem sb(model);
+    REQUIRE(sb.solve({2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1}) == 1);
+}
+
+TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
@@ -320,14 +343,14 @@ TEST_CASE("test solver IPMSIM_PV", "[model]")
         REQUIRE_NOTHROW(efyj::read(is, model));
     }
 
-    efyj::solver_bigmem si(model);
+    efyj::solver_basic si(model);
+    REQUIRE(si.solve({2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1}) == 6);
 
-    REQUIRE(model.problem_size == 279936u);
-    REQUIRE(model.basic_scale_number == 14u);
-    REQUIRE(model.scale_number == 21u);
-    REQUIRE(model.scalevalue_number == 35u);
-    //REQUIRE(si.solve({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) == -1);
-    //REQUIRE(si.solve({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}) == -1);
+    efyj::solver_hash sh(model);
+    REQUIRE(sh.solve("20010110002001") == 6);
+
+    efyj::solver_bigmem sb(model);
+    REQUIRE(sb.solve({2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1}) == 6);
 }
 
 #endif
