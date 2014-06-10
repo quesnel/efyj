@@ -43,7 +43,26 @@ namespace {
                   << "    -s, --stress [int]    Stress mode (check all solver/cache)\n"
                   << "                          If no argument, the default"
                   " make 100000 run\n"
+                  << "    -l, --list-solver     Show the list of solver and"
+                  " cache\n"
+                  << "    -c, --select [name]   Select the specified solver\n"
+                  << "    -o str                Add option to run solver\n"
                   << "    [files...]            DEXi file to run\n"
+                  << std::endl;
+    }
+
+    void show_solver() noexcept
+    {
+        std::cout << "available solver:\n"
+                  << " classic            Default solver\n"
+                  << " hash               classic solver, hash table and"
+                  " integer vector options\n"
+                  << " hash_string        classic solver, hash table and"
+                  " string options\n"
+                  << " bigmem             classic solver, big memory cache"
+                  " and integer vector options\n"
+                  << " bigmem_integer     classic solver, big memory cache"
+                  " and integer options"
                   << std::endl;
     }
 
@@ -55,18 +74,46 @@ namespace {
                   << ")" << std::endl;
     }
 
-    void process(const std::string& filepath)
+    void process(const std::string& filepath,
+                 const std::map <std::string, bool>& solvers,
+                 const std::vector <std::string>& options)
     {
-        efyj::dexi dexi_data;
-
+        efyj::dexi model;
         std::ifstream is(filepath);
         if (not is)
             throw std::invalid_argument(
                 efyj::stringf("unknown file %s", filepath.c_str()));
 
-        efyj::read(is, dexi_data);
+        efyj::read(is, model);
+        show_model(model);
 
-        show_model(dexi_data);
+        std::cout << "Results:\n";
+        for (const auto& slv : solvers) {
+            if (slv.second)
+                std::cout << " " << slv.first << ": ";
+
+            if (slv.first == "classic" && slv.second) {
+                efyj::solver_basic si(model);
+                for (const auto& opt : options)
+                    std::cout << (unsigned int)si.solve(opt) << "\n";
+            } else if (slv.first == "hash" && slv.second) {
+                efyj::solver_hash sh(model);
+                for (const auto& opt : options)
+                    std::cout << (unsigned int)sh.solve(opt) << "\n";
+            } else if (slv.first == "hash_string" && slv.second) {
+                efyj::solver_hash sh(model);
+                for (const auto& opt : options)
+                    std::cout << (unsigned int)sh.solve(opt) << "\n";
+            } else if (slv.first == "bigmem" && slv.second) {
+                efyj::solver_bigmem sbm(model);
+                for (const auto& opt : options)
+                    std::cout << (unsigned int)sbm.solve(opt) << "\n";
+            } else if (slv.first == "bigmem_integer" && slv.second) {
+                efyj::solver_bigmem sbm(model);
+                for (const auto& opt : options)
+                    std::cout << (unsigned int)sbm.solve(opt) << "\n";
+            }
+        }
     }
 
     void generate_new_options(std::vector <efyj::scale_id>& options,
@@ -248,6 +295,13 @@ int main(int argc, char *argv[])
     int ret = EXIT_SUCCESS;
     int i = 1;
 
+    std::map <std::string, bool> solvers = {{"classic", false},
+        {"hash", false}, {"hash_string", false}, {"bigmem", false},
+        {"bigmem_integer", false}};
+
+    std::vector <std::string> options;
+    std::vector <std::string> files;
+
     while (i < argc) {
         if (not std::strcmp(argv[i], "--stress") or
             not std::strcmp(argv[i], "-s")) {
@@ -262,9 +316,14 @@ int main(int argc, char *argv[])
                     stress_test_number = nb;
             }
 
-            std::cout << "- run stress mode for " << stress_test_number << " random run\n";
             i++;
             continue;
+        }
+
+        if (not std::strcmp(argv[i], "-l") or
+            not std::strcmp(argv[i], "--list-solver")) {
+            show_solver();
+            break;
         }
 
         if (not std::strcmp(argv[i], "--help") or
@@ -273,33 +332,70 @@ int main(int argc, char *argv[])
             break;
         }
 
-        std::cout << "Processing [" << dYELLOW << argv[i] << dNORMAL << "] \n";
-        try {
-            if (stress_test)
-                process_stress_test(argv[i], stress_test_number);
-            else
-                process(argv[i]);
+        if (not std::strcmp(argv[i], "-c") or
+            not std::strcmp(argv[i], "--select")) {
+            i++;
 
-            std::cout << "\n";
-        } catch (const std::bad_alloc& e) {
-            std::cerr << dRED << "fail to allocate memory: " << dNORMAL << e.what()
-                << std::endl;
-            ret = EXIT_FAILURE;
-        } catch (const std::invalid_argument& e) {
-            std::cerr << dRED << "bad argument: " << dNORMAL << e.what() <<
-                std::endl;
-            ret = EXIT_FAILURE;
-        } catch (const efyj::xml_parse_error& e) {
-            std::cerr << dRED << "fail to parse file " << argv[i] << " in ("
-                << e.line << " << " << e.column << "): " << dNORMAL << e.what()
-                << std::endl;
-            ret = EXIT_FAILURE;
-        } catch (const std::exception& e) {
-            std::cerr << dRED << "unknown failure: " << dNORMAL <<  e.what() <<
-                std::endl;
-            ret = EXIT_FAILURE;
+            if (i == argc)
+                throw std::invalid_argument(
+                    efyj::stringf("Missing argument for `%s'", argv[i - 1]));
+
+            auto it = solvers.find(argv[i]);
+            if (it == solvers.end())
+                throw std::invalid_argument(
+                    efyj::stringf("Unknown solver `%s'", argv[i]));
+
+            it->second = true;
+            i++;
+            continue;
         }
+
+        if (not std::strcmp(argv[i], "-o")) {
+            i++;
+
+            if (i == argc)
+                throw std::invalid_argument("Missing argument for `-o'");
+
+            options.emplace_back(argv[i]);
+            i++;
+            continue;
+        }
+
+        files.emplace_back(argv[i]);
         i++;
+    }
+
+    try {
+        if (stress_test) {
+            std::cout << "- run stress mode for " << stress_test_number << " random run\n";
+            for (const auto& file : files) {
+                std::cout << "Processing [" << dYELLOW << file << dNORMAL << "] \n";
+                process_stress_test(file, stress_test_number);
+            }
+        } else {
+            for (const auto& file : files) {
+                std::cout << "Processing [" << dYELLOW << file << dNORMAL << "] \n";
+                process(file, solvers, options);
+            }
+        }
+        std::cout << "\n";
+    } catch (const std::bad_alloc& e) {
+        std::cerr << dRED << "fail to allocate memory: " << dNORMAL << e.what()
+            << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (const std::invalid_argument& e) {
+        std::cerr << dRED << "bad argument: " << dNORMAL << e.what() <<
+            std::endl;
+        ret = EXIT_FAILURE;
+    } catch (const efyj::xml_parse_error& e) {
+        std::cerr << dRED << "fail to parse file " << argv[i] << " in ("
+            << e.line << " << " << e.column << "): " << dNORMAL << e.what()
+            << std::endl;
+        ret = EXIT_FAILURE;
+    } catch (const std::exception& e) {
+        std::cerr << dRED << "unknown failure: " << dNORMAL <<  e.what() <<
+            std::endl;
+        ret = EXIT_FAILURE;
     }
 
     return ret;

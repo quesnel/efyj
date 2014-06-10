@@ -115,4 +115,17 @@ namespace efyj {
             }
         }
     }
+
+    scale_id solver_basic::solve(const std::string& options)
+    {
+        std::vector <efyj::scale_id> cnv(options.size(), 0);
+
+        std::transform(options.begin(), options.end(),
+                       cnv.begin(),
+                       [](char character) {
+                           return character - '0';
+                       });
+
+        return solve(cnv);
+    }
 }

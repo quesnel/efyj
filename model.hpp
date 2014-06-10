@@ -24,6 +24,7 @@
 
 #include "visibility.hpp"
 #include <deque>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -41,17 +42,22 @@ namespace efyj {
 
     template <typename T>
         constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
-        is_valid_scale_id(T n)
+        is_valid_scale_id(T n) noexcept
         {
             return n <= 127;
         }
 
     template <typename T>
         constexpr typename std::enable_if <!std::is_unsigned <T>::value, bool>::type
-        is_valid_scale_id(T n)
+        is_valid_scale_id(T n) noexcept
         {
             return n >= 0 && n <= 127;
         }
+
+    constexpr scale_id scale_id_unknown() noexcept
+    {
+        return std::numeric_limits <scale_id>::max();
+    }
 
     typedef std::set <std::string> group_set;
 

@@ -96,24 +96,24 @@ namespace efyj {
     {
     }
 
-    std::int8_t solver_hash::solve(const std::vector <efyj::scale_id>& options)
+    efyj::scale_id solver_hash::solve(const std::vector <efyj::scale_id>& options)
     {
         std::string key = ::make_key(options);
 
         auto it = impl->hash.find(key);
         if (it == impl->hash.end())
             throw solver_error(
-                stringf("Unknown result for key: %s", key.c_str()));
+                stringf("hash: Unknown result for key: %s", key.c_str()));
 
         return it->second;
     }
 
-    std::int8_t solver_hash::solve(const std::string& options)
+    efyj::scale_id solver_hash::solve(const std::string& options)
     {
         auto it = impl->hash.find(options);
         if (it == impl->hash.end())
             throw solver_error(
-                stringf("Unknown result for key: %s", options.c_str()));
+                stringf("hash: Unknown result for key: %s", options.c_str()));
 
         return it->second;
     }

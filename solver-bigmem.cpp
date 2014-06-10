@@ -44,6 +44,20 @@ namespace {
         return ret;
     }
 
+    unsigned long make_key(const std::string& options,
+                           const std::vector <efyj::scale_id>& bits)
+    {
+        unsigned long ret = 0;
+        std::size_t indice = 0;
+
+        for (std::size_t i = 0, e = bits.size(); i != e; ++i) {
+            ret += ((options[i] - '0') << indice);
+            indice += std::floor(std::log2(bits[i]) + 1);
+        }
+
+        return ret;
+    }
+
 }
 
 namespace efyj {
@@ -61,7 +75,8 @@ namespace efyj {
             }
 
             try {
-                result.resize(std::pow(2, binary_scale_value_size), -1);
+                result.resize(std::pow(2, binary_scale_value_size),
+                              scale_id_unknown());
             } catch (const std::bad_alloc&) {
                 throw std::logic_error(
                     efyj::stringf("failed to allocate %f GB",
@@ -106,15 +121,22 @@ namespace efyj {
         };
     }
 
-    std::int8_t solver_bigmem::solve(const std::vector <efyj::scale_id>& options)
+    efyj::scale_id solver_bigmem::solve(const std::vector <efyj::scale_id>& options)
     {
         unsigned long key = ::make_key(options, binary_scales);
 
         return result[key];
     }
 
-    std::int8_t solver_bigmem::solve(std::size_t options)
+    efyj::scale_id solver_bigmem::solve(std::size_t options)
     {
         return result[options];
+    }
+
+    efyj::scale_id solver_bigmem::solve(const std::string& options)
+    {
+        unsigned long key = ::make_key(options, binary_scales);
+
+        return result[key];
     }
 }

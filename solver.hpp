@@ -46,7 +46,8 @@ namespace efyj {
     {
         solver_basic(dexi& model);
 
-        scale_id solve(const std::vector <efyj::scale_id>& options);
+        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
+        efyj::scale_id solve(const std::string& options);
 
         dexi& model;
     };
@@ -55,12 +56,13 @@ namespace efyj {
     {
         solver_bigmem(dexi& model);
 
-        std::int8_t solve(const std::vector <efyj::scale_id>& options);
-        std::int8_t solve(std::size_t options);
+        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
+        efyj::scale_id solve(std::size_t options);
+        efyj::scale_id solve(const std::string& options);
 
         std::size_t binary_scale_value_size;
         std::vector <efyj::scale_id> binary_scales;
-        std::vector <std::int8_t> result;
+        std::vector <efyj::scale_id> result;
     };
 
     struct EFYJ_API solver_hash
@@ -68,8 +70,8 @@ namespace efyj {
         solver_hash(dexi& model);
         ~solver_hash();
 
-        std::int8_t solve(const std::vector <efyj::scale_id>& options);
-        std::int8_t solve(const std::string& options);
+        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
+        efyj::scale_id solve(const std::string& options);
 
         struct solver_hash_impl;
         std::unique_ptr <solver_hash_impl> impl;

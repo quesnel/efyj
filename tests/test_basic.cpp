@@ -280,31 +280,34 @@ TEST_CASE("test basic solver for Car", "[model]")
     REQUIRE(model.scale_number == 10u);
     REQUIRE(model.scalevalue_number == 19u);
 
-    efyj::solver_basic si(model);
-    REQUIRE(si.solve({1, 2, 2, 2, 2, 2}) == 3);
-    REQUIRE(si.solve({1, 1, 2, 2, 2, 1}) == 2);
-
-    efyj::solver_hash sh(model);
+    const std::vector <efyj::scale_id> opt_v3 = {1, 2, 2, 2, 2, 2};
+    const std::vector <efyj::scale_id> opt_v2 = {1, 1, 2, 2, 2, 1};
+    const std::string opt_s3 = "122222";
+    const std::string opt_s2 = "112221";
 
     {
-        std::vector <std::uint8_t> opt_3({1, 2, 2, 2, 2, 2});
-        REQUIRE(sh.solve(opt_3) == 3);
-
-        std::vector <std::uint8_t> opt_2({1, 1, 2, 2, 2, 1});
-        REQUIRE(sh.solve(opt_2) == 2);
+        efyj::solver_basic s(model);
+        REQUIRE(s.solve(opt_v3) == 3);
+        REQUIRE(s.solve(opt_v2) == 2);
+        REQUIRE(s.solve(opt_s3) == 3);
+        REQUIRE(s.solve(opt_s2) == 2);
     }
 
     {
-        std::string opt_3("122222");
-        REQUIRE(sh.solve(opt_3) == 3);
-
-        std::string opt_2("112221");
-        REQUIRE(sh.solve(opt_2) == 2);
+        efyj::solver_hash s(model);
+        REQUIRE(s.solve(opt_v3) == 3);
+        REQUIRE(s.solve(opt_v2) == 2);
+        REQUIRE(s.solve(opt_s3) == 3);
+        REQUIRE(s.solve(opt_s2) == 2);
     }
 
-    efyj::solver_bigmem sb(model);
-    REQUIRE(sb.solve({1, 2, 2, 2, 2, 2}) == 3);
-    REQUIRE(sb.solve({1, 1, 2, 2, 2, 1}) == 2);
+    {
+        efyj::solver_bigmem s(model);
+        REQUIRE(s.solve(opt_v3) == 3);
+        REQUIRE(s.solve(opt_v2) == 2);
+        REQUIRE(s.solve(opt_s3) == 3);
+        REQUIRE(s.solve(opt_s2) == 2);
+    }
 }
 
 TEST_CASE("test basic solver for Enterprise", "[model]")
@@ -320,14 +323,20 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE_NOTHROW(efyj::read(is, model));
     }
 
-    efyj::solver_basic si(model);
-    REQUIRE(si.solve({2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1}) == 1);
+    std::vector <efyj::scale_id> opt_v = {2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1};
+    std::string opt_s = "200020001111";
 
-    efyj::solver_hash sh(model);
-    REQUIRE(sh.solve("200020001111") == 1);
+    efyj::solver_basic si(model);
+    REQUIRE(si.solve(opt_v) == 1);
+    REQUIRE(si.solve(opt_s) == 1);
 
     efyj::solver_bigmem sb(model);
-    REQUIRE(sb.solve({2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1}) == 1);
+    REQUIRE(sb.solve(opt_v) == 1);
+    REQUIRE(sb.solve(opt_s) == 1);
+
+    efyj::solver_hash sh(model);
+    REQUIRE(sh.solve(opt_v) == 1);
+    REQUIRE(sh.solve(opt_s) == 1);
 }
 
 TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
@@ -343,14 +352,21 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
         REQUIRE_NOTHROW(efyj::read(is, model));
     }
 
-    efyj::solver_basic si(model);
-    REQUIRE(si.solve({2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1}) == 6);
 
-    efyj::solver_hash sh(model);
-    REQUIRE(sh.solve("20010110002001") == 6);
+    std::vector <efyj::scale_id> opt_v = {2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1};
+    std::string opt_s = "20010110002001";
+
+    efyj::solver_basic si(model);
+    REQUIRE(si.solve(opt_v) == 6);
+    REQUIRE(si.solve(opt_s) == 6);
 
     efyj::solver_bigmem sb(model);
-    REQUIRE(sb.solve({2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1}) == 6);
+    REQUIRE(sb.solve(opt_v) == 6);
+    REQUIRE(sb.solve(opt_s) == 6);
+
+    efyj::solver_hash sh(model);
+    REQUIRE(sh.solve(opt_v) == 6);
+    REQUIRE(sh.solve(opt_s) == 6);
 }
 
 #endif
