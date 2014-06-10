@@ -27,7 +27,7 @@ namespace efyj {
 
     void attribute::fill_utility_function()
     {
-        std::vector <std::uint_fast8_t> child_max_value(children.size(), 0u);
+        std::vector <scale_id> child_max_value(children.size(), 0u);
         std::transform(children.begin(), children.end(),
                        child_max_value.begin(),
                        std::mem_fn(&attribute::scale_size));

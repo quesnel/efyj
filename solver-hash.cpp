@@ -27,7 +27,7 @@
 
 namespace {
 
-    std::string make_key(const std::vector <std::uint8_t>& options)
+    std::string make_key(const std::vector <efyj::scale_id>& options)
     {
         std::string ret;
 
@@ -59,7 +59,7 @@ namespace efyj {
                 }
             }
 
-            std::vector <std::uint_fast8_t> options(model.basic_scale_number, 0);
+            std::vector <scale_id> options(model.basic_scale_number, 0);
             efyj::solver_basic basic(model);
             bool end = false;
 
@@ -84,7 +84,7 @@ namespace efyj {
             } while (not end);
         }
 
-        std::unordered_map <std::string, std::uint_fast8_t> hash;
+        std::unordered_map <std::string, scale_id> hash;
     };
 
     solver_hash::solver_hash(dexi& model)
@@ -96,7 +96,7 @@ namespace efyj {
     {
     }
 
-    std::int8_t solver_hash::solve(const std::vector <std::uint8_t>& options)
+    std::int8_t solver_hash::solve(const std::vector <efyj::scale_id>& options)
     {
         std::string key = ::make_key(options);
 

@@ -69,7 +69,7 @@ namespace {
         show_model(dexi_data);
     }
 
-    void generate_new_options(std::vector <std::uint8_t>& options,
+    void generate_new_options(std::vector <efyj::scale_id>& options,
                               const std::vector <std::size_t>& high_level,
                               std::mt19937& rng)
     {
@@ -136,7 +136,7 @@ namespace {
         {
             start = std::chrono::system_clock::now();
 
-            std::vector <std::uint8_t> options(model.basic_scale_number, 0u);
+            std::vector <efyj::scale_id> options(model.basic_scale_number, 0u);
             efyj::solver_basic si(model);
             std::mt19937 generator;
 
@@ -151,7 +151,7 @@ namespace {
         {
             start = std::chrono::system_clock::now();
 
-            std::vector <std::uint8_t> options(model.basic_scale_number, 0u);
+            std::vector <efyj::scale_id> options(model.basic_scale_number, 0u);
             efyj::solver_hash sh(model);
             std::mt19937 generator;
 
@@ -181,7 +181,7 @@ namespace {
         {
             start = std::chrono::system_clock::now();
 
-            std::vector <std::uint8_t> options(model.basic_scale_number, 0u);
+            std::vector <efyj::scale_id> options(model.basic_scale_number, 0u);
             efyj::solver_bigmem sbm(model);
             std::mt19937 generator;
 

@@ -25,6 +25,7 @@
 #include "utils.hpp"
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -220,8 +221,15 @@ namespace {
                 case stack_identifier::SCALEVALUE:
                     pd->is_parent({stack_identifier::SCALE});
                     pd->stack.push(id);
-                    pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue",
-                                                                  pd->dexi.group.end());
+
+                    pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue", pd->dexi.group.end());
+
+                    if (not efyj::is_valid_scale_id(pd->dexi.attributes.size()))
+                        throw std::overflow_error(
+                            efyj::stringf("Too many scale value (%" PRIuMAX ") "
+                                          "for attribute `%s'",
+                                          static_cast <std::uintmax_t>(pd->dexi.attributes.size()),
+                                          pd->dexi.attributes.back().name.c_str()));
                     break;
                 case stack_identifier::GROUP:
                     pd->is_parent({stack_identifier::SCALEVALUE});

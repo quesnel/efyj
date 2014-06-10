@@ -30,8 +30,8 @@
 
 namespace {
 
-    unsigned long make_key(const std::vector <std::uint8_t>& options,
-                           const std::vector <uint8_t>& bits)
+    unsigned long make_key(const std::vector <efyj::scale_id>& options,
+                           const std::vector <efyj::scale_id>& bits)
     {
         unsigned long ret = 0;
         std::size_t indice = 0;
@@ -79,7 +79,7 @@ namespace efyj {
                 }
             }
 
-            std::vector <std::uint_fast8_t> options(model.basic_scale_number, 0);
+            std::vector <scale_id> options(model.basic_scale_number, 0);
             efyj::solver_basic basic(model);
             bool end = false;
 
@@ -106,7 +106,7 @@ namespace efyj {
         };
     }
 
-    std::int8_t solver_bigmem::solve(const std::vector <std::uint8_t>& options)
+    std::int8_t solver_bigmem::solve(const std::vector <efyj::scale_id>& options)
     {
         unsigned long key = ::make_key(options, binary_scales);
 

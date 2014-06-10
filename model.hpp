@@ -27,13 +27,32 @@
 #include <map>
 #include <set>
 #include <string>
-#include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include <cstdint>
 
 namespace efyj {
 
+    /**
+     * The @e scale_id is used to represent possible value when solving
+     * problem. The range of @e scale_id is [0..127].
+     */
     typedef std::uint_fast8_t scale_id;
+
+    template <typename T>
+        constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
+        is_valid_scale_id(T n)
+        {
+            return n <= 127;
+        }
+
+    template <typename T>
+        constexpr typename std::enable_if <!std::is_unsigned <T>::value, bool>::type
+        is_valid_scale_id(T n)
+        {
+            return n >= 0 && n <= 127;
+        }
+
     typedef std::set <std::string> group_set;
 
     struct EFYJ_API scalevalue
@@ -89,13 +108,8 @@ namespace efyj {
             return children.size();
         }
 
-        std::uint_fast8_t scale_size() const noexcept
+        scale_id scale_size() const noexcept
         {
-#ifndef NDEBUG
-            if (scale.size() > 9u)
-                throw std::overflow_error("attribute scale_size too big");
-
-#endif
             return scale.size();
         }
 
@@ -123,7 +137,7 @@ namespace efyj {
         function functions;
         std::vector <std::string> options;
         std::vector <attribute*> children;
-        std::map <std::uint32_t, std::uint_fast8_t> utility_function;
+        std::map <std::uint32_t, scale_id> utility_function;
     };
 
     struct EFYJ_API dexi

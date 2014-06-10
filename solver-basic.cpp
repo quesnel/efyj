@@ -39,14 +39,14 @@ namespace {
                           key, att.name.c_str()));
     }
 
-    std::string format_error_msg(const std::vector <std::uint8_t>& options)
+    std::string format_error_msg(const std::vector <efyj::scale_id>& options)
     {
         return std::move(
             efyj::stringf("Too many option in vector (%" PRIuMAX ")",
                           static_cast <std::uintmax_t>(options.size())));
     }
 
-    std::uint_fast8_t utility_function_get_value(efyj::attribute& att)
+    efyj::scale_id utility_function_get_value(efyj::attribute& att)
     {
         std::uint32_t key = std::accumulate(
             att.children.begin(),
@@ -73,7 +73,7 @@ namespace efyj {
         model.init();
     }
 
-    std::uint_fast8_t solver_basic::solve(const std::vector <std::uint8_t>& options)
+    scale_id solver_basic::solve(const std::vector <efyj::scale_id>& options)
     {
         std::size_t i = 0;
         for (auto& att : model.attributes) {
@@ -103,7 +103,7 @@ namespace efyj {
 
                     attribute *cur= &att;
                     while (cur && cur->parent_is_solvable == cur->children.size()) {
-                        std::uint_fast8_t value = ::utility_function_get_value(*cur);
+                        scale_id value = ::utility_function_get_value(*cur);
                         if (cur->parent == nullptr)
                             return value;
 
