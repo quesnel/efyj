@@ -58,8 +58,8 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 set(efyj_CORE_HDRS dbg.hpp io.hpp model.hpp print.hpp solver.hpp
   utils.hpp visibility.hpp)
 
-set(efyj_CORE_SRCS io.cpp model.cpp print.cpp solver-basic.cpp
-  solver-bigmem.cpp solver-hash.cpp)
+set(efyj_CORE_SRCS io.cpp model.cpp print.cpp solver.cpp
+  solver-basic.cpp solver-bigmem.cpp solver-hash.cpp)
 
 add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
 add_library(efyj_static_corelib STATIC ${efyj_CORE_SRCS})

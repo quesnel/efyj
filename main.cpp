@@ -27,6 +27,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <random>
 #include <cstdlib>
 #include <ctime>
@@ -74,6 +75,14 @@ namespace {
                   << ")" << std::endl;
     }
 
+    std::ostream& operator<<(std::ostream& os, const efyj::result_type& rt)
+    {
+        std::copy(rt.cbegin(), rt.cend(),
+                  std::ostream_iterator <efyj::scale_id>(os, " "));
+
+        return os;
+    }
+
     void process(const std::string& filepath,
                  const std::map <std::string, bool>& solvers,
                  const std::vector <std::string>& options)
@@ -95,23 +104,23 @@ namespace {
             if (slv.first == "classic" && slv.second) {
                 efyj::solver_basic si(model);
                 for (const auto& opt : options)
-                    std::cout << (unsigned int)si.solve(opt) << "\n";
+                    std::cout << si.solve(opt) << "\n";
             } else if (slv.first == "hash" && slv.second) {
                 efyj::solver_hash sh(model);
                 for (const auto& opt : options)
-                    std::cout << (unsigned int)sh.solve(opt) << "\n";
+                    std::cout << sh.solve(opt) << "\n";
             } else if (slv.first == "hash_string" && slv.second) {
                 efyj::solver_hash sh(model);
                 for (const auto& opt : options)
-                    std::cout << (unsigned int)sh.solve(opt) << "\n";
+                    std::cout << sh.solve(opt) << "\n";
             } else if (slv.first == "bigmem" && slv.second) {
                 efyj::solver_bigmem sbm(model);
                 for (const auto& opt : options)
-                    std::cout << (unsigned int)sbm.solve(opt) << "\n";
+                    std::cout << sbm.solve(opt) << "\n";
             } else if (slv.first == "bigmem_integer" && slv.second) {
                 efyj::solver_bigmem sbm(model);
                 for (const auto& opt : options)
-                    std::cout << (unsigned int)sbm.solve(opt) << "\n";
+                    std::cout << sbm.solve(opt) << "\n";
             }
         }
     }

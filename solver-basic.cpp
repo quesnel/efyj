@@ -23,6 +23,7 @@
 #include "solver.hpp"
 #include "print.hpp"
 #include <algorithm>
+#include <functional>
 #include <numeric>
 #include <vector>
 #include <string>
@@ -116,16 +117,20 @@ namespace efyj {
         }
     }
 
-    scale_id solver_basic::solve(const std::string& options)
+    efyj::result_type solver_basic::solve(const std::string& options)
     {
-        std::vector <efyj::scale_id> cnv(options.size(), 0);
+        std::vector <std::vector <scale_id>> todo =
+            efyj::make_scale_id_options(options, model.basic_attribute_scale_size);
 
-        std::transform(options.begin(), options.end(),
-                       cnv.begin(),
-                       [](char character) {
-                           return character - '0';
+        result_type ret;
+
+        std::transform(todo.cbegin(), todo.cend(),
+                       std::inserter(ret, ret.end()),
+                       [this](const std::vector <scale_id>& opt)
+                       {
+                           return solve(opt);
                        });
 
-        return solve(cnv);
+        return std::move(ret);
     }
 }

@@ -166,6 +166,7 @@ namespace efyj {
         std::string name;
         std::string description;
         std::vector <std::string> options;
+        std::vector <scale_id> basic_attribute_scale_size;
         group_set group;
         std::deque <attribute> attributes;
         attribute *child;

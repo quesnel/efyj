@@ -25,8 +25,20 @@
 #include "model.hpp"
 #include "visibility.hpp"
 #include <memory>
+#include <set>
+#include <unordered_map>
 
 namespace efyj {
+
+    typedef std::set <scale_id> result_type;
+
+    EFYJ_API std::vector <std::string> make_string_options(
+        const std::string& options,
+        const std::vector <scale_id>& max_options);
+
+    EFYJ_API std::vector <std::vector <scale_id>> make_scale_id_options(
+        const std::string& options,
+        const std::vector <scale_id>& max_options);
 
     struct solver_error : std::logic_error
     {
@@ -46,8 +58,8 @@ namespace efyj {
     {
         solver_basic(dexi& model);
 
-        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
-        efyj::scale_id solve(const std::string& options);
+        scale_id solve(const std::vector <scale_id>& options);
+        result_type solve(const std::string& options);
 
         dexi& model;
     };
@@ -56,25 +68,25 @@ namespace efyj {
     {
         solver_bigmem(dexi& model);
 
-        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
-        efyj::scale_id solve(std::size_t options);
-        efyj::scale_id solve(const std::string& options);
+        scale_id solve(const std::vector <scale_id>& options);
+        scale_id solve(std::size_t options);
+        result_type solve(const std::string& options);
 
         std::size_t binary_scale_value_size;
-        std::vector <efyj::scale_id> binary_scales;
-        std::vector <efyj::scale_id> result;
+        std::vector <scale_id> binary_scales;
+        std::vector <scale_id> result;
+        std::vector <scale_id> basic_attribute_scale_size;
     };
 
     struct EFYJ_API solver_hash
     {
         solver_hash(dexi& model);
-        ~solver_hash();
 
-        efyj::scale_id solve(const std::vector <efyj::scale_id>& options);
-        efyj::scale_id solve(const std::string& options);
+        scale_id solve(const std::vector <scale_id>& options);
+        result_type solve(const std::string& options);
 
-        struct solver_hash_impl;
-        std::unique_ptr <solver_hash_impl> impl;
+        std::unordered_map <std::string, scale_id> hash;
+        std::vector <scale_id> basic_attribute_scale_size;
     };
 }
 

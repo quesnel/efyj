@@ -64,6 +64,7 @@ namespace efyj {
 
     solver_bigmem::solver_bigmem(dexi& model)
         : binary_scale_value_size(0)
+          , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         {
             for (const auto& att : model.attributes) {
@@ -79,7 +80,7 @@ namespace efyj {
                               scale_id_unknown());
             } catch (const std::bad_alloc&) {
                 throw std::logic_error(
-                    efyj::stringf("failed to allocate %f GB",
+                    efyj::stringf("bigmem: failed to allocate %f GB",
                                   std::pow(2, binary_scale_value_size) / 1024 /
                                   1024) + "GB");
             }
@@ -133,10 +134,29 @@ namespace efyj {
         return result[options];
     }
 
-    efyj::scale_id solver_bigmem::solve(const std::string& options)
+    result_type solver_bigmem::solve(const std::string& options)
     {
-        unsigned long key = ::make_key(options, binary_scales);
+        std::vector <std::string> todo =
+            efyj::make_string_options(options, basic_attribute_scale_size);
 
-        return result[key];
+        result_type ret;
+
+        std::transform(todo.cbegin(), todo.cend(),
+                       std::inserter(ret, ret.end()),
+                       [this](const std::string& opt)
+                       {
+                           unsigned long key = ::make_key(opt, binary_scales);
+                           scale_id r = result[key];
+
+                           if (not is_valid_scale_id(r))
+                               throw solver_error(
+                                   stringf("bigmem: Unknown result for key: %"
+                                           PRIuMAX, static_cast
+                                           <std::uintmax_t>(key)));
+
+                           return r;
+                       });
+
+        return std::move(ret);
     }
 }

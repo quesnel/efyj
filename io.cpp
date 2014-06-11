@@ -32,7 +32,6 @@
 #include <unordered_map>
 #include <cstring>
 #include <expat.h>
-#include <iostream>
 
 namespace {
 
@@ -288,8 +287,11 @@ namespace {
                     pd->stack.pop();
                     if (pd->attributes_stack.top()->children.empty()) {
                         pd->dexi.basic_scale_number++;
-                        pd->dexi.scalevalue_number += pd->attributes_stack.top()->scale.scale.size();
-                        pd->dexi.problem_size *= pd->attributes_stack.top()->scale.scale.size();
+
+                        auto scale_size = pd->attributes_stack.top()->scale.scale.size();
+                        pd->dexi.scalevalue_number += scale_size;
+                        pd->dexi.problem_size *= scale_size;
+                        pd->dexi.basic_attribute_scale_size.emplace_back(scale_size);
                     }
 
                     pd->attributes_stack.pop();
