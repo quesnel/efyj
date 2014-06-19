@@ -1,7 +1,7 @@
 project(efyj)
 cmake_minimum_required(VERSION 2.8)
 set(efyj_MAJOR 0)
-set(efyj_MINOR 1)
+set(efyj_MINOR 5)
 set(efyj_PATCH 0)
 set(efyj_VERSION "${efyj_MAJOR}.${efyj_MINOR}.${efyj_PATCH}")
 set(efyj_STABLEVERSION "${efyj_MAJOR}.${efyj_MINOR}")
