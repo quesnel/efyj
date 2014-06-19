@@ -139,3 +139,63 @@ if (CATCH_INCLUDE_DIR)
 else ()
   message(STATUS " not found catch.hpp. Unit test disabled")
 endif ()
+
+
+### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## CPack
+#
+
+include(InstallRequiredSystemLibraries)
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EFYj - Multi-Attribute Decision Making")
+set(CPACK_PACKAGE_VENDOR "INRA")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_NAME "efyj")
+set(CPACK_PACKAGE_VERSION_MAJOR "${efyj_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${efyj_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${efyj_PATCH}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "efyj ${efyj_MAJOR}.${efyj_MINOR}")
+set(CPACK_STRIP_FILES "1")
+set(CPACK_PACKAGE_CONTACT "Gauthier Quesnel <gauthier.quesnel@toulouse.inra.fr>")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY "1")
+
+if (WIN32)
+  set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY "0")
+  set (CPACK_GENERATOR "ZIP;NSIS")
+  set (CPACK_SOURCE_GENERATOR "ZIP")
+else ()
+  set (CPACK_GENERATOR "TGZ;DEB;RPM")
+  set (CPACK_SOURCE_GENERATOR "TGZ;TBZ2")
+endif ()
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "efyj-${efyj_VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES
+  "/\\\\.git/"
+  "\\\\.#"
+  "/#"
+  "/\\\\.gitignore$"
+  "/\\\\.gitattributes$"
+  "/build-debug-clang/"
+  "/build-debug-gcc/"
+  "/build-release-clang/"
+  "/build-release-gcc/"
+  "/build-cross/"
+  "/coverage/"
+  )
+  
+if (WIN32 AND NOT UNIX)
+  set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}\\\\efyj.ico")
+  set(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}\\\\efyj.ico")
+  set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\efyj.bmp")
+  set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\efyj.exe")
+  set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} EFYj ${efyj_VERSION}")
+  set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\https://github.com/quesnel/efyj")
+  set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\https://github.com/quesnel/efyj")
+  set(CPACK_NSIS_CONTACT "gauthier.quesnel@toulouse.inra.fr")
+  set(CPACK_NSIS_MODIFY_PATH ON)
+else ()
+  set(CPACK_STRIP_FILES "bin/efyj")
+endif ()
+
+INCLUDE(CPack)
