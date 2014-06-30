@@ -34,151 +34,166 @@
 
 namespace efyj {
 
-    /**
-     * The @e scale_id is used to represent possible value when solving
-     * problem. The range of @e scale_id is [0..127].
-     */
-    typedef std::uint_fast8_t scale_id;
+/**
+ * The @e scale_id is used to represent possible value when solving
+ * problem. The range of @e scale_id is [0..127].
+ */
+// typedef std::uint_fast8_t scale_id;
+typedef int scale_id;
 
-    template <typename T>
-        constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
-        is_valid_scale_id(T n) noexcept
-        {
-            return n <= 127;
-        }
+template <typename T>
+constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
+is_valid_scale_id(T n) noexcept
+{
+    return n <= 127;
+}
 
-    template <typename T>
-        constexpr typename std::enable_if <!std::is_unsigned <T>::value, bool>::type
-        is_valid_scale_id(T n) noexcept
-        {
-            return n >= 0 && n <= 127;
-        }
+template <typename T>
+constexpr typename std::enable_if <!std::is_unsigned <T>::value, bool>::type
+is_valid_scale_id(T n) noexcept
+{
+    return n >= 0 && n <= 127;
+}
 
-    constexpr scale_id scale_id_unknown() noexcept
+constexpr scale_id scale_id_unknown() noexcept
+{
+    return std::numeric_limits <scale_id>::max();
+}
+
+typedef std::set <std::string> group_set;
+
+struct EFYJ_API scalevalue
+{
+    scalevalue(const std::string& name, group_set::iterator group)
+        : name(name), group(group)
+    {}
+
+    std::string name;
+    std::string description;
+    group_set::iterator group;
+};
+
+struct EFYJ_API function
+{
+    std::string low;
+    std::string entered;
+    std::string consist;
+
+    bool empty() const noexcept
     {
-        return std::numeric_limits <scale_id>::max();
+        return low.empty() and entered.empty() and consist.empty();
+    }
+};
+
+struct EFYJ_API scales
+{
+    scales()
+        : order(true)
+    {}
+
+    bool order;
+    std::vector <scalevalue> scale;
+
+    int find_scale_value(const std::string& name) const
+    {
+        for (std::size_t i = 0, e = scale.size(); i != e; ++i)
+            if (scale[i].name == name)
+                return static_cast <int>(i);
+
+        return -1;
     }
 
-    typedef std::set <std::string> group_set;
-
-    struct EFYJ_API scalevalue
+    std::size_t size() const noexcept
     {
-        scalevalue(const std::string& name, group_set::iterator group)
-            : name(name), group(group)
-        {}
+        return scale.size();
+    }
+};
 
-        std::string name;
-        std::string description;
-        group_set::iterator group;
-    };
+struct EFYJ_API attribute
+{
+    attribute(const std::string& name)
+        : parent(nullptr)
+        , position_in_parent(0)
+        , value(0)
+        , parent_is_solvable(0)
+        , name(name)
+    {}
 
-    struct EFYJ_API function
+    std::size_t children_size() const noexcept
     {
-        std::string low;
-        std::string entered;
-        std::string consist;
+        return children.size();
+    }
 
-        bool empty() const noexcept
-        {
-            return low.empty() and entered.empty() and consist.empty();
-        }
-    };
-
-    struct EFYJ_API scales
+    std::size_t scale_size() const noexcept
     {
-        scales()
-            : order(true)
-        {}
+        return scale.size();
+    }
 
-        bool order;
-        std::vector <scalevalue> scale;
-
-        std::size_t size() const noexcept
-        {
-            return scale.size();
-        }
-    };
-
-    struct EFYJ_API attribute
+    bool is_basic() const noexcept
     {
-        attribute(const std::string& name)
-            : parent(nullptr)
-              , position_in_parent(0)
-              , value(0)
-              , parent_is_solvable(0)
-              , name(name)
-        {}
+        return children.empty();
+    }
 
-        std::size_t size() const noexcept
-        {
-            return children.size();
-        }
-
-        scale_id scale_size() const noexcept
-        {
-            return scale.size();
-        }
-
-        bool is_basic() const noexcept
-        {
-            return children.empty();
-        }
-
-        void push_back(attribute *child)
-        {
-            children.emplace_back(child);
-            child->position_in_parent = children.size();
-            child->parent = this;
-        }
-
-        void fill_utility_function();
-
-        attribute *parent;
-        std::size_t position_in_parent;
-        std::size_t value;
-        std::size_t parent_is_solvable;
-        std::string name;
-        std::string description;
-        scales scale;
-        function functions;
-        std::vector <std::string> options;
-        std::vector <attribute*> children;
-        std::map <std::uint32_t, scale_id> utility_function;
-    };
-
-    struct EFYJ_API dexi
+    bool is_aggregate() const noexcept
     {
-        dexi()
-            : child(nullptr),
-            problem_size(1),
-            basic_scale_number(0),
-            scale_number(0),
-            scalevalue_number(0)
-        {}
+        return !children.empty();
+    }
 
-        dexi(const dexi& other) = delete;
-        dexi(dexi&& other) = delete;
-        dexi& operator=(const dexi& other) = delete;
-        dexi& operator=(dexi&& other) = delete;
+    void push_back(attribute *child)
+    {
+        children.emplace_back(child);
+        child->position_in_parent = children.size();
+        child->parent = this;
+    }
 
-        void init();
+    void fill_utility_function();
 
-        std::string name;
-        std::string description;
-        std::vector <std::string> options;
-        std::vector <scale_id> basic_attribute_scale_size;
-        group_set group;
-        std::deque <attribute> attributes;
-        attribute *child;
+    attribute *parent;
+    std::size_t position_in_parent;
+    std::size_t value;
+    std::size_t parent_is_solvable;
+    std::string name;
+    std::string description;
+    scales scale;
+    function functions;
+    std::vector <std::string> options;
+    std::vector <attribute*> children;
+    std::map <std::uint32_t, scale_id> utility_function;
+};
 
-        std::size_t problem_size;
-        std::size_t basic_scale_number;
-        std::size_t scale_number;
-        std::size_t scalevalue_number;
-    };
+struct EFYJ_API dexi
+{
+    dexi()
+        : child(nullptr)
+        , problem_size(1)
+        , basic_scale_number(0)
+        , scale_number(0)
+        , scalevalue_number(0)
+    {}
 
-    EFYJ_API bool operator==(const dexi& lhs, const dexi& rhs);
-    EFYJ_API bool operator!=(const dexi& lhs, const dexi& rhs);
+    dexi(const dexi& other) = delete;
+    dexi(dexi&& other) = delete;
+    dexi& operator=(const dexi& other) = delete;
+    dexi& operator=(dexi&& other) = delete;
+
+    void init();
+
+    std::string name;
+    std::string description;
+    std::vector <std::string> options;
+    std::vector <scale_id> basic_attribute_scale_size;
+    group_set group;
+    std::deque <attribute> attributes;
+    attribute *child;
+
+    std::size_t problem_size;
+    std::size_t basic_scale_number;
+    std::size_t scale_number;
+    std::size_t scalevalue_number;
+};
+
+EFYJ_API bool operator==(const dexi& lhs, const dexi& rhs);
+EFYJ_API bool operator!=(const dexi& lhs, const dexi& rhs);
 }
 
 #endif

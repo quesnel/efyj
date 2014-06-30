@@ -19,31 +19,46 @@
  * SOFTWARE.
  */
 
-#include "print.hpp"
-#include <vector>
-#include <cstdio>
-#include <cstdarg>
+#ifndef INRA_EFYj_LOG_HPP
+#define INRA_EFYj_LOG_HPP
+
+#include <fstream>
+#include <string>
+#include <iostream>
 
 namespace efyj {
 
-std::string stringf(const char* format, ...)
-{
-    std::vector <char> buffer(1024, '\0');
-    int sz;
-    va_list ap;
+    struct log
+    {
+        log(const std::string& filepath, int id)
+            : old_clog_rdbuf(nullptr)
+        {
+            std::string logfile(filepath);
+            logfile += '-' + std::to_string(id) + ".log";
 
-    for (;;) {
-        va_start(ap, format);
-        sz = std::vsnprintf(buffer.data(), buffer.size(), format, ap);
-        va_end(ap);
+            ofs.open(logfile);
+            if (ofs) {
+                old_clog_rdbuf = std::clog.rdbuf();
+                std::clog.rdbuf(ofs.rdbuf());
+            }
+        }
 
-        if (sz < 0)
-            return std::move(std::string());
-        else if (static_cast <std::size_t>(sz) < buffer.size())
-            return std::move(std::string(buffer.data(), buffer.size()));
-        else
-            buffer.resize(sz + 1);
-    }
+        operator bool() const
+        {
+            return ofs.good();
+        }
+
+        ~log()
+        {
+            if (old_clog_rdbuf)
+                std::clog.rdbuf(old_clog_rdbuf);
+        }
+
+    private:
+        std::ofstream ofs;
+        std::streambuf *old_clog_rdbuf;
+    };
+
 }
 
-}
+#endif

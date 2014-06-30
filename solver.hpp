@@ -28,6 +28,9 @@
 #include <set>
 #include <unordered_map>
 
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#include <Eigen/Core>
+
 namespace efyj {
 
     typedef std::set <scale_id> result_type;
@@ -60,6 +63,7 @@ namespace efyj {
 
         scale_id solve(const std::vector <scale_id>& options);
         result_type solve(const std::string& options);
+        scale_id solve(const Eigen::MatrixXi& options);
 
         dexi& model;
     };

@@ -2,7 +2,7 @@ project(efyj)
 cmake_minimum_required(VERSION 2.8)
 set(efyj_MAJOR 0)
 set(efyj_MINOR 5)
-set(efyj_PATCH 0)
+set(efyj_PATCH 99)
 set(efyj_VERSION "${efyj_MAJOR}.${efyj_MINOR}.${efyj_PATCH}")
 set(efyj_STABLEVERSION "${efyj_MAJOR}.${efyj_MINOR}")
 
@@ -24,7 +24,7 @@ include_directories(. ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 find_package(PkgConfig)
 
 macro (pkg_config_library LIBNAME pcfile)
-  pkg_check_modules(${LIBNAME} ${pcfile})
+  pkg_check_modules(${LIBNAME} REQUIRED ${pcfile})
   include_directories(${${LIBNAME}_INCLUDE_DIRS})
   link_directories(${${LIBNAME}_LIBRARY_DIRS})
   add_definitions(${${LIBNAME}_CFLAGS_OTHER})
@@ -34,6 +34,44 @@ endmacro ()
 
 pkg_config_library(LIBEXPAT expat)
 pkg_config_library(LIBEIGEN3 eigen3)
+#pkg_config_library(LIBMPI ompi-cxx)
+
+message(STATUS "checking for 'gmp' library")
+find_path(GMP_INCLUDE_DIR NAMES gmpxx.h)
+if (GMP_INCLUDE_DIR)
+  message(STATUS " found 'gmpxx.h' in ${GMP_INCLUDE_DIR}")
+  find_library(GMP_LIBRARIES NAMES gmp libgmp)
+  if (GMP_LIBRARIES)
+    message(STATUS " found ${GMP_LIBRARIES}")
+    find_library(GMPXX_LIBRARIES NAMES gmpxx libgmpxx)
+    if (GMPXX_LIBRARIES)
+      message(STATUS " found ${GMPXX_LIBRARIES}")
+      include_directories(${GMP_INCLUDE_DIR})
+      set(efyj_LINK_LIBRARIES ${efyj_LINK_LIBRARIES} ${GMP_LIBRARIES})
+      set(efyj_LINK_LIBRARIES ${efyj_LINK_LIBRARIES} ${GMPXX_LIBRARIES})
+      set(efyj_STATIC_LINK_LIBRARIES ${efyj_STATIC_LINK_LIBRARIES} ${GMP_LIBRARIES})
+      set(efyj_STATIC_LINK_LIBRARIES ${efyj_STATIC_LINK_LIBRARIES} ${GMPXX_LIBRARIES})
+    else ()
+      message(ERROR " can not found gmpxx or libgmpxx")
+    endif ()
+  else ()
+    message(ERROR " can not found gmp or libgmp")
+  endif ()
+else ()
+  message(ERROR " can not found gmpxx.h")
+endif ()
+
+message(STATUS "checking for a C++ compiler with MPI support")
+find_package(MPI REQUIRED)
+if (NOT MPI_CXX_FOUND)
+  message(ERROR " failed to found a C++ compiler with MPI support.
+  Please assign MPI_CXX_COMPILER to the MPI wrapper (mpicc, etc.) and
+  rerun CMake. If this fails, set both MPI_CXX_LIBRARIES and
+  MPI_CXX_INCLUDE_PATH and rerun CMake.")
+else()
+  message(STATUS " MPI support enabled")
+endif ()
+
 
 ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ## efyj-x.y.pc
@@ -55,10 +93,10 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 ## Core library
 #
 
-set(efyj_CORE_HDRS dbg.hpp io.hpp model.hpp print.hpp solver.hpp
-  utils.hpp visibility.hpp)
+set(efyj_CORE_HDRS dbg.hpp io.hpp log.hpp model.hpp print.hpp
+  problem.hpp solver.hpp utils.hpp visibility.hpp)
 
-set(efyj_CORE_SRCS io.cpp model.cpp print.cpp solver.cpp
+set(efyj_CORE_SRCS io.cpp model.cpp print.cpp problem.cpp solver.cpp
   solver-basic.cpp solver-bigmem.cpp solver-hash.cpp)
 
 add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
@@ -103,6 +141,19 @@ install(TARGETS efyj_static_corelib
 set(efyj_MAIN_SRCS main.cpp)
 
 add_executable(efyj ${efyj_MAIN_SRCS})
+
+if (MPI_CXX_FOUND)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+  target_link_libraries(efyj ${MPI_CXX_LIBRARIES})
+
+  if (MPI_CXX_COMPILE_FLAGS)
+    set_target_properties(efyj PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
+  endif ()
+
+  if (MPI_CXX_LINK_FLAGS)
+    set_target_properties(efyj PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
+  endif ()
+endif ()
 
 if (WIN32)
   target_link_libraries(efyj efyj_static_corelib ${efyj_STATIC_LINK_LIBRARIES})
@@ -183,7 +234,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/build-cross/"
   "/coverage/"
   )
-  
+
 if (WIN32 AND NOT UNIX)
   set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}\\\\efyj.ico")
   set(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}\\\\efyj.ico")
