@@ -45,7 +45,7 @@ namespace efyj {
                        child_max_value.begin(),
                        std::mem_fn(&attribute::scale_size));
 
-        std::vector <std::size_t> iter(children.size(), 0u);
+        std::vector <scale_id> iter(children.size(), 0u);
         bool end = false;
 
         std::size_t id = 0;
@@ -128,7 +128,7 @@ namespace efyj {
 
             for (;;) {
                 value[current]++;
-                if ((unsigned int)(value[current]) >= '0' + scale_value_size) {
+                if (value[current] >= ('0' + scale_value_size)) {
                     value[current] = '0';
 
                     if (current == 0) {
