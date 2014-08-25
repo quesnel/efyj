@@ -144,16 +144,15 @@ bool process_models(const std::string& dexi_filepath,
     efyj::scope_exit finalize([]() { MPI::Finalize(); });
 
     try {
-        std::clog << "efyj::problem: open files: ";
+        efyj::logf("efyj::problem: open files: ");
         efyj::problem pb(dexi_filepath, option_filepath);
-        std::clog << "ok" << std::endl;
+        efyj::logf("ok");
 
-        std::clog << "efyj::problem: solve: ";
+        efyj::logf("efyj::problem: solve: ");
         pb.solve(rank, world_size);
-        std::clog << "ok" << std::endl;
+        efyj::logf("ok");
     } catch (const std::exception& e) {
-        std::clog << "failed\n";
-        std::clog << e.what() << "\n";
+        efyj::logf("failed: %s", e.what());
         ret = false;
     }
 

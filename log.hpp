@@ -22,43 +22,41 @@
 #ifndef INRA_EFYj_LOG_HPP
 #define INRA_EFYj_LOG_HPP
 
+#include "visibility.hpp"
 #include <fstream>
 #include <string>
 #include <iostream>
 
+#if defined __GNUC__
+#define EFYJ_GCC_PRINTF(format__, args__) __attribute__ ((format (printf, format__, args__)))
+#endif
+
 namespace efyj {
 
-    struct log
+struct log
+{
+    log(const std::string& filepath, int id);
+
+    ~log();
+
+    operator bool() const
     {
-        log(const std::string& filepath, int id)
-            : old_clog_rdbuf(nullptr)
-        {
-            std::string logfile(filepath);
-            logfile += '-' + std::to_string(id) + ".log";
+        return ofs.good();
+    }
 
-            ofs.open(logfile);
-            if (ofs) {
-                old_clog_rdbuf = std::clog.rdbuf();
-                std::clog.rdbuf(ofs.rdbuf());
-            }
-        }
 
-        operator bool() const
-        {
-            return ofs.good();
-        }
+private:
+    std::ofstream ofs;
+    std::streambuf *old_clog_rdbuf;
+};
 
-        ~log()
-        {
-            if (old_clog_rdbuf)
-                std::clog.rdbuf(old_clog_rdbuf);
-        }
+EFYJ_API void logf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+EFYJ_API void debugf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 
-    private:
-        std::ofstream ofs;
-        std::streambuf *old_clog_rdbuf;
-    };
-
+#ifdef NDEBUG
+inline void debugf(const char* /*format*/, ...)
+{}
+#endif
 }
 
 #endif

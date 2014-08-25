@@ -158,21 +158,21 @@ struct flat_utility_function
             max = (lenght * (id + 1)) - 1;
         }
 
-        std::clog << "\n"
-                  << "- flat_utility_function fu_size: " << fu_size << "\n"
-                  << " \\- id=" << id << " processor=" << processor << "\n"
-                  << "   - start calculation at =" << min.get_str() << "\n"
-                  << "   - end   calculation at =" << max.get_str() << "\n";
+        efyj::logf("- flat_utility_function fu_size: %ld\n"
+                   "  - id=%d processor=%d\n"
+                   "  - start=%s\n"
+                   "  - end=%s\n", fu_size, id, processor,
+                   min.get_str().c_str(), max.get_str().c_str());
 
         std::uintmax_t modelsz = 1;
         for (std::size_t i = 0; i < attribute_size.size(); ++i) {
             std::uintmax_t sz = std::pow(scale_sizes[i], attribute_size[i]);
             modelsz *= sz;
-            std::clog << (std::uintmax_t)scale_sizes[i] << "^"
-                      << (std::uintmax_t)attribute_size[i] << " * ";
+
+            efyj::debugf("%d^%d *", scale_sizes[i], attribute_size[i]);
         }
 
-        std::clog << "\nproblem size: " << modelsz << "\n";
+        efyj::debugf("problem size: %" PRIuMAX, modelsz);
         uf_scale_size.resize(fu_size, 0);
 
         auto it = uf_scale_size.begin();
@@ -180,9 +180,7 @@ struct flat_utility_function
             it = std::fill_n(it, attribute_size[i], scale_sizes[i]);
 
         for (size_t i = 0; i < uf_scale_size.size(); ++i)
-            std::clog << uf_scale_size[i].get_ui();
-
-        std::clog << "\n";
+            efyj::debugf("%ld", uf_scale_size[i].get_ui());
     }
 
     void init()
@@ -337,12 +335,9 @@ struct hierarchical_consistency_fu : hierarchical_fu
             }
         }
 
-#ifndef NDEBUG
-        std::clog << "hierarchical_consistency_fu: "
-                  << fu.rows() << "x" << fu.cols()
-                  << "(" << scale_value_size << "**" << value.size() << ")"
-                  << "\n";
-#endif
+        efyj::logf("hierarchical_consistency_fu: %ld x %ld (%d ** %lud)",
+                   fu.rows(), fu.cols(),
+                   scale_value_size, value.size());
     }
 
     virtual ~hierarchical_consistency_fu() {}
@@ -514,8 +509,11 @@ struct problem::pimpl
                 atts[i]->functions.low = solvers[i]->value();
 
             efyj::solver_basic sb(model);
-            for (int i = 0, e = options.rows(); i != e; ++i)
-                auto result = sb.solve(options.row(i));
+            for (int i = 0, e = options.rows(); i != e; ++i) {
+                efyj::debugf("compute option %d", i);
+                // auto result =
+                sb.solve(options.row(i));
+            }
 
             imax++;
 

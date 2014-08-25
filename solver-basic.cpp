@@ -19,7 +19,6 @@
  * SOFTWARE.
  */
 
-#include "dbg.hpp"
 #include "solver.hpp"
 #include "print.hpp"
 #include <algorithm>

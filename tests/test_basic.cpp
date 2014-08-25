@@ -19,7 +19,6 @@
  * SOFTWARE.
  */
 
-#include "dbg.hpp"
 #include "io.hpp"
 #include "model.hpp"
 #include "solver.hpp"
@@ -79,8 +78,6 @@ TEST_CASE("test classic dexi file", "[model]")
         "Shuttle.dxi"};
 
     for (const auto& filepath : filepaths) {
-        dInfo("Now we check:", filepath);
-
         std::ifstream is(filepath);
         REQUIRE(is.is_open());
 

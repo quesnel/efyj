@@ -20,7 +20,6 @@
  */
 
 #include "solver.hpp"
-#include "dbg.hpp"
 #include "print.hpp"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
