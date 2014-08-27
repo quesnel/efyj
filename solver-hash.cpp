@@ -49,7 +49,7 @@ namespace efyj {
     solver_hash::solver_hash(dexi& model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
-        std::vector <std::size_t> high_level(model.basic_scale_number);
+        std::vector <scale_id> high_level(model.basic_scale_number);
         int i = 0;
 
         for (const auto& att : model.attributes) {

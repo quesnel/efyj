@@ -84,7 +84,7 @@ namespace efyj {
                                   1024) + "GB");
             }
 
-            std::vector <std::size_t> high_level(model.basic_scale_number);
+            std::vector <scale_id> high_level(model.basic_scale_number);
             int i = 0;
 
             for (const auto& att : model.attributes) {
