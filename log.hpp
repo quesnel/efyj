@@ -28,12 +28,13 @@
 #include <iostream>
 
 #if defined __GNUC__
-#define EFYJ_GCC_PRINTF(format__, args__) __attribute__ ((format (printf, format__, args__)))
+#define EFYJ_GCC_PRINTF(format__, args__)               \
+    __attribute__ ((format (printf, format__, args__)))
 #endif
 
 namespace efyj {
 
-struct log
+struct EFYJ_API log
 {
     log(const std::string& filepath, int id);
 
@@ -44,7 +45,6 @@ struct log
         return ofs.good();
     }
 
-
 private:
     std::ofstream ofs;
     std::streambuf *old_clog_rdbuf;
@@ -53,10 +53,14 @@ private:
 EFYJ_API void logf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 EFYJ_API void debugf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 
+/*
+ * debugf do nothing when NDEBUG is actived.
+ */
 #ifdef NDEBUG
 inline void debugf(const char* /*format*/, ...)
 {}
 #endif
+
 }
 
 #endif
