@@ -19,7 +19,6 @@
  * SOFTWARE.
  */
 
-#include "io.hpp"
 #include "model.hpp"
 #include "solver.hpp"
 #include <sstream>
@@ -51,13 +50,13 @@ TEST_CASE("test empty object read/write", "[model]")
         std::string result;
         {
             std::ostringstream os;
-            efyj::write(os, x1);
+            os << x1;
             result = os.str();
         }
 
         {
             std::istringstream is(result);
-            efyj::read(is, x2);
+            is >> x2;
         }
     }
 
@@ -82,7 +81,7 @@ TEST_CASE("test classic dexi file", "[model]")
         REQUIRE(is.is_open());
 
         efyj::dexi dex;
-        REQUIRE_NOTHROW(efyj::read(is, dex));
+        REQUIRE_NOTHROW(is >> dex);
     }
 }
 
@@ -97,12 +96,12 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, car));
-        REQUIRE_NOTHROW(efyj::write(ss, car));;
+        REQUIRE_NOTHROW(is >> car);
+        REQUIRE_NOTHROW(ss << car);
     }
 
     efyj::dexi car2;
-    REQUIRE_NOTHROW(efyj::read(ss, car2));
+    REQUIRE_NOTHROW(ss >> car2);
 
     REQUIRE(car == car2);
 }
@@ -149,11 +148,11 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, car));
+        REQUIRE_NOTHROW(is >> car);
 
         std::ofstream os(make_temporary(outputfile, false));
         REQUIRE(os.is_open());
-        REQUIRE_NOTHROW(efyj::write(os, car));;
+        REQUIRE_NOTHROW(os << car);
     }
 
     efyj::dexi car2;
@@ -161,7 +160,7 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
     {
         std::ifstream is(outputfile);
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, car2));
+        REQUIRE_NOTHROW(is >> car2);
     }
 
     REQUIRE(car == car2);
@@ -178,7 +177,7 @@ TEST_CASE("test Car.dxi", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, car));
+        REQUIRE_NOTHROW(is >> car);
     }
 
     REQUIRE(car.attributes.size() == 10u);
@@ -215,13 +214,13 @@ TEST_CASE("test multiple Car.dexi", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, src));
+        REQUIRE_NOTHROW(is >> src);
     }
 
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, dst));
+        REQUIRE_NOTHROW(is >> dst);
     }
 
     REQUIRE(src == dst);
@@ -230,7 +229,7 @@ TEST_CASE("test multiple Car.dexi", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, dst2));
+        REQUIRE_NOTHROW(is >> dst2);
     }
 
     REQUIRE(dst2 == dst);
@@ -250,7 +249,7 @@ TEST_CASE("test solver Car", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, model));
+        REQUIRE_NOTHROW(is >> model);
     }
 
     REQUIRE(model.problem_size == 972u);
@@ -269,7 +268,7 @@ TEST_CASE("test basic solver for Car", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, model));
+        REQUIRE_NOTHROW(is >> model);
     }
 
     REQUIRE(model.problem_size == 972u);
@@ -317,7 +316,7 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
     {
         std::ifstream is("Enterprise.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, model));
+        REQUIRE_NOTHROW(is >> model);
     }
 
     std::vector <efyj::scale_id> opt_v = {2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1};
@@ -346,7 +345,7 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     {
         std::ifstream is("IPSIM_PV_simulation1-1.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, model));
+        REQUIRE_NOTHROW(is >> model);
     }
 
 
@@ -376,7 +375,7 @@ TEST_CASE("test multiple solver for Car", "[model]")
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(efyj::read(is, model));
+        REQUIRE_NOTHROW(is >> model);
     }
 
     REQUIRE(model.problem_size == 972u);

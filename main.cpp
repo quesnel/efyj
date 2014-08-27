@@ -19,7 +19,6 @@
  * SOFTWARE.
  */
 
-#include "io.hpp"
 #include "log.hpp"
 #include "model.hpp"
 #include "problem.hpp"
@@ -98,7 +97,8 @@ void process(const std::string& filepath,
         throw std::invalid_argument(
             efyj::stringf("unknown file %s", filepath.c_str()));
 
-    efyj::read(is, model);
+    is >> model;
+
     show_model(model);
 
     std::cout << "Results:\n";
@@ -210,7 +210,7 @@ void process_stress_test(const std::string& filepath,
             throw std::invalid_argument(
                 efyj::stringf("unknown file %s", filepath.c_str()));
 
-        efyj::read(is, model);
+        is >> model;
 
         time_result[0] = std::chrono::system_clock::now() - start;
     }

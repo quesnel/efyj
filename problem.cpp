@@ -20,7 +20,6 @@
  */
 
 #include "problem.hpp"
-#include "io.hpp"
 #include "log.hpp"
 #include "model.hpp"
 #include "print.hpp"
@@ -392,7 +391,7 @@ struct problem::pimpl
             throw std::invalid_argument(
                 stringf("fail to load DEXi file %s", filepath.c_str()));
 
-        efyj::read(ifs, model);
+        ifs >> model;
     }
 
     void read_option_file(const std::string& filepath)

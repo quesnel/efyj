@@ -93,11 +93,12 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 ## Core library
 #
 
-set(efyj_CORE_HDRS io.hpp log.hpp model.hpp print.hpp problem.hpp
-  solver.hpp utils.hpp visibility.hpp)
+set(efyj_CORE_HDRS log.hpp model.hpp print.hpp problem.hpp solver.hpp
+  utils.hpp visibility.hpp)
 
-set(efyj_CORE_SRCS io.cpp log.cpp model.cpp print.cpp problem.cpp
-  solver.cpp solver-basic.cpp solver-bigmem.cpp solver-hash.cpp)
+set(efyj_CORE_SRCS log.cpp model.cpp model-io.cpp print.cpp
+  problem.cpp solver.cpp solver-basic.cpp solver-bigmem.cpp
+  solver-hash.cpp)
 
 add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
 add_library(efyj_static_corelib STATIC ${efyj_CORE_SRCS})
