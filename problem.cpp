@@ -39,10 +39,9 @@ std::vector <const efyj::attribute*> get_basic_attribute(const efyj::dexi& model
 
     ret.reserve(model.attributes.size());
 
-    for (const auto& att : model.attributes) {
+    for (const auto& att : model.attributes)
         if (att.is_basic())
             ret.emplace_back(&att);
-    }
 
     return std::move(ret);
 }
@@ -441,9 +440,10 @@ struct problem::pimpl
                 mpz_class pc = (doing * 100.0) / remaining;
                 mpz_class estimated = (remaining * duration.count()) / doing;
 
-                std::clog << "- " << pc.get_str() << "%. Time elapsed: "
-                          << duration.count() << "s. Time remaining estimated: "
-                          << estimated.get_str() << "s.\n";
+                logf("- %s%%. Time elapsed: %f. Time remaining estimated: %s",
+                     pc.get_str().c_str(), duration.count(),
+                     estimated.get_str().c_str());
+
                 max = 0;
             }
         }
@@ -482,8 +482,9 @@ struct problem::pimpl
                         proc= max;
 
                     if (id >= proc) {
-                        std::clog << "Too many processor to split the first"
-                                  << " aggregate attribute";
+                        logf("Too many processor to split the first "
+                             "aggregate attribute");
+
                         return;
                     }
 
@@ -492,11 +493,12 @@ struct problem::pimpl
                     max = (lenght * (id + 1)) - 1;
                 }
 
-                std::clog << "\n"
-                          << "- first solver id=" << id
-                          << " processor=" << processor << "\n"
-                          << "  - start calculation at " << min.get_str() << "\n"
-                          << "  - end calculation at " << max.get_str() << "\n";
+                logf("\n- first solver id=%d processor=%d\n"
+                     "  - start calculation at %s\n"
+                     "  - end calculation at %s\n",
+                     id, processor,
+                     min.get_str().c_str(),
+                     max.get_str().c_str());
             }
 
             solvers[i]->init(min, max);
@@ -520,8 +522,7 @@ struct problem::pimpl
                 imax = 0;
 
                 for (auto& solver : solvers)
-                    std::clog << solver->value() << " ";
-                std::clog << "\n";
+                    logf("%s", solver->value().c_str());
             }
 
             std::size_t current = solvers.size() - 1;
@@ -555,30 +556,33 @@ struct problem::pimpl
                     consistency_fu_nb++;
                 fu_nb++;
 
-                std::clog << "- Attribute " << att.name << " scale size "
-                          << att.scale_size() << " childrens : " << att.children.size()
-                          << "\n";
+                debugf("- Attribute %s scale size %" PRIuMAX "children %" PRIuMAX,
+                       att.name.c_str(),
+                       (std::uintmax_t)att.scale_size(),
+                       (std::uintmax_t)att.children.size());
 
                 std::size_t m = 1;
                 for (const auto& child : att.children) {
-                    std::clog << "  - " << child->name << " scale size "
-                              << child->scale_size() << "\n";
+                    debugf("  - %s scale size: %" PRIuMAX,
+                           child->name.c_str(),
+                           (std::uintmax_t)child->scale_size());
+
                     m *= child->scale_size();
                 }
 
-                std::clog << " Problem size: " << att.scale_size()
-                          << "**" << m << " ("
-                          << std::pow(att.scale_size(), m) << ")\n"
-                          << " Consistency " << std::boolalpha
-                          << consistency << "\n";
+                debugf(" Problem size: %" PRIuMAX "** %" PRIuMAX "(%f): %s\n",
+                       (std::uintmax_t)att.scale_size(),
+                       (std::uintmax_t)m,
+                       std::pow(att.scale_size(), m),
+                       (consistency) ? "true" : "false");
             }
         }
 
         if (fu_nb > 0) {
-            std::clog << "We can use the monotone kernel\n";
+            logf("We can use the monotone kernel\n");
             compute_hierarchical_model(world_size, rank);
         } else {
-            std::clog << "Inconsistency model: need too long time\n";
+            logf("Inconsistency model: need too long time\n");
             compute_flat_model(world_size, rank);
         }
     }
@@ -587,10 +591,10 @@ struct problem::pimpl
     dexi model;
 };
 
-problem::problem(const std::string& dexi_filepath, const std::string& option_filepath)
+problem::problem(const std::string& dexi_filepath,
+                 const std::string& option_filepath)
     : m(new problem::pimpl(dexi_filepath, option_filepath))
 {
-    std::clog << "Options:\n" << m->options << std::endl;
 }
 
 problem::~problem()
