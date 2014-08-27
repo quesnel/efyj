@@ -93,10 +93,10 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 ## Core library
 #
 
-set(efyj_CORE_HDRS log.hpp model.hpp print.hpp problem.hpp solver.hpp
-  utils.hpp visibility.hpp)
+set(efyj_CORE_HDRS log.hpp model.hpp problem.hpp solver.hpp utils.hpp
+  visibility.hpp)
 
-set(efyj_CORE_SRCS log.cpp model.cpp model-io.cpp print.cpp
+set(efyj_CORE_SRCS log.cpp model.cpp model-io.cpp utils.cpp
   problem.cpp solver.cpp solver-basic.cpp solver-bigmem.cpp
   solver-hash.cpp)
 
@@ -120,7 +120,7 @@ set_target_properties(efyj_static_corelib PROPERTIES
   VERSION 0
   OUTPUT_NAME "efyj-${efyj_STABLEVERSION}"
   DEFINE_SYMBOL "efyj_EXPORTS"
-  COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
+  COMPILE_FLAGS "-fvisibility=hidden -Fvisibility-inlines-hidden")
 
 install(FILES ${efyj_CORE_HDRS}
   DESTINATION include/efyj-${efyj_STABLEVERSION})

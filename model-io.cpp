@@ -20,7 +20,6 @@
  */
 
 #include "model.hpp"
-#include "print.hpp"
 #include "utils.hpp"
 #include <istream>
 #include <ostream>

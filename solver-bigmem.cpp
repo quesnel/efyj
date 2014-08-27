@@ -20,7 +20,7 @@
  */
 
 #include "solver.hpp"
-#include "print.hpp"
+#include "utils.hpp"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
 #include <vector>

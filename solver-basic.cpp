@@ -20,7 +20,7 @@
  */
 
 #include "solver.hpp"
-#include "print.hpp"
+#include "utils.hpp"
 #include <algorithm>
 #include <functional>
 #include <numeric>

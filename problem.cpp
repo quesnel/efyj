@@ -22,7 +22,7 @@
 #include "problem.hpp"
 #include "log.hpp"
 #include "model.hpp"
-#include "print.hpp"
+#include "utils.hpp"
 #include "solver.hpp"
 #include <fstream>
 #include <gmpxx.h>
