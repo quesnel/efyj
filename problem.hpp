@@ -27,8 +27,9 @@
 
 namespace efyj {
 
-struct EFYJ_API problem
+class EFYJ_API problem
 {
+public:
     problem(const std::string& dexi_filepath,
             const std::string& option_filepath);
 
@@ -41,6 +42,7 @@ struct EFYJ_API problem
 
     void solve(int rank, int world_size);
 
+private:
     struct pimpl;
     std::unique_ptr <pimpl> m;
 };
