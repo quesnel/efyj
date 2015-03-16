@@ -1,4 +1,4 @@
-/* Copyright (C) 2014 INRA
+/* Copyright (C) 2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,42 +19,56 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_UTILS_HPP
-#define INRA_EFYj_UTILS_HPP
+#ifndef INRA_EFYj_CONTEXT_HPP
+#define INRA_EFYj_CONTEXT_HPP
 
-#include <efyj/visibility.hpp>
+#include <memory>
 #include <functional>
-#include <string>
-#include <cstdint>
-#include <cinttypes>
-
-#define dWHITE "\x1b[37;1m"
-#define dRED "\x1b[31;1m"
-#define dYELLOW "\x1b[33;1m"
-#define dCYAN "\x1b[36;1m"
-#define dNORMAL "\x1b[0;m"
+#include <cstdarg>
 
 #if defined __GNUC__
-#define EFYJ_GCC_PRINTF(format__, args__)               \
+#define EFYj_GCC_PRINTF(format__, args__)               \
     __attribute__ ((format (printf, format__, args__)))
 #endif
 
+#define DEBUG_MESSAGE efyj::LOG_OPTION_DEBUG, __FILE__, __LINE__, __PRETTY_FUNCTION__
+#define INFO_MESSAGE efyj::LOG_OPTION_INFO, __FILE__, __LINE__, __PRETTY_FUNCTION__
+#define ERR_MESSAGE efyj::LOG_OPTION_ERR, __FILE__, __LINE__, __PRETTY_FUNCTION__
+
 namespace efyj {
 
-EFYJ_API std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+class ContextImpl;
 
-struct EFYJ_API scope_exit
+typedef std::shared_ptr <ContextImpl> Context;
+
+enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
+
+typedef std::function <void(const ContextImpl& ctx, int priority, const char *file,
+                            int line, const char *fn, const char *format,
+                            va_list args)> log_function;
+
+class ContextImpl
 {
-    scope_exit(std::function <void (void)> fct)
-        : fct(fct)
-    {}
+public:
+    ContextImpl();
 
-    ~scope_exit()
-    {
-        fct();
-    }
+    ~ContextImpl();
 
-    std::function <void (void)> fct;
+    Context create();
+
+    void set_log_function(log_function fct);
+
+    void log(int priority, const char *file,
+             int line, const char *fn,
+             const char *formats, ...) EFYj_GCC_PRINTF(6, 7);
+
+    LogOption log_priority() const;
+
+    void set_log_priority(LogOption priority);
+
+private:
+    struct impl;
+    impl* m_impl;
 };
 
 }

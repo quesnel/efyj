@@ -20,10 +20,11 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQU
   endif ()
 endif ()
 
-include_directories(. ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 find_package(PkgConfig)
 
-macro (pkg_config_library LIBNAME pcfile)
+macro (pkg_config_required_library LIBNAME pcfile)
   pkg_check_modules(${LIBNAME} REQUIRED ${pcfile})
   include_directories(${${LIBNAME}_INCLUDE_DIRS})
   link_directories(${${LIBNAME}_LIBRARY_DIRS})
@@ -32,9 +33,23 @@ macro (pkg_config_library LIBNAME pcfile)
   set(efyj_STATIC_LINK_LIBRARIES ${efyj_STATIC_LINK_LIBRARIES} ${${LIBNAME}_STATIC_LIBRARIES})
 endmacro ()
 
-pkg_config_library(LIBEXPAT expat)
-pkg_config_library(LIBEIGEN3 eigen3)
-#pkg_config_library(LIBMPI ompi-cxx)
+macro (pkg_config_library LIBNAME pcfile)
+  pkg_check_modules(${LIBNAME} ${pcfile})
+
+  if (NOT ${LIBNAME}_FOUND)
+    message(STATUS " MPI ${LIBNAME} is not found. Build without MPI support")
+  else ()
+    include_directories(${${LIBNAME}_INCLUDE_DIRS})
+    link_directories(${${LIBNAME}_LIBRARY_DIRS})
+    add_definitions(${${LIBNAME}_CFLAGS_OTHER} -DEFYj_MPI_SUPPORT)
+    set(efyj_LINK_LIBRARIES ${efyj_LINK_LIBRARIES} ${${LIBNAME}_LIBRARIES})
+    set(efyj_STATIC_LINK_LIBRARIES ${efyj_STATIC_LINK_LIBRARIES} ${${LIBNAME}_STATIC_LIBRARIES})
+  endif ()
+endmacro ()
+
+pkg_config_required_library(LIBEXPAT expat)
+pkg_config_required_library(LIBEIGEN3 eigen3)
+pkg_config_library(LIBMPI ompi-cxx)
 
 message(STATUS "checking for 'gmp' library")
 find_path(GMP_INCLUDE_DIR NAMES gmpxx.h)
@@ -61,17 +76,16 @@ else ()
   message(ERROR " can not found gmpxx.h")
 endif ()
 
-message(STATUS "checking for a C++ compiler with MPI support")
-find_package(MPI REQUIRED)
-if (NOT MPI_CXX_FOUND)
-  message(ERROR " failed to found a C++ compiler with MPI support.
-  Please assign MPI_CXX_COMPILER to the MPI wrapper (mpicc, etc.) and
-  rerun CMake. If this fails, set both MPI_CXX_LIBRARIES and
-  MPI_CXX_INCLUDE_PATH and rerun CMake.")
-else()
-  message(STATUS " MPI support enabled")
-endif ()
-
+# message(STATUS "checking for a C++ compiler with MPI support")
+# find_package(MPI REQUIRED)
+# if (NOT MPI_CXX_FOUND)
+#   message(ERROR " failed to found a C++ compiler with MPI support.
+#   Please assign MPI_CXX_COMPILER to the MPI wrapper (mpicc, etc.) and
+#   rerun CMake. If this fails, set both MPI_CXX_LIBRARIES and
+#   MPI_CXX_INCLUDE_PATH and rerun CMake.")
+# else()
+#   message(STATUS " MPI support enabled")
+# endif ()
 
 ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ## efyj-x.y.pc
@@ -93,12 +107,14 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 ## Core library
 #
 
-set(efyj_CORE_HDRS log.hpp model.hpp problem.hpp solver.hpp utils.hpp
-  visibility.hpp)
+install(DIRECTORY efyj DESTINATION
+  DESTINATION include/efyj-${efyj_STABLEVERSION})
 
-set(efyj_CORE_SRCS log.cpp model.cpp model-io.cpp utils.cpp
-  problem.cpp solver.cpp solver-basic.cpp solver-bigmem.cpp
-  solver-hash.cpp)
+set(efyj_CORE_SRCS context.cpp csv-parser.cpp exception.cpp model.cpp
+  model-io.cpp problem.cpp problem.hpp solver-basic.cpp
+  solver-bigmem.cpp solver.cpp solver-hash.cpp solver.hpp utils.cpp
+  utils.hpp efyj/context.hpp efyj/visibility.hpp efyj/exception.hpp
+  efyj/model.hpp)
 
 add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
 add_library(efyj_static_corelib STATIC ${efyj_CORE_SRCS})
@@ -121,9 +137,6 @@ set_target_properties(efyj_static_corelib PROPERTIES
   OUTPUT_NAME "efyj-${efyj_STABLEVERSION}"
   DEFINE_SYMBOL "efyj_EXPORTS"
   COMPILE_FLAGS "-fvisibility=hidden -Fvisibility-inlines-hidden")
-
-install(FILES ${efyj_CORE_HDRS}
-  DESTINATION include/efyj-${efyj_STABLEVERSION})
 
 install(TARGETS efyj_corelib
   RUNTIME DESTINATION bin

@@ -19,11 +19,12 @@
  * SOFTWARE.
  */
 
-#include "log.hpp"
-#include "model.hpp"
+#include <efyj/model.hpp>
+#include <efyj/exception.hpp>
 #include "problem.hpp"
 #include "solver.hpp"
 #include "utils.hpp"
+#include <iostream>
 #include <algorithm>
 #include <chrono>
 #include <fstream>
@@ -33,7 +34,10 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
+
+#ifdef EFYj_MPI_SUPPORT
 #include <mpi.h>
+#endif
 
 namespace {
 
@@ -133,27 +137,34 @@ bool process_models(const std::string& dexi_filepath,
                     const std::string& option_filepath,
                     int argc, char *argv[])
 {
-    bool ret = true;
+    bool ret = false;
 
+#ifndef EFYj_MPI_SUPPORT
+    (void)dexi_filepath;
+    (void)option_filepath;
+    (void)argc;
+    (void)argv;
+#else
     MPI::Init(argc, argv);
     int world_size = MPI::COMM_WORLD.Get_size();
     int rank = MPI::COMM_WORLD.Get_rank();
 
-//    efyj::log a("output", rank);
     efyj::scope_exit finalize([]() { MPI::Finalize(); });
 
     try {
-        efyj::logf("efyj::problem: open files: ");
+        std::cout << "efyj::problem: open files:\n";
         efyj::problem pb(dexi_filepath, option_filepath);
-        efyj::logf("ok");
+        std::cout << "ok\n";
 
-        efyj::logf("efyj::problem: solve: ");
+        std::cout << "efyj::problem: solve:\n";
+
         pb.solve(rank, world_size);
-        efyj::logf("ok");
+        std::cout << "ok\n";
+        ret = true;
     } catch (const std::exception& e) {
-        efyj::logf("failed: %s", e.what());
-        ret = false;
+        std::cerr << "failed: " << e.what();
     }
+#endif
 
     return ret;
 }
@@ -448,9 +459,9 @@ int main(int argc, char *argv[])
         std::cerr << dRED << "bad argument: " << dNORMAL << e.what() <<
             std::endl;
         ret = EXIT_FAILURE;
-    } catch (const efyj::xml_parse_error& e) {
+    } catch (const efyj::xml_parser_error& e) {
         std::cerr << dRED << "fail to parse file " << argv[i] << " in ("
-                  << e.line << " << " << e.column << "): " << dNORMAL << e.what()
+                  << e.line() << " << " << e.column() << "): " << dNORMAL << e.what()
                   << std::endl;
         ret = EXIT_FAILURE;
     } catch (const std::exception& e) {

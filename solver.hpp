@@ -22,8 +22,8 @@
 #ifndef INRA_EFYj_SOLVER_HPP
 #define INRA_EFYj_SOLVER_HPP
 
-#include "model.hpp"
-#include "visibility.hpp"
+#include <efyj/model.hpp>
+#include <efyj/visibility.hpp>
 #include <memory>
 #include <set>
 #include <unordered_map>

@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
-#include "visibility.hpp"
+#include <efyj/visibility.hpp>
 #include <deque>
 #include <limits>
 #include <map>
@@ -33,19 +33,6 @@
 #include <cstdint>
 
 namespace efyj {
-
-struct EFYJ_API xml_parse_error : std::logic_error
-{
-    xml_parse_error(const std::string& msg, int line, int column, int error)
-        : std::logic_error(msg),
-          line(line),
-          column(column),
-          internal_error_code(error)
-    {}
-
-    int line, column;
-    int internal_error_code;
-};
 
 /**
  * The @e scale_id is used to represent possible value when solving

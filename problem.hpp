@@ -22,7 +22,8 @@
 #ifndef INRA_EFYj_PROBLEM_HPP
 #define INRA_EFYj_PROBLEM_HPP
 
-#include "visibility.hpp"
+#include <efyj/context.hpp>
+#include <efyj/visibility.hpp>
 #include <memory>
 
 namespace efyj {
@@ -30,7 +31,8 @@ namespace efyj {
 class EFYJ_API problem
 {
 public:
-    problem(const std::string& dexi_filepath,
+    problem(const efyj::Context& context,
+            const std::string& dexi_filepath,
             const std::string& option_filepath);
 
     problem(const problem&) = delete;

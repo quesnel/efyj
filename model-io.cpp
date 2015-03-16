@@ -19,7 +19,8 @@
  * SOFTWARE.
  */
 
-#include "model.hpp"
+#include <efyj/model.hpp>
+#include <efyj/exception.hpp>
 #include "utils.hpp"
 #include <istream>
 #include <ostream>
@@ -82,7 +83,7 @@ struct dexi_reader
             is.read(buffer, buffer_size);
 
             if (not ::XML_ParseBuffer(parser, is.gcount(), is.eof()))
-                throw efyj::xml_parse_error(
+                throw efyj::xml_parser_error(
                     data.error_message,
                     XML_GetCurrentLineNumber(parser),
                     XML_GetCurrentColumnNumber(parser),
