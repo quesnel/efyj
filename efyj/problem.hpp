@@ -19,31 +19,31 @@
  * SOFTWARE.
  */
 
-#include "utils.hpp"
-#include <vector>
-#include <cstdio>
-#include <cstdarg>
+#ifndef INRA_EFYj_PROBLEM_HPP
+#define INRA_EFYj_PROBLEM_HPP
+
+#include <efyj/visibility.hpp>
+#include <efyj/context.hpp>
+#include <memory>
 
 namespace efyj {
 
-std::string stringf(const char* format, ...)
+class EFYJ_API problem
 {
-    std::vector <char> buffer(1024, '\0');
-    int sz;
-    va_list ap;
+public:
+    problem(const efyj::Context& context,
+            const std::string& dexi_filepath,
+            const std::string& option_filepath);
 
-    for (;;) {
-        va_start(ap, format);
-        sz = std::vsnprintf(buffer.data(), buffer.size(), format, ap);
-        va_end(ap);
+    ~problem();
 
-        if (sz < 0)
-            return std::move(std::string());
-        else if (static_cast <std::size_t>(sz) < buffer.size())
-            return std::move(std::string(buffer.data(), buffer.size()));
-        else
-            buffer.resize(sz + 1);
-    }
-}
+    void solve(int rank, int world_size);
+
+private:
+    struct pimpl;
+    std::unique_ptr <pimpl> m;
+};
 
 }
+
+#endif

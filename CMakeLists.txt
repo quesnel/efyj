@@ -110,11 +110,11 @@ install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
 install(DIRECTORY efyj DESTINATION
   DESTINATION include/efyj-${efyj_STABLEVERSION})
 
-set(efyj_CORE_SRCS context.cpp csv-parser.cpp exception.cpp model.cpp
-  model-io.cpp problem.cpp problem.hpp solver-basic.cpp
-  solver-bigmem.cpp solver.cpp solver-hash.cpp solver.hpp utils.cpp
-  utils.hpp efyj/context.hpp efyj/visibility.hpp efyj/exception.hpp
-  efyj/model.hpp)
+set(efyj_CORE_SRCS context.cpp exception.cpp model.cpp model-io.cpp
+  options.hpp options.cpp problem.cpp efyj/problem.hpp
+  solver-basic.cpp solver-bigmem.cpp solver.cpp solver-hash.cpp
+  solver.hpp utils.hpp efyj/context.hpp efyj/visibility.hpp
+  efyj/exception.hpp efyj/model.hpp)
 
 add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
 add_library(efyj_static_corelib STATIC ${efyj_CORE_SRCS})

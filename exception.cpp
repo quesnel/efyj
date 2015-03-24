@@ -53,6 +53,12 @@ std::string csv_parser_error_format(std::size_t line,
     }
 }
 
+std::string xml_parser_error_format(const std::string& msg)
+{
+    return boost::str(
+        boost::format("DEXI error: %1%") % msg);
+}
+
 std::string xml_parser_error_format(const std::string& msg, int line,
                                     int column, int error)
 {
@@ -63,6 +69,15 @@ std::string xml_parser_error_format(const std::string& msg, int line,
 } // anonymous namespace
 
 namespace efyj {
+
+xml_parser_error::xml_parser_error(const std::string& msg)
+    : efyj_error(::xml_parser_error_format(msg))
+    , m_line(0)
+    , m_column(0)
+    , m_internal_error_code(0)
+    , m_message(msg)
+{
+}
 
 xml_parser_error::xml_parser_error(const std::string& msg, int line, int column, int error)
     : efyj_error(::xml_parser_error_format(msg, line, column, error))

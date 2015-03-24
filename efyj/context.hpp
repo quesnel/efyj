@@ -22,14 +22,10 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
+#include <efyj/visibility.hpp>
+#include <boost/format.hpp>
 #include <memory>
 #include <functional>
-#include <cstdarg>
-
-#if defined __GNUC__
-#define EFYj_GCC_PRINTF(format__, args__)               \
-    __attribute__ ((format (printf, format__, args__)))
-#endif
 
 #define DEBUG_MESSAGE efyj::LOG_OPTION_DEBUG, __FILE__, __LINE__, __PRETTY_FUNCTION__
 #define INFO_MESSAGE efyj::LOG_OPTION_INFO, __FILE__, __LINE__, __PRETTY_FUNCTION__
@@ -37,17 +33,18 @@
 
 namespace efyj {
 
+using fmt = boost::format;
+
 class ContextImpl;
 
 typedef std::shared_ptr <ContextImpl> Context;
 
 enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
 
-typedef std::function <void(const ContextImpl& ctx, int priority, const char *file,
-                            int line, const char *fn, const char *format,
-                            va_list args)> log_function;
+typedef std::function <void(const ContextImpl&, int, const char *,
+                            int, const char *, const efyj::fmt& fmt)> log_function;
 
-class ContextImpl
+class EFYJ_API ContextImpl
 {
 public:
     ContextImpl();
@@ -56,11 +53,17 @@ public:
 
     Context create();
 
+    void set_log_stream(std::ostream* os);
+
+    void set_error_stream(std::ostream* os);
+
     void set_log_function(log_function fct);
+
+    void log(const efyj::fmt& fmt);
 
     void log(int priority, const char *file,
              int line, const char *fn,
-             const char *formats, ...) EFYj_GCC_PRINTF(6, 7);
+             const efyj::fmt& fmt);
 
     LogOption log_priority() const;
 

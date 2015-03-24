@@ -22,26 +22,12 @@
 #ifndef INRA_EFYj_UTILS_HPP
 #define INRA_EFYj_UTILS_HPP
 
-#include <efyj/visibility.hpp>
 #include <functional>
-#include <string>
-#include <cstdint>
-#include <cinttypes>
-
-#define dWHITE "\x1b[37;1m"
-#define dRED "\x1b[31;1m"
-#define dYELLOW "\x1b[33;1m"
-#define dCYAN "\x1b[36;1m"
-#define dNORMAL "\x1b[0;m"
-
-#if defined __GNUC__
-#define EFYJ_GCC_PRINTF(format__, args__)               \
-    __attribute__ ((format (printf, format__, args__)))
-#endif
+#include <boost/format.hpp>
 
 namespace efyj {
 
-EFYJ_API std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+using fmt = boost::format;
 
 struct EFYJ_API scope_exit
 {

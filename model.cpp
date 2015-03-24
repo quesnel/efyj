@@ -29,7 +29,10 @@ void attribute::fill_utility_function()
     std::vector <scale_id> child_max_value(children.size(), 0u);
     std::transform(children.begin(), children.end(),
                    child_max_value.begin(),
-                   std::mem_fn(&attribute::scale_size));
+                   [](const attribute* att)
+                   {
+                       return att->scale_size();
+                   });
 
     std::vector <scale_id> iter(children.size(), 0u);
     bool end = false;

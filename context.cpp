@@ -21,14 +21,34 @@
 
 #include <efyj/context.hpp>
 #include <iostream>
-#include <vector>
-#include <cstdio>
 
 namespace efyj {
 
+void default_log_fct(const ContextImpl&, int, const char *,
+                     int, const char *, const efyj::fmt&);
+
+struct ContextImpl::impl
+{
+    impl()
+        : fct(&default_log_fct)
+        , priority(LOG_OPTION_DEBUG)
+        , osl(&std::cout)
+        , ose(&std::cerr)
+    {
+    }
+
+    ~impl()
+    {}
+
+    log_function fct;
+    LogOption priority;
+
+    std::ostream *osl;
+    std::ostream *ose;
+};
+
 void default_log_fct(const ContextImpl& ctx, int priority, const char *file,
-                     int line, const char *fn, const char *format,
-                     va_list args)
+                     int line, const char *fn, const efyj::fmt& format)
 {
     (void)ctx;
 
@@ -37,42 +57,15 @@ void default_log_fct(const ContextImpl& ctx, int priority, const char *file,
         std::cout << "Debug " << file << ":" << line  << " " << fn << " ";
         break;
     case efyj::LOG_OPTION_INFO:
+        std::cout << "Info " << file << ":" << line  << " " << fn << " ";
         break;
     case efyj::LOG_OPTION_ERR:
         std::cout << "Error " << file << ":" << line  << " " << fn << " ";
         break;
     }
 
-    std::vector <char> buffer(1024, '\0');
-
-    for (;;) {
-        int sz = std::vsnprintf(buffer.data(), buffer.size() - 1, format, args);
-
-        if (sz < 0) {
-            break;
-        } else if (static_cast <std::size_t>(sz) < buffer.size()) {
-            buffer[sz] = '\0';
-            std::cout << buffer.data();
-        } else {
-            buffer.resize(sz + 1);
-        }
-    }
-
-    std::cout << '\n';
+    std::cout << format << '\n';
 }
-
-
-struct ContextImpl::impl
-{
-    impl()
-        : fct(&default_log_fct)
-        , priority(LOG_OPTION_DEBUG)
-    {
-    }
-
-    log_function fct;
-    LogOption priority;
-};
 
 Context ContextImpl::create()
 {
@@ -94,24 +87,34 @@ void ContextImpl::set_log_function(log_function fct)
     m_impl->fct = fct;
 }
 
+void ContextImpl::log(const fmt& f)
+{
+    std::cout << f << '\n';
+}
+
 void ContextImpl::log(int priority, const char *file,
                       int line, const char *fn,
-                      const char *format, ...)
+                      const fmt& format)
 {
-    va_list ap;
-    va_start(ap, format);
-
     try {
-        m_impl->fct(*this, priority, file, line, fn, format, ap);
+        m_impl->fct(*this, priority, file, line, fn, format);
     } catch (...) {
     }
-
-    va_end(ap);
 }
 
 LogOption ContextImpl::log_priority() const
 {
     return m_impl->priority;
+}
+
+void ContextImpl::set_log_stream(std::ostream* os)
+{
+    (void)os;
+}
+
+void ContextImpl::set_error_stream(std::ostream* os)
+{
+    (void)os;
 }
 
 void ContextImpl::set_log_priority(LogOption priority)

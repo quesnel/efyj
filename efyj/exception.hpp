@@ -39,6 +39,8 @@ public:
 class EFYJ_API xml_parser_error : public efyj_error
 {
 public:
+    xml_parser_error(const std::string& msg);
+
     xml_parser_error(const std::string& msg, int line, int column, int error);
 
     virtual ~xml_parser_error();

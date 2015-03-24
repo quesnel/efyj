@@ -28,7 +28,11 @@
 #include <set>
 #include <unordered_map>
 
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdeprecated-register"
+#endif
+
+#include  <Eigen/src/Core/util/DisableStupidWarnings.h>
 #include <Eigen/Core>
 
 namespace efyj {

@@ -126,9 +126,9 @@ private:
 
         try {
             return stack_identifier_map.at(name);
-        } catch (const std::exception& e) {
-            throw std::invalid_argument(
-                efyj::stringf("Unknown element: %s", name));
+        } catch (const std::exception& /*e*/) {
+            throw efyj::xml_parser_error(
+                (efyj::fmt("Unknown element %1%") % name).str());
         }
     }
 
@@ -224,11 +224,9 @@ private:
                 pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue", pd->dexi.group.end());
 
                 if (not efyj::is_valid_scale_id(pd->dexi.attributes.size()))
-                    throw std::overflow_error(
-                        efyj::stringf("Too many scale value (%" PRIuMAX ") "
-                                      "for attribute `%s'",
-                                      static_cast <std::uintmax_t>(pd->dexi.attributes.size()),
-                                      pd->dexi.attributes.back().name.c_str()));
+                    throw efyj::xml_parser_error(
+                        (efyj::fmt("Too many scale value (%1%) for attribute `%2%'") %
+                         pd->dexi.attributes.size() % pd->dexi.attributes.back().name).str());
                 break;
             case stack_identifier::GROUP:
                 pd->is_parent({stack_identifier::SCALEVALUE});

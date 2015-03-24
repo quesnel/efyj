@@ -1,4 +1,4 @@
-/* Copyright (C) 2014 INRA
+/* Copyright (C) 2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,35 +19,52 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_PROBLEM_HPP
-#define INRA_EFYj_PROBLEM_HPP
+#ifndef INRA_EFYj_OPTIONS_HPP
+#define INRA_EFYj_OPTIONS_HPP
 
-#include <efyj/context.hpp>
-#include <efyj/visibility.hpp>
-#include <memory>
+#include <efyj/model.hpp>
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#endif
+#include <Eigen/src/Core/util/DisableStupidWarnings.h>
+#include <Eigen/Core>
 
 namespace efyj {
 
-class EFYJ_API problem
+struct OptionsId
 {
-public:
-    problem(const efyj::Context& context,
-            const std::string& dexi_filepath,
-            const std::string& option_filepath);
+    OptionsId(const std::string& simulation_,
+              const std::string& place_,
+              int department_,
+              int year_,
+              int observated_)
+        : simulation(simulation_)
+        , place(place_)
+        , department(department_)
+        , year(year_)
+        , observated(observated_)
+        , simulated(-1)
+    {}
 
-    problem(const problem&) = delete;
-    problem(problem&&) = delete;
-    problem& operator=(const problem&) = delete;
-    problem& operator=(problem&&) = delete;
+    std::string simulation;
+    std::string place;
+    int department;
+    int year;
 
-    ~problem();
-
-    void solve(int rank, int world_size);
-
-private:
-    struct pimpl;
-    std::unique_ptr <pimpl> m;
+    int observated;
+    int simulated;
 };
+
+typedef Eigen::ArrayXXi ArrayOptions;
+
+struct Options
+{
+    std::vector <OptionsId> ids;
+    ArrayOptions options;
+};
+
+Options array_options_read(std::istream& is, const efyj::dexi& model);
 
 }
 

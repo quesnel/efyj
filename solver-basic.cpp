@@ -35,15 +35,13 @@ namespace {
 std::string format_error_msg(const efyj::attribute& att, std::uint32_t key)
 {
     return std::move(
-        efyj::stringf("Unknown solution %" PRIu32 " for attribute %s",
-                      key, att.name.c_str()));
+        (efyj::fmt("Unknown solution %1% for attribute %2%") % key % att.name).str());
 }
 
 std::string format_error_msg(const std::vector <efyj::scale_id>& options)
 {
     return std::move(
-        efyj::stringf("Too many option in vector (%" PRIuMAX ")",
-                      static_cast <std::uintmax_t>(options.size())));
+        (efyj::fmt("Too many option in vector (%1%)") % options.size()).str());
 }
 
 efyj::scale_id utility_function_get_value(efyj::attribute& att)
@@ -157,9 +155,7 @@ scale_id solver_basic::solve(const Eigen::MatrixXi& options)
             }
         }
     }
-
 }
-
 
 efyj::result_type solver_basic::solve(const std::string& options)
 {

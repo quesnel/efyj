@@ -33,8 +33,7 @@ namespace {
         for (auto opt : options) {
             if (not efyj::is_valid_scale_id(opt))
                 throw efyj::solver_option_error(
-                    efyj::stringf("Hash: invalid scale id: %" PRIuMAX,
-                                  (static_cast <std::uintmax_t>(opt))));
+                    (efyj::fmt("Hash: invalid scale id: %1%") % opt).str());
 
             ret += ('0' + opt);
         }
@@ -91,7 +90,7 @@ namespace efyj {
         auto it = hash.find(key);
         if (it == hash.end())
             throw solver_error(
-                stringf("hash: Unknown result for key: %s", key.c_str()));
+                (fmt("hash: Unknown result for key: %1%") % key).str());
 
         return it->second;
     }
@@ -111,8 +110,7 @@ namespace efyj {
 
                            if (it == hash.end())
                                throw solver_error(
-                                   stringf("hash: Unknown result for key: %s",
-                                           opt.c_str()));
+                                   (fmt("hash: Unknown result for key: %1%") % opt).str());
 
                            return it->second;
                        });

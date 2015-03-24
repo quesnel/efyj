@@ -20,6 +20,7 @@
  */
 
 #include "solver.hpp"
+#include <efyj/exception.hpp>
 #include "utils.hpp"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
@@ -78,10 +79,9 @@ namespace efyj {
                 result.resize(std::pow(2, binary_scale_value_size),
                               scale_id_unknown());
             } catch (const std::bad_alloc&) {
-                throw std::logic_error(
-                    efyj::stringf("bigmem: failed to allocate %f GB",
-                                  std::pow(2, binary_scale_value_size) / 1024 /
-                                  1024) + "GB");
+                throw efyj::efyj_error(
+                    (efyj::fmt("bigmem: failed to allocate %1% GB") %
+                     (std::pow(2, binary_scale_value_size) / 1024 / 1024)).str());
             }
 
             std::vector <scale_id> high_level(model.basic_scale_number);
@@ -148,10 +148,8 @@ namespace efyj {
                            scale_id r = result[key];
 
                            if (not is_valid_scale_id(r))
-                               throw solver_error(
-                                   stringf("bigmem: Unknown result for key: %"
-                                           PRIuMAX, static_cast
-                                           <std::uintmax_t>(key)));
+                               throw efyj_error(
+                                   (efyj::fmt("bigmem: Unknown result for key: %1%") % key).str());
 
                            return r;
                        });

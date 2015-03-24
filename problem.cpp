@@ -19,383 +19,33 @@
  * SOFTWARE.
  */
 
+#include <efyj/problem.hpp>
 #include <efyj/model.hpp>
 #include <efyj/context.hpp>
-#include "problem.hpp"
+#include <efyj/exception.hpp>
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 #include "utils.hpp"
+#include "options.hpp"
+#include "post.hpp"
 #include "solver.hpp"
+#include <iostream>
 #include <fstream>
 #include <gmpxx.h>
 #include <numeric>
-
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
-#include <Eigen/Core>
-
-namespace {
-
-std::vector <const efyj::attribute*> get_basic_attribute(const efyj::dexi& model)
-{
-    std::vector <const efyj::attribute*> ret;
-
-    ret.reserve(model.attributes.size());
-
-    for (const auto& att : model.attributes)
-        if (att.is_basic())
-            ret.emplace_back(&att);
-
-    return std::move(ret);
-}
-
-struct string_t
-{
-    std::string val;
-
-    friend std::istream& operator>>(std::istream& is, string_t& data)
-    {
-        bool end = false;
-
-        data.val.clear();
-
-        while (not end) {
-            auto c = is.peek();
-
-            switch (c) {
-            case std::istream::traits_type::eof():
-            case ',':
-            case '\n':
-                end = true;
-            break;
-            default:
-                data.val.push_back(c);
-                is.get();
-            }
-        }
-
-        return is;
-    }
-};
-
-struct strings_t
-{
-    std::size_t nb;
-
-    strings_t(std::size_t nb)
-        : nb(nb), lst(nb)
-    {}
-
-    std::vector <string_t> lst;
-
-    friend std::istream& operator>>(std::istream& is, strings_t& data)
-    {
-        for (auto& s : data.lst) {
-            is >> s;
-            is.ignore();
-        }
-
-        return is;
-    }
-};
-
-Eigen::MatrixXi read_option_file(std::istream& is, const efyj::dexi& model)
-{
-    std::vector <const efyj::attribute*> atts = ::get_basic_attribute(model);
-    Eigen::MatrixXi ret = Eigen::MatrixXi::Zero(1, atts.size());
-    strings_t line(atts.size());
-
-    while (is >> line) {
-        for (std::size_t i = 0, e = atts.size(); i != e; ++i) {
-            int option = atts[i]->scale.find_scale_value(line.lst[i].val);
-
-            if (option < 0)
-                throw std::invalid_argument(
-                    efyj::stringf("unknown scale value `%s' for attribute"
-                                  " `%s' in option file",
-                                  line.lst[i].val.c_str(),
-                                  atts[i]->name.c_str()));
-
-            ret(ret.rows() - 1, i) = option;
-        }
-        ret.conservativeResize(ret.rows() + 1, Eigen::NoChange_t());
-    }
-    ret.conservativeResize(ret.rows() - 1, Eigen::NoChange_t());
-
-    return std::move(ret);
-}
-
-struct flat_utility_function
-{
-    efyj::Context context;
-    std::vector <mpz_class> uf_scale_size;
-    std::vector <std::uint8_t> uf_attribute_size;
-    mpz_class value;
-    mpz_class min;
-    mpz_class max;
-    std::size_t fu_size;
-    int processor, id;
-
-    flat_utility_function(const efyj::Context& context,
-                          const std::vector <std::uint8_t>& scale_sizes,
-                          const std::vector <std::uint8_t>& attribute_size,
-                          int processor, int id)
-        : context(context)
-        , fu_size(std::accumulate(attribute_size.begin(), attribute_size.end(), 0))
-        , processor(processor)
-        , id(id)
-    {
-        max = 1;
-        mpz_class tmp;
-        for (std::size_t i = 0; i < scale_sizes.size(); ++i) {
-            mpz_ui_pow_ui(tmp.get_mpz_t(), scale_sizes[i], attribute_size[i]);
-            max *= tmp;
-        }
-
-        if (processor == 1) {
-            min = 0;
-        } else {
-            mpz_class lenght = max / processor;
-            min = lenght * id;
-            value = min;
-            max = (lenght * (id + 1)) - 1;
-        }
-
-        context->log(DEBUG_MESSAGE,
-                     "- flat_utility_function fu_size: %ld\n"
-                     "  - id=%d processor=%d\n"
-                     "  - start=%s\n"
-                     "  - end=%s\n", fu_size, id, processor,
-                     min.get_str().c_str(), max.get_str().c_str());
-
-        std::uintmax_t modelsz = 1;
-        for (std::size_t i = 0; i < attribute_size.size(); ++i) {
-            std::uintmax_t sz = std::pow(scale_sizes[i], attribute_size[i]);
-            modelsz *= sz;
-
-            context->log(DEBUG_MESSAGE, "%d^%d *", scale_sizes[i], attribute_size[i]);
-        }
-
-        context->log(DEBUG_MESSAGE, "problem size: %" PRIuMAX, modelsz);
-        uf_scale_size.resize(fu_size, 0);
-
-        auto it = uf_scale_size.begin();
-        for (std::size_t i = 0; i < attribute_size.size(); ++i)
-            it = std::fill_n(it, attribute_size[i], scale_sizes[i]);
-
-        for (size_t i = 0; i < uf_scale_size.size(); ++i)
-            context->log(DEBUG_MESSAGE, "%ld", uf_scale_size[i].get_ui());
-    }
-
-    void init()
-    {
-        value = min;
-    }
-
-    bool next()
-    {
-        return ++value < max;
-    }
-
-    std::string to_string() const
-    {
-        std::string ret(fu_size, '0');
-
-        mpz_class tmp = value;
-        mpz_class quo, rest;
-
-        int i = fu_size - 1;
-
-        while (tmp) {
-            mpz_fdiv_qr(quo.get_mpz_t(), rest.get_mpz_t(), tmp.get_mpz_t(),
-                        uf_scale_size[i].get_mpz_t());
-
-            ret[i] += rest.get_ui();
-            tmp = quo;
-            --i;
-        }
-
-        return std::move(ret);
-    }
-};
-
-struct hierarchical_fu
-{
-    hierarchical_fu() {}
-    virtual ~hierarchical_fu() {}
-
-    virtual void init(const mpz_class& min, const mpz_class& max) = 0;
-    virtual void init() = 0;
-    virtual bool next() = 0;
-    virtual std::string value() const = 0;
-    virtual mpz_class size() const = 0;
-};
-
-struct hierarchical_no_consistency_fu : hierarchical_fu
-{
-    efyj::Context context;
-    mpz_class current_value, min_value, max_value;
-    mpz_class scale_value_size;
-    mpz_class fu_size;
-
-    hierarchical_no_consistency_fu(const efyj::Context& context,
-                                   const std::string& value,
-                                   unsigned int scale_value_size)
-        : hierarchical_fu()
-        , context(context)
-        , current_value(0)
-        , min_value(0)
-        , max_value(0)
-        , scale_value_size(scale_value_size)
-        , fu_size(value.size())
-    {}
-
-    virtual ~hierarchical_no_consistency_fu() {}
-
-    virtual void init(const mpz_class& min, const mpz_class& max)
-    {
-        min_value = min;
-        max_value = max;
-        current_value = min_value;
-    }
-
-    virtual void init()
-    {
-        current_value = min_value;
-    }
-
-    virtual bool next()
-    {
-        return ++current_value < max_value;
-    }
-
-    virtual std::string value() const
-    {
-        std::string ret(fu_size.get_ui(), '0');
-
-        mpz_class tmp = current_value;
-        mpz_class quo, rest;
-
-        int i = fu_size.get_ui() - 1;
-
-        while (tmp) {
-            mpz_fdiv_qr(quo.get_mpz_t(), rest.get_mpz_t(), tmp.get_mpz_t(),
-                        scale_value_size.get_mpz_t());
-
-            ret[i] += rest.get_ui();
-            tmp = quo;
-            --i;
-        }
-
-        return std::move(ret);
-    }
-
-    virtual mpz_class size() const
-    {
-        mpz_class ret;
-
-        mpz_ui_pow_ui(ret.get_mpz_t(), scale_value_size.get_ui(), fu_size.get_ui());
-
-        return std::move(ret);
-    }
-};
-
-struct hierarchical_consistency_fu : hierarchical_fu
-{
-    efyj::Context context;
-    Eigen::MatrixXi fu;
-    const int max_value;
-    int idx;
-    int idx_min, idx_max;
-
-    hierarchical_consistency_fu(const efyj::Context& context,
-                                const std::string& value,
-                                unsigned int scale_value_size)
-        : hierarchical_fu()
-        , context(context)
-        , fu(Eigen::MatrixXi::Zero(1, value.size()))
-        , max_value(scale_value_size - 1)
-        , idx(0)
-        , idx_min(0)
-        , idx_max(0)
-    {
-        int col = 0;
-        int row = 0;
-
-        while (fu(row, 0) < max_value) {
-            fu.conservativeResize(fu.rows() + 1, Eigen::NoChange_t());
-            fu.row(fu.rows() - 1) = fu.row(fu.rows() - 2);
-            row = fu.rows() - 1;
-            col = fu.cols() - 1;
-
-            fu(row, col)++;
-
-            if (fu(row, col) > max_value) {
-                do {
-                    col--;
-
-                    if (col < 0)
-                        return;
-
-                    fu(row, col)++;
-                } while (fu(row, col) > max_value);
-
-                for (int i = col + 1; i < fu.cols(); ++i)
-                    fu(row, i) = fu(row, col);
-            }
-        }
-
-        context->log(INFO_MESSAGE,
-                     "hierarchical_consistency_fu: %ld x %ld (%d ** %lud)",
-                     fu.rows(), fu.cols(),
-                     scale_value_size, value.size());
-    }
-
-    virtual ~hierarchical_consistency_fu() {}
-
-    virtual void init(const mpz_class& min, const mpz_class& max)
-    {
-        idx_min = min.get_ui();
-        idx_max = max.get_ui();
-        idx = idx_min;
-    }
-
-    virtual void init()
-    {
-        idx = idx_min;
-    }
-
-    virtual bool next()
-    {
-        return ++idx < idx_max;
-    }
-
-    virtual std::string value() const
-    {
-        std::string ret(fu.cols(), '0');
-
-        for (int i = 0, e = fu.cols(); i != e; ++i)
-            ret[i] += fu(idx, i);
-
-        return ret;
-    }
-
-    virtual mpz_class size() const
-    {
-        mpz_class ret;
-
-        ret = fu.rows();
-
-        return std::move(ret);
-    }
-};
-
-}
+#include <cinttypes>
 
 namespace efyj {
 
 struct problem::pimpl
 {
-    pimpl(const Context& ctx, const std::string& dexi_filepath, const std::string& option_filepath)
+    pimpl(const Context& ctx, const std::string& dexi_filepath,
+          const std::string& option_filepath)
         : context(ctx)
     {
+        ctx->log(fmt("problem: model '%1%' - option '%2%'\n")
+                 % dexi_filepath % option_filepath);
+
         read_dexi_file(dexi_filepath);
         read_option_file(option_filepath);
     }
@@ -404,8 +54,8 @@ struct problem::pimpl
     {
         std::ifstream ifs(filepath);
         if (!ifs)
-            throw std::invalid_argument(
-                stringf("fail to load DEXi file %s", filepath.c_str()));
+            throw efyj::xml_parser_error(
+                (efyj::fmt("fail to load DEXi file %1%") % filepath).str());
 
         ifs >> model;
     }
@@ -414,197 +64,35 @@ struct problem::pimpl
     {
         std::ifstream ifs(filepath);
         if (!ifs)
-            throw std::invalid_argument(
-                stringf("fail to load option file %s", filepath.c_str()));
+            throw efyj::csv_parser_error(
+                (efyj::fmt("fail to load option file %1%") % filepath).str());
 
-        options = ::read_option_file(ifs, model);
-    }
-
-    void compute_flat_model(int processor, int id)
-    {
-        std::vector <std::uint8_t> fu_ss, fu_as;
-        fu_ss.reserve(model.attributes.size());
-        fu_as.reserve(model.attributes.size());
-
-        for (auto& att : model.attributes) {
-            if (not att.is_basic()) {
-                fu_ss.emplace_back(att.scale_size());
-                fu_as.emplace_back(att.functions.low.size());
-            }
-        }
-
-        flat_utility_function fu(context, fu_ss, fu_as, processor, id);
-        std::size_t max = 0;
-
-        std::chrono::time_point <std::chrono::system_clock> start =
-            std::chrono::system_clock::now();
-
-        while (fu.next()) {
-            max++;
-
-            if ((max % 123454321) == 0) {
-                std::chrono::duration <double> duration =
-                    std::chrono::system_clock::now() - start;
-
-                mpz_class doing = (fu.value - fu.min);
-                mpz_class remaining = (fu.max - fu.value);
-                mpz_class pc = (doing * 100.0) / remaining;
-                mpz_class estimated = (remaining * duration.count()) / doing;
-
-                context->log(INFO_MESSAGE,
-                             "- %s%%. Time elapsed: %f. Time remaining estimated: %s",
-                             pc.get_str().c_str(), duration.count(),
-                             estimated.get_str().c_str());
-
-                max = 0;
-            }
-        }
-    }
-
-    void compute_hierarchical_model(int processor, int id)
-    {
-        std::vector <std::unique_ptr<hierarchical_fu>> solvers;
-        std::vector <efyj::attribute*> atts;
-
-        for (auto& att : model.attributes) {
-            if (not att.is_basic()) {
-                atts.emplace_back(&att);
-
-                if (att.functions.consist == "False")
-                    solvers.emplace_back(
-                        new hierarchical_no_consistency_fu(
-                            context,
-                            att.functions.low, att.scale_size()));
-                else
-                    solvers.emplace_back(
-                        new hierarchical_consistency_fu(
-                            context,
-                            att.functions.low, att.scale_size()));
-            }
-        }
-
-        for (int i = 0, e = solvers.size(); i != e; ++i) {
-            mpz_class max = solvers[i]->size();
-            mpz_class min = 0;
-
-            if (i == 0) {
-                mpz_class proc = processor;
-                if (proc == 1) {
-                    min = 0;
-                } else {
-                    if (max < proc)
-                        proc= max;
-
-                    if (id >= proc) {
-                        context->log(INFO_MESSAGE,
-                                     "Too many processor to split the first "
-                                     "aggregate attribute");
-
-                        return;
-                    }
-
-                    mpz_class lenght = max / proc;
-                    min = lenght * id;
-                    max = (lenght * (id + 1)) - 1;
-                }
-
-                context->log(INFO_MESSAGE,
-                             "\n- first solver id=%d processor=%d\n"
-                             "  - start calculation at %s\n"
-                             "  - end calculation at %s\n",
-                             id, processor,
-                             min.get_str().c_str(),
-                             max.get_str().c_str());
-            }
-
-            solvers[i]->init(min, max);
-        }
-
-        std::size_t imax = 0;
-        for (;;) {
-            for (std::size_t i = 0; i < solvers.size(); ++i)
-                atts[i]->functions.low = solvers[i]->value();
-
-            efyj::solver_basic sb(model);
-            for (int i = 0, e = options.rows(); i != e; ++i) {
-                context->log(DEBUG_MESSAGE, "compute option %d", i);
-                // auto result =
-                sb.solve(options.row(i));
-            }
-
-            imax++;
-
-            if ((imax % 1234567) == 0) {
-                imax = 0;
-
-                for (auto& solver : solvers)
-                    context->log(INFO_MESSAGE, "%s", solver->value().c_str());
-            }
-
-            std::size_t current = solvers.size() - 1;
-
-            for (;;) {
-                if (not solvers[current]->next()) {
-                    solvers[current]->init();
-
-                    if (current == 0) {
-                        return;
-                    } else {
-                        current--;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
+        options = array_options_read(ifs, model);
     }
 
     void compute(int rank, int world_size)
     {
-        int consistency_fu_nb = 0;
-        int fu_nb = 0;
+        (void)rank;
+        (void)world_size;
 
-        for (auto& att : model.attributes) {
-            if (not att.is_basic()) {
-                bool consistency = att.functions.consist != "False";
+        solver_basic basic(model);
 
-                if (consistency)
-                    consistency_fu_nb++;
-                fu_nb++;
-
-                context->log(DEBUG_MESSAGE, "- Attribute %s scale size %" PRIuMAX "children %" PRIuMAX,
-                       att.name.c_str(),
-                       (std::uintmax_t)att.scale_size(),
-                       (std::uintmax_t)att.children.size());
-
-                std::size_t m = 1;
-                for (const auto& child : att.children) {
-                    context->log(DEBUG_MESSAGE, "  - %s scale size: %" PRIuMAX,
-                           child->name.c_str(),
-                           (std::uintmax_t)child->scale_size());
-
-                    m *= child->scale_size();
-                }
-
-                context->log(DEBUG_MESSAGE, " Problem size: %" PRIuMAX "** %" PRIuMAX "(%f): %s\n",
-                       (std::uintmax_t)att.scale_size(),
-                       (std::uintmax_t)m,
-                       std::pow(att.scale_size(), m),
-                       (consistency) ? "true" : "false");
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+            try {
+                options.ids[i].simulated = basic.solve(options.options.row(i));
+                // std::cout << options.ids[i].observated << " "
+                //           << options.ids[i].simulated << " "
+                //           << std::abs(options.ids[i].observated -
+                //                       options.ids[i].simulated) << '\n';
+            } catch (const std::exception& e) {
+                std::cout << "failure option at line " << i
+                          << ": " << e.what() << '\n';
             }
-        }
-
-        if (fu_nb > 0) {
-            context->log(INFO_MESSAGE, "We can use the monotone kernel\n");
-            compute_hierarchical_model(world_size, rank);
-        } else {
-            context->log(INFO_MESSAGE, "Inconsistency model: need too long time\n");
-            compute_flat_model(world_size, rank);
         }
     }
 
     Context context;
-    Eigen::MatrixXi options;
+    Options options;
     dexi model;
 };
 
@@ -613,6 +101,12 @@ problem::problem(const Context& ctx,
                  const std::string& option_filepath)
     : m(new problem::pimpl(ctx, dexi_filepath, option_filepath))
 {
+    std::cout << boost::format("problem instantiate: %1% line(s) to solve with model")
+        % m->options.ids.size()
+              << '\n';
+
+    std::ofstream ofs("matrix.dat");
+    ofs << m->options.options << '\n';
 }
 
 problem::~problem()
@@ -621,7 +115,24 @@ problem::~problem()
 
 void problem::solve(int rank, int world_size)
 {
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
     m->compute(rank, world_size);
+
+    Post post;
+    post.functions.emplace_back(rmsep);
+    post.functions.emplace_back(weighted_kappa);
+    post.apply(m->model, m->options, std::cout);
+
+    end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    std::cout << "finished computation at " << std::ctime(&end_time)
+              << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
 }
 
 }
