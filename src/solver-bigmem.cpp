@@ -20,7 +20,7 @@
  */
 
 #include "solver.hpp"
-#include <efyj/exception.hpp>
+#include "exception.hpp"
 #include "utils.hpp"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>

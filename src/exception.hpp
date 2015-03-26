@@ -22,13 +22,12 @@
 #ifndef INRA_EFYj_EXCEPTION_HPP
 #define INRA_EFYj_EXCEPTION_HPP
 
-#include <efyj/visibility.hpp>
 #include <stdexcept>
 #include <string>
 
 namespace efyj {
 
-class EFYJ_API efyj_error : public std::runtime_error
+class efyj_error : public std::runtime_error
 {
 public:
     efyj_error(const std::string& msg);
@@ -36,7 +35,7 @@ public:
     virtual ~efyj_error();
 };
 
-class EFYJ_API xml_parser_error : public efyj_error
+class xml_parser_error : public efyj_error
 {
 public:
     xml_parser_error(const std::string& msg);
@@ -56,7 +55,7 @@ private:
     std::string m_message;
 };
 
-class EFYJ_API csv_parser_error : public efyj_error
+class csv_parser_error : public efyj_error
 {
 public:
     csv_parser_error(const std::string& msg);

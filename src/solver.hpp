@@ -22,8 +22,7 @@
 #ifndef INRA_EFYj_SOLVER_HPP
 #define INRA_EFYj_SOLVER_HPP
 
-#include <efyj/model.hpp>
-#include <efyj/visibility.hpp>
+#include "model.hpp"
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -39,11 +38,11 @@ namespace efyj {
 
     typedef std::set <scale_id> result_type;
 
-    EFYJ_API std::vector <std::string> make_string_options(
+    std::vector <std::string> make_string_options(
         const std::string& options,
         const std::vector <scale_id>& max_options);
 
-    EFYJ_API std::vector <std::vector <scale_id>> make_scale_id_options(
+    std::vector <std::vector <scale_id>> make_scale_id_options(
         const std::string& options,
         const std::vector <scale_id>& max_options);
 
@@ -61,7 +60,7 @@ namespace efyj {
         {}
     };
 
-    struct EFYJ_API solver_basic
+    struct solver_basic
     {
         solver_basic(dexi& model);
 
@@ -72,7 +71,7 @@ namespace efyj {
         dexi& model;
     };
 
-    struct EFYJ_API solver_bigmem
+    struct solver_bigmem
     {
         solver_bigmem(dexi& model);
 
@@ -86,7 +85,7 @@ namespace efyj {
         std::vector <scale_id> basic_attribute_scale_size;
     };
 
-    struct EFYJ_API solver_hash
+    struct solver_hash
     {
         solver_hash(dexi& model);
 

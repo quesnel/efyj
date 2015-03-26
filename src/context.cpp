@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include <efyj/context.hpp>
+#include "context.hpp"
 #include <iostream>
 
 namespace efyj {

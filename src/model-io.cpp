@@ -19,8 +19,8 @@
  * SOFTWARE.
  */
 
-#include <efyj/model.hpp>
-#include <efyj/exception.hpp>
+#include "model.hpp"
+#include "exception.hpp"
 #include "utils.hpp"
 #include <istream>
 #include <ostream>

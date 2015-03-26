@@ -22,7 +22,6 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
-#include <efyj/visibility.hpp>
 #include <deque>
 #include <limits>
 #include <map>
@@ -62,7 +61,7 @@ constexpr scale_id scale_id_unknown() noexcept
 
 typedef std::set <std::string> group_set;
 
-struct EFYJ_API scalevalue
+struct scalevalue
 {
     scalevalue(const std::string& name, group_set::iterator group)
         : name(name), group(group)
@@ -73,7 +72,7 @@ struct EFYJ_API scalevalue
     group_set::iterator group;
 };
 
-struct EFYJ_API function
+struct function
 {
     std::string low;
     std::string entered;
@@ -85,7 +84,7 @@ struct EFYJ_API function
     }
 };
 
-struct EFYJ_API scales
+struct scales
 {
     scales()
         : order(true)
@@ -109,7 +108,7 @@ struct EFYJ_API scales
     }
 };
 
-struct EFYJ_API attribute
+struct attribute
 {
     attribute(const std::string& name)
         : parent(nullptr)
@@ -161,7 +160,7 @@ struct EFYJ_API attribute
     std::map <std::uint32_t, scale_id> utility_function;
 };
 
-struct EFYJ_API dexi
+struct dexi
 {
     dexi()
         : child(nullptr)
@@ -192,11 +191,11 @@ struct EFYJ_API dexi
     std::size_t scalevalue_number;
 };
 
-EFYJ_API bool operator==(const dexi& lhs, const dexi& rhs);
-EFYJ_API bool operator!=(const dexi& lhs, const dexi& rhs);
+bool operator==(const dexi& lhs, const dexi& rhs);
+bool operator!=(const dexi& lhs, const dexi& rhs);
 
-EFYJ_API std::ostream& operator<<(std::ostream& os, const dexi& dexi_data);
-EFYJ_API std::istream& operator>>(std::istream& is, dexi& dexi_data);
+std::ostream& operator<<(std::ostream& os, const dexi& dexi_data);
+std::istream& operator>>(std::istream& is, dexi& dexi_data);
 
 }
 

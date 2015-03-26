@@ -29,7 +29,7 @@ namespace efyj {
 
 using fmt = boost::format;
 
-struct EFYJ_API scope_exit
+struct scope_exit
 {
     scope_exit(std::function <void (void)> fct)
         : fct(fct)

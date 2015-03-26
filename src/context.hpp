@@ -22,7 +22,6 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
-#include <efyj/visibility.hpp>
 #include <boost/format.hpp>
 #include <memory>
 #include <functional>
@@ -44,7 +43,7 @@ enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
 typedef std::function <void(const ContextImpl&, int, const char *,
                             int, const char *, const efyj::fmt& fmt)> log_function;
 
-class EFYJ_API ContextImpl
+class ContextImpl
 {
 public:
     ContextImpl();

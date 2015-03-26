@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include <efyj/model.hpp>
+#include "model.hpp"
 #include "solver.hpp"
 #include <sstream>
 #include <cstdlib>

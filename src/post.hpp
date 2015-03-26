@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_POST_HPP
 #define INRA_EFYj_POST_HPP
 
-#include <efyj/model.hpp>
+#include "model.hpp"
 #include "options.hpp"
 
 #include <Eigen/Core>

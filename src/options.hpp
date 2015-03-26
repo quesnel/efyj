@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_OPTIONS_HPP
 #define INRA_EFYj_OPTIONS_HPP
 
-#include <efyj/model.hpp>
+#include "model.hpp"
 
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdeprecated-register"

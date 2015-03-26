@@ -21,7 +21,9 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQU
 endif ()
 
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 find_package(PkgConfig)
 
 macro (pkg_config_required_library LIBNAME pcfile)
@@ -88,73 +90,17 @@ endif ()
 # endif ()
 
 ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-## efyj-x.y.pc
+## Core program
 #
 
-if (WIN32)
-  set(efyj_PKGCONFIG_PREFIXPATH "/target")
-  set(efyj_PKGCONFIG_LIBDIR "bin")
-else()
-  set(efyj_PKGCONFIG_PREFIXPATH "${CMAKE_INSTALL_PREFIX}")
-  set(efyj_PKGCONFIG_LIBDIR "lib")
-endif()
+set(efyj_CORE_SRCS src/context.cpp src/context.hpp src/exception.cpp
+  src/exception.hpp src/main.cpp src/model.cpp src/model.hpp
+  src/model-io.cpp src/options.cpp src/options.hpp src/post.hpp
+  src/problem.cpp src/problem.hpp src/solver-basic.cpp
+  src/solver-bigmem.cpp src/solver.cpp src/solver-hash.cpp
+  src/solver.hpp src/utils.hpp)
 
-configure_file(efyj.pc.in ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc @ONLY)
-install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
-  DESTINATION lib/pkgconfig)
-
-### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-## Core library
-#
-
-install(DIRECTORY efyj DESTINATION
-  DESTINATION include/efyj-${efyj_STABLEVERSION})
-
-set(efyj_CORE_SRCS context.cpp exception.cpp model.cpp model-io.cpp
-  options.hpp options.cpp problem.cpp efyj/problem.hpp
-  solver-basic.cpp solver-bigmem.cpp solver.cpp solver-hash.cpp
-  solver.hpp utils.hpp efyj/context.hpp efyj/visibility.hpp
-  efyj/exception.hpp efyj/model.hpp)
-
-add_library(efyj_corelib SHARED ${efyj_CORE_SRCS})
-add_library(efyj_static_corelib STATIC ${efyj_CORE_SRCS})
-
-set_target_properties(efyj_corelib PROPERTIES
-  VERSION 0
-  OUTPUT_NAME "efyj-${efyj_STABLEVERSION}"
-  DEFINE_SYMBOL "efyj_EXPORTS"
-  COMPILE_DEFINITIONS "efyj_DLL"
-  COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
-
-if (WIN32)
-  target_link_libraries(efyj_corelib ${efyj_STATIC_LINK_LIBRARIES})
-else ()
-  target_link_libraries(efyj_corelib ${efyj_LINK_LIBRARIES})
-endif ()
-
-set_target_properties(efyj_static_corelib PROPERTIES
-  VERSION 0
-  OUTPUT_NAME "efyj-${efyj_STABLEVERSION}"
-  DEFINE_SYMBOL "efyj_EXPORTS"
-  COMPILE_FLAGS "-fvisibility=hidden -Fvisibility-inlines-hidden")
-
-install(TARGETS efyj_corelib
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
-
-install(TARGETS efyj_static_corelib
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
-
-### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-## Executable
-#
-
-set(efyj_MAIN_SRCS main.cpp)
-
-add_executable(efyj ${efyj_MAIN_SRCS})
+add_executable(efyj ${efyj_CORE_SRCS})
 
 if (MPI_CXX_FOUND)
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -170,16 +116,15 @@ if (MPI_CXX_FOUND)
 endif ()
 
 if (WIN32)
-  target_link_libraries(efyj efyj_static_corelib ${efyj_STATIC_LINK_LIBRARIES})
+  target_link_libraries(efyj ${efyj_STATIC_LINK_LIBRARIES})
   set_target_properties(efyj PROPERTIES
     COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 else ()
-  target_link_libraries(efyj efyj_corelib ${efyj_LINK_LIBRARIES})
+  target_link_libraries(efyj ${efyj_LINK_LIBRARIES})
   set_target_properties(efyj PROPERTIES
     VERSION ${efyj_STABLEVERSION}
     COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 endif ()
-
 
 install(TARGETS efyj DESTINATION bin)
 

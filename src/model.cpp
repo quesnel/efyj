@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include <efyj/model.hpp>
+#include "model.hpp"
 #include <algorithm>
 
 namespace efyj {

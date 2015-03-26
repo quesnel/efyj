@@ -19,10 +19,10 @@
  * SOFTWARE.
  */
 
-#include <efyj/problem.hpp>
-#include <efyj/model.hpp>
-#include <efyj/context.hpp>
-#include <efyj/exception.hpp>
+#include "problem.hpp"
+#include "model.hpp"
+#include "context.hpp"
+#include "exception.hpp"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include "utils.hpp"

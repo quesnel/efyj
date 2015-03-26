@@ -22,13 +22,12 @@
 #ifndef INRA_EFYj_PROBLEM_HPP
 #define INRA_EFYj_PROBLEM_HPP
 
-#include <efyj/visibility.hpp>
-#include <efyj/context.hpp>
+#include "context.hpp"
 #include <memory>
 
 namespace efyj {
 
-class EFYJ_API problem
+class problem
 {
 public:
     problem(const efyj::Context& context,

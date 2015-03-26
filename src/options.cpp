@@ -20,7 +20,7 @@
  */
 
 #include "options.hpp"
-#include <efyj/exception.hpp>
+#include "exception.hpp"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
