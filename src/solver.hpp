@@ -23,14 +23,9 @@
 #define INRA_EFYj_SOLVER_HPP
 
 #include "model.hpp"
-#include "type.hpp"
-#include <memory>
-#include <set>
-#include <unordered_map>
+#include "types.hpp"
 
 namespace efyj {
-
-typedef std::set <scale_id> result_type;
 
 struct solver_error : std::logic_error
 {

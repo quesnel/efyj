@@ -19,47 +19,19 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_OPTIONS_HPP
-#define INRA_EFYj_OPTIONS_HPP
+#ifndef INRA_EFYj_TYPE_HPP
+#define INRA_EFYj_TYPE_HPP
 
-#include "model.hpp"
-#include "types.hpp"
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#endif
+
+#include <Eigen/src/Core/util/DisableStupidWarnings.h>
+#include <Eigen/Core>
 
 namespace efyj {
-
-struct OptionsId
-{
-    OptionsId(const std::string& simulation_,
-              const std::string& place_,
-              int department_,
-              int year_,
-              int observated_)
-        : simulation(simulation_)
-        , place(place_)
-        , department(department_)
-        , year(year_)
-        , observated(observated_)
-        , simulated(-1)
-    {}
-
-    std::string simulation;
-    std::string place;
-    int department;
-    int year;
-
-    int observated;
-    int simulated;
-};
-
-
-struct Options
-{
-    std::vector <OptionsId> ids;
-    Array options;
-};
-
-Options array_options_read(std::istream& is, const efyj::Model& model);
-
+typedef Eigen::ArrayXXi Array;
+typedef Array::RowXpr VectorRef;
+typedef Eigen::VectorXi Vector;
 }
-
 #endif
