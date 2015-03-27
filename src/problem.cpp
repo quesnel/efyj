@@ -42,23 +42,23 @@ namespace efyj {
 
 struct problem::pimpl
 {
-    pimpl(const Context& ctx, const std::string& dexi_filepath,
+    pimpl(const Context& ctx, const std::string& Model_filepath,
           const std::string& option_filepath)
         : context(ctx)
     {
         ctx->log(fmt("problem: model '%1%' - option '%2%'\n")
-                 % dexi_filepath % option_filepath);
+                 % Model_filepath % option_filepath);
 
-        read_dexi_file(dexi_filepath);
+        read_Model_file(Model_filepath);
         read_option_file(option_filepath);
     }
 
-    void read_dexi_file(const std::string& filepath)
+    void read_Model_file(const std::string& filepath)
     {
         std::ifstream ifs(filepath);
         if (!ifs)
             throw efyj::xml_parser_error(
-                (efyj::fmt("fail to load DEXi file %1%") % filepath).str());
+                (efyj::fmt("fail to load Model file %1%") % filepath).str());
 
         ifs >> model;
     }
@@ -96,13 +96,13 @@ struct problem::pimpl
 
     Context context;
     Options options;
-    dexi model;
+    Model model;
 };
 
 problem::problem(const Context& ctx,
-                 const std::string& dexi_filepath,
+                 const std::string& Model_filepath,
                  const std::string& option_filepath)
-    : m(new problem::pimpl(ctx, dexi_filepath, option_filepath))
+    : m(new problem::pimpl(ctx, Model_filepath, option_filepath))
 {
     std::cout << boost::format("problem instantiate: %1% line(s) to solve with model")
         % m->options.ids.size()

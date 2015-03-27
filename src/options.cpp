@@ -30,7 +30,7 @@
 
 namespace {
 
-std::vector <const efyj::attribute*> get_basic_attribute(const efyj::dexi& model)
+std::vector <const efyj::attribute*> get_basic_attribute(const efyj::Model& model)
 {
     std::vector <const efyj::attribute*> ret;
 
@@ -62,7 +62,7 @@ std::size_t get_basic_attribute_id(const std::vector <const efyj::attribute*>& a
 
 namespace efyj {
 
-Options array_options_read(std::istream& is, const efyj::dexi& model)
+Options array_options_read(std::istream& is, const efyj::Model& model)
 {
     Options ret;
 

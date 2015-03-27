@@ -45,7 +45,7 @@ std::string make_key(const Eigen::VectorXi& options)
 
 struct solver_hash
 {
-    solver_hash(dexi& model)
+    solver_hash(Model& model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         std::vector <scale_id> high_level(model.basic_scale_number);

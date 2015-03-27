@@ -66,7 +66,7 @@ void attribute::fill_utility_function()
     } while (not end);
 }
 
-void dexi::init()
+void Model::init()
 {
     for (auto& att : attributes)
         if (not att.is_basic())
@@ -78,7 +78,7 @@ bool operator==(const attribute& lhs, const attribute& rhs)
     return lhs.name == rhs.name;
 }
 
-bool operator==(const dexi& lhs, const dexi& rhs)
+bool operator==(const Model& lhs, const Model& rhs)
 {
     if (not (lhs.options == rhs.options &&
              lhs.group == rhs.group &&
@@ -94,7 +94,7 @@ bool operator==(const dexi& lhs, const dexi& rhs)
     return false;
 }
 
-bool operator!=(const dexi& lhs, const dexi& rhs)
+bool operator!=(const Model& lhs, const Model& rhs)
 {
     return not (lhs == rhs);
 }

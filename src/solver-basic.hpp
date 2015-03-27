@@ -59,7 +59,7 @@ efyj::scale_id utility_function_get_value(efyj::attribute& att)
 
 struct solver_basic
 {
-    solver_basic(dexi& model)
+    solver_basic(Model& model)
         : model(model)
     {
         model.init();
@@ -110,7 +110,7 @@ struct solver_basic
         }
     }
 
-    dexi& model;
+    Model& model;
 };
 
 }

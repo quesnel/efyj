@@ -58,7 +58,7 @@ struct Options
     Array options;
 };
 
-Options array_options_read(std::istream& is, const efyj::dexi& model);
+Options array_options_read(std::istream& is, const efyj::Model& model);
 
 }
 

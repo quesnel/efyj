@@ -56,9 +56,9 @@ struct str_hash
     }
 };
 
-struct dexi_reader
+struct Model_reader
 {
-    dexi_reader(std::istream& is, efyj::dexi& dex) noexcept
+    Model_reader(std::istream& is, efyj::Model& dex) noexcept
     : is(is), dex(dex)
     {
     }
@@ -70,9 +70,9 @@ struct dexi_reader
 
         parser_data data(parser, dex);
 
-        XML_SetElementHandler(parser, dexi_reader::start_element,
-                              dexi_reader::end_element);
-        XML_SetCharacterDataHandler(parser, dexi_reader::character_data);
+        XML_SetElementHandler(parser, Model_reader::start_element,
+                              Model_reader::end_element);
+        XML_SetCharacterDataHandler(parser, Model_reader::character_data);
         XML_SetUserData(parser, reinterpret_cast <void*>(&data));
 
         while (is.good() and not is.eof()) {
@@ -93,7 +93,7 @@ struct dexi_reader
 
 private:
     std::istream& is;
-    efyj::dexi& dex;
+    efyj::Model& dex;
 
     enum class stack_identifier {
         DEXi, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS, ATTRIBUTE, NAME,
@@ -134,13 +134,13 @@ private:
 
     struct parser_data
     {
-        parser_data(XML_Parser parser, efyj::dexi& data)
-            : parser(parser), dexi(data)
+        parser_data(XML_Parser parser, efyj::Model& data)
+            : parser(parser), model(data)
         {}
 
         XML_Parser parser;
         std::string error_message;
-        efyj::dexi& dexi;
+        efyj::Model& model;
         std::stack <stack_identifier> stack;
         std::stack <efyj::attribute*> attributes_stack;
         std::string char_data;
@@ -195,19 +195,23 @@ private:
             case stack_identifier::ATTRIBUTE:
                 pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE});
                 pd->stack.push(id);
-                pd->dexi.attributes.emplace_back("unaffected attribute");
+                pd->model.attributes.emplace_back("unaffected attribute");
                 if (pd->attributes_stack.empty()) {
-                    pd->dexi.child = &pd->dexi.attributes.back();
+                    pd->model.child = &pd->model.attributes.back();
                 } else {
-                    pd->attributes_stack.top()->push_back(&pd->dexi.attributes.back());
+                    pd->attributes_stack.top()->push_back(&pd->model.attributes.back());
                 }
-                pd->attributes_stack.push(&pd->dexi.attributes.back());
+                pd->attributes_stack.push(&pd->model.attributes.back());
                 break;
             case stack_identifier::NAME:
-                pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE, stack_identifier::SCALEVALUE});
+                pd->is_parent({stack_identifier::DEXi,
+                            stack_identifier::ATTRIBUTE,
+                            stack_identifier::SCALEVALUE});
                 break;
             case stack_identifier::DESCRIPTION:
-                pd->is_parent({stack_identifier::DEXi, stack_identifier::ATTRIBUTE, stack_identifier::SCALEVALUE});
+                pd->is_parent({stack_identifier::DEXi,
+                            stack_identifier::ATTRIBUTE,
+                            stack_identifier::SCALEVALUE});
                 pd->stack.push(id);
                 break;
             case stack_identifier::SCALE:
@@ -221,12 +225,12 @@ private:
                 pd->is_parent({stack_identifier::SCALE});
                 pd->stack.push(id);
 
-                pd->dexi.attributes.back().scale.scale.emplace_back("unaffected scalevalue", pd->dexi.group.end());
+                pd->model.attributes.back().scale.scale.emplace_back("unaffected scalevalue", pd->model.group.end());
 
-                if (not efyj::is_valid_scale_id(pd->dexi.attributes.size()))
+                if (not efyj::is_valid_scale_id(pd->model.attributes.size()))
                     throw efyj::xml_parser_error(
                         (efyj::fmt("Too many scale value (%1%) for attribute `%2%'") %
-                         pd->dexi.attributes.size() % pd->dexi.attributes.back().name).str());
+                         pd->model.attributes.size() % pd->model.attributes.back().name).str());
                 break;
             case stack_identifier::GROUP:
                 pd->is_parent({stack_identifier::SCALEVALUE});
@@ -266,9 +270,9 @@ private:
                 break;
             case stack_identifier::OPTION:
                 if (pd->stack.top() == stack_identifier::DEXi)
-                    pd->dexi.options.emplace_back(pd->char_data);
+                    pd->model.options.emplace_back(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().options.emplace_back(pd->char_data);
+                    pd->model.attributes.back().options.emplace_back(pd->char_data);
                 else
                     throw std::invalid_argument("bad stack");
                 break;
@@ -284,23 +288,23 @@ private:
             case stack_identifier::ATTRIBUTE:
                 pd->stack.pop();
                 if (pd->attributes_stack.top()->children.empty()) {
-                    pd->dexi.basic_scale_number++;
+                    pd->model.basic_scale_number++;
 
                     auto scale_size = pd->attributes_stack.top()->scale.scale.size();
-                    pd->dexi.scalevalue_number += scale_size;
-                    pd->dexi.problem_size *= scale_size;
-                    pd->dexi.basic_attribute_scale_size.emplace_back(scale_size);
+                    pd->model.scalevalue_number += scale_size;
+                    pd->model.problem_size *= scale_size;
+                    pd->model.basic_attribute_scale_size.emplace_back(scale_size);
                 }
 
                 pd->attributes_stack.pop();
                 break;
             case stack_identifier::NAME:
                 if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().name.assign(pd->char_data);
+                    pd->model.attributes.back().name.assign(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::DEXi)
-                    pd->dexi.name.assign(pd->char_data);
+                    pd->model.name.assign(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::SCALEVALUE)
-                    pd->dexi.attributes.back().scale.scale.back().name.assign(pd->char_data);
+                    pd->model.attributes.back().scale.scale.back().name.assign(pd->char_data);
                 break;
             case stack_identifier::DESCRIPTION:
                 if (pd->stack.top() != stack_identifier::DESCRIPTION)
@@ -309,31 +313,31 @@ private:
                 pd->stack.pop();
 
                 if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->dexi.attributes.back().description.assign(pd->char_data);
+                    pd->model.attributes.back().description.assign(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::DEXi)
-                    pd->dexi.description.assign(pd->char_data);
+                    pd->model.description.assign(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::SCALEVALUE)
-                    pd->dexi.attributes.back().scale.scale.back().description.assign(pd->char_data);
+                    pd->model.attributes.back().scale.scale.back().description.assign(pd->char_data);
                 break;
             case stack_identifier::SCALE:
                 pd->stack.pop();
-                pd->dexi.scale_number++;
+                pd->model.scale_number++;
                 break;
             case stack_identifier::ORDER:
                 if (pd->char_data == "NONE")
-                    pd->dexi.attributes.back().scale.order = false;
+                    pd->model.attributes.back().scale.order = false;
                 break;
             case stack_identifier::SCALEVALUE:
                 pd->stack.pop();
                 break;
             case stack_identifier::GROUP:
                 if (pd->stack.top() == stack_identifier::SCALEVALUE) {
-                    auto it = pd->dexi.group.find(pd->char_data);
+                    auto it = pd->model.group.find(pd->char_data);
 
-                    if (it == pd->dexi.group.end())
-                        it = pd->dexi.group.insert(pd->char_data).first;
+                    if (it == pd->model.group.end())
+                        it = pd->model.group.insert(pd->char_data).first;
 
-                    pd->dexi.attributes.back().scale.scale.back().group = it;
+                    pd->model.attributes.back().scale.scale.back().group = it;
                 }
                 break;
             case stack_identifier::FUNCTION:
@@ -341,15 +345,15 @@ private:
                 break;
             case stack_identifier::LOW:
                 if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.low = pd->char_data;
+                    pd->model.attributes.back().functions.low = pd->char_data;
                 break;
             case stack_identifier::ENTERED:
                 if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.entered = pd->char_data;
+                    pd->model.attributes.back().functions.entered = pd->char_data;
                 break;
             case stack_identifier::CONSIST:
                 if (pd->stack.top() == stack_identifier::FUNCTION)
-                    pd->dexi.attributes.back().functions.consist = pd->char_data;
+                    pd->model.attributes.back().functions.consist = pd->char_data;
                 break;
             }
         } catch (const std::exception& e) {
@@ -371,20 +375,20 @@ private:
     }
 };
 
-struct dexi_writer
+struct Model_writer
 {
-    dexi_writer(std::ostream& os, const efyj::dexi& dexi_data) noexcept
-    : os(os), dex(dexi_data), space(0)
+    Model_writer(std::ostream& os, const efyj::Model& Model_data) noexcept
+    : os(os), dex(Model_data), space(0)
     {}
 
     void write()
     {
-        write_dexi();
+        write_Model();
     }
 
 private:
     std::ostream& os;
-    const efyj::dexi& dex;
+    const efyj::Model& dex;
     std::size_t space;
 
     std::string make_space() const
@@ -397,13 +401,13 @@ private:
         return std::move(std::string(space + adding, ' '));
     }
 
-    void write_dexi_option(const std::vector <std::string>& opts)
+    void write_Model_option(const std::vector <std::string>& opts)
     {
         for (const auto& opt : opts)
             os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
     }
 
-    void write_dexi_attribute(const efyj::attribute& att)
+    void write_Model_attribute(const efyj::attribute& att)
     {
         os << make_space() << "<ATTRIBUTE>\n";
 
@@ -453,28 +457,28 @@ private:
         }
 
         if (not att.options.empty())
-            write_dexi_option(att.options);
+            write_Model_option(att.options);
 
         for (const auto& child : att.children)
-            write_dexi_attribute(*child);
+            write_Model_attribute(*child);
         space -= 2;
 
         os << make_space() << "</ATTRIBUTE>\n";
     }
 
-    void write_dexi()
+    void write_Model()
     {
         os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-           << "<DEXi>\n"
+           << "<Model>\n"
            << "  <NAME>" << dex.name << "</NAME>\n";
 
         space = 2;
-        write_dexi_option(dex.options);
+        write_Model_option(dex.options);
 
         if (dex.child)
-            write_dexi_attribute(*(dex.child));
+            write_Model_attribute(*(dex.child));
 
-        os << "</DEXi>\n";
+        os << "</Model>\n";
     }
 };
 
@@ -482,18 +486,18 @@ private:
 
 namespace efyj {
 
-std::ostream& operator<<(std::ostream& os, const dexi& dexi_data)
+std::ostream& operator<<(std::ostream& os, const Model& Model_data)
 {
-    ::dexi_writer dw(os, dexi_data);
+    ::Model_writer dw(os, Model_data);
 
     dw.write();
 
     return os;
 }
 
-std::istream& operator>>(std::istream& is, dexi& dexi_data)
+std::istream& operator>>(std::istream& is, Model& Model_data)
 {
-    ::dexi_reader dr(is, dexi_data);
+    ::Model_reader dr(is, Model_data);
 
     dr.read(4096u);
 

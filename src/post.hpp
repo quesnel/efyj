@@ -31,13 +31,13 @@
 
 namespace efyj {
 
-typedef std::function <void(const efyj::dexi&,
+typedef std::function <void(const efyj::Model&,
                             const Options&,
                             const std::size_t,
                             const std::size_t,
                             std::ostream&)> method_fn;
 
-void rmsep(const efyj::dexi&, const Options& options,
+void rmsep(const efyj::Model&, const Options& options,
            const std::size_t N, const std::size_t NC,
            std::ostream& os)
 {
@@ -57,7 +57,7 @@ void rmsep(const efyj::dexi&, const Options& options,
        << "\n\n";
 }
 
-void weighted_kappa(const efyj::dexi&, const Options& options,
+void weighted_kappa(const efyj::Model&, const Options& options,
                     const std::size_t N, const std::size_t NC,
                     std::ostream& os)
 {
@@ -107,13 +107,13 @@ void weighted_kappa(const efyj::dexi&, const Options& options,
 
 struct Post
 {
-    void apply(const efyj::dexi& model, const Options& options,
+    void apply(const efyj::Model& model, const Options& options,
                std::ostream& os);
 
     std::vector <method_fn> functions;
 };
 
-void Post::apply(const efyj::dexi& model, const Options& options,
+void Post::apply(const efyj::Model& model, const Options& options,
                  std::ostream& os)
 {
     const std::size_t n = options.options.rows();

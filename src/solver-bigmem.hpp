@@ -53,7 +53,7 @@ unsigned long make_key(const V& options,
 
 struct solver_bigmem
 {
-    solver_bigmem(dexi& model)
+    solver_bigmem(Model& model)
         : binary_scale_value_size(0)
         , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {

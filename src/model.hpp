@@ -160,9 +160,9 @@ struct attribute
     std::map <std::uint32_t, scale_id> utility_function;
 };
 
-struct dexi
+struct Model
 {
-    dexi()
+    Model()
         : child(nullptr)
         , problem_size(1)
         , basic_scale_number(0)
@@ -170,10 +170,10 @@ struct dexi
         , scalevalue_number(0)
     {}
 
-    dexi(const dexi& other) = delete;
-    dexi(dexi&& other) = delete;
-    dexi& operator=(const dexi& other) = delete;
-    dexi& operator=(dexi&& other) = delete;
+    Model(const Model& other) = delete;
+    Model(Model&& other) = delete;
+    Model& operator=(const Model& other) = delete;
+    Model& operator=(Model&& other) = delete;
 
     void init();
 
@@ -191,11 +191,11 @@ struct dexi
     std::size_t scalevalue_number;
 };
 
-bool operator==(const dexi& lhs, const dexi& rhs);
-bool operator!=(const dexi& lhs, const dexi& rhs);
+bool operator==(const Model& lhs, const Model& rhs);
+bool operator!=(const Model& lhs, const Model& rhs);
 
-std::ostream& operator<<(std::ostream& os, const dexi& dexi_data);
-std::istream& operator>>(std::istream& is, dexi& dexi_data);
+std::ostream& operator<<(std::ostream& os, const Model& Model_data);
+std::istream& operator>>(std::istream& is, Model& Model_data);
 
 }
 

@@ -38,15 +38,15 @@
 
 TEST_CASE("test empty object equality", "[model]")
 {
-    efyj::dexi x1;
-    efyj::dexi x2;
+    efyj::Model x1;
+    efyj::Model x2;
 
     REQUIRE(x1 == x2);
 }
 
 TEST_CASE("test empty object read/write", "[model]")
 {
-    efyj::dexi x1, x2;
+    efyj::Model x1, x2;
 
     {
         std::string result;
@@ -69,7 +69,7 @@ TEST_CASE("test empty object read/write", "[model]")
 #if defined EXAMPLES_DIR && defined __unix__
 #include <unistd.h>
 
-TEST_CASE("test classic dexi file", "[model]")
+TEST_CASE("test classic Model file", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
@@ -82,7 +82,7 @@ TEST_CASE("test classic dexi file", "[model]")
         std::ifstream is(filepath);
         REQUIRE(is.is_open());
 
-        efyj::dexi dex;
+        efyj::Model dex;
         REQUIRE_NOTHROW(is >> dex);
     }
 }
@@ -92,7 +92,7 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi car;
+    efyj::Model car;
     std::stringstream ss;
 
     {
@@ -102,7 +102,7 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
         REQUIRE_NOTHROW(ss << car);
     }
 
-    efyj::dexi car2;
+    efyj::Model car2;
     REQUIRE_NOTHROW(ss >> car2);
 
     REQUIRE(car == car2);
@@ -144,7 +144,7 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi car;
+    efyj::Model car;
     std::string outputfile("CarXXXXXXXX.dxi");
 
     {
@@ -157,7 +157,7 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
         REQUIRE_NOTHROW(os << car);
     }
 
-    efyj::dexi car2;
+    efyj::Model car2;
 
     {
         std::ifstream is(outputfile);
@@ -174,7 +174,7 @@ TEST_CASE("test Car.dxi", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi car;
+    efyj::Model car;
 
     {
         std::ifstream is("Car.dxi");
@@ -206,12 +206,12 @@ TEST_CASE("test Car.dxi", "[model]")
     REQUIRE(car.child->children[1]->children[1]->children.empty() == true);
 }
 
-TEST_CASE("test multiple Car.dexi", "[model]")
+TEST_CASE("test multiple Car.Model", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi src, dst;
+    efyj::Model src, dst;
 
     {
         std::ifstream is("Car.dxi");
@@ -227,7 +227,7 @@ TEST_CASE("test multiple Car.dexi", "[model]")
 
     REQUIRE(src == dst);
 
-    efyj::dexi dst2;
+    efyj::Model dst2;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
@@ -246,7 +246,7 @@ TEST_CASE("test solver Car", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi model;
+    efyj::Model model;
 
     {
         std::ifstream is("Car.dxi");
@@ -265,7 +265,7 @@ TEST_CASE("test basic solver for Car", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi model;
+    efyj::Model model;
 
     {
         std::ifstream is("Car.dxi");
@@ -305,7 +305,7 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi model;
+    efyj::Model model;
 
     {
         std::ifstream is("Enterprise.dxi");
@@ -330,7 +330,7 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi model;
+    efyj::Model model;
 
     {
         std::ifstream is("IPSIM_PV_simulation1-1.dxi");
@@ -356,7 +356,7 @@ TEST_CASE("test multiple solver for Car", "[model]")
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
 
-    efyj::dexi model;
+    efyj::Model model;
 
     {
         std::ifstream is("Car.dxi");
