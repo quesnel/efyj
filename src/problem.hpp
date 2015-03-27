@@ -23,24 +23,22 @@
 #define INRA_EFYj_PROBLEM_HPP
 
 #include "context.hpp"
-#include <memory>
+#include "options.hpp"
+#include "model.hpp"
 
 namespace efyj {
 
-class problem
+struct problem
 {
-public:
     problem(const efyj::Context& context,
             const std::string& dexi_filepath,
             const std::string& option_filepath);
 
-    ~problem();
+    void compute(int rank, int world_size);
 
-    void solve(int rank, int world_size);
-
-private:
-    struct pimpl;
-    std::unique_ptr <pimpl> m;
+    Context context;
+    Options options;
+    Model model;
 };
 
 }

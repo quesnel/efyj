@@ -26,7 +26,6 @@
 #include "options.hpp"
 
 #include <Eigen/Core>
-#include <ostream>
 #include <cmath>
 
 namespace efyj {
@@ -35,11 +34,11 @@ typedef std::function <void(const efyj::Model&,
                             const Options&,
                             const std::size_t,
                             const std::size_t,
-                            std::ostream&)> method_fn;
+                            Context)> method_fn;
 
 void rmsep(const efyj::Model&, const Options& options,
            const std::size_t N, const std::size_t NC,
-           std::ostream& os)
+           Context ctx)
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
@@ -51,15 +50,12 @@ void rmsep(const efyj::Model&, const Options& options,
         for (std::size_t j = 0; j != NC; ++j)
             sum += matrix(i, j) * ((i - j) * (i - j));
 
-    os << "RMSE:\n"
-       << "----\n"
-       << std::sqrt((double)sum / (double)N)
-       << "\n\n";
+    ctx->log(boost::format("RMSE\n----\n%1%\n\n") % std::sqrt((double)sum / (double)N));
 }
 
 void weighted_kappa(const efyj::Model&, const Options& options,
                     const std::size_t N, const std::size_t NC,
-                    std::ostream& os)
+                    Context ctx)
 {
     (void)N;
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
@@ -70,13 +66,9 @@ void weighted_kappa(const efyj::Model&, const Options& options,
     auto pi_i = matrix.colwise().sum();
     auto pi_j = matrix.rowwise().sum();
 
-    os << "confusion matrix:\n"
-       << "----------------\n"
-       << matrix
-       << "\n\n"
-       << "n_i+:\n" << pi_i << "\n"
-       << "n_+j:\n" << pi_j << "\n"
-       << "\n\n";
+    ctx->log(boost::format("Confusion matrix\n----------------\n%1%\n") % matrix);
+    ctx->log(boost::format("n_i+:\n%1%\n") % pi_i);
+    ctx->log(boost::format("n_i+:\n%1%\n") % pi_j);
 
     double qfirst = 0.0;
     double qsecond = 0.0;
@@ -95,26 +87,19 @@ void weighted_kappa(const efyj::Model&, const Options& options,
         }
     }
 
-    os << "K_qw:\n"
-       << "--\n"
-       << ((qfirst - qsecond) / (1 - qsecond))
-       << "\n\n"
-       << "K_lw:\n"
-       << "--\n"
-       << ((lfirst - lsecond) / (1 - lsecond))
-       << "\n\n";
+    ctx->log(boost::format("K_qw: %1%\nK_lw: %2%\n") 
+      % ((qfirst - qsecond) / (1 - qsecond))
+      % ((lfirst - lsecond) / (1 - lsecond)));
 };
 
 struct Post
 {
-    void apply(const efyj::Model& model, const Options& options,
-               std::ostream& os);
+    void apply(const efyj::Model& model, const Options& options, Context os);
 
     std::vector <method_fn> functions;
 };
 
-void Post::apply(const efyj::Model& model, const Options& options,
-                 std::ostream& os)
+void Post::apply(const efyj::Model& model, const Options& options, Context os)
 {
     const std::size_t n = options.options.rows();
     const std::size_t nc = model.child->scale.size();

@@ -171,9 +171,7 @@ struct Model
     {}
 
     Model(const Model& other) = delete;
-    Model(Model&& other) = delete;
     Model& operator=(const Model& other) = delete;
-    Model& operator=(Model&& other) = delete;
 
     void init();
 

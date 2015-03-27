@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         ctx->set_log_priority(efyj::LOG_OPTION_DEBUG);
 
         efyj::problem pb(ctx, modelfilepath, optionfilepath);
-        pb.solve(0, 1);
+        pb.compute(0, 1);
     } catch (const std::exception& e) {
         std::cerr << "failure: " << e.what() << '\n';
     }

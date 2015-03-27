@@ -40,102 +40,77 @@
 
 namespace efyj {
 
-struct problem::pimpl
+namespace problem_details {
+
+void read_model_file(const std::string& filepath, Model& model)
 {
-    pimpl(const Context& ctx, const std::string& Model_filepath,
-          const std::string& option_filepath)
-        : context(ctx)
-    {
-        ctx->log(fmt("problem: model '%1%' - option '%2%'\n")
-                 % Model_filepath % option_filepath);
+    std::ifstream ifs(filepath);
+    if (!ifs)
+        throw efyj::xml_parser_error(
+            (efyj::fmt("fail to load Model file %1%") % filepath).str());
 
-        read_Model_file(Model_filepath);
-        read_option_file(option_filepath);
-    }
+    ifs >> model;
+}
 
-    void read_Model_file(const std::string& filepath)
-    {
-        std::ifstream ifs(filepath);
-        if (!ifs)
-            throw efyj::xml_parser_error(
-                (efyj::fmt("fail to load Model file %1%") % filepath).str());
+void read_option_file(const std::string& filepath, const Model& model,
+    Options& options)
+{
+    std::ifstream ifs(filepath);
+    if (!ifs)
+        throw efyj::csv_parser_error(
+            (efyj::fmt("fail to load option file %1%") % filepath).str());
 
-        ifs >> model;
-    }
+    options = array_options_read(ifs, model);
+}
 
-    void read_option_file(const std::string& filepath)
-    {
-        std::ifstream ifs(filepath);
-        if (!ifs)
-            throw efyj::csv_parser_error(
-                (efyj::fmt("fail to load option file %1%") % filepath).str());
-
-        options = array_options_read(ifs, model);
-    }
-
-    void compute(int rank, int world_size)
-    {
-        (void)rank;
-        (void)world_size;
-
-        solver_basic basic(model);
-
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-            try {
-                options.ids[i].simulated = basic.solve(options.options.row(i));
-                // std::cout << options.ids[i].observated << " "
-                //           << options.ids[i].simulated << " "
-                //           << std::abs(options.ids[i].observated -
-                //                       options.ids[i].simulated) << '\n';
-            } catch (const std::exception& e) {
-                std::cout << "failure option at line " << i
-                          << ": " << e.what() << '\n';
-            }
-        }
-    }
-
-    Context context;
-    Options options;
-    Model model;
-};
+} // namespace problem_details
 
 problem::problem(const Context& ctx,
                  const std::string& Model_filepath,
                  const std::string& option_filepath)
-    : m(new problem::pimpl(ctx, Model_filepath, option_filepath))
+    : context(ctx)
 {
-    std::cout << boost::format("problem instantiate: %1% line(s) to solve with model")
-        % m->options.ids.size()
-              << '\n';
+    context->log(boost::format(fmt("problem: model '%1%' - option '%2%'\n")
+                           % Model_filepath % option_filepath));
 
-    std::ofstream ofs("matrix.dat");
-    ofs << m->options.options << '\n';
+    problem_details::read_model_file(Model_filepath, model);
+    problem_details::read_option_file(option_filepath, model, options);
 }
 
-problem::~problem()
-{
-}
-
-void problem::solve(int rank, int world_size)
+void problem::compute(int rank, int world_size)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    m->compute(rank, world_size);
+    (void)rank;
+    (void)world_size;
+
+    solver_basic basic(model);
+
+    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+        try {
+            options.ids[i].simulated = basic.solve(options.options.row(i));
+        } catch (const std::exception& e) {
+            context->log(
+                boost::format(
+                    "solve failure option at row %1%: %2%") % i % e.what());
+        }
+    }
 
     Post post;
     post.functions.emplace_back(rmsep);
     post.functions.emplace_back(weighted_kappa);
-    post.apply(m->model, m->options, std::cout);
+    post.apply(model, options, context);
 
     end = std::chrono::system_clock::now();
 
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    std::cout << "finished computation at " << std::ctime(&end_time)
-              << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
+    context->log(
+        boost::format(
+            "finished computation at %1% elapsed time: %2%s")
+            % std::ctime(&end_time) % elapsed_seconds.count());
 }
 
 }
