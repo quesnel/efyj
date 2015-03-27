@@ -1,4 +1,4 @@
-/* Copyright (C) 2014 INRA
+/* Copyright (C) 2014-2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,6 +106,5 @@ int main(int argc, char *argv[])
         std::cerr << "failure: " << e.what() << '\n';
     }
 
-
-    return ret;
+  return ret;
 }

@@ -51,7 +51,6 @@ struct OptionsId
     int simulated;
 };
 
-
 struct Options
 {
     std::vector <OptionsId> ids;
