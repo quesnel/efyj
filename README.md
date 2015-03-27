@@ -1,7 +1,7 @@
 efyj
 ====
 
-Copyright © 2014 INRA
+Copyright © 2014-2015 INRA
 
 The software is released under the MIT license. See the COPYING file.
 
@@ -35,4 +35,13 @@ To use clang replace the previous `cmake` command:
 
 # Usage
 
-* Not yet usable.
+    $ efyj -m file.dxi -o file.csv
+
+The `file.csv` contains the options of the model. Four first one columns contains fields: site, fields, department, year. Next columns are basic attributes. Finally, the last column contains the result of the model dexi.
+
+For example, if a DEXi file `test.dxi` have one aggregate attribute `root` and three basic attributes `a`, `b` and `c`, the CSV file is:
+
+	$ cat file.csv
+	site;fields;departement;year;a;b;c;result
+	xxxx;yyyy;1532;2010;ok;favourable;host;0-5
+	...
