@@ -20,7 +20,9 @@
  */
 
 #include "model.hpp"
-#include "solver.hpp"
+#include "solver-basic.hpp"
+#include "solver-hash.hpp"
+#include "solver-bigmem.hpp"
 #include <sstream>
 #include <cstdlib>
 
@@ -276,33 +278,25 @@ TEST_CASE("test basic solver for Car", "[model]")
     REQUIRE(model.scale_number == 10u);
     REQUIRE(model.scalevalue_number == 19u);
 
-    const std::vector <efyj::scale_id> opt_v3 = {1, 2, 2, 2, 2, 2};
-    const std::vector <efyj::scale_id> opt_v2 = {1, 1, 2, 2, 2, 1};
-    const std::string opt_s3 = "122222";
-    const std::string opt_s2 = "112221";
+    efyj::Vector opt_v3(6); opt_v3 << 1, 2, 2, 2, 2, 2;
+    efyj::Vector opt_v2(6); opt_v2 << 1, 1, 2, 2, 2, 1;
 
     {
         efyj::solver_basic s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({2}));
     }
 
     {
         efyj::solver_hash s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({2}));
     }
 
     {
         efyj::solver_bigmem s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({2}));
     }
 }
 
@@ -319,20 +313,16 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE_NOTHROW(is >> model);
     }
 
-    std::vector <efyj::scale_id> opt_v = {2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1};
-    std::string opt_s = "200020001111";
+    efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
 
     efyj::solver_basic si(model);
     REQUIRE(si.solve(opt_v) == 1);
-    REQUIRE(si.solve(opt_s) == efyj::result_type({1}));
 
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve(opt_v) == 1);
-    REQUIRE(sb.solve(opt_s) == efyj::result_type({1}));
 
     efyj::solver_hash sh(model);
     REQUIRE(sh.solve(opt_v) == 1);
-    REQUIRE(sh.solve(opt_s) == efyj::result_type({1}));
 }
 
 TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
@@ -349,20 +339,16 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     }
 
 
-    std::vector <efyj::scale_id> opt_v = {2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1};
-    std::string opt_s = "20010110002001";
+    efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
 
     efyj::solver_basic si(model);
     REQUIRE(si.solve(opt_v) == 6);
-    REQUIRE(si.solve(opt_s) == efyj::result_type({6}));
 
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve(opt_v) == 6);
-    REQUIRE(sb.solve(opt_s) == efyj::result_type({6}));
 
     efyj::solver_hash sh(model);
     REQUIRE(sh.solve(opt_v) == 6);
-    REQUIRE(sh.solve(opt_s) == efyj::result_type({6}));
 }
 
 TEST_CASE("test multiple solver for Car", "[model]")
@@ -383,26 +369,26 @@ TEST_CASE("test multiple solver for Car", "[model]")
     REQUIRE(model.scale_number == 10u);
     REQUIRE(model.scalevalue_number == 19u);
 
-    const std::string opt_s3 = "1*2222";
-    const std::string opt_s2 = "122**1";
+//     const std::string opt_s3 = "1*2222";
+//     const std::string opt_s2 = "122**1";
 
-    {
-        efyj::solver_basic s(model);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    }
+//     {
+//         efyj::solver_basic s(model);
+//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+//     }
 
-    {
-        efyj::solver_hash s(model);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    }
+//     {
+//         efyj::solver_hash s(model);
+//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+//     }
 
-    {
-        efyj::solver_bigmem s(model);
-        REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-        REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    }
+//     {
+//         efyj::solver_bigmem s(model);
+//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+//     }
 }
 
 #endif

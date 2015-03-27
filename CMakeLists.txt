@@ -96,9 +96,9 @@ endif ()
 set(efyj_CORE_SRCS src/context.cpp src/context.hpp src/exception.cpp
   src/exception.hpp src/main.cpp src/model.cpp src/model.hpp
   src/model-io.cpp src/options.cpp src/options.hpp src/post.hpp
-  src/problem.cpp src/problem.hpp src/solver-basic.cpp
-  src/solver-bigmem.cpp src/solver.cpp src/solver-hash.cpp
-  src/solver.hpp src/utils.hpp)
+  src/problem.cpp src/problem.hpp src/solver-basic.hpp
+  src/solver-bigmem.hpp src/solver-hash.hpp src/solver.hpp
+  src/utils.hpp)
 
 add_executable(efyj ${efyj_CORE_SRCS})
 
@@ -141,8 +141,13 @@ if (CATCH_INCLUDE_DIR)
   message(STATUS " found 'catch.hpp' in ${CATCH_INCLUDE_DIR}")
   include_directories(${CATCH_INCLUDE_DIR})
 
-  add_executable(test_basic tests/test_basic.cpp)
-  target_link_libraries(test_basic efyj_corelib ${efyj_LINK_LIBRARIES})
+  add_executable(test_basic tests/test_basic.cpp src/model.cpp
+  			        src/model-io.cpp src/exception.cpp
+  			        src/solver-basic.hpp
+  			        src/solver-bigmem.hpp
+  			        src/solver-hash.hpp)
+
+  target_link_libraries(test_basic ${efyj_LINK_LIBRARIES})
   set_target_properties(test_basic PROPERTIES
     COMPILE_DEFINITIONS EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/tests")
   add_test(NAME test_basic COMMAND test_basic)

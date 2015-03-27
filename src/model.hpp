@@ -102,7 +102,7 @@ struct scales
         return -1;
     }
 
-    std::size_t size() const noexcept
+    scale_id size() const noexcept
     {
         return scale.size();
     }

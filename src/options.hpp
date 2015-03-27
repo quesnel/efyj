@@ -23,12 +23,7 @@
 #define INRA_EFYj_OPTIONS_HPP
 
 #include "model.hpp"
-
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
-#endif
-#include <Eigen/src/Core/util/DisableStupidWarnings.h>
-#include <Eigen/Core>
+#include "type.hpp"
 
 namespace efyj {
 
@@ -56,12 +51,11 @@ struct OptionsId
     int simulated;
 };
 
-typedef Eigen::ArrayXXi ArrayOptions;
 
 struct Options
 {
     std::vector <OptionsId> ids;
-    ArrayOptions options;
+    Array options;
 };
 
 Options array_options_read(std::istream& is, const efyj::dexi& model);

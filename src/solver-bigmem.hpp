@@ -19,52 +19,43 @@
  * SOFTWARE.
  */
 
+#ifndef INRA_EFYj_BIGMEM_HPP
+#define INRA_EFYj_BIGMEM_HPP
+
 #include "solver.hpp"
 #include "exception.hpp"
 #include "utils.hpp"
-#include <boost/dynamic_bitset.hpp>
 #include <numeric>
 #include <vector>
 #include <string>
 #include <cmath>
 
-namespace {
+namespace efyj {
 
-    unsigned long make_key(const std::vector <efyj::scale_id>& options,
-                           const std::vector <efyj::scale_id>& bits)
-    {
-        unsigned long ret = 0;
-        std::size_t indice = 0;
+namespace bigmem_details {
 
-        for (std::size_t i = 0, e = bits.size(); i != e; ++i) {
-            ret += (options[i] << indice);
-            indice += std::floor(std::log2(bits[i]) + 1);
-        }
+template <typename V>
+unsigned long make_key(const V& options,
+                       const std::vector <efyj::scale_id>& bits)
+{
+    unsigned long ret = 0;
+    std::size_t indice = 0;
 
-        return ret;
+    for (std::size_t i = 0, e = bits.size(); i != e; ++i) {
+        ret += (options(i) << indice);
+        indice += std::floor(std::log2(bits[i]) + 1);
     }
 
-    unsigned long make_key(const std::string& options,
-                           const std::vector <efyj::scale_id>& bits)
-    {
-        unsigned long ret = 0;
-        std::size_t indice = 0;
-
-        for (std::size_t i = 0, e = bits.size(); i != e; ++i) {
-            ret += ((options[i] - '0') << indice);
-            indice += std::floor(std::log2(bits[i]) + 1);
-        }
-
-        return ret;
-    }
+    return ret;
+}
 
 }
 
-namespace efyj {
-
-    solver_bigmem::solver_bigmem(dexi& model)
+struct solver_bigmem
+{
+    solver_bigmem(dexi& model)
         : binary_scale_value_size(0)
-          , basic_attribute_scale_size(model.basic_attribute_scale_size)
+        , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         {
             for (const auto& att : model.attributes) {
@@ -94,12 +85,12 @@ namespace efyj {
                 }
             }
 
-            std::vector <scale_id> options(model.basic_scale_number, 0);
+            Vector options(model.basic_scale_number);
             efyj::solver_basic basic(model);
             bool end = false;
 
             do {
-                unsigned long key = ::make_key(options, binary_scales);
+                unsigned long key = bigmem_details::make_key(options, binary_scales);
                 result[key] = basic.solve(options);
 
                 std::size_t current = model.basic_scale_number - 1;
@@ -121,39 +112,21 @@ namespace efyj {
         };
     }
 
-    efyj::scale_id solver_bigmem::solve(const std::vector <efyj::scale_id>& options)
+    template <typename V>
+    scale_id solve(const V& options)
     {
-        unsigned long key = ::make_key(options, binary_scales);
+        unsigned long key = bigmem_details::make_key(options, binary_scales);
 
         return result[key];
     }
 
-    efyj::scale_id solver_bigmem::solve(std::size_t options)
-    {
-        return result[options];
-    }
+    std::size_t binary_scale_value_size;
+    std::vector <scale_id> binary_scales;
+    std::vector <scale_id> result;
+    std::vector <scale_id> basic_attribute_scale_size;
 
-    result_type solver_bigmem::solve(const std::string& options)
-    {
-        std::vector <std::string> todo =
-            efyj::make_string_options(options, basic_attribute_scale_size);
+};
 
-        result_type ret;
-
-        std::transform(todo.cbegin(), todo.cend(),
-                       std::inserter(ret, ret.end()),
-                       [this](const std::string& opt)
-                       {
-                           unsigned long key = ::make_key(opt, binary_scales);
-                           scale_id r = result[key];
-
-                           if (not is_valid_scale_id(r))
-                               throw efyj_error(
-                                   (efyj::fmt("bigmem: Unknown result for key: %1%") % key).str());
-
-                           return r;
-                       });
-
-        return std::move(ret);
-    }
 }
+
+#endif

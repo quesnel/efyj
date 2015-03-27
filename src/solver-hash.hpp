@@ -19,33 +19,33 @@
  * SOFTWARE.
  */
 
+#ifndef INRA_EFYj_SOLVER_HASH_HPP
+#define INRA_EFYj_SOLVER_HASH_HPP
+
 #include "solver.hpp"
 #include "utils.hpp"
 #include <algorithm>
 #include <unordered_map>
 
-namespace {
+namespace efyj {
 
-    std::string make_key(const std::vector <efyj::scale_id>& options)
-    {
-        std::string ret;
+namespace hash_details {
 
-        for (auto opt : options) {
-            if (not efyj::is_valid_scale_id(opt))
-                throw efyj::solver_option_error(
-                    (efyj::fmt("Hash: invalid scale id: %1%") % opt).str());
+std::string make_key(const Eigen::VectorXi& options)
+{
+    std::string ret;
 
-            ret += ('0' + opt);
-        }
+    for (int i = 0, e = options.size(); i != e; ++i)
+        ret += ('0' + options(i));
 
-        return std::move(ret);
-    }
+    return std::move(ret);
+}
 
 }
 
-namespace efyj {
-
-    solver_hash::solver_hash(dexi& model)
+struct solver_hash
+{
+    solver_hash(dexi& model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         std::vector <scale_id> high_level(model.basic_scale_number);
@@ -58,12 +58,12 @@ namespace efyj {
             }
         }
 
-        std::vector <scale_id> options(model.basic_scale_number, 0);
+        Vector options(model.basic_scale_number);
         efyj::solver_basic basic(model);
         bool end = false;
 
         do {
-            hash.emplace(make_key(options), basic.solve(options));
+            hash.emplace(hash_details::make_key(options), basic.solve(options));
 
             std::size_t current = model.basic_scale_number - 1;
             do {
@@ -82,10 +82,10 @@ namespace efyj {
             } while (not end);
         } while (not end);
     }
-
-    efyj::scale_id solver_hash::solve(const std::vector <efyj::scale_id>& options)
+    template <typename V>
+    scale_id solve(const V& options)
     {
-        std::string key = ::make_key(options);
+        std::string key = hash_details::make_key(options);
 
         auto it = hash.find(key);
         if (it == hash.end())
@@ -95,26 +95,10 @@ namespace efyj {
         return it->second;
     }
 
-    result_type solver_hash::solve(const std::string& options)
-    {
-        std::vector <std::string> todo =
-            efyj::make_string_options(options, basic_attribute_scale_size);
+    std::unordered_map <std::string, scale_id> hash;
+    std::vector <scale_id> basic_attribute_scale_size;
+};
 
-        result_type ret;
-
-        std::transform(todo.begin(), todo.end(),
-                       std::inserter(ret, ret.end()),
-                       [this](const std::string& opt)
-                       {
-                           auto it = hash.find(opt);
-
-                           if (it == hash.end())
-                               throw solver_error(
-                                   (fmt("hash: Unknown result for key: %1%") % opt).str());
-
-                           return it->second;
-                       });
-
-        return std::move(ret);
-    }
 }
+
+#endif

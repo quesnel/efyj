@@ -20,6 +20,9 @@
  */
 
 #include "problem.hpp"
+#include "solver-basic.hpp"
+#include "solver-bigmem.hpp"
+#include "solver-hash.hpp"
 #include "model.hpp"
 #include "context.hpp"
 #include "exception.hpp"
