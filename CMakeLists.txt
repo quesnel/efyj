@@ -22,6 +22,22 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 
+find_package(Threads)
+
+###
+## Check logging options
+#
+option(WITH_LOGGING "Logging system in echll [default=ON]" ON)
+option(WITH_DEBUG "Debugging system in echll [default=ON]" ON)
+
+if (WITH_LOGGING)
+    set(efyj_compile_flags "-DENABLE_LOGGING")
+endif ()
+
+if (WITH_DEBUG)
+    set(efyj_compile_flags "-DENABLE_DEBUG ${efyj_compile_flags}")
+endif ()
+
 find_package(PkgConfig)
 
 macro (pkg_config_required_library LIBNAME pcfile)
@@ -91,10 +107,10 @@ endif ()
 ## Core program
 #
 
-set(efyj_CORE_SRCS src/context.cpp src/context.hpp src/exception.cpp
-  src/exception.hpp src/main.cpp src/model.cpp src/model.hpp
-  src/model-io.cpp src/options.cpp src/options.hpp src/post.hpp
-  src/problem.cpp src/problem.hpp src/solver-basic.hpp
+set(efyj_CORE_SRCS src/context.hpp src/exception.cpp
+  src/exception.hpp src/main.cpp src/message.hpp src/model.cpp
+  src/model.hpp src/model-io.cpp src/options.cpp src/options.hpp
+  src/post.hpp src/problem.cpp src/problem.hpp src/solver-basic.hpp
   src/solver-bigmem.hpp src/solver-hash.hpp src/solver.hpp
   src/utils.hpp)
 
@@ -114,14 +130,14 @@ if (MPI_CXX_FOUND)
 endif ()
 
 if (WIN32)
-  target_link_libraries(efyj ${efyj_STATIC_LINK_LIBRARIES})
+  target_link_libraries(efyj ${efyj_STATIC_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
   set_target_properties(efyj PROPERTIES
-    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
+    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden ${efyj_compile_flags}")
 else ()
-  target_link_libraries(efyj ${efyj_LINK_LIBRARIES})
+  target_link_libraries(efyj ${efyj_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
   set_target_properties(efyj PROPERTIES
     VERSION ${efyj_STABLEVERSION}
-    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
+    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden ${efyj_compile_flags}")
 endif ()
 
 install(TARGETS efyj DESTINATION bin)
@@ -145,8 +161,9 @@ if (CATCH_INCLUDE_DIR)
   			        src/solver-bigmem.hpp
   			        src/solver-hash.hpp)
 
-  target_link_libraries(test_basic ${efyj_LINK_LIBRARIES})
+  target_link_libraries(test_basic ${efyj_LINK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
   set_target_properties(test_basic PROPERTIES
+    COMPILE_FLAGS "-DENABLE_LOGGING -DENABLE_DEBUG"
     COMPILE_DEFINITIONS EXAMPLES_DIR="${CMAKE_SOURCE_DIR}/tests")
   add_test(NAME test_basic COMMAND test_basic)
 else ()

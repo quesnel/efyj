@@ -40,6 +40,8 @@ class xml_parser_error : public efyj_error
 public:
     xml_parser_error(const std::string& msg);
 
+    xml_parser_error(const std::string& msg, const std::string& filepath);    
+
     xml_parser_error(const std::string& msg, int line, int column, int error);
 
     virtual ~xml_parser_error();
@@ -47,11 +49,13 @@ public:
     int line() const { return m_line; }
     int column() const { return m_column; }
     int internal_error_code() const { return m_internal_error_code; }
+    std::string filepath() const { return m_filepath; }
     std::string message() const { return m_message; }
 
 private:
     int m_line, m_column;
     int m_internal_error_code;
+    std::string m_filepath;
     std::string m_message;
 };
 

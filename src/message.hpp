@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2015 INRA
+/* Copyright (C) 2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,27 +19,39 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_UTILS_HPP
-#define INRA_EFYj_UTILS_HPP
+#ifndef INRA_EFYj_MESSAGE_HPP
+#define INRA_EFYj_MESSAGE_HPP
 
-#include <functional>
+#include <string>
+#include <thread>
+#include <ostream>
+#include <boost/format.hpp>
 
 namespace efyj {
 
-struct scope_exit
-{
-    scope_exit(std::function <void (void)> fct)
-        : fct(fct)
-    {}
+enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
 
-    ~scope_exit()
-    {
-        fct();
-    }
+struct message {
+    template <typename T>
+    message(LogOption priority, const T &t);
 
-    std::function <void (void)> fct;
+    template <typename T>
+    message(LogOption priority, const char *file, int line, const char *fn,
+            const T &t);
+
+    std::string msg;
+    std::string file;
+    std::string fn;
+    std::thread::id thread_id;
+    LogOption priority;
+    unsigned long int pid;
+    int line;
 };
 
+std::ostream &operator<<(std::ostream &os, const message &msg);
+
 }
+
+#include "details/message-implementation.hpp"
 
 #endif

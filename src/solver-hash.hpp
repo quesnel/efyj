@@ -90,7 +90,7 @@ struct solver_hash
         auto it = hash.find(key);
         if (it == hash.end())
             throw solver_error(
-                (fmt("hash: Unknown result for key: %1%") % key).str());
+                std::string("hash: Unknown result for key: ") + key);
 
         return it->second;
     }

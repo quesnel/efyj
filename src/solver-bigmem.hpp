@@ -35,8 +35,8 @@ namespace efyj {
 namespace bigmem_details {
 
 template <typename V>
-unsigned long make_key(const V& options,
-                       const std::vector <efyj::scale_id>& bits)
+unsigned long make_key(const V &options,
+                       const std::vector <efyj::scale_id> &bits)
 {
     unsigned long ret = 0;
     std::size_t indice = 0;
@@ -49,16 +49,15 @@ unsigned long make_key(const V& options,
     return ret;
 }
 
-}
+} // namespace bigmem details
 
-struct solver_bigmem
-{
-    solver_bigmem(Model& model)
+struct solver_bigmem {
+    solver_bigmem(Model &model)
         : binary_scale_value_size(0)
         , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         {
-            for (const auto& att : model.attributes) {
+            for (const auto &att : model.attributes) {
                 if (att.children.empty()) {
                     binary_scales.push_back(
                         std::floor(std::log2(att.scale.scale.size())) + 1);
@@ -69,16 +68,17 @@ struct solver_bigmem
             try {
                 result.resize(std::pow(2, binary_scale_value_size),
                               scale_id_unknown());
-            } catch (const std::bad_alloc&) {
-                throw efyj::efyj_error(
-                    (efyj::fmt("bigmem: failed to allocate %1% GB") %
-                     (std::pow(2, binary_scale_value_size) / 1024 / 1024)).str());
+            } catch (const std::bad_alloc &) {
+                std::string msg("bigmem: failed to allocate: ");
+                double size = std::pow(2, binary_scale_value_size) / (1024.0 * 1024.0);
+                msg += std::to_string(size) + std::string(" MB");
+                throw efyj::efyj_error(msg);
             }
 
             std::vector <scale_id> high_level(model.basic_scale_number);
             int i = 0;
 
-            for (const auto& att : model.attributes) {
+            for (const auto &att : model.attributes) {
                 if (att.children.empty()) {
                     high_level[i] = att.scale_size();
                     ++i;
@@ -92,10 +92,11 @@ struct solver_bigmem
             do {
                 unsigned long key = bigmem_details::make_key(options, binary_scales);
                 result[key] = basic.solve(options);
-
                 std::size_t current = model.basic_scale_number - 1;
+
                 do {
                     options[current]++;
+
                     if (options[current] >= high_level[current]) {
                         options[current] = 0;
 
@@ -113,10 +114,9 @@ struct solver_bigmem
     }
 
     template <typename V>
-    scale_id solve(const V& options)
+    scale_id solve(const V &options)
     {
         unsigned long key = bigmem_details::make_key(options, binary_scales);
-
         return result[key];
     }
 
@@ -124,7 +124,6 @@ struct solver_bigmem
     std::vector <scale_id> binary_scales;
     std::vector <scale_id> result;
     std::vector <scale_id> basic_attribute_scale_size;
-
 };
 
 }

@@ -26,51 +26,59 @@ namespace {
 
 std::string csv_parser_error_format(std::size_t line,
                                     std::size_t column,
-                                    const std::string& filepath,
-                                    const std::string& msg)
+                                    const std::string &filepath,
+                                    const std::string &msg)
 {
     if (filepath.empty()) {
         return boost::str(
-            boost::format("CSV Error: %1%") % msg);
+                   boost::format("CSV Error: %1%") % msg);
     } else {
         if (line == 0u) {
             return boost::str(
-                boost::format(
-                    "CSV Error: file `%1%': %2%") % filepath % msg);
+                       boost::format(
+                           "CSV Error: file `%1%': %2%") % filepath % msg);
         } else {
             if (column == 0u) {
                 return boost::str(
-                    boost::format(
-                        "CSV Error: file `%1%' line %2%: %3%") %
-                    filepath % line % msg);
+                           boost::format(
+                               "CSV Error: file `%1%' line %2%: %3%") %
+                           filepath % line % msg);
             } else {
                 return boost::str(
-                    boost::format(
-                        "CSV Error: file `%1%' %2%:%3%: %4%") %
-                    filepath % line % column % msg);
+                           boost::format(
+                               "CSV Error: file `%1%' %2%:%3%: %4%") %
+                           filepath % line % column % msg);
             }
         }
     }
 }
 
-std::string xml_parser_error_format(const std::string& msg)
+std::string xml_parser_error_format(const std::string &msg)
 {
     return boost::str(
-        boost::format("DEXI error: %1%") % msg);
+               boost::format("DEXI error: %1%") % msg);
 }
 
-std::string xml_parser_error_format(const std::string& msg, int line,
+std::string xml_parser_error_format(const std::string &msg,
+                                    const std::string &filepath)
+{
+    return boost::str(
+               boost::format("DEXI error: %1% %2%") % filepath % msg);
+}
+
+std::string xml_parser_error_format(const std::string &msg, int line,
                                     int column, int error)
 {
     return boost::str(
-        boost::format("DEXI error: error %1% at %2%:%3%, %4%") % msg % line % column % error);
+               boost::format("DEXI error: error %1% at %2%:%3%, %4%") % msg % line % column %
+               error);
 }
 
 } // anonymous namespace
 
 namespace efyj {
 
-xml_parser_error::xml_parser_error(const std::string& msg)
+xml_parser_error::xml_parser_error(const std::string &msg)
     : efyj_error(::xml_parser_error_format(msg))
     , m_line(0)
     , m_column(0)
@@ -79,7 +87,19 @@ xml_parser_error::xml_parser_error(const std::string& msg)
 {
 }
 
-xml_parser_error::xml_parser_error(const std::string& msg, int line, int column, int error)
+xml_parser_error::xml_parser_error(const std::string &msg,
+                                   const std::string &filepath)
+    : efyj_error(::xml_parser_error_format(filepath, msg))
+    , m_line(0)
+    , m_column(0)
+    , m_internal_error_code(0)
+    , m_filepath(filepath)
+    , m_message(msg)
+{
+}
+
+xml_parser_error::xml_parser_error(const std::string &msg, int line, int column,
+                                   int error)
     : efyj_error(::xml_parser_error_format(msg, line, column, error))
     , m_line(line)
     , m_column(column)
@@ -92,7 +112,7 @@ xml_parser_error::~xml_parser_error()
 {
 }
 
-efyj_error::efyj_error(const std::string& msg)
+efyj_error::efyj_error(const std::string &msg)
     : std::runtime_error(msg)
 {
 }
@@ -101,7 +121,7 @@ efyj_error::~efyj_error()
 {
 }
 
-csv_parser_error::csv_parser_error(const std::string& msg)
+csv_parser_error::csv_parser_error(const std::string &msg)
     : efyj_error(::csv_parser_error_format(0, 0, std::string(), msg))
     , m_line(0)
     , m_column(0)
@@ -109,8 +129,8 @@ csv_parser_error::csv_parser_error(const std::string& msg)
 {
 }
 
-csv_parser_error::csv_parser_error(const std::string& filepath,
-                                   const std::string& msg)
+csv_parser_error::csv_parser_error(const std::string &filepath,
+                                   const std::string &msg)
     : efyj_error(::csv_parser_error_format(0, 0, filepath, msg))
     , m_line(0)
     , m_column(0)
@@ -120,8 +140,8 @@ csv_parser_error::csv_parser_error(const std::string& filepath,
 }
 
 csv_parser_error::csv_parser_error(std::size_t line,
-                                   const std::string& filepath,
-                                   const std::string& msg)
+                                   const std::string &filepath,
+                                   const std::string &msg)
     : efyj_error(::csv_parser_error_format(line, 0, filepath, msg))
     , m_line(line)
     , m_column(0)
@@ -131,8 +151,8 @@ csv_parser_error::csv_parser_error(std::size_t line,
 }
 
 csv_parser_error::csv_parser_error(std::size_t line, std::size_t column,
-                                   const std::string& filepath,
-                                   const std::string& msg)
+                                   const std::string &filepath,
+                                   const std::string &msg)
     : efyj_error(::csv_parser_error_format(line, column, filepath, msg))
     , m_line(line)
     , m_column(column)

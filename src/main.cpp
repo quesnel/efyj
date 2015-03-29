@@ -35,7 +35,7 @@
 #include <getopt.h>
 
 #ifdef EFYj_MPI_SUPPORT
-#include <mpi.h>
+    #include <mpi.h>
 #endif
 
 namespace {
@@ -76,12 +76,15 @@ int main(int argc, char *argv[])
         case 'm':
             modelfilepath.assign(::optarg);
             break;
+
         case 'o':
             optionfilepath.assign(::optarg);
             break;
+
         case 's':
             solvername.assign(::optarg);
             break;
+
         case 'h':
         default:
             ::usage();
@@ -95,16 +98,13 @@ int main(int argc, char *argv[])
     }
 
     try {
-        efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
-        ctx->set_log_stream(&std::cout);
-        ctx->set_error_stream(&std::cerr);
-        ctx->set_log_priority(efyj::LOG_OPTION_DEBUG);
-
+        efyj::Context ctx = std::make_shared <efyj::ContextImpl>("efyj.log",
+                            efyj::LOG_OPTION_ERR);
         efyj::problem pb(ctx, modelfilepath, optionfilepath);
         pb.compute(0, 1);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
     }
 
-  return ret;
+    return ret;
 }

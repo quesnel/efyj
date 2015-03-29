@@ -22,57 +22,73 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
-#include <boost/format.hpp>
-#include <memory>
-#include <functional>
-
-#define DEBUG_MESSAGE efyj::LOG_OPTION_DEBUG, __FILE__, __LINE__, __PRETTY_FUNCTION__
-#define INFO_MESSAGE efyj::LOG_OPTION_INFO, __FILE__, __LINE__, __PRETTY_FUNCTION__
-#define ERR_MESSAGE efyj::LOG_OPTION_ERR, __FILE__, __LINE__, __PRETTY_FUNCTION__
+#include "message.hpp"
+#include <fstream>
+#include <deque>
 
 namespace efyj {
-
-using fmt = boost::format;
 
 class ContextImpl;
 
 typedef std::shared_ptr <ContextImpl> Context;
 
-enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
+} // namespace efyj
 
-typedef std::function <void(const ContextImpl&, int, const char *,
-                            int, const char *, const efyj::fmt& fmt)> log_function;
+#define efyj_log_cond(ctx, prio, arg...)                                \
+    do {                                                                \
+        if ((ctx) && (ctx)->log_priority() >= prio) {                   \
+            if (prio == LOG_OPTION_DEBUG)                               \
+                (ctx)->log(prio, __FILE__, __LINE__,                    \
+                           __PRETTY_FUNCTION__,  ## arg);               \
+            else                                                        \
+                (ctx)->log(prio, ## arg);                               \
+        }                                                               \
+    } while (0)
+
+#ifdef ENABLE_LOGGING
+    #ifdef ENABLE_DEBUG
+        #define efyj_dbg(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_DEBUG, ## arg)
+    #else
+        #define efyj_dbg(ctx, arg...)
+    #endif
+    #define efyj_info(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_INFO, ## arg)
+    #define efyj_err(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_ERR, ## arg)
+#else
+    #define efyj_dbg(ctx, arg...)
+    #define efyj_info(ctx, arg...)
+    #define efyj_err(ctx, arg...)
+#endif
+
+namespace efyj {
 
 class ContextImpl
 {
 public:
-    ContextImpl();
+    ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
 
     ~ContextImpl();
 
-    Context create();
+    void set_log_stream(const std::string &filepath);
 
-    void set_log_stream(std::ostream* os);
-
-    void set_error_stream(std::ostream* os);
-
-    void set_log_function(log_function fct);
-
-    void log(const efyj::fmt& fmt);
-
-    void log(int priority, const char *file,
-             int line, const char *fn,
-             const efyj::fmt& fmt);
+    template <typename... _Args>
+    void log(_Args &&... args);
 
     LogOption log_priority() const;
 
     void set_log_priority(LogOption priority);
 
 private:
-    struct impl;
-    impl* m_impl;
+    std::ofstream m_os;
+    std::deque <message> m_queue;
+    LogOption m_priority;
+    std::mutex m_queue_locker;
+    std::mutex m_os_locker;
+    std::thread m_writer;
+    bool m_close;
 };
 
 }
+
+#include "details/context-implementation.hpp"
 
 #endif

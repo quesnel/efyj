@@ -46,8 +46,7 @@ void read_model_file(const std::string& filepath, Model& model)
 {
     std::ifstream ifs(filepath);
     if (!ifs)
-        throw efyj::xml_parser_error(
-            (efyj::fmt("fail to load Model file %1%") % filepath).str());
+        throw efyj::xml_parser_error(filepath, "fail to open");
 
     ifs >> model;
 }
@@ -57,8 +56,7 @@ void read_option_file(const std::string& filepath, const Model& model,
 {
     std::ifstream ifs(filepath);
     if (!ifs)
-        throw efyj::csv_parser_error(
-            (efyj::fmt("fail to load option file %1%") % filepath).str());
+        throw efyj::csv_parser_error(filepath, "fail to open");
 
     options = array_options_read(ifs, model);
 }
@@ -70,8 +68,7 @@ problem::problem(const Context& ctx,
                  const std::string& option_filepath)
     : context(ctx)
 {
-    context->log(boost::format(fmt("problem: model '%1%' - option '%2%'\n")
-                           % Model_filepath % option_filepath));
+    efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") % Model_filepath % option_filepath);
 
     problem_details::read_model_file(Model_filepath, model);
     problem_details::read_option_file(option_filepath, model, options);
@@ -91,9 +88,7 @@ void problem::compute(int rank, int world_size)
         try {
             options.ids[i].simulated = basic.solve(options.options.row(i));
         } catch (const std::exception& e) {
-            context->log(
-                boost::format(
-                    "solve failure option at row %1%: %2%") % i % e.what());
+            efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
         }
     }
 
@@ -107,10 +102,8 @@ void problem::compute(int rank, int world_size)
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    context->log(
-        boost::format(
-            "finished computation at %1% elapsed time: %2%s")
-            % std::ctime(&end_time) % elapsed_seconds.count());
+    efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") % 
+        std::ctime(&end_time) % elapsed_seconds.count());
 }
 
 }
