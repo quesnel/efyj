@@ -22,8 +22,9 @@
 #ifndef INRA_EFYj_SOLVER_HASH_HPP
 #define INRA_EFYj_SOLVER_HASH_HPP
 
-#include "solver.hpp"
+#include "exception.hpp"
 #include "utils.hpp"
+#include "types.hpp"
 #include <algorithm>
 #include <unordered_map>
 

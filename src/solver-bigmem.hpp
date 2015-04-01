@@ -22,7 +22,6 @@
 #ifndef INRA_EFYj_BIGMEM_HPP
 #define INRA_EFYj_BIGMEM_HPP
 
-#include "solver.hpp"
 #include "exception.hpp"
 #include "utils.hpp"
 #include <numeric>

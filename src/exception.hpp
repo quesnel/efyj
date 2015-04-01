@@ -35,6 +35,21 @@ public:
     virtual ~efyj_error();
 };
 
+class solver_error : public efyj_error
+{
+public:
+    solver_error(const std::string& msg);
+
+    virtual ~solver_error();
+};
+
+struct solver_option_error : solver_error
+{
+    solver_option_error(const std::string& msg);
+
+    virtual ~solver_option_error();
+};
+
 class xml_parser_error : public efyj_error
 {
 public:

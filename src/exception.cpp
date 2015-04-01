@@ -74,9 +74,40 @@ std::string xml_parser_error_format(const std::string &msg, int line,
                error);
 }
 
+std::string solver_error_format(const std::string &msg)
+{
+    return boost::str(
+               boost::format("Solver error: %1%") % msg);
+}
+
+std::string solver_option_error_format(const std::string &opt)
+{
+    return boost::str(
+               boost::format("option `%1%' is unknown") % opt);
+}
+
+
 } // anonymous namespace
 
 namespace efyj {
+
+solver_error::solver_error(const std::string &msg)
+    : efyj_error(::solver_error_format(msg))
+{
+}
+
+solver_error::~solver_error()
+{
+}
+
+solver_option_error::solver_option_error(const std::string &option)
+    : solver_error(::solver_option_error_format(option))
+{
+}
+
+solver_option_error::~solver_option_error()
+{
+}
 
 xml_parser_error::xml_parser_error(const std::string &msg)
     : efyj_error(::xml_parser_error_format(msg))

@@ -31,7 +31,6 @@
 #include "utils.hpp"
 #include "options.hpp"
 #include "post.hpp"
-#include "solver.hpp"
 #include <iostream>
 #include <fstream>
 #include <gmpxx.h>
