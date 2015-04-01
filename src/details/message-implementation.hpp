@@ -40,18 +40,19 @@ inline message::message(LogOption priority, const T &t)
     msg = os.str();
 }
 
-// template <>
-// inline message <std::string>::message(LogOption priority, const std::string& msg)
-//     : msg(msg)
-//     , thread_id(std::this_thread::get_id())
-//     , priority(priority)
-//     , pid(::getpid())
-// {
-// }
+template <>
+inline message::message <std::string>(LogOption priority,
+                                      const std::string &msg)
+    : msg(msg)
+    , thread_id(std::this_thread::get_id())
+    , priority(priority)
+    , pid(::getpid())
+{
+}
 
 template <typename T>
 inline message::message(LogOption priority, const char *file, int line,
-                        const char *fn, const T& t)
+                        const char *fn, const T &t)
     : file(file)
     , fn(fn)
     , thread_id(std::this_thread::get_id())
@@ -62,6 +63,20 @@ inline message::message(LogOption priority, const char *file, int line,
     std::stringstream os;
     os << t;
     msg = os.str();
+}
+
+template <>
+inline message::message <std::string>(LogOption priority, const char *file,
+                                      int line,
+                                      const char *fn, const std::string &msg)
+    : msg(msg)
+    , file(file)
+    , fn(fn)
+    , thread_id(std::this_thread::get_id())
+    , priority(priority)
+    , pid(::getpid())
+    , line(line)
+{
 }
 
 inline std::ostream &operator<<(std::ostream &os, const message &msg)
