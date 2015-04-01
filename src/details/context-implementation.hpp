@@ -130,7 +130,7 @@ inline LogOption ContextImpl::log_priority() const
 
 inline void ContextImpl::set_log_priority(LogOption priority)
 {
-    priority = m_priority;
+    m_priority = priority;
 }
 
 }
