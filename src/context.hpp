@@ -23,8 +23,10 @@
 #define INRA_EFYj_CONTEXT_HPP
 
 #include "message.hpp"
-#include <fstream>
 #include <deque>
+#include <fstream>
+#include <thread>
+#include <mutex>
 
 namespace efyj {
 
@@ -78,7 +80,7 @@ public:
     void set_log_priority(LogOption priority);
 
 private:
-    std::ofstream m_os;
+    std::shared_ptr <std::ostream> m_os;
     std::deque <message> m_queue;
     LogOption m_priority;
     std::mutex m_queue_locker;

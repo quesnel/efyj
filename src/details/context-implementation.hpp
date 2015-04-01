@@ -24,29 +24,37 @@
 
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <memory>
 
 namespace efyj {
 
 namespace context_details {
 
-inline std::ofstream make_log_stream(const std::string &filepath)
+inline void cout_no_deleter(std::ostream *os)
 {
-    {
-        std::ofstream tmp(filepath);
-
-        if (tmp.is_open())
-            return std::move(tmp);
-    }
-    {
-        std::ofstream tmp("efyj.log");
-
-        if (tmp.is_open())
-            return std::move(tmp);
-    }
-    throw std::runtime_error("efyj: fail to open log file");
+    (void)os;
 }
 
-inline void writer_run(std::ostream &os, std::deque <message> &queue,
+inline std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
+{
+    {
+        std::shared_ptr <std::ofstream> tmp(new std::ofstream(filepath));
+
+        if (tmp->is_open())
+            return tmp;
+    }
+    {
+        std::shared_ptr <std::ofstream> tmp(new std::ofstream("efyj.log"));
+
+        if (tmp->is_open())
+            return tmp;
+    }
+
+    return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
+}
+
+inline void writer_run(std::shared_ptr <std::ostream> &os, std::deque <message> &queue,
                        std::mutex &queue_locker, std::mutex &os_locker, bool &close)
 {
     std::deque <message> copy;
@@ -62,7 +70,7 @@ inline void writer_run(std::ostream &os, std::deque <message> &queue,
             std::lock_guard <std::mutex> lock(os_locker);
 
             for (const auto &msg : copy)
-                os << msg << '\n';
+                (*os) << msg << '\n';
         }
     }
 
@@ -76,7 +84,7 @@ inline void writer_run(std::ostream &os, std::deque <message> &queue,
             std::lock_guard <std::mutex> lock(os_locker);
 
             for (const auto &msg : copy) {
-                os << msg << '\n';
+                (*os) << msg << '\n';
             }
         }
     }
