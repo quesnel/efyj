@@ -23,6 +23,7 @@
 #include "solver-basic.hpp"
 #include "solver-bigmem.hpp"
 #include "solver-hash.hpp"
+#include "solver-gmp.hpp"
 #include "model.hpp"
 #include "context.hpp"
 #include "exception.hpp"
@@ -33,7 +34,6 @@
 #include "post.hpp"
 #include <iostream>
 #include <fstream>
-#include <gmpxx.h>
 #include <numeric>
 #include <cinttypes>
 

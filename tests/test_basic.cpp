@@ -23,6 +23,7 @@
 #include "solver-basic.hpp"
 #include "solver-hash.hpp"
 #include "solver-bigmem.hpp"
+#include "solver-gmp.hpp"
 #include <sstream>
 #include <cstdlib>
 
@@ -289,6 +290,12 @@ TEST_CASE("test basic solver for Car", "[model]")
 
     {
         efyj::solver_hash s(model);
+        REQUIRE(s.solve(opt_v3) == 3);
+        REQUIRE(s.solve(opt_v2) == 2);
+    }
+
+    {
+        efyj::solver_bigmem s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
     }
