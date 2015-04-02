@@ -19,7 +19,9 @@
  * SOFTWARE.
  */
 
-#include "problem.hpp"
+#ifndef INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
+#define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
+
 #include "solver-basic.hpp"
 #include "solver-bigmem.hpp"
 #include "solver-hash.hpp"
@@ -27,15 +29,11 @@
 #include "model.hpp"
 #include "context.hpp"
 #include "exception.hpp"
-#include <boost/format.hpp>
-#include <boost/algorithm/string.hpp>
 #include "utils.hpp"
 #include "options.hpp"
 #include "post.hpp"
-#include <iostream>
 #include <fstream>
-#include <numeric>
-#include <cinttypes>
+#include <chrono>
 
 namespace efyj {
 
@@ -106,3 +104,5 @@ void problem::compute(int rank, int world_size)
 }
 
 }
+
+#endif

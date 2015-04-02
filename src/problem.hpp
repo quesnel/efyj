@@ -43,4 +43,6 @@ struct problem
 
 }
 
+#include "details/problem-implementation.hpp"
+
 #endif

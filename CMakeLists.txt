@@ -109,7 +109,7 @@ endif ()
 
 set(efyj_CORE_SRCS src/context.hpp src/exception.hpp src/main.cpp
   src/message.hpp src/model.hpp src/model-io.cpp src/options.hpp src/post.hpp
-  src/problem.cpp src/problem.hpp src/solver-basic.hpp src/solver-bigmem.hpp
+  src/problem.hpp src/solver-basic.hpp src/solver-bigmem.hpp
   src/solver-hash.hpp src/utils.hpp)
 
 add_executable(efyj ${efyj_CORE_SRCS})
