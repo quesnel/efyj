@@ -22,8 +22,9 @@
 #ifndef INRA_EFYj_BIGMEM_HPP
 #define INRA_EFYj_BIGMEM_HPP
 
-#include "exception.hpp"
-#include "utils.hpp"
+#include <efyj/exception.hpp>
+#include <efyj/utils.hpp>
+
 #include <numeric>
 #include <vector>
 #include <string>

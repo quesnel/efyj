@@ -22,8 +22,9 @@
 #ifndef INRA_EFYj_SOLVER_BASIC_HPP
 #define INRA_EFYj_SOLVER_BASIC_HPP
 
-#include "model.hpp"
-#include "exception.hpp"
+#include <efyj/model.hpp>
+#include <efyj/exception.hpp>
+
 #include <algorithm>
 #include <numeric>
 

@@ -19,9 +19,10 @@
  * SOFTWARE.
  */
 
-#include "model.hpp"
-#include "exception.hpp"
-#include "problem.hpp"
+#include <efyj/model.hpp>
+#include <efyj/exception.hpp>
+#include <efyj/problem.hpp>
+
 #include <iostream>
 #include <algorithm>
 #include <chrono>

@@ -19,38 +19,35 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_SOLVER_GMP_HPP
-#define INRA_EFYj_SOLVER_GMP_HPP
+#ifndef INRA_EFYj_SOLVER_HASH_HPP
+#define INRA_EFYj_SOLVER_HASH_HPP
 
-#include "exception.hpp"
-#include "utils.hpp"
-#include "types.hpp"
+#include <efyj/exception.hpp>
+#include <efyj/utils.hpp>
+#include <efyj/types.hpp>
+
 #include <algorithm>
 #include <unordered_map>
-#include <gmpxx.h>
 
 namespace efyj {
 
-namespace gmp_details {
+namespace hash_details {
 
-template <typename V>
-mpz_class make_key(const V& options)
+std::string make_key(const Eigen::VectorXi& options)
 {
-    mpz_class ret;
+    std::string ret;
 
-    for (int i = 0, e = options.size(); i != e; ++i) {
-        ret *= 10;
-        ret += options(i);
-    }
+    for (int i = 0, e = options.size(); i != e; ++i)
+        ret += ('0' + options(i));
 
     return std::move(ret);
 }
 
-} // namespace gmp_details
+}
 
-struct solver_gmp
+struct solver_hash
 {
-    solver_gmp(Model& model)
+    solver_hash(Model& model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         std::vector <scale_id> high_level(model.basic_scale_number);
@@ -68,7 +65,7 @@ struct solver_gmp
         bool end = false;
 
         do {
-            hash.emplace(gmp_details::make_key(options), basic.solve(options));
+            hash.emplace(hash_details::make_key(options), basic.solve(options));
 
             std::size_t current = model.basic_scale_number - 1;
             do {
@@ -90,16 +87,17 @@ struct solver_gmp
     template <typename V>
     scale_id solve(const V& options)
     {
-        mpz_class key = hash_details::make_key(options);
+        std::string key = hash_details::make_key(options);
 
         auto it = hash.find(key);
         if (it == hash.end())
-            throw solver_option_error(key.get_str());
+            throw solver_error(
+                std::string("hash: Unknown result for key: ") + key);
 
         return it->second;
     }
 
-    std::map <mpz_class, scale_id> hash;
+    std::unordered_map <std::string, scale_id> hash;
     std::vector <scale_id> basic_attribute_scale_size;
 };
 

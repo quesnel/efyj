@@ -23,8 +23,9 @@
 #define INRA_DETAILS_EFYj_MODEL_IMPLEMENTATION_HPP
 
 #include <algorithm>
-#include "exception.hpp"
-#include "utils.hpp"
+#include <efyj/exception.hpp>
+#include <efyj/utils.hpp>
+
 #include <istream>
 #include <ostream>
 #include <functional>

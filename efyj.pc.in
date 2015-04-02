@@ -1,0 +1,10 @@
+prefix=@efyj_PKGCONFIG_PREFIX_DIR@
+includedir=${prefix}/include
+
+Name: efyj
+Description: A C++ template library for DEXi statistical analysis
+Requires: expat eigen3
+Version: @efyj_VERSION@
+Libs:
+Libs.private: -lm -lpthread
+Cflags: -I${includedir}/efyj-@efyj_STABLEVERSION@ -I@efyj_PKGCONFIG_BOOSTINCLUDE_DIRS@

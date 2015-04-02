@@ -22,7 +22,8 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
-#include "message.hpp"
+#include <efyj/message.hpp>
+
 #include <deque>
 #include <fstream>
 #include <thread>

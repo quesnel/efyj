@@ -22,13 +22,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 
-find_package(Threads)
-
-###
+### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ## Check logging options
 #
-option(WITH_LOGGING "Logging system in echll [default=ON]" ON)
-option(WITH_DEBUG "Debugging system in echll [default=ON]" ON)
+
+option(WITH_LOGGING "Logging system in efyj [default=ON]" ON)
+option(WITH_DEBUG "Debugging system in efyj [default=ON]" ON)
 
 if (WITH_LOGGING)
     set(efyj_compile_flags "-DENABLE_LOGGING")
@@ -38,6 +37,11 @@ if (WITH_DEBUG)
     set(efyj_compile_flags "-DENABLE_DEBUG ${efyj_compile_flags}")
 endif ()
 
+### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## Check dependencies
+#
+
+find_package(Threads)
 find_package(PkgConfig)
 
 macro (pkg_config_required_library LIBNAME pcfile)
@@ -107,12 +111,9 @@ endif ()
 ## Core program
 #
 
-set(efyj_CORE_SRCS src/context.hpp src/exception.hpp src/main.cpp
-  src/message.hpp src/model.hpp src/options.hpp src/post.hpp src/problem.hpp
-  src/solver-basic.hpp src/solver-bigmem.hpp src/solver-hash.hpp
-  src/utils.hpp)
+install(DIRECTORY src/efyj DESTINATION include/efyj-${efyj_STABLEVERSION})
 
-add_executable(efyj ${efyj_CORE_SRCS})
+add_executable(efyj src/main.cpp)
 
 if (MPI_CXX_FOUND)
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -139,6 +140,17 @@ else ()
 endif ()
 
 install(TARGETS efyj DESTINATION bin)
+
+### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+## efyj-x.y.pc
+#
+
+set(efyj_PKGCONFIG_PREFIX_DIR "${CMAKE_INSTALL_PREFIX}")
+set(efyj_PKGCONFIG_BOOSTINCLUDE_DIRS "${Boost_INCLUDE_DIRS}")
+
+configure_file(efyj.pc.in ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc @ONLY)
+install(FILES ${PROJECT_BINARY_DIR}/efyj-${efyj_STABLEVERSION}.pc
+  DESTINATION lib/pkgconfig)
 
 ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 ## Testing

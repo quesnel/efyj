@@ -22,16 +22,17 @@
 #ifndef INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 #define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 
-#include "solver-basic.hpp"
-#include "solver-bigmem.hpp"
-#include "solver-hash.hpp"
-#include "solver-gmp.hpp"
-#include "model.hpp"
-#include "context.hpp"
-#include "exception.hpp"
-#include "utils.hpp"
-#include "options.hpp"
-#include "post.hpp"
+#include <efyj/solver-basic.hpp>
+#include <efyj/solver-bigmem.hpp>
+#include <efyj/solver-hash.hpp>
+#include <efyj/solver-gmp.hpp>
+#include <efyj/model.hpp>
+#include <efyj/context.hpp>
+#include <efyj/exception.hpp>
+#include <efyj/utils.hpp>
+#include <efyj/options.hpp>
+#include <efyj/post.hpp>
+
 #include <fstream>
 #include <chrono>
 
@@ -99,7 +100,7 @@ void problem::compute(int rank, int world_size)
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") % 
+    efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
         std::ctime(&end_time) % elapsed_seconds.count());
 }
 

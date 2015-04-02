@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 INRA
+/* Copyright (C) 2014-2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,43 +19,30 @@
  * SOFTWARE.
  */
 
-#ifndef INRA_EFYj_OPTIONS_HPP
-#define INRA_EFYj_OPTIONS_HPP
+#ifndef INRA_EFYj_PROBLEM_HPP
+#define INRA_EFYj_PROBLEM_HPP
 
-#include "model.hpp"
-#include "types.hpp"
+#include <efyj/context.hpp>
+#include <efyj/options.hpp>
+#include <efyj/model.hpp>
 
 namespace efyj {
 
-class OptionsId
+struct problem
 {
-public:
-    OptionsId(const std::string &simulation,
-              const std::string &place,
-              int department,
-              int year,
-              int observated);
+    problem(const efyj::Context& context,
+            const std::string& dexi_filepath,
+            const std::string& option_filepath);
 
-    ~OptionsId();
+    void compute(int rank, int world_size);
 
-    std::string simulation;
-    std::string place;
-    int department;
-    int year;
-
-    int observated;
-    int simulated;
+    Context context;
+    Options options;
+    Model model;
 };
-
-struct Options {
-    std::vector <OptionsId> ids;
-    Array options;
-};
-
-Options array_options_read(std::istream &is, const efyj::Model &model);
 
 }
 
-#include "details/options-implementation.hpp"
+#include "details/problem-implementation.hpp"
 
 #endif

@@ -19,11 +19,12 @@
  * SOFTWARE.
  */
 
-#include "model.hpp"
-#include "solver-basic.hpp"
-#include "solver-hash.hpp"
-#include "solver-bigmem.hpp"
-#include "solver-gmp.hpp"
+#include <efyj/model.hpp>
+#include <efyj/solver-basic.hpp>
+#include <efyj/solver-hash.hpp>
+#include <efyj/solver-bigmem.hpp>
+#include <efyj/solver-gmp.hpp>
+
 #include <sstream>
 #include <cstdlib>
 

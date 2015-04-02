@@ -22,7 +22,8 @@
 #ifndef INRA_EFYj_DETAILS_OPTIONS_IMPLEMENTATION_HPP
 #define INRA_EFYj_DETAILS_OPTIONS_IMPLEMENTATION_HPP
 
-#include "exception.hpp"
+#include <efyj/exception.hpp>
+
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
