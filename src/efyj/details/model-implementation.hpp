@@ -540,6 +540,11 @@ void attribute::fill_utility_function()
                        return att->scale_size();
                    });
 
+    for (auto child : child_max_value) {
+        if (child > 10)
+            throw std::invalid_argument("can not compute this model (too many value for efyj");
+    }
+
     std::vector <scale_id> iter(children.size(), 0u);
     bool end = false;
 
