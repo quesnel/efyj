@@ -27,20 +27,16 @@
 
 namespace efyj {
 
-struct OptionsId
+class OptionsId
 {
-    OptionsId(const std::string& simulation_,
-              const std::string& place_,
-              int department_,
-              int year_,
-              int observated_)
-        : simulation(simulation_)
-        , place(place_)
-        , department(department_)
-        , year(year_)
-        , observated(observated_)
-        , simulated(-1)
-    {}
+public:
+    OptionsId(const std::string &simulation,
+              const std::string &place,
+              int department,
+              int year,
+              int observated);
+
+    ~OptionsId();
 
     std::string simulation;
     std::string place;
@@ -51,14 +47,15 @@ struct OptionsId
     int simulated;
 };
 
-struct Options
-{
+struct Options {
     std::vector <OptionsId> ids;
     Array options;
 };
 
-Options array_options_read(std::istream& is, const efyj::Model& model);
+Options array_options_read(std::istream &is, const efyj::Model &model);
 
 }
+
+#include "details/options-implementation.hpp"
 
 #endif
