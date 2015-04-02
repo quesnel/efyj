@@ -41,8 +41,7 @@ inline message::message(LogOption priority, const T &t)
 }
 
 template <>
-inline message::message <std::string>(LogOption priority,
-                                      const std::string &msg)
+inline message::message(LogOption priority, const std::string &msg)
     : msg(msg)
     , thread_id(std::this_thread::get_id())
     , priority(priority)
@@ -66,9 +65,9 @@ inline message::message(LogOption priority, const char *file, int line,
 }
 
 template <>
-inline message::message <std::string>(LogOption priority, const char *file,
-                                      int line,
-                                      const char *fn, const std::string &msg)
+inline message::message(LogOption priority, const char *file,
+                        int line,
+                        const char *fn, const std::string &msg)
     : msg(msg)
     , file(file)
     , fn(fn)
