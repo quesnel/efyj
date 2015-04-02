@@ -197,4 +197,6 @@ std::istream& operator>>(std::istream& is, Model& Model_data);
 
 }
 
+#include "details/model-implementation.hpp"
+
 #endif

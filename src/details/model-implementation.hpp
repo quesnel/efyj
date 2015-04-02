@@ -19,11 +19,14 @@
  * SOFTWARE.
  */
 
-#include "model.hpp"
+#ifndef INRA_DETAILS_EFYj_MODEL_IMPLEMENTATION_HPP
+#define INRA_DETAILS_EFYj_MODEL_IMPLEMENTATION_HPP
+
 #include <algorithm>
 
 namespace efyj {
 
+inline
 void attribute::fill_utility_function()
 {
     std::vector <scale_id> child_max_value(children.size(), 0u);
@@ -66,6 +69,7 @@ void attribute::fill_utility_function()
     } while (not end);
 }
 
+inline
 void Model::init()
 {
     for (auto& att : attributes)
@@ -73,11 +77,13 @@ void Model::init()
             att.fill_utility_function();
 }
 
+inline
 bool operator==(const attribute& lhs, const attribute& rhs)
 {
     return lhs.name == rhs.name;
 }
 
+inline
 bool operator==(const Model& lhs, const Model& rhs)
 {
     if (not (lhs.options == rhs.options &&
@@ -94,9 +100,12 @@ bool operator==(const Model& lhs, const Model& rhs)
     return false;
 }
 
+inline
 bool operator!=(const Model& lhs, const Model& rhs)
 {
     return not (lhs == rhs);
 }
 
 }
+
+#endif
