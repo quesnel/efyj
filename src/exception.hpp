@@ -43,8 +43,9 @@ public:
     virtual ~solver_error();
 };
 
-struct solver_option_error : solver_error
+class solver_option_error : solver_error
 {
+public:
     solver_option_error(const std::string& msg);
 
     virtual ~solver_option_error();
