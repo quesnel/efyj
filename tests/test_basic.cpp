@@ -29,10 +29,10 @@
 #include <cstdlib>
 
 #if defined(__unix__)
-#include <unistd.h>
+    #include <unistd.h>
 #elif defined(__WIN32__)
-#include <io.h>
-#include <stdio.h>
+    #include <io.h>
+    #include <stdio.h>
 #endif
 
 #define CATCH_CONFIG_MAIN
@@ -42,14 +42,12 @@ TEST_CASE("test empty object equality", "[model]")
 {
     efyj::Model x1;
     efyj::Model x2;
-
     REQUIRE(x1 == x2);
 }
 
 TEST_CASE("test empty object read/write", "[model]")
 {
     efyj::Model x1, x2;
-
     {
         std::string result;
         {
@@ -57,13 +55,11 @@ TEST_CASE("test empty object read/write", "[model]")
             os << x1;
             result = os.str();
         }
-
         {
             std::istringstream is(result);
             is >> x2;
         }
     }
-
     bool is_equal = x1 == x2;
     REQUIRE(is_equal == true);
 }
@@ -75,15 +71,14 @@ TEST_CASE("test classic Model file", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
-        "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi", "Nursery.dxi",
-        "Shuttle.dxi"};
+                                            "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi", "Nursery.dxi",
+                                            "Shuttle.dxi"
+                                          };
 
-    for (const auto& filepath : filepaths) {
+    for (const auto &filepath : filepaths) {
         std::ifstream is(filepath);
         REQUIRE(is.is_open());
-
         efyj::Model dex;
         REQUIRE_NOTHROW(is >> dex);
     }
@@ -93,25 +88,21 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model car;
     std::stringstream ss;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> car);
         REQUIRE_NOTHROW(ss << car);
     }
-
     efyj::Model car2;
     REQUIRE_NOTHROW(ss >> car2);
-
     REQUIRE(car == car2);
 }
 
 #if (GCC_VERSION >= 40900) or (defined __clang__)
-std::ofstream make_temporary(std::string& name, bool remove = true)
+std::ofstream make_temporary(std::string &name, bool remove = true)
 {
     static const char *names[] = { "TMPDIR", "TMP", "TEMP" };
     static const int names_size = sizeof(names) / sizeof(names[0]);
@@ -130,6 +121,7 @@ std::ofstream make_temporary(std::string& name, bool remove = true)
     filename += "/" + name;
     name = filename;
     std::ofstream os(filename);
+
     if (os && remove) {
 #if defined(__unix__)
         ::unlink(filename.c_str());
@@ -145,28 +137,22 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model car;
     std::string outputfile("CarXXXXXXXX.dxi");
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> car);
-
         std::ofstream os(make_temporary(outputfile, false));
         REQUIRE(os.is_open());
         REQUIRE_NOTHROW(os << car);
     }
-
     efyj::Model car2;
-
     {
         std::ifstream is(outputfile);
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> car2);
     }
-
     REQUIRE(car == car2);
 }
 #endif
@@ -175,15 +161,12 @@ TEST_CASE("test Car.dxi", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model car;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> car);
     }
-
     REQUIRE(car.attributes.size() == 10u);
     REQUIRE(car.child);
     REQUIRE(car.child->name == "CAR");
@@ -199,11 +182,14 @@ TEST_CASE("test Car.dxi", "[model]")
     REQUIRE(car.child->children[1]->children[0]->name == "COMFORT");
     REQUIRE(car.child->children[1]->children[0]->children.size() == 3u);
     REQUIRE(car.child->children[1]->children[0]->children[0]->name == "#PERS");
-    REQUIRE(car.child->children[1]->children[0]->children[0]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[0]->children[0]->children.empty() ==
+            true);
     REQUIRE(car.child->children[1]->children[0]->children[1]->name == "#DOORS");
-    REQUIRE(car.child->children[1]->children[0]->children[1]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[0]->children[1]->children.empty() ==
+            true);
     REQUIRE(car.child->children[1]->children[0]->children[2]->name == "LUGGAGE");
-    REQUIRE(car.child->children[1]->children[0]->children[2]->children.empty() == true);
+    REQUIRE(car.child->children[1]->children[0]->children[2]->children.empty() ==
+            true);
     REQUIRE(car.child->children[1]->children[1]->name == "SAFETY");
     REQUIRE(car.child->children[1]->children[1]->children.empty() == true);
 }
@@ -212,34 +198,27 @@ TEST_CASE("test multiple Car.Model", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model src, dst;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> src);
     }
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> dst);
     }
-
     REQUIRE(src == dst);
-
     efyj::Model dst2;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> dst2);
     }
-
     REQUIRE(dst2 == dst);
     REQUIRE(dst2.child);
     dst2.child->name = "change";
-
     REQUIRE(dst2 != dst);
 }
 
@@ -247,15 +226,12 @@ TEST_CASE("test solver Car", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model model;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
     REQUIRE(model.problem_size == 972u);
     REQUIRE(model.basic_scale_number == 6u);
     REQUIRE(model.scale_number == 10u);
@@ -266,45 +242,43 @@ TEST_CASE("test basic solver for Car", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model model;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
     REQUIRE(model.problem_size == 972u);
     REQUIRE(model.basic_scale_number == 6u);
     REQUIRE(model.scale_number == 10u);
     REQUIRE(model.scalevalue_number == 19u);
-
     efyj::Vector opt_v3(6); opt_v3 << 1, 2, 2, 2, 2, 2;
     efyj::Vector opt_v2(6); opt_v2 << 1, 1, 2, 2, 2, 1;
-
     {
         efyj::solver_basic s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
     }
-
     {
         efyj::solver_hash s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
     }
-
     {
         efyj::solver_bigmem s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
     }
-
     {
-        efyj::solver_bigmem s(model);
-        REQUIRE(s.solve(opt_v3) == 3);
-        REQUIRE(s.solve(opt_v2) == 2);
+        efyj::solver_gmp s(model);
+
+        bool equal;
+
+        equal = (s.solve(opt_v3) == 3);
+        REQUIRE(equal);
+
+        equal = (s.solve(opt_v2) == 2);
+        REQUIRE(equal);
     }
 }
 
