@@ -60,7 +60,7 @@ struct solver_hash
             }
         }
 
-        Vector options(model.basic_scale_number);
+        Vector options = Vector::Zero(model.basic_scale_number);
         efyj::solver_basic basic(model);
         bool end = false;
 

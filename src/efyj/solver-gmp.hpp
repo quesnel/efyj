@@ -64,7 +64,7 @@ struct solver_gmp
             }
         }
 
-        Vector options(model.basic_scale_number);
+        Vector options = Vector::Zero(model.basic_scale_number);
         efyj::solver_basic basic(model);
         bool end = false;
 
@@ -91,7 +91,7 @@ struct solver_gmp
     template <typename V>
     scale_id solve(const V& options)
     {
-        mpz_class key = hash_details::make_key(options);
+        mpz_class key = gmp_details::make_key(options);
 
         auto it = hash.find(key);
         if (it == hash.end())
