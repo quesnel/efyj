@@ -32,7 +32,7 @@ namespace efyj {
 
 namespace basic_details {
 
-std::string format_error_msg(const efyj::attribute& att, std::uint32_t key)
+std::string format_error_msg(const efyj::attribute& att, std::size_t key)
 {
     return std::string("Unknown solution ") + std::to_string(key)
         + std::string(" for attribute ") + att.name;
@@ -40,11 +40,11 @@ std::string format_error_msg(const efyj::attribute& att, std::uint32_t key)
 
 efyj::scale_id utility_function_get_value(efyj::attribute& att)
 {
-    std::uint32_t key = std::accumulate(
+    std::size_t key = std::accumulate(
         att.children.begin(),
         att.children.end(),
         0u,
-        [](std::uint32_t init, const efyj::attribute* a)
+        [](std::size_t init, const efyj::attribute* a)
         {
             return init * 10 + a->value;
         });
