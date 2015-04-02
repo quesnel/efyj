@@ -94,7 +94,7 @@ struct solver_gmp
 
         auto it = hash.find(key);
         if (it == hash.end())
-            throw solver_option_error(key);
+            throw solver_option_error(key.get_str());
 
         return it->second;
     }
