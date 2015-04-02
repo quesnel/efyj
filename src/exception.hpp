@@ -30,7 +30,7 @@ namespace efyj {
 class efyj_error : public std::runtime_error
 {
 public:
-    efyj_error(const std::string& msg);
+    efyj_error(const std::string &msg);
 
     virtual ~efyj_error();
 };
@@ -38,7 +38,7 @@ public:
 class solver_error : public efyj_error
 {
 public:
-    solver_error(const std::string& msg);
+    solver_error(const std::string &msg);
 
     virtual ~solver_error();
 };
@@ -46,7 +46,7 @@ public:
 class solver_option_error : solver_error
 {
 public:
-    solver_option_error(const std::string& msg);
+    solver_option_error(const std::string &msg);
 
     virtual ~solver_option_error();
 };
@@ -54,11 +54,11 @@ public:
 class xml_parser_error : public efyj_error
 {
 public:
-    xml_parser_error(const std::string& msg);
+    xml_parser_error(const std::string &msg);
 
-    xml_parser_error(const std::string& msg, const std::string& filepath);    
+    xml_parser_error(const std::string &msg, const std::string &filepath);
 
-    xml_parser_error(const std::string& msg, int line, int column, int error);
+    xml_parser_error(const std::string &msg, int line, int column, int error);
 
     virtual ~xml_parser_error();
 
@@ -78,16 +78,16 @@ private:
 class csv_parser_error : public efyj_error
 {
 public:
-    csv_parser_error(const std::string& msg);
+    csv_parser_error(const std::string &msg);
 
-    csv_parser_error(const std::string& filepath, const std::string& msg);
+    csv_parser_error(const std::string &filepath, const std::string &msg);
 
-    csv_parser_error(std::size_t line, const std::string& filepath,
-                     const std::string& msg);
+    csv_parser_error(std::size_t line, const std::string &filepath,
+                     const std::string &msg);
 
     csv_parser_error(std::size_t line, std::size_t column,
-                     const std::string& filepath,
-                     const std::string& msg);
+                     const std::string &filepath,
+                     const std::string &msg);
 
     virtual ~csv_parser_error();
 
@@ -104,5 +104,7 @@ private:
 };
 
 }
+
+#include "details/exception-implementation.hpp"
 
 #endif

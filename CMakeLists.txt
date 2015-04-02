@@ -107,10 +107,10 @@ endif ()
 ## Core program
 #
 
-set(efyj_CORE_SRCS src/context.hpp src/exception.cpp src/exception.hpp
-  src/main.cpp src/message.hpp src/model.cpp src/model.hpp src/model-io.cpp
-  src/options.hpp src/post.hpp src/problem.cpp src/problem.hpp
-  src/solver-basic.hpp src/solver-bigmem.hpp src/solver-hash.hpp src/utils.hpp)
+set(efyj_CORE_SRCS src/context.hpp src/exception.hpp src/main.cpp
+  src/message.hpp src/model.cpp src/model.hpp src/model-io.cpp src/options.hpp
+  src/post.hpp src/problem.cpp src/problem.hpp src/solver-basic.hpp
+  src/solver-bigmem.hpp src/solver-hash.hpp src/utils.hpp)
 
 add_executable(efyj ${efyj_CORE_SRCS})
 
@@ -154,7 +154,7 @@ if (CATCH_INCLUDE_DIR)
   include_directories(${CATCH_INCLUDE_DIR})
 
   add_executable(test_basic tests/test_basic.cpp src/model.cpp
-  			        src/model-io.cpp src/exception.cpp
+  			        src/model-io.cpp
   			        src/solver-basic.hpp
   			        src/solver-bigmem.hpp
   			        src/solver-hash.hpp)
