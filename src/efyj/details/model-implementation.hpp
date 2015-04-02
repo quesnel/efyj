@@ -515,7 +515,7 @@ private:
     void write_Model()
     {
         os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-           << "<Model>\n"
+           << "<DEXi>\n"
            << "  <NAME>" << dex.name << "</NAME>\n";
         space = 2;
         write_Model_option(dex.options);
@@ -523,7 +523,7 @@ private:
         if (dex.child)
             write_Model_attribute(*(dex.child));
 
-        os << "</Model>\n";
+        os << "</DEXi>\n";
     }
 };
 
