@@ -69,8 +69,6 @@ struct solver_basic
     template <typename V>
     scale_id solve(const V& options)
     {
-        std::size_t i = 0;
-
         for (auto& att : model.attributes) {
             if (not att.is_basic()) {
                 att.parent_is_solvable = 0;
@@ -78,6 +76,7 @@ struct solver_basic
             }
         }
 
+        std::size_t i = 0;
         for (auto& att : model.attributes) {
             if (att.is_basic()) {
                 att.value = options(i++);
@@ -89,6 +88,9 @@ struct solver_basic
                     att.parent->parent_is_solvable++;
             }
         }
+
+        if ((long)i != options.size())
+            throw std::invalid_argument("i != options.size()");
 
         for (;;) {
             for (auto& att : model.attributes) {
