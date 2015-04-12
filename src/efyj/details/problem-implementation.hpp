@@ -26,6 +26,7 @@
 #include <efyj/solver-bigmem.hpp>
 #include <efyj/solver-hash.hpp>
 #include <efyj/solver-gmp.hpp>
+#include <efyj/solver-stack.hpp>
 #include <efyj/model.hpp>
 #include <efyj/context.hpp>
 #include <efyj/exception.hpp>
@@ -50,7 +51,7 @@ void read_model_file(const std::string& filepath, Model& model)
 }
 
 void read_option_file(const std::string& filepath, const Model& model,
-    Options& options)
+                      Options& options)
 {
     std::ifstream ifs(filepath);
     if (!ifs)
@@ -64,7 +65,7 @@ void read_option_file(const std::string& filepath, const Model& model,
 problem::problem(const Context& ctx,
                  const std::string& Model_filepath,
                  const std::string& option_filepath)
-    : context(ctx)
+: context(ctx)
 {
     efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") % Model_filepath % option_filepath);
 
@@ -74,34 +75,64 @@ problem::problem(const Context& ctx,
 
 void problem::compute(int rank, int world_size)
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-
     (void)rank;
     (void)world_size;
 
-    solver_basic basic(model);
+    {
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
 
-    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-        try {
-            options.ids[i].simulated = basic.solve(options.options.row(i));
-        } catch (const std::exception& e) {
-            efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
+        solver_basic basic(model);
+
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+            try {
+                options.ids[i].simulated = basic.solve(options.options.row(i));
+            } catch (const std::exception& e) {
+                efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
+            }
         }
+
+        Post post;
+        post.functions.emplace_back(rmsep);
+        post.functions.emplace_back(weighted_kappa);
+        post.apply(model, options, context);
+
+        end = std::chrono::system_clock::now();
+
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+        efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
+                  std::ctime(&end_time) % elapsed_seconds.count());
     }
 
-    Post post;
-    post.functions.emplace_back(rmsep);
-    post.functions.emplace_back(weighted_kappa);
-    post.apply(model, options, context);
+    {
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
 
-    end = std::chrono::system_clock::now();
+        solver_stack basic(model);
 
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+            try {
+                options.ids[i].simulated = basic.solve(options.options.row(i));
+            } catch (const std::exception& e) {
+                efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
+            }
+        }
 
-    efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
-        std::ctime(&end_time) % elapsed_seconds.count());
+        Post post;
+        post.functions.emplace_back(rmsep);
+        post.functions.emplace_back(weighted_kappa);
+        post.apply(model, options, context);
+
+        end = std::chrono::system_clock::now();
+
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+        efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
+                  std::ctime(&end_time) % elapsed_seconds.count());
+    }
 }
 
 }
