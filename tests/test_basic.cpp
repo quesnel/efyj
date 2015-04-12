@@ -24,6 +24,7 @@
 #include <efyj/solver-hash.hpp>
 #include <efyj/solver-bigmem.hpp>
 #include <efyj/solver-gmp.hpp>
+#include <efyj/solver-stack.hpp>
 
 #include <sstream>
 #include <cstdlib>
@@ -270,6 +271,11 @@ TEST_CASE("test basic solver for Car", "[model]")
         REQUIRE(s.solve(opt_v2) == 2);
     }
     {
+        efyj::solver_stack s(model);
+        REQUIRE(s.solve(opt_v3) == 3);
+        REQUIRE(s.solve(opt_v2) == 2);
+    }
+    {
         efyj::solver_gmp s(model);
 
         bool equal;
@@ -303,6 +309,9 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve(opt_v) == 1);
 
+    efyj::solver_stack ss(model);
+    REQUIRE(ss.solve(opt_v) == 1);
+
     efyj::solver_hash sh(model);
     REQUIRE(sh.solve(opt_v) == 1);
 }
@@ -328,6 +337,9 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve(opt_v) == 6);
+
+    efyj::solver_stack ss(model);
+    REQUIRE(ss.solve(opt_v) == 6);
 
     efyj::solver_hash sh(model);
     REQUIRE(sh.solve(opt_v) == 6);
