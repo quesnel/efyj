@@ -67,11 +67,15 @@ namespace efyj {
 class ContextImpl
 {
 public:
+    ContextImpl(LogOption option = LOG_OPTION_DEBUG);
+
     ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
 
     ~ContextImpl();
 
     void set_log_stream(const std::string &filepath);
+
+    void set_console_log_stream();
 
     template <typename... _Args>
     void log(_Args &&... args);

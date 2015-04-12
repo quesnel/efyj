@@ -93,8 +93,7 @@ int main(int argc, char *argv[])
     }
 
     try {
-        efyj::Context ctx = std::make_shared <efyj::ContextImpl>("efyj.log",
-                            efyj::LOG_OPTION_ERR);
+        efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
         efyj::problem pb(ctx, modelfilepath, optionfilepath);
 
         if (solvername == "stack")

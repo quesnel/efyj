@@ -36,6 +36,11 @@ inline void cout_no_deleter(std::ostream *os)
     (void)os;
 }
 
+inline std::shared_ptr<std::ostream> make_cout_stream()
+{
+    return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
+}
+
 inline std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
 {
     {
@@ -51,7 +56,7 @@ inline std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath
             return tmp;
     }
 
-    return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
+    return make_cout_stream();
 }
 
 inline void writer_run(std::shared_ptr <std::ostream> &os, std::deque <message> &queue,
@@ -92,6 +97,16 @@ inline void writer_run(std::shared_ptr <std::ostream> &os, std::deque <message> 
 
 } // namespace context_details
 
+inline ContextImpl::ContextImpl(LogOption option)
+    : m_os(context_details::make_cout_stream())
+    , m_priority(option)
+    , m_close(false)
+{
+    m_writer = std::thread(context_details::writer_run,
+                           std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
+                           std::ref(m_os_locker), std::ref(m_close));
+}
+
 inline ContextImpl::ContextImpl(const std::string &filepath, LogOption option)
     : m_os(context_details::make_log_stream(filepath))
     , m_priority(option)
@@ -114,6 +129,12 @@ inline void ContextImpl::set_log_stream(const std::string &filepath)
 {
     std::lock_guard <std::mutex> lock(m_os_locker);
     m_os = context_details::make_log_stream(filepath);
+}
+
+inline void ContextImpl::set_console_log_stream()
+{
+    std::lock_guard <std::mutex> lock(m_os_locker);
+    m_os = context_details::make_cout_stream();
 }
 
 template <typename... _Args>
