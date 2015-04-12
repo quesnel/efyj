@@ -34,6 +34,7 @@ struct problem
             const std::string& dexi_filepath,
             const std::string& option_filepath);
 
+    template <typename Solver>
     void compute(int rank, int world_size);
 
     Context context;

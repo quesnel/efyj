@@ -51,15 +51,9 @@ void usage() noexcept
               << "    -s solver_name       Select the specified solver\n"
               << "\n"
               << "Available solvers:\n"
-              << "   classic            Default solver\n"
-              << "   hash               classic solver, hash table and"
-              << "                      integer vector options\n"
-              << "   hash_string        classic solver, hash table and"
-              << "                      string options\n"
-              << "   bigmem             classic solver, big memory cache"
-              << "                      and integer vector options\n"
-              << "   bigmem_integer     classic solver, big memory cache"
-              << "                      and integer options"
+              << "   classic            the default tree path\n"
+              << "   stack              stack and reverse polish notation\n"
+              << "   bigmem             default solver fill a big memory space\n"
               << std::endl;
 }
 
@@ -102,7 +96,13 @@ int main(int argc, char *argv[])
         efyj::Context ctx = std::make_shared <efyj::ContextImpl>("efyj.log",
                             efyj::LOG_OPTION_ERR);
         efyj::problem pb(ctx, modelfilepath, optionfilepath);
-        pb.compute(0, 1);
+
+        if (solvername == "stack")
+          pb.compute <efyj::solver_stack>(0, 1);
+        else if (solvername == "bigmem")
+          pb.compute <efyj::solver_bigmem>(0, 1);
+        else
+          pb.compute <efyj::solver_basic>(0, 1);
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
     }

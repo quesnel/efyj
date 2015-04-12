@@ -41,19 +41,21 @@ namespace efyj {
 
 namespace problem_details {
 
-void read_model_file(const std::string& filepath, Model& model)
+void read_model_file(const std::string &filepath, Model &model)
 {
     std::ifstream ifs(filepath);
+
     if (!ifs)
         throw efyj::xml_parser_error(filepath, "fail to open");
 
     ifs >> model;
 }
 
-void read_option_file(const std::string& filepath, const Model& model,
-                      Options& options)
+void read_option_file(const std::string &filepath, const Model &model,
+                      Options &options)
 {
     std::ifstream ifs(filepath);
+
     if (!ifs)
         throw efyj::csv_parser_error(filepath, "fail to open");
 
@@ -62,79 +64,49 @@ void read_option_file(const std::string& filepath, const Model& model,
 
 } // namespace problem_details
 
-problem::problem(const Context& ctx,
-                 const std::string& Model_filepath,
-                 const std::string& option_filepath)
-: context(ctx)
+problem::problem(const Context &ctx,
+                 const std::string &Model_filepath,
+                 const std::string &option_filepath)
+    : context(ctx)
 {
-    efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") % Model_filepath % option_filepath);
-
+    efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") %
+              Model_filepath % option_filepath);
     problem_details::read_model_file(Model_filepath, model);
     problem_details::read_option_file(option_filepath, model, options);
 }
 
+template <typename Solver>
 void problem::compute(int rank, int world_size)
 {
     (void)rank;
     (void)world_size;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    Solver slv(model);
 
-    {
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
-
-        solver_basic basic(model);
-
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-            try {
-                options.ids[i].simulated = basic.solve(options.options.row(i));
-            } catch (const std::exception& e) {
-                efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
-            }
+    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+        try {
+            options.ids[i].simulated = slv.solve(options.options.row(i));
+        } catch (const std::exception &e) {
+            efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i %
+                      e.what());
         }
-
-        Post post;
-        post.functions.emplace_back(rmsep);
-        post.functions.emplace_back(weighted_kappa);
-        post.apply(model, options, context);
-
-        end = std::chrono::system_clock::now();
-
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
-                  std::ctime(&end_time) % elapsed_seconds.count());
     }
 
-    {
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
+    Post post;
+    post.functions.emplace_back(rmsep);
+    post.functions.emplace_back(weighted_kappa);
+    post.apply(model, options, context);
 
-        solver_stack basic(model);
+    end = std::chrono::system_clock::now();
 
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-            try {
-                options.ids[i].simulated = basic.solve(options.options.row(i));
-            } catch (const std::exception& e) {
-                efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i % e.what());
-            }
-        }
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-        Post post;
-        post.functions.emplace_back(rmsep);
-        post.functions.emplace_back(weighted_kappa);
-        post.apply(model, options, context);
-
-        end = std::chrono::system_clock::now();
-
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        efyj_info(context, boost::format("finished computation at %1% elapsed time: %2% s.\n") %
-                  std::ctime(&end_time) % elapsed_seconds.count());
-    }
+    efyj_info(context,
+              boost::format("finished computation at %1% elapsed time: %2% s.\n") %
+              std::ctime(&end_time) % elapsed_seconds.count());
 }
-
 }
 
 #endif
