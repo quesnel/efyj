@@ -80,7 +80,7 @@ inline message::message(LogOption priority, const char *file,
 
 inline std::ostream &operator<<(std::ostream &os, const message &msg)
 {
-#ifdef NDEBUG
+#if 0
     os << msg.pid << '@' << msg.thread_id << ": " << msg.priority << "\n";
 #endif
 
