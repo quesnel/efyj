@@ -71,6 +71,7 @@ problem::problem(const Context &ctx,
 {
     efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") %
               Model_filepath % option_filepath);
+
     problem_details::read_model_file(Model_filepath, model);
     problem_details::read_option_file(option_filepath, model, options);
 }
@@ -97,16 +98,25 @@ void problem::compute(int rank, int world_size)
     post.functions.emplace_back(rmsep);
     post.functions.emplace_back(weighted_kappa);
     post.apply(model, options, context);
-
     end = std::chrono::system_clock::now();
-
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
     efyj_info(context,
               boost::format("finished computation at %1% elapsed time: %2% s.\n") %
               std::ctime(&end_time) % elapsed_seconds.count());
+
+    {
+        std::ofstream ofs("obs-sim.csv");
+
+        if (ofs) {
+            ofs << "observated;simulated\n";
+
+            for (const auto &opt : options.ids)
+                ofs << opt.observated << ';' << opt.simulated << '\n';
+        }
+    }
 }
+
 }
 
 #endif
