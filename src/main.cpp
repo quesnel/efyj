@@ -24,15 +24,8 @@
 #include <efyj/problem.hpp>
 
 #include <iostream>
-#include <algorithm>
 #include <chrono>
 #include <fstream>
-#include <iterator>
-#include <random>
-#include <cstdlib>
-#include <ctime>
-#include <cstdlib>
-#include <cstring>
 #include <getopt.h>
 
 #ifdef EFYj_MPI_SUPPORT
