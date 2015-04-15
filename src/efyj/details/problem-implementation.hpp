@@ -117,6 +117,29 @@ void problem::compute(int rank, int world_size)
     }
 }
 
+inline
+void show(const attribute* att, std::size_t space, std::ostream& os)
+{
+    os << std::string(space, ' ') << att->name << '\n';
+
+    for (const auto& sc : att->scale.scale)
+        os << std::string(space, ' ') << "| " << sc.name << '\n';
+
+    if (att->is_aggregate()) {
+       os << std::string(space + 1, ' ') << "\\ -> (" << att->functions.low << ")\n";
+
+        for (const attribute* child : att->children) {
+            show(child, space + 2, os);
+        }
+    }
+}
+
+inline
+void show(const Model& model, std::ostream& os)
+{
+    show(model.child, 0, os);
+}
+
 }
 
 #endif

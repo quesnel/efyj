@@ -89,6 +89,9 @@ int main(int argc, char *argv[])
         efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
         efyj::problem pb(ctx, modelfilepath, optionfilepath);
 
+        efyj::show(pb.model, std::cout);
+        std::cout << '\n';
+
         if (solvername == "stack")
           pb.compute <efyj::solver_stack>(0, 1);
         else if (solvername == "bigmem")

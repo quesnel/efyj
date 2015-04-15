@@ -42,6 +42,8 @@ struct problem
     Model model;
 };
 
+void show(const Model& model, std::ostream& os);
+
 }
 
 #include "details/problem-implementation.hpp"
