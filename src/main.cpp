@@ -44,8 +44,7 @@ void usage() noexcept
               << "    -s solver_name       Select the specified solver\n"
               << "\n"
               << "Available solvers:\n"
-              << "   classic            the default tree path\n"
-              << "   stack              stack and reverse polish notation\n"
+              << "   stack              (default) stack and reverse polish notation\n"
               << "   bigmem             default solver fill a big memory space\n"
               << std::endl;
 }
@@ -92,12 +91,10 @@ int main(int argc, char *argv[])
         efyj::show(pb.model, std::cout);
         std::cout << '\n';
 
-        if (solvername == "stack")
-          pb.compute <efyj::solver_stack>(0, 1);
-        else if (solvername == "bigmem")
+        if (solvername == "bigmem")
           pb.compute <efyj::solver_bigmem>(0, 1);
         else
-          pb.compute <efyj::solver_basic>(0, 1);
+          pb.compute <efyj::solver_stack>(0, 1);
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
     }

@@ -59,17 +59,15 @@ constexpr scale_id scale_id_unknown() noexcept
     return std::numeric_limits <scale_id>::max();
 }
 
-typedef std::set <std::string> group_set;
-
 struct scalevalue
 {
-    scalevalue(const std::string& name, group_set::iterator group)
-        : name(name), group(group)
+    scalevalue(const std::string& name)
+        : name(name), group(-1)
     {}
 
     std::string name;
     std::string description;
-    group_set::iterator group;
+    int group;
 };
 
 struct function
@@ -111,11 +109,7 @@ struct scales
 struct attribute
 {
     attribute(const std::string& name)
-        : parent(nullptr)
-        , position_in_parent(0)
-        , value(0)
-        , parent_is_solvable(0)
-        , name(name)
+        : name(name)
     {}
 
     std::size_t children_size() const noexcept
@@ -138,59 +132,46 @@ struct attribute
         return !children.empty();
     }
 
-    void push_back(attribute *child)
+    void push_back(std::size_t child)
     {
         children.emplace_back(child);
-        child->position_in_parent = children.size();
-        child->parent = this;
     }
 
-    void fill_utility_function();
-
-    attribute *parent;
-    std::size_t position_in_parent;
-    std::size_t value;
-    std::size_t parent_is_solvable;
     std::string name;
     std::string description;
     scales scale;
     function functions;
     std::vector <std::string> options;
-    std::vector <attribute*> children;
-    std::map <std::uint32_t, scale_id> utility_function;
+    std::vector <std::size_t> children;
 };
 
 struct Model
 {
-    Model()
-        : child(nullptr)
-        , problem_size(1)
-        , basic_scale_number(0)
-        , scale_number(0)
-        , scalevalue_number(0)
-    {}
-
-    Model(const Model& other) = delete;
-    Model& operator=(const Model& other) = delete;
-
-    void init();
-
     std::string name;
     std::string description;
     std::vector <std::string> options;
     std::vector <scale_id> basic_attribute_scale_size;
-    group_set group;
+    std::vector <std::string> group;
     std::deque <attribute> attributes;
-    attribute *child;
+    
+    int group_id(const std::string& name) const
+    {
+        auto it = std::find(group.cbegin(), group.cend(), name);
 
-    std::size_t problem_size;
-    std::size_t basic_scale_number;
-    std::size_t scale_number;
-    std::size_t scalevalue_number;
+        if (it == group.cend())
+            return -1;
+
+        return it - group.cbegin();
+    }
+
+    const attribute& child() const
+    {
+        return attributes[0];
+    }
 };
 
+bool operator<(const Model& lhs, const Model& rhs);
 bool operator==(const Model& lhs, const Model& rhs);
-bool operator!=(const Model& lhs, const Model& rhs);
 
 std::ostream& operator<<(std::ostream& os, const Model& Model_data);
 std::istream& operator>>(std::istream& is, Model& Model_data);

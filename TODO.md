@@ -4,7 +4,6 @@ efyj's todo list
 - Cleanup: All thrown exceptions should use `efyj_error` class.
 
 - Cleanup:  remove dead code, simplify algorithms.
-  - `efyj::Model` is complex.
 
 - CMake: hide solver-gmp.hpp if gmp is not available.
 

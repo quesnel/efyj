@@ -24,6 +24,7 @@
 
 #include <efyj/exception.hpp>
 #include <efyj/utils.hpp>
+#include <efyj/solver-stack.hpp>
 #include <efyj/types.hpp>
 
 #include <algorithm>
@@ -54,7 +55,13 @@ struct solver_gmp
     solver_gmp(Model& model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
-        std::vector <scale_id> high_level(model.basic_scale_number);
+        std::size_t basic_scale_number = 0;
+
+        for (const auto& att : model.attributes)
+            if (att.children.empty())
+                basic_scale_number++;
+
+        std::vector <scale_id> high_level(basic_scale_number);
         int i = 0;
 
         for (const auto& att : model.attributes) {
@@ -64,14 +71,14 @@ struct solver_gmp
             }
         }
 
-        Vector options = Vector::Zero(model.basic_scale_number);
-        efyj::solver_basic basic(model);
+        Vector options = Vector::Zero(basic_scale_number);
+        efyj::solver_stack basic(model);
         bool end = false;
 
         do {
             hash.emplace(gmp_details::make_key(options), basic.solve(options));
 
-            std::size_t current = model.basic_scale_number - 1;
+            std::size_t current = basic_scale_number - 1;
             do {
                 options[current]++;
                 if (options[current] >= high_level[current]) {

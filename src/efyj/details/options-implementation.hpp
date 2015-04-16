@@ -129,7 +129,7 @@ inline Options array_options_read(std::istream &is, const efyj::Model &model)
             continue;
         }
 
-        int obs = model.child->scale.find_scale_value(columns[columns.size() - 1]);
+        int obs = model.attributes[0].scale.find_scale_value(columns[columns.size() - 1]);
 
         if (obs == -1) {
             std::cout << boost::format(

@@ -22,9 +22,7 @@
 #ifndef INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 #define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 
-#include <efyj/solver-basic.hpp>
 #include <efyj/solver-bigmem.hpp>
-#include <efyj/solver-hash.hpp>
 #include <efyj/solver-gmp.hpp>
 #include <efyj/solver-stack.hpp>
 #include <efyj/model.hpp>
@@ -118,18 +116,18 @@ void problem::compute(int rank, int world_size)
 }
 
 inline
-void show(const attribute* att, std::size_t space, std::ostream& os)
+void show(const Model& model, std::size_t att, std::size_t space, std::ostream& os)
 {
-    os << std::string(space, ' ') << att->name << '\n';
+    os << std::string(space, ' ') << model.attributes[att].name << '\n';
 
-    for (const auto& sc : att->scale.scale)
+    for (const auto& sc : model.attributes[att].scale.scale)
         os << std::string(space, ' ') << "| " << sc.name << '\n';
 
-    if (att->is_aggregate()) {
-       os << std::string(space + 1, ' ') << "\\ -> (" << att->functions.low << ")\n";
+    if (model.attributes[att].is_aggregate()) {
+       os << std::string(space + 1, ' ') << "\\ -> (" << model.attributes[att].functions.low << ")\n";
 
-        for (const attribute* child : att->children) {
-            show(child, space + 2, os);
+        for (std::size_t child : model.attributes[att].children) {
+            show(model, child, space + 2, os);
         }
     }
 }
@@ -137,7 +135,7 @@ void show(const attribute* att, std::size_t space, std::ostream& os)
 inline
 void show(const Model& model, std::ostream& os)
 {
-    show(model.child, 0, os);
+    show(model, 0, 0, os);
 }
 
 }

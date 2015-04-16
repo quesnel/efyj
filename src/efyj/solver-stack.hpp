@@ -24,6 +24,7 @@
 
 #include <efyj/model.hpp>
 #include <efyj/exception.hpp>
+#include <efyj/types.hpp>
 
 #include <algorithm>
 #include <numeric>
@@ -35,14 +36,15 @@ namespace solver_stack_details {
 class aggregate_attribute
 {
 public:
-    aggregate_attribute(const efyj::attribute &att)
+    aggregate_attribute(const Model& model, std::size_t att)
         : stack_size(0)
     {
-        std::transform(att.children.cbegin(),
-                       att.children.cend(),
+        std::transform(model.attributes[att].children.cbegin(),
+                       model.attributes[att].children.cend(),
                        std::back_inserter(scale_size),
-                       [](const efyj::attribute * child) {
-                       return child->scale_size();
+                       [&model](std::size_t child)
+                       {
+                            return model.attributes[child].scale_size();
                        });
 
         coeffs = Vector::Zero(scale_size.size());
@@ -51,8 +53,8 @@ public:
         for (long int i = (long int)scale_size.size() - 2; i >= 0; --i) // TODO FIXME
             coeffs(i) = scale_size[i + 1] * coeffs(i + 1);
 
-        std::transform(att.functions.low.cbegin(),
-                       att.functions.low.cend(),
+        std::transform(model.attributes[att].functions.low.cbegin(),
+                       model.attributes[att].functions.low.cend(),
                        std::back_inserter(functions),
                        [](const char id) {
                        return id - '0';
@@ -130,7 +132,7 @@ public:
         atts.reserve(model.attributes.size());
 
         int value_id = 0;
-        recursive_fill(*model.child, value_id);
+        recursive_fill(model, 0, value_id);
     }
 
     ~solver_stack()
@@ -171,15 +173,15 @@ private:
     // To avoid reallocation each solve(), we store the stack into the solver.
     std::vector <int> result;
 
-    void recursive_fill(const efyj::attribute& att, int &value_id)
+    void recursive_fill(const efyj::Model& model, std::size_t att, int &value_id)
     {
-        if (att.is_basic()) {
+        if (model.attributes[att].is_basic()) {
             function.emplace_back(value_id++);
         } else {
-            for (auto& child : att.children)
-                recursive_fill(*child, value_id);
+            for (auto& child : model.attributes[att].children)
+                recursive_fill(model, child, value_id);
 
-            atts.emplace_back(att);
+            atts.emplace_back(model, att);
             function.emplace_back(&atts.back());
         }
     }

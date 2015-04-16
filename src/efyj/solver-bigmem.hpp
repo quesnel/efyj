@@ -24,6 +24,7 @@
 
 #include <efyj/exception.hpp>
 #include <efyj/utils.hpp>
+#include <efyj/solver-stack.hpp>
 
 #include <numeric>
 #include <vector>
@@ -57,13 +58,17 @@ struct solver_bigmem {
         , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         {
+            std::size_t basic_scale_number = 0;
+
             for (const auto &att : model.attributes) {
                 if (att.children.empty()) {
+                    basic_scale_number++;
                     binary_scales.push_back(
                         std::floor(std::log2(att.scale.scale.size())) + 1);
                     binary_scale_value_size += binary_scales.back();
                 }
             }
+
 
             try {
                 result.resize(std::pow(2, binary_scale_value_size),
@@ -75,7 +80,7 @@ struct solver_bigmem {
                 throw efyj::efyj_error(msg);
             }
 
-            std::vector <scale_id> high_level(model.basic_scale_number);
+            std::vector <scale_id> high_level(basic_scale_number);
             int i = 0;
 
             for (const auto &att : model.attributes) {
@@ -85,14 +90,14 @@ struct solver_bigmem {
                 }
             }
 
-            Vector options = Vector::Zero(model.basic_scale_number);
-            efyj::solver_basic basic(model);
+            Vector options = Vector::Zero(basic_scale_number);
+            efyj::solver_stack basic(model);
             bool end = false;
 
             do {
                 unsigned long key = bigmem_details::make_key(options, binary_scales);
                 result[key] = basic.solve(options);
-                std::size_t current = model.basic_scale_number - 1;
+                std::size_t current = basic_scale_number - 1;
 
                 do {
                     options[current]++;

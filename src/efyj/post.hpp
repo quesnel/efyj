@@ -108,7 +108,7 @@ struct Post {
 void Post::apply(const efyj::Model &model, const Options &options, Context os)
 {
     const std::size_t n = options.options.rows();
-    const std::size_t nc = model.child->scale.size();
+    const std::size_t nc = model.attributes[0].scale.size();
 
     for (auto fn : functions)
         fn(model, options, n, nc, os);

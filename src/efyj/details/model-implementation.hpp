@@ -205,11 +205,9 @@ private:
                 pd->stack.push(id);
                 pd->model.attributes.emplace_back("unaffected attribute");
 
-                if (pd->attributes_stack.empty()) {
-                    pd->model.child = &pd->model.attributes.back();
-                } else {
-                    pd->attributes_stack.top()->push_back(&pd->model.attributes.back());
-                }
+                if (not pd->attributes_stack.empty())
+                    pd->attributes_stack.top()->push_back(
+                        pd->model.attributes.size() - 1);
 
                 pd->attributes_stack.push(&pd->model.attributes.back());
                 break;
@@ -241,8 +239,7 @@ private:
             case stack_identifier::SCALEVALUE:
                 pd->is_parent({stack_identifier::SCALE});
                 pd->stack.push(id);
-                pd->model.attributes.back().scale.scale.emplace_back("unaffected scalevalue",
-                        pd->model.group.end());
+                pd->model.attributes.back().scale.scale.emplace_back("unaffected scalevalue");
 
                 if (not efyj::is_valid_scale_id(pd->model.attributes.size()))
                     throw efyj::xml_parser_error(
@@ -319,10 +316,7 @@ private:
                 pd->stack.pop();
 
                 if (pd->attributes_stack.top()->children.empty()) {
-                    pd->model.basic_scale_number++;
                     auto scale_size = pd->attributes_stack.top()->scale.scale.size();
-                    pd->model.scalevalue_number += scale_size;
-                    pd->model.problem_size *= scale_size;
                     pd->model.basic_attribute_scale_size.emplace_back(scale_size);
                 }
 
@@ -357,7 +351,6 @@ private:
 
             case stack_identifier::SCALE:
                 pd->stack.pop();
-                pd->model.scale_number++;
                 break;
 
             case stack_identifier::ORDER:
@@ -372,10 +365,12 @@ private:
 
             case stack_identifier::GROUP:
                 if (pd->stack.top() == stack_identifier::SCALEVALUE) {
-                    auto it = pd->model.group.find(pd->char_data);
+                    int it = pd->model.group_id(pd->char_data);
 
-                    if (it == pd->model.group.end())
-                        it = pd->model.group.insert(pd->char_data).first;
+                    if (it < 0) {
+                        pd->model.group.emplace_back(pd->char_data);
+                        it = pd->model.group.size() - 1;
+                    }
 
                     pd->model.attributes.back().scale.scale.back().group = it;
                 }
@@ -423,6 +418,49 @@ private:
     }
 };
 
+struct to_xml {
+
+    to_xml(const std::string &str)
+    {
+        m_str.reserve(str.size() * 2);
+
+        for (char ch : str) {
+            switch (ch) {
+            case '&':
+                m_str += "&amp;";
+                break;
+
+            case '\'':
+                m_str += "&apos;";
+                break;
+
+            case '"':
+                m_str += "&quot;";
+                break;
+
+            case '<':
+                m_str += "&lt;";
+                break;
+
+            case '>':
+                m_str += "&gt;";
+                break;
+
+            default:
+                m_str += ch;
+                break;
+            }
+        }
+    }
+
+    std::string m_str;
+};
+
+std::ostream &operator<<(std::ostream &os, const to_xml &str)
+{
+    return os << str.m_str;
+}
+
 struct Model_writer {
     Model_writer(std::ostream &os, const efyj::Model &Model_data) noexcept
         : os(os), dex(Model_data), space(0)
@@ -430,7 +468,20 @@ struct Model_writer {
 
     void write()
     {
-        write_Model();
+        os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+           << "<DEXi>\n"
+           << "  <NAME>" << to_xml(dex.name) << "</NAME>\n"
+           << "  <DESCRIPTION>\n"
+           << "    " << to_xml(dex.description) << "\n"
+           << "  </DESCRIPTION>\n";
+
+        space = 2;
+        write_Model_option(dex.options);
+
+        if (!dex.attributes.empty())
+            write_Model_attribute(0);
+
+        os << "</DEXi>\n";
     }
 
 private:
@@ -454,12 +505,15 @@ private:
             os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
     }
 
-    void write_Model_attribute(const efyj::attribute &att)
+    void write_Model_attribute(std::size_t child)
     {
+        assert(child <= dex.attributes.size());
+        const attribute &att(dex.attributes[child]);
         os << make_space() << "<ATTRIBUTE>\n";
         space += 2;
-        os << make_space() << "<NAME>" << att.name << "</NAME>\n"
-           << make_space() << "<DESCRIPTION>" << att.description << "</DESCRIPTION>\n"
+        os << make_space() << "<NAME>" << to_xml(att.name) << "</NAME>\n"
+           << make_space() << "<DESCRIPTION>" << to_xml(att.description) <<
+           "</DESCRIPTION>\n"
            << make_space() << "<SCALE>\n";
         space += 2;
 
@@ -468,15 +522,15 @@ private:
 
         for (const auto &sv : att.scale.scale) {
             os << make_space() << "<SCALEVALUE>\n"
-               << make_space(2) << "<NAME>" << sv.name << "</NAME>\n";
+               << make_space(2) << "<NAME>" << to_xml(sv.name) << "</NAME>\n";
 
             if (not sv.description.empty())
                 os << make_space(2) << "<DESCRIPTION>"
-                   << sv.description << "</DESCRIPTION>\n";
+                   << to_xml(sv.description) << "</DESCRIPTION>\n";
 
-            if (sv.group != dex.group.end())
+            if (sv.group >= 0)
                 os << make_space(2) << "<GROUP>"
-                   << *sv.group << "</GROUP>\n";
+                   << to_xml(dex.group[sv.group]) << "</GROUP>\n";
 
             os << make_space() << "</SCALEVALUE>\n";
         }
@@ -506,110 +560,74 @@ private:
             write_Model_option(att.options);
 
         for (const auto &child : att.children)
-            write_Model_attribute(*child);
+            write_Model_attribute(child);
 
         space -= 2;
         os << make_space() << "</ATTRIBUTE>\n";
-    }
-
-    void write_Model()
-    {
-        os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-           << "<DEXi>\n"
-           << "  <NAME>" << dex.name << "</NAME>\n";
-        space = 2;
-        write_Model_option(dex.options);
-
-        if (dex.child)
-            write_Model_attribute(*(dex.child));
-
-        os << "</DEXi>\n";
     }
 };
 
 } // model-details namespace
 
 inline
-void attribute::fill_utility_function()
+bool operator<(const attribute &lhs, const attribute &rhs)
 {
-    std::vector <scale_id> child_max_value(children.size(), 0u);
-    std::transform(children.begin(), children.end(),
-                   child_max_value.begin(),
-                   [](const attribute* att)
-                   {
-                       return att->scale_size();
-                   });
-
-    for (auto child : child_max_value) {
-        if (child > 10)
-            throw std::invalid_argument("can not compute this model (too many value for efyj");
-    }
-
-    std::vector <scale_id> iter(children.size(), 0u);
-    bool end = false;
-
-    std::size_t id = 0;
-    do {
-        std::size_t key = 0;
-        for (std::size_t i = 0, e = iter.size(); i != e; ++i) {
-            key *= 10;
-            key += iter[i];
-        }
-        utility_function.emplace(key, functions.low[id] - '0');
-
-        std::size_t current = child_max_value.size() - 1;
-
-        do {
-            iter[current]++;
-            if (iter[current] >= child_max_value[current]) {
-                iter[current] = 0;
-
-                if (current == 0) {
-                    end = true;
-                    break;
-                } else {
-                    --current;
-                }
-            } else
-                break;
-        } while (not end);
-        ++id;
-    } while (not end);
+    return lhs.name < rhs.name;
 }
 
 inline
-void Model::init()
+bool operator==(const scalevalue &lhs, const scalevalue &rhs)
 {
-    for (auto& att : attributes)
-        if (not att.is_basic())
-            att.fill_utility_function();
+    return lhs.name == rhs.name &&
+           lhs.description == rhs.description &&
+           lhs.group == rhs.group;
 }
 
 inline
-bool operator==(const attribute& lhs, const attribute& rhs)
+bool operator==(const scales &lhs, const scales &rhs)
 {
-    return lhs.name == rhs.name;
+    return lhs.order == rhs.order &&
+           lhs.scale == rhs.scale;
 }
 
 inline
-bool operator==(const Model& lhs, const Model& rhs)
+bool operator==(const function &lhs, const function &rhs)
 {
-    if (not (lhs.options == rhs.options &&
-             lhs.group == rhs.group &&
-             lhs.attributes == rhs.attributes))
-        return false;
+    return lhs.low == rhs.low &&
+           lhs.entered == rhs.entered &&
+           lhs.consist == rhs.consist;
+}
 
-    if (lhs.child and rhs.child)
-        return (*lhs.child) == (*rhs.child);
+inline
+bool operator==(const attribute &lhs, const attribute &rhs)
+{
+    return lhs.name == rhs.name &&
+           lhs.description == rhs.description &&
+           lhs.scale == rhs.scale &&
+           lhs.functions == rhs.functions &&
+           lhs.children == rhs.children;
+}
 
-    if (lhs.child == nullptr and rhs.child == nullptr)
-        return true;
+inline
+bool operator<(const Model &lhs, const Model &rhs)
+{
+    return lhs.name < rhs.name;
+}
 
+inline
+bool operator==(const Model &lhs, const Model &rhs)
+{
+    return lhs.name == rhs.name &&
+//           lhs.description == rhs.description &&
+           lhs.options == rhs.options &&
+           lhs.basic_attribute_scale_size == rhs.basic_attribute_scale_size &&
+           lhs.group == rhs.group &&
+           lhs.attributes == rhs.attributes;
     return false;
 }
 
 inline
-bool operator!=(const Model& lhs, const Model& rhs)
+bool operator!=(const Model &lhs, const Model &rhs)
 {
     return not (lhs == rhs);
 }
