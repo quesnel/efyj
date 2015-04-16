@@ -107,13 +107,6 @@
   <OPTION>105</OPTION>
   <OPTION>106</OPTION>
   <OPTION>107</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
-  <OPTION>New</OPTION>
   <SETTINGS/>
   <ATTRIBUTE>
     <NAME>Dynamique du piétin-verse</NAME>
@@ -155,61 +148,93 @@
     <FUNCTION>
       <LOW>001255334455555566</LOW>
     </FUNCTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>4</OPTION>
+    <OPTION>4</OPTION>
+    <OPTION>4</OPTION>
+    <OPTION>4</OPTION>
+    <OPTION>4</OPTION>
+    <OPTION>4</OPTION>
     <OPTION>4</OPTION>
     <OPTION>4</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
     <OPTION>5</OPTION>
     <OPTION>5</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
-    <OPTION>3</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>6</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
+    <OPTION>5</OPTION>
     <OPTION>6</OPTION>
     <OPTION>6</OPTION>
     <OPTION>6</OPTION>
@@ -219,56 +244,17 @@
     <OPTION>6</OPTION>
     <OPTION>6</OPTION>
     <OPTION>0</OPTION>
+    <OPTION>3</OPTION>
     <OPTION>0</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>3</OPTION>
     <OPTION>0</OPTION>
+    <OPTION>3</OPTION>
     <OPTION>0</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>3</OPTION>
     <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>0</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>4</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION>03456</OPTION>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION>03456</OPTION>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION/>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
-    <OPTION>03456</OPTION>
     <ATTRIBUTE>
       <NAME>Effet des pratiques agricoles</NAME>
       <DESCRIPTION>impact de l&apos;ensemble des éléments du système de culture </DESCRIPTION>
@@ -292,25 +278,66 @@
         <LOW>020212021222121222021212121222121222122222222222222222</LOW>
       </FUNCTION>
       <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>2</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>1</OPTION>
       <OPTION>2</OPTION>
       <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>1</OPTION>
@@ -321,31 +348,14 @@
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
@@ -354,57 +364,26 @@
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
       <OPTION>0</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION>1</OPTION>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>action sur l&apos;inoculum : succession x inversion du sol</NAME>
         <DESCRIPTION>effet de la combinaison des 2 pratiques : succession et travail du sol</DESCRIPTION>
@@ -428,120 +407,113 @@
           <LOW>002100220022022122222222122122222222</LOW>
           <CONSIST>False</CONSIST>
         </FUNCTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
         <OPTION>2</OPTION>
         <OPTION>1</OPTION>
         <OPTION>2</OPTION>
         <OPTION>0</OPTION>
         <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
         <OPTION>1</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
         <ATTRIBUTE>
           <NAME>précédent</NAME>
           <DESCRIPTION>culture précédente</DESCRIPTION>
@@ -668,13 +640,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>antéprécédent </NAME>
@@ -802,13 +767,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>Wsol précédent</NAME>
@@ -932,13 +890,6 @@
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>Wsol antéprécédent</NAME>
@@ -955,6 +906,113 @@
               <GROUP>GOOD</GROUP>
             </SCALEVALUE>
           </SCALE>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
         </ATTRIBUTE>
       </ATTRIBUTE>
       <ATTRIBUTE>
@@ -988,7 +1046,7 @@
         <OPTION>0</OPTION>
         <OPTION>1</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
@@ -1083,13 +1141,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME> atténuation en culture </NAME>
@@ -1114,25 +1165,14 @@
           <LOW>000000000111222222</LOW>
         </FUNCTION>
         <OPTION>1</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
-        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>2</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
@@ -1144,89 +1184,93 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>1</OPTION>
-        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
         <ATTRIBUTE>
           <NAME>choix de la variété</NAME>
           <DESCRIPTION>effet de la sensibilité variétale</DESCRIPTION>
@@ -1353,13 +1397,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>niveau fertilisation azotée</NAME>
@@ -1483,13 +1520,6 @@
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>densité de semis</NAME>
@@ -1617,13 +1647,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
       </ATTRIBUTE>
       <ATTRIBUTE>
@@ -1748,13 +1771,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
     <ATTRIBUTE>
@@ -1779,53 +1795,85 @@
       <FUNCTION>
         <LOW>001122</LOW>
       </FUNCTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
@@ -1854,45 +1902,6 @@
       <OPTION>0</OPTION>
       <OPTION>0</OPTION>
       <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>0</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION>02</OPTION>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION>02</OPTION>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
-      <OPTION>02</OPTION>
       <ATTRIBUTE>
         <NAME>climat</NAME>
         <DESCRIPTION>effet du climat sur la dynamique du pV</DESCRIPTION>
@@ -1915,53 +1924,85 @@
         <FUNCTION>
           <LOW>002002112</LOW>
         </FUNCTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
+        <OPTION>2</OPTION>
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
@@ -1990,45 +2031,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION>0</OPTION>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
-        <OPTION/>
         <ATTRIBUTE>
           <NAME>automne et/ou hiver</NAME>
           <DESCRIPTION>effet du climat automno hivernal</DESCRIPTION>
@@ -2155,13 +2157,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>printemps</NAME>
@@ -2289,13 +2284,6 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
-          <OPTION>*</OPTION>
         </ATTRIBUTE>
       </ATTRIBUTE>
       <ATTRIBUTE>
@@ -2420,13 +2408,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
     <ATTRIBUTE>
@@ -2526,41 +2507,34 @@
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
-      <OPTION/>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>présence d&apos;éléments paysagers</NAME>
         <DESCRIPTION>présence de ZCE</DESCRIPTION>
@@ -2683,13 +2657,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>présence de blé dans l&apos;assolement</NAME>
@@ -2813,13 +2780,6 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
-        <OPTION>*</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
   </ATTRIBUTE>
