@@ -28,23 +28,25 @@
 
 namespace efyj {
 
-struct problem
+template <typename T>
+class problem
 {
-    problem(const efyj::Context& context, const std::string& model);
+public:
+    problem(const efyj::Context &context, const std::string &model);
 
-    void extract(const std::string& file);
+    void extract(const std::string &file);
 
-    void options(const std::string& file);
+    void options(const std::string &file);
 
     template <typename Solver>
-    void compute(int rank, int world_size);
+    double compute(int rank, int world_size);
 
     Context m_context;
-    Options m_options;
+    Options <T> m_options;
     Model m_model;
 };
 
-void show(const Model& model, std::ostream& os);
+void show(const Model &model, std::ostream &os);
 
 }
 

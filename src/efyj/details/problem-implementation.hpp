@@ -59,37 +59,42 @@ void extract_option_from_model(const std::string& filepath, const Model& model)
     model.write_options(ofs);
 }
 
+template <typename T>
 void read_option_file(const std::string &filepath, const Model &model,
-                      Options &options)
+                      Options <T>&options)
 {
     std::ifstream ifs(filepath);
 
     if (!ifs)
         throw efyj::csv_parser_error(filepath, "fail to open");
 
-    options = array_options_read(ifs, model);
+    options = array_options_read<T>(ifs, model);
 }
 
 } // namespace problem_details
 
-problem::problem(const Context &ctx, const std::string &file)
+template <typename T>
+problem<T>::problem(const Context &ctx, const std::string &file)
     : m_context(ctx)
 {
     problem_details::read_model_file(file, m_model);
 }
 
-void problem::extract(const std::string& file)
+template <typename T>
+void problem<T>::extract(const std::string& file)
 {
     problem_details::extract_option_from_model(file, m_model);
 }
 
-void problem::options(const std::string& file)
+template <typename T>
+void problem<T>::options(const std::string& file)
 {
     problem_details::read_option_file(file, m_model, m_options);
 }
 
+template <typename T>
 template <typename Solver>
-void problem::compute(int rank, int world_size)
+double problem<T>::compute(int rank, int world_size)
 {
     (void)rank;
     (void)world_size;
@@ -106,10 +111,8 @@ void problem::compute(int rank, int world_size)
         }
     }
 
-    Post post;
-    post.functions.emplace_back(rmsep);
-    post.functions.emplace_back(weighted_kappa);
-    post.apply(m_model, m_options, m_context);
+    double ret = weighted_kappa(m_model, m_options, m_options.options.rows(), m_model.attributes[0].scale.size(), m_context);
+
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
@@ -127,6 +130,8 @@ void problem::compute(int rank, int world_size)
                 ofs << opt.observated << ';' << opt.simulated << '\n';
         }
     }
+
+    return ret;
 }
 
 inline

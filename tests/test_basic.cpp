@@ -19,6 +19,8 @@
  * SOFTWARE.
  */
 
+#include <efyj/context.hpp>
+#include <efyj/problem.hpp>
 #include <efyj/model.hpp>
 #include <efyj/solver-bigmem.hpp>
 #include <efyj/solver-gmp.hpp>
@@ -362,6 +364,28 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 
         efyj::solver_stack ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
+    }
+}
+
+TEST_CASE("test problem Model file", "[model]")
+{
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+    std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
+                                            "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi"
+                                          };
+
+    ::efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
+
+    for (const auto &filepath : filepaths) {
+        std::cout << "run " << filepath << "\n";
+        efyj::problem <std::string> pb(ctx, filepath);
+        pb.extract("/tmp/toto.csv");
+        pb.options("/tmp/toto.csv");
+
+        double kappa = pb.compute <efyj::solver_stack>(0, 1);
+
+        REQUIRE(kappa == 1.0);
     }
 }
 

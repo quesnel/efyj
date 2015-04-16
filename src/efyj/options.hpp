@@ -27,30 +27,30 @@
 
 namespace efyj {
 
+template <typename T>
 class OptionsId
 {
 public:
-    OptionsId(const std::string &simulation,
-              const std::string &place,
-              int department,
-              int year,
-              int observated);
+    OptionsId(const T& t, int observated)
+        : header(t)
+        , observated(observated)
+        , simulated(0)
+    {
+    }
 
-    std::string simulation;
-    std::string place;
-    int department;
-    int year;
-
+    T header;
     int observated;
     int simulated;
 };
 
+template <typename T>
 struct Options {
-    std::vector <OptionsId> ids;
+    std::vector <OptionsId <T>> ids;
     Array options;
 };
 
-Options array_options_read(std::istream &is, const efyj::Model &model);
+template <typename T>
+Options<T> array_options_read(std::istream &is, const efyj::Model &model);
 
 }
 

@@ -66,23 +66,91 @@ inline std::size_t get_basic_attribute_id(const std::vector
 
 } // options_details namespace
 
-inline OptionsId::OptionsId(const std::string &simulation_,
-                            const std::string &place_,
-                            int department_,
-                            int year_,
-                            int observated_)
-    : simulation(simulation_)
-    , place(place_)
-    , department(department_)
-    , year(year_)
-    , observated(observated_)
-    , simulated(-1)
+template <typename T>
+inline Options <T> array_options_read(std::istream &is, const efyj::Model &model)
 {
+    Options <T> ret;
+    std::vector <const efyj::attribute *> atts = options_details::get_basic_attribute(model);
+    std::vector <int> convertheader(atts.size(), 0);
+    std::vector <std::string> columns;
+    std::string line;
+
+    if (is) {
+        std::getline(is, line);
+        boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
+
+        if (columns.size() != atts.size() + 2u) // TODO perhaps us sizeof...
+            throw efyj::csv_parser_error(
+                0, 0, std::string(),
+                (boost::format(
+                     "csv file have not correct number of column %1% (expected: %2%)")
+                 % columns.size() % (atts.size() + 5u)).str());
+
+        for (std::size_t i = 1, e = 1 + atts.size(); i != e; ++i)
+            convertheader[i - 1] = options_details::get_basic_attribute_id(atts,
+                                   columns[i]);
+    }
+
+    ret.options = Eigen::ArrayXXi::Zero(1, atts.size());
+    int line_number = -1;
+
+    while (true) {
+        std::getline(is, line);
+        line_number++;
+
+        if (not is)
+            break;
+
+        boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
+
+        if (columns.size() != atts.size() + 2u) {
+            std::cout << boost::format(
+                          "error in csv file line %1%: not correct number of column %2%"
+                          " (expected: %3%)") % line_number % columns.size()
+                      % (atts.size() + 2u) << '\n';
+            continue;
+        }
+
+        int obs = model.attributes[0].scale.find_scale_value(columns[columns.size() -
+                  1]);
+
+        if (obs == -1) {
+            std::cout << boost::format(
+                          "error in csv file line %1%: fail to convert observated `%2%'")
+                      % line_number % columns[columns.size() - 1] << '\n';
+            continue;
+        }
+
+        ret.ids.emplace_back(T(columns[0]), obs);
+
+        for (std::size_t i = 1, e = 1 + atts.size(); i != e; ++i) {
+            std::size_t attid = convertheader[i - 1];
+            int option = atts[attid]->scale.find_scale_value(columns[i]);
+
+            if (option < 0) {
+                std::cout << boost::format(
+                              "error in csv file line %1%: "
+                              "unknown scale value `%2%' for attribute `%3%'")
+                          % line_number % columns[i] % atts[attid]->name << '\n';
+                ret.ids.pop_back();
+                ret.options.conservativeResize(ret.options.rows() - 1, Eigen::NoChange_t());
+                break;
+            } else {
+                ret.options(ret.options.rows() - 1, attid) = option;
+            }
+        }
+
+        ret.options.conservativeResize(ret.options.rows() + 1, Eigen::NoChange_t());
+    }
+
+    ret.options.conservativeResize(ret.options.rows() - 1, Eigen::NoChange_t());
+    return std::move(ret);
 }
 
-inline Options array_options_read(std::istream &is, const efyj::Model &model)
+template <>
+inline Options <std::tuple <std::string, std::string, int, int>> array_options_read(std::istream &is, const efyj::Model &model)
 {
-    Options ret;
+    Options <std::tuple <std::string, std::string, int, int>> ret;
     std::vector <const efyj::attribute *> atts =
         options_details::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
@@ -148,7 +216,8 @@ inline Options array_options_read(std::istream &is, const efyj::Model &model)
             continue;
         }
 
-        ret.ids.emplace_back(columns[0], columns[1], department, year, obs);
+        std::tuple <std::string, std::string, int, int> topush { columns[0], columns[1], department, year};
+        ret.ids.emplace_back(topush, obs);
 
         for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i) {
             std::size_t attid = convertheader[i - 4];

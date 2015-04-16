@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
     try {
         efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
-        efyj::problem pb(ctx, modelfilepath);
+        efyj::problem <std::string> pb(ctx, modelfilepath);
         efyj::show(pb.m_model, std::cout);
 
         if (!extractfile.empty())

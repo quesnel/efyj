@@ -30,13 +30,8 @@
 
 namespace efyj {
 
-typedef std::function <void(const efyj::Model &,
-                            const Options &,
-                            const std::size_t,
-                            const std::size_t,
-                            Context)> method_fn;
-
-void rmsep(const efyj::Model &, const Options &options,
+template <typename T>
+double rmsep(const efyj::Model &, const Options <T> &options,
            const std::size_t N, const std::size_t NC,
            Context ctx)
 {
@@ -53,9 +48,12 @@ void rmsep(const efyj::Model &, const Options &options,
 
     double result = std::sqrt((double)sum / (double)N);
     efyj_info(ctx, boost::format("RMSE: %1%") % result);
+
+    return result;
 }
 
-void weighted_kappa(const efyj::Model &, const Options &options,
+template <typename T>
+double weighted_kappa(const efyj::Model &, const Options <T> &options,
                     const std::size_t N, const std::size_t NC,
                     Context ctx)
 {
@@ -79,40 +77,29 @@ void weighted_kappa(const efyj::Model &, const Options &options,
             expected(i, j) = distributions(i, 0) * distributions(j, 1);
 
     Eigen::ArrayXXd weighted = Eigen::ArrayXXd(NC, NC);
+
     {
         for (int i = 0; i != (int)NC; ++i)
             for (int j = 0; j != (int)NC; ++j)
-                weighted(i, j) = std::abs(i - j); // * std::abs(i - j);
+                weighted(i, j) = std::abs(i - j);
 
         double kapa = 1.0 - ((weighted * observed).sum() /
                              (weighted * expected).sum());
         efyj_info(ctx, boost::format("kapa linear: %1%") % kapa);
+
+        return kapa;
     }
-    {
-        for (int i = 0; i != (int)NC; ++i)
-            for (int j = 0; j != (int)NC; ++j)
-                weighted(i, j) = std::abs(i - j) * std::abs(i - j);
 
-        double kapa = 1.0 - ((weighted * observed).sum() /
-                             (weighted * expected).sum());
-        efyj_info(ctx, boost::format("kapa squared: %1%") % kapa);
-    }
+    // {
+    //     for (int i = 0; i != (int)NC; ++i)
+    //         for (int j = 0; j != (int)NC; ++j)
+    //             weighted(i, j) = std::abs(i - j) * std::abs(i - j);
+
+    //     double kapa = 1.0 - ((weighted * observed).sum() /
+    //                          (weighted * expected).sum());
+    //     efyj_info(ctx, boost::format("kapa squared: %1%") % kapa);
+    // }
 };
-
-struct Post {
-    void apply(const efyj::Model &model, const Options &options, Context os);
-
-    std::vector <method_fn> functions;
-};
-
-void Post::apply(const efyj::Model &model, const Options &options, Context os)
-{
-    const std::size_t n = options.options.rows();
-    const std::size_t nc = model.attributes[0].scale.size();
-
-    for (auto fn : functions)
-        fn(model, options, n, nc, os);
-}
 
 }
 
