@@ -39,6 +39,7 @@ void usage() noexcept
     std::cout << "efyj [-h][-m file.dexi][-o file.csv]\n\n"
               << "Options:\n"
               << "    -h                   This help message\n"
+              << "    -e output.csv        Extract the option from dexi file into csv file\n"
               << "    -m model.dexi        The model file\n"
               << "    -o options.csv       The options file\n"
               << "    -s solver_name       Select the specified solver\n"
@@ -55,11 +56,15 @@ int main(int argc, char *argv[])
 {
     int ret = EXIT_SUCCESS;
     int opt;
-    std::string modelfilepath, optionfilepath;
+    std::string modelfilepath, optionfilepath, extractfile;
     std::string solvername;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:h")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:e:h")) != -1) {
         switch (opt) {
+        case 'e':
+            extractfile.assign(::optarg);
+            break;
+
         case 'm':
             modelfilepath.assign(::optarg);
             break;
@@ -86,15 +91,20 @@ int main(int argc, char *argv[])
 
     try {
         efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
-        efyj::problem pb(ctx, modelfilepath, optionfilepath);
+        efyj::problem pb(ctx, modelfilepath);
+        efyj::show(pb.m_model, std::cout);
 
-        efyj::show(pb.model, std::cout);
-        std::cout << '\n';
+        if (!extractfile.empty())
+            pb.extract(extractfile);
 
-        if (solvername == "bigmem")
-          pb.compute <efyj::solver_bigmem>(0, 1);
-        else
-          pb.compute <efyj::solver_stack>(0, 1);
+        if (!optionfilepath.empty()) {
+            pb.options(optionfilepath);
+
+            if (solvername == "bigmem")
+                pb.compute <efyj::solver_bigmem>(0, 1);
+            else
+                pb.compute <efyj::solver_stack>(0, 1);
+        }
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
     }

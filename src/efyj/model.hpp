@@ -141,7 +141,7 @@ struct attribute
     std::string description;
     scales scale;
     function functions;
-    std::vector <std::string> options;
+    std::vector <int> options;
     std::vector <std::size_t> children;
 };
 
@@ -168,6 +168,8 @@ struct Model
     {
         return attributes[0];
     }
+
+    void write_options(std::ostream& os) const;
 };
 
 bool operator<(const Model& lhs, const Model& rhs);

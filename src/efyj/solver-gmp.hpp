@@ -36,7 +36,7 @@ namespace efyj {
 namespace gmp_details {
 
 template <typename V>
-mpz_class make_key(const V& options)
+mpz_class make_key(const V &options)
 {
     mpz_class ret;
 
@@ -50,21 +50,20 @@ mpz_class make_key(const V& options)
 
 } // namespace gmp_details
 
-struct solver_gmp
-{
-    solver_gmp(Model& model)
+struct solver_gmp {
+    solver_gmp(Model &model)
         : basic_attribute_scale_size(model.basic_attribute_scale_size)
     {
         std::size_t basic_scale_number = 0;
 
-        for (const auto& att : model.attributes)
+        for (const auto &att : model.attributes)
             if (att.children.empty())
                 basic_scale_number++;
 
         std::vector <scale_id> high_level(basic_scale_number);
         int i = 0;
 
-        for (const auto& att : model.attributes) {
+        for (const auto &att : model.attributes) {
             if (att.children.empty()) {
                 high_level[i] = att.scale_size();
                 ++i;
@@ -77,10 +76,11 @@ struct solver_gmp
 
         do {
             hash.emplace(gmp_details::make_key(options), basic.solve(options));
-
             std::size_t current = basic_scale_number - 1;
+
             do {
                 options[current]++;
+
                 if (options[current] >= high_level[current]) {
                     options[current] = 0;
 
@@ -95,12 +95,13 @@ struct solver_gmp
             } while (not end);
         } while (not end);
     }
+
     template <typename V>
-    scale_id solve(const V& options)
+    scale_id solve(const V &options)
     {
         mpz_class key = gmp_details::make_key(options);
-
         auto it = hash.find(key);
+
         if (it == hash.end())
             throw solver_option_error(key.get_str());
 

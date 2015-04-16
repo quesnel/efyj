@@ -3,7 +3,6 @@ efyj's todo list
 
 - Cleanup: All thrown exceptions should use `efyj_error` class.
 - Cleanup: remove dead code, simplify algorithms.
-- Main: add a -e option to extract existing option.
 - CMake: hide solver-gmp.hpp if gmp is not available.
 - Improve the write function to store <LINE>...</LINE> element.
 - Read new element VERSION and CREATED.

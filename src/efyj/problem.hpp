@@ -30,16 +30,18 @@ namespace efyj {
 
 struct problem
 {
-    problem(const efyj::Context& context,
-            const std::string& dexi_filepath,
-            const std::string& option_filepath);
+    problem(const efyj::Context& context, const std::string& model);
+
+    void extract(const std::string& file);
+
+    void options(const std::string& file);
 
     template <typename Solver>
     void compute(int rank, int world_size);
 
-    Context context;
-    Options options;
-    Model model;
+    Context m_context;
+    Options m_options;
+    Model m_model;
 };
 
 void show(const Model& model, std::ostream& os);

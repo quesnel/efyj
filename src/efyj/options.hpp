@@ -36,8 +36,6 @@ public:
               int year,
               int observated);
 
-    ~OptionsId();
-
     std::string simulation;
     std::string place;
     int department;

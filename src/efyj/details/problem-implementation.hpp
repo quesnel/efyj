@@ -49,6 +49,16 @@ void read_model_file(const std::string &filepath, Model &model)
     ifs >> model;
 }
 
+void extract_option_from_model(const std::string& filepath, const Model& model)
+{
+    std::ofstream ofs(filepath);
+
+    if (!ofs)
+        throw efyj::efyj_error("bad extract options file");
+
+    model.write_options(ofs);
+}
+
 void read_option_file(const std::string &filepath, const Model &model,
                       Options &options)
 {
@@ -62,16 +72,20 @@ void read_option_file(const std::string &filepath, const Model &model,
 
 } // namespace problem_details
 
-problem::problem(const Context &ctx,
-                 const std::string &Model_filepath,
-                 const std::string &option_filepath)
-    : context(ctx)
+problem::problem(const Context &ctx, const std::string &file)
+    : m_context(ctx)
 {
-    efyj_info(ctx, boost::format("problem: model '%1%' - option '%2%'") %
-              Model_filepath % option_filepath);
+    problem_details::read_model_file(file, m_model);
+}
 
-    problem_details::read_model_file(Model_filepath, model);
-    problem_details::read_option_file(option_filepath, model, options);
+void problem::extract(const std::string& file)
+{
+    problem_details::extract_option_from_model(file, m_model);
+}
+
+void problem::options(const std::string& file)
+{
+    problem_details::read_option_file(file, m_model, m_options);
 }
 
 template <typename Solver>
@@ -81,13 +95,13 @@ void problem::compute(int rank, int world_size)
     (void)world_size;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-    Solver slv(model);
+    Solver slv(m_model);
 
-    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+    for (std::size_t i = 0, e = m_options.options.rows(); i != e; ++i) {
         try {
-            options.ids[i].simulated = slv.solve(options.options.row(i));
+            m_options.ids[i].simulated = slv.solve(m_options.options.row(i));
         } catch (const std::exception &e) {
-            efyj_info(context, boost::format("solve failure option at row %1%: %2%") % i %
+            efyj_info(m_context, boost::format("solve failure option at row %1%: %2%") % i %
                       e.what());
         }
     }
@@ -95,11 +109,11 @@ void problem::compute(int rank, int world_size)
     Post post;
     post.functions.emplace_back(rmsep);
     post.functions.emplace_back(weighted_kappa);
-    post.apply(model, options, context);
+    post.apply(m_model, m_options, m_context);
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-    efyj_info(context,
+    efyj_info(m_context,
               boost::format("finished computation at %1% elapsed time: %2% s.\n") %
               std::ctime(&end_time) % elapsed_seconds.count());
 
@@ -109,7 +123,7 @@ void problem::compute(int rank, int world_size)
         if (ofs) {
             ofs << "observated;simulated\n";
 
-            for (const auto &opt : options.ids)
+            for (const auto &opt : m_options.ids)
                 ofs << opt.observated << ';' << opt.simulated << '\n';
         }
     }

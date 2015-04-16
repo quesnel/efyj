@@ -294,7 +294,7 @@ private:
                 if (pd->stack.top() == stack_identifier::DEXi)
                     pd->model.options.emplace_back(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->model.attributes.back().options.emplace_back(pd->char_data);
+                    pd->model.attributes.back().options.emplace_back(std::stoi(pd->char_data));
                 else
                     throw std::invalid_argument("bad stack");
 
@@ -499,7 +499,8 @@ private:
         return std::move(std::string(space + adding, ' '));
     }
 
-    void write_Model_option(const std::vector <std::string> &opts)
+    template <typename T>
+    void write_Model_option(const std::vector <T> &opts)
     {
         for (const auto &opt : opts)
             os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
@@ -567,7 +568,39 @@ private:
     }
 };
 
+void reorder_basic_attribute(const Model& model, std::size_t att, std::vector <std::size_t> &out)
+{
+    if (model.attributes[att].is_basic())
+        out.push_back(att);
+    else
+        for (auto child : model.attributes[att].children)
+            reorder_basic_attribute(model, child, out);
+}
+
 } // model-details namespace
+
+void Model::write_options(std::ostream& os) const
+{
+    std::vector <std::size_t> ordered_att;
+
+    model_details::reorder_basic_attribute(*this, 0, ordered_att);
+
+    os << "id;";
+
+    for (int child : ordered_att)
+        os << attributes[child].name << ';';
+
+    os << attributes[0].name << '\n';
+
+    for (std::size_t opt = 0; opt != options.size(); ++opt) {
+        os << options[opt] << ';';
+
+        for (int child : ordered_att)
+            os << attributes[child].scale.scale[attributes[child].options[opt]].name << ';';
+
+        os << attributes[0].scale.scale[attributes[0].options[opt]].name << '\n';
+    }
+}
 
 inline
 bool operator<(const attribute &lhs, const attribute &rhs)
