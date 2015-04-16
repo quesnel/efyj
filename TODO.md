@@ -2,10 +2,11 @@ efyj's todo list
 ================
 
 - Cleanup: All thrown exceptions should use `efyj_error` class.
-
-- Cleanup:  remove dead code, simplify algorithms.
-
+- Cleanup: remove dead code, simplify algorithms.
+- Main: add a -e option to extract existing option.
 - CMake: hide solver-gmp.hpp if gmp is not available.
-
+- Improve the write function to store <LINE>...</LINE> element.
+- Read new element VERSION and CREATED.
+- Add option to unread OPTION in DEXi files.
 - Switch internal source code into C++11 template.
   - C++11 template for libexpat or libxml2 SAX API.
