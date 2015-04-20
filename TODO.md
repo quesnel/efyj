@@ -12,3 +12,4 @@ efyj's todo list
 - To avoid any cast, replace all `std::size_t` from `scale_size` with int or
   `scale_id`.
 - Replace `scale_size()` with `scale_result()`.
+- Homogeneize read/write with `std::[io]stream` and `operator<<`.

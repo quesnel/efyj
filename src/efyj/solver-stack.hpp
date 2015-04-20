@@ -130,6 +130,11 @@ struct Block {
 
 } // namespace solver_stack_details
 
+struct line_updater
+{
+    int attribute, line, value;
+};
+
 class solver_stack
 {
 public:
@@ -172,21 +177,26 @@ public:
             return result[0];
         }
 
-    bool update_line(int &attribute, int &line, int &value)
+    void update_line_init()
     {
-        atts[attribute].functions[line] = value;
+        atts[0].functions[0] = 0;
+    }
 
-        ++value;
-        if (value >= atts[attribute].scale_result()) {
-            value = 0;
-            atts[attribute].functions[line] = atts_copy[attribute].functions[line];
-            ++line;
+    bool update_line(line_updater &next)
+    {
+        atts[next.attribute].functions[next.line] = next.value;
 
-            if (line >= (int)atts[attribute].functions.size()) {
-                line = 0;
-                ++attribute;
+        ++next.value;
+        if (next.value >= atts[next.attribute].scale_result()) {
+            next.value = 0;
+            atts[next.attribute].functions[next.line] = atts_copy[next.attribute].functions[next.line];
+            ++next.line;
 
-                if (attribute >= (int)atts.size()) 
+            if (next.line >= (int)atts[next.attribute].functions.size()) {
+                next.line = 0;
+                ++next.attribute;
+
+                if (next.attribute >= (int)atts.size()) 
                     return false;
             }
         }

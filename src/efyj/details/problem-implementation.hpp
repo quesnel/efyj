@@ -116,11 +116,15 @@ double problem::compute1(int rank, int world_size)
     Solver slv(m_model);
     double best_kappa = 0.0;
     std::ofstream ofs("output.csv");
-    int attribute = 0, line = 0, value = 0;
+
+    line_updater current {0, 0, 0};
+    line_updater best;
+    slv.update_line_init();
+
     int computed = 0;
     ofs << "attribte;line;value;kappa\n";
 
-    while (slv.update_line(attribute, line, value)) {
+    do {
         for (std::size_t i = 0, e = m_options.options.rows(); i != e; ++i) {
             try {
                 m_options.ids[i].simulated = slv.solve(m_options.options.row(i));
@@ -130,25 +134,29 @@ double problem::compute1(int rank, int world_size)
             }
         }
 
-        double ret = weighted_kappa(m_model, m_options, m_options.options.rows(),
-                                    m_model.attributes[0].scale.size(), m_context);
-        ofs << attribute << ';' << line << ';' << value << ';' << ret << '\n';
+        double ret = squared_weighted_kappa(m_model, m_options, m_options.options.rows(),
+                                           m_model.attributes[0].scale.size());
+        ofs << current.attribute << ';' << current.line << ';' << current.value << ';' << ret << '\n';
 
         if (ret > best_kappa) {
             best_kappa = ret;
+            best = current;
         }
 
         ++computed;
-    }
+    } while (slv.update_line(current));
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-    efyj_info(m_context,
-              boost::format("%1% lines changed\nfinished computation at %2% elapsed time: %3% s.\n")
-              %
-              computed %
-              std::ctime(&end_time) % elapsed_seconds.count());
+
+    efyj_info(m_context, boost::format("Best kappa %1% (for attribute %2%"
+        " line %3% with value %4%)\nDefault kappa: %5%\n%6% lines"
+        " changed\nComputation ends at %7% elapsed time: %8%") % best_kappa %
+        best.attribute % best.line % best.value % compute0 <Solver>(rank,
+        world_size) % computed % std::ctime(&end_time) %
+        elapsed_seconds.count());
+
     return best_kappa;
 }
 
