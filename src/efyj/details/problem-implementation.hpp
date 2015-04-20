@@ -85,8 +85,8 @@ double problem::compute0(int rank, int world_size)
         }
     }
 
-    double ret = weighted_kappa(m_model, m_options, m_options.options.rows(),
-                                m_model.attributes[0].scale.size(), m_context);
+    double ret = linear_weighted_kappa(m_model, m_options, m_options.options.rows(),
+                                       m_model.attributes[0].scale.size());
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);

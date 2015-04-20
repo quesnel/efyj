@@ -31,10 +31,8 @@
 namespace efyj {
 
 double rmsep(const efyj::Model &, const Options &options,
-             const std::size_t N, const std::size_t NC,
-             Context ctx)
+             const std::size_t N, const std::size_t NC)
 {
-    (void)ctx;
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
     for (const auto &id : options.ids)
@@ -46,16 +44,12 @@ double rmsep(const efyj::Model &, const Options &options,
         for (std::size_t j = 0; j != NC; ++j)
             sum += matrix(i, j) * ((i - j) * (i - j));
 
-    double result = std::sqrt((double)sum / (double)N);
-    // efyj_info(ctx, boost::format("RMSE: %1%") % result);
-    return result;
+    return std::sqrt((double)sum / (double)N);
 }
 
-double weighted_kappa(const efyj::Model &, const Options &options,
-                      const std::size_t N, const std::size_t NC,
-                      Context ctx)
+double linear_weighted_kappa(const efyj::Model &, const Options &options,
+                             const std::size_t N, const std::size_t NC)
 {
-    (void)ctx;
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
@@ -65,8 +59,6 @@ double weighted_kappa(const efyj::Model &, const Options &options,
         ++distributions(options.ids[i].simulated, 1);
     }
 
-    // efyj_info(ctx, "Confusion matrix");
-    // efyj_info(ctx, observed);
     observed /= (double)N;
     distributions /= (double)N;
     Eigen::ArrayXXd expected = Eigen::ArrayXXd::Zero(NC, NC);
@@ -76,25 +68,44 @@ double weighted_kappa(const efyj::Model &, const Options &options,
             expected(i, j) = distributions(i, 0) * distributions(j, 1);
 
     Eigen::ArrayXXd weighted = Eigen::ArrayXXd(NC, NC);
-    {
-        for (int i = 0; i != (int)NC; ++i)
-            for (int j = 0; j != (int)NC; ++j)
-                weighted(i, j) = std::abs(i - j);
 
-        double kapa = 1.0 - ((weighted * observed).sum() /
-                             (weighted * expected).sum());
-        // efyj_info(ctx, boost::format("kapa linear: %1%") % kapa);
-        return kapa;
+    for (int i = 0; i != (int)NC; ++i)
+        for (int j = 0; j != (int)NC; ++j)
+            weighted(i, j) = std::abs(i - j);
+
+    return 1.0 - ((weighted * observed).sum() /
+                  (weighted * expected).sum());
+}
+
+double squared_weighted_kappa(const efyj::Model &, const Options &options,
+                              const std::size_t N, const std::size_t NC)
+{
+    Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
+    Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
+
+    for (int i = 0; i != (int)N; ++i) {
+        ++observed(options.ids[i].observated, options.ids[i].simulated);
+        ++distributions(options.ids[i].observated, 0);
+        ++distributions(options.ids[i].simulated, 1);
     }
-    // {
-    //     for (int i = 0; i != (int)NC; ++i)
-    //         for (int j = 0; j != (int)NC; ++j)
-    //             weighted(i, j) = std::abs(i - j) * std::abs(i - j);
-    //     double kapa = 1.0 - ((weighted * observed).sum() /
-    //                          (weighted * expected).sum());
-    //     efyj_info(ctx, boost::format("kapa squared: %1%") % kapa);
-    // }
-};
+
+    observed /= (double)N;
+    distributions /= (double)N;
+    Eigen::ArrayXXd expected = Eigen::ArrayXXd::Zero(NC, NC);
+
+    for (int i = 0; i != (int)NC; ++i)
+        for (int j = 0; j != (int)NC; ++j)
+            expected(i, j) = distributions(i, 0) * distributions(j, 1);
+
+    Eigen::ArrayXXd weighted = Eigen::ArrayXXd(NC, NC);
+
+    for (int i = 0; i != (int)NC; ++i)
+        for (int j = 0; j != (int)NC; ++j)
+            weighted(i, j) = std::abs(i - j) * std::abs(i - j);
+
+    return 1.0 - ((weighted * observed).sum() /
+                  (weighted * expected).sum());
+}
 
 }
 
