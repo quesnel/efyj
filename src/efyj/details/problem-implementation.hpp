@@ -37,64 +37,39 @@
 
 namespace efyj {
 
-namespace problem_details {
-
-void read_model_file(const std::string &filepath, Model &model)
+problem::problem(const Context &ctx, const std::string &file)
+    : m_context(ctx)
 {
-    std::ifstream ifs(filepath);
+    std::ifstream ifs(file);
 
     if (!ifs)
-        throw efyj::xml_parser_error(filepath, "fail to open");
+        throw efyj::xml_parser_error(file, "fail to open");
 
-    ifs >> model;
+    ifs >> m_model;
 }
 
-void extract_option_from_model(const std::string& filepath, const Model& model)
+void problem::extract(const std::string& file)
 {
-    std::ofstream ofs(filepath);
+    std::ofstream ofs(file);
 
     if (!ofs)
         throw efyj::efyj_error("bad extract options file");
 
-    model.write_options(ofs);
+    m_model.write_options(ofs);
 }
 
-template <typename T>
-void read_option_file(const std::string &filepath, const Model &model,
-                      Options <T>&options)
+void problem::options(const std::string& file)
 {
-    std::ifstream ifs(filepath);
+    std::ifstream ifs(file);
 
     if (!ifs)
-        throw efyj::csv_parser_error(filepath, "fail to open");
+        throw efyj::csv_parser_error(file, "fail to open");
 
-    options = array_options_read<T>(ifs, model);
+    m_options = array_options_read(ifs, m_model);
 }
 
-} // namespace problem_details
-
-template <typename T>
-problem<T>::problem(const Context &ctx, const std::string &file)
-    : m_context(ctx)
-{
-    problem_details::read_model_file(file, m_model);
-}
-
-template <typename T>
-void problem<T>::extract(const std::string& file)
-{
-    problem_details::extract_option_from_model(file, m_model);
-}
-
-template <typename T>
-void problem<T>::options(const std::string& file)
-{
-    problem_details::read_option_file(file, m_model, m_options);
-}
-
-template <typename T>
 template <typename Solver>
-double problem<T>::compute(int rank, int world_size)
+double problem::compute(int rank, int world_size)
 {
     (void)rank;
     (void)world_size;

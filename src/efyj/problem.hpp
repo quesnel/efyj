@@ -28,10 +28,8 @@
 
 namespace efyj {
 
-template <typename T>
-class problem
+struct problem
 {
-public:
     problem(const efyj::Context &context, const std::string &model);
 
     void extract(const std::string &file);
@@ -42,7 +40,7 @@ public:
     double compute(int rank, int world_size);
 
     Context m_context;
-    Options <T> m_options;
+    Options m_options;
     Model m_model;
 };
 

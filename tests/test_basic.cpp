@@ -379,7 +379,7 @@ TEST_CASE("test problem Model file", "[model]")
 
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
-        efyj::problem <std::string> pb(ctx, filepath);
+        efyj::problem pb(ctx, filepath);
         pb.extract("/tmp/toto.csv");
         pb.options("/tmp/toto.csv");
 

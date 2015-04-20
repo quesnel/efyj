@@ -30,8 +30,7 @@
 
 namespace efyj {
 
-template <typename T>
-double rmsep(const efyj::Model &, const Options <T> &options,
+double rmsep(const efyj::Model &, const Options &options,
            const std::size_t N, const std::size_t NC,
            Context ctx)
 {
@@ -52,8 +51,7 @@ double rmsep(const efyj::Model &, const Options <T> &options,
     return result;
 }
 
-template <typename T>
-double weighted_kappa(const efyj::Model &, const Options <T> &options,
+double weighted_kappa(const efyj::Model &, const Options &options,
                     const std::size_t N, const std::size_t NC,
                     Context ctx)
 {
