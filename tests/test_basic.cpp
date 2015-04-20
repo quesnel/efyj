@@ -180,7 +180,7 @@ TEST_CASE("test Car.dxi", "[model]")
 
     REQUIRE(car.attributes[1].name == "PRICE");
     REQUIRE(car.attributes[1].children.size() == 2u);
-    REQUIRE(car.attributes[1].children == std::vector <std::size_t>({ 2, 3 }));    
+    REQUIRE(car.attributes[1].children == std::vector <std::size_t>({ 2, 3 }));
 
     REQUIRE(car.attributes[2].name == "BUY.PRICE");
     REQUIRE(car.attributes[2].children.empty() == true);

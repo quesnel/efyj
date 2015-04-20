@@ -298,7 +298,7 @@ private:
                     try {
                         att = std::stoi(pd->char_data);
                     } catch (...) {
-                        std::cout << "fail to convert " << pd->char_data << " in integer\n";
+                        //std::cout << "fail to convert " << pd->char_data << " in integer\n";
                     }
                     pd->model.attributes.back().options.emplace_back(att);
                 }

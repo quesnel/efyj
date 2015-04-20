@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
+#include <algorithm>
 #include <deque>
 #include <limits>
 #include <map>
@@ -153,7 +154,7 @@ struct Model
     std::vector <scale_id> basic_attribute_scale_size;
     std::vector <std::string> group;
     std::deque <attribute> attributes;
-    
+
     int group_id(const std::string& name) const
     {
         auto it = std::find(group.cbegin(), group.cend(), name);

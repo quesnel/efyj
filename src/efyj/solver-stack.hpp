@@ -196,7 +196,7 @@ public:
                 next.line = 0;
                 ++next.attribute;
 
-                if (next.attribute >= (int)atts.size()) 
+                if (next.attribute >= (int)atts.size())
                     return false;
             }
         }
