@@ -39,11 +39,14 @@ void usage() noexcept
     std::cout << "efyj [-h][-m file.dexi][-o file.csv]\n\n"
               << "Options:\n"
               << "    -h                   This help message\n"
-              << "    -e output.csv        Extract the option from dexi file into csv file\n"
+              << "    -e output.csv        Extract the option from dexi files into csv file\n"
               << "    -m model.dexi        The model file\n"
               << "    -o options.csv       The options file\n"
               << "    -s solver_name       Select the specified solver\n"
-              << "    -a[limit]            Compute the best model for kappa\n"
+              << "    -a [limit]           Compute the best model for kappa\n"
+              << "                         0: compute kappa\n"
+              << "                         1..n: number of walkers\n"
+              << "                         -n: from 1 to n walkers\n"
               << "\n"
               << "Available solvers:\n"
               << "   stack              (default) stack and reverse polish notation\n"
@@ -61,7 +64,7 @@ int main(int argc, char *argv[])
     std::string solvername;
     int limit = 0;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:e:ha::")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:e:ha:")) != -1) {
         switch (opt) {
         case 'e':
             extractfile.assign(::optarg);
@@ -80,8 +83,6 @@ int main(int argc, char *argv[])
             break;
 
         case 'a':
-            limit = 1;
-
             if (::optarg)
                 limit = std::stoi(::optarg);
 
@@ -100,7 +101,8 @@ int main(int argc, char *argv[])
     }
 
     try {
-        efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
+        efyj::Context ctx = std::make_shared <efyj::ContextImpl>(
+            efyj::LOG_OPTION_ERR);
 
         efyj::Model model = model_read(ctx, modelfilepath);
         efyj::model_show(model, std::cout);
@@ -112,12 +114,15 @@ int main(int argc, char *argv[])
             efyj::Options options = option_read(ctx, model, optionfilepath);
 
             if (limit == 0) {
-                if (solvername == "bigmem")
-                    efyj::compute0 <efyj::solver_bigmem>(ctx, model, options, 0, 1);
-                else
-                    efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
-            } else
-                efyj::compute1 <efyj::solver_stack>(ctx, model, options, 0, 1);
+                std::cout << "compute Kappa:\n";
+                efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
+            } else if (limit > 0) {
+                std::cout << "compute best Kappa with " << limit << ":\n";
+                efyj::computen(ctx, model, options, 0, 1, limit);
+            } else {
+                std::cout << "compute best Kappa without limit\n";
+                efyj::compute_1_to_n(ctx, model, options, 0, 1, -limit);
+            }
         }
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';

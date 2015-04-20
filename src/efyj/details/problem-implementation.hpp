@@ -31,6 +31,7 @@
 #include <efyj/options.hpp>
 #include <efyj/post.hpp>
 
+#include <iterator>
 #include <fstream>
 #include <chrono>
 
@@ -63,7 +64,7 @@ Options option_read(Context ctx, const Model& model, const std::string &filename
         throw efyj::csv_parser_error(filename, "fail to open");
     }
 
-    return array_options_read(ifs, model);
+    return array_options_read(ctx, ifs, model);
 }
 
 inline
@@ -80,6 +81,34 @@ void option_extract(Context ctx, const Model& model, const std::string& filename
 }
 
 template <typename Solver>
+double compute_kappa(Context ctx, const Model& model, const Options& options)
+{
+    Solver slv(model);
+
+    std::vector <int> simulated(options.options.rows());
+
+    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+        simulated[i] = slv.solve(options.options.row(i));
+
+    double ret = linear_weighted_kappa(model, options, simulated,
+                                       options.options.rows(),
+                                       model.attributes[0].scale.size());
+
+    if (ctx->log_priority() >= LOG_OPTION_INFO) {
+        for (auto i = 0ul, e = options.ids.size(); i != e; ++i) {
+            if (options.ids[i].observated != simulated[i]) {
+                efyj_info(ctx,
+                          boost::format("observation (%1%) != simulated (%2%)"
+                                        " at line %3%")
+                          % options.ids[i].observated % simulated[i] % i);
+            }
+        }
+    }
+
+    return ret;
+}
+
+template <typename Solver>
 double compute0(Context ctx, const Model& model, const Options&
                 options, int rank, int world_size)
 {
@@ -88,104 +117,136 @@ double compute0(Context ctx, const Model& model, const Options&
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-    Solver slv(model);
 
-    std::vector <int> simulated(options.options.rows());
+    double ret = compute_kappa <Solver>(ctx, model, options);
 
-    for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-        try {
-            simulated[i] = slv.solve(options.options.row(i));
-        } catch (const std::exception &e) {
-            efyj_info(ctx, boost::format("solve failure option at row %1%: %2%") % i %
-                      e.what());
-        }
-    }
-
-    double ret = linear_weighted_kappa(model, options, simulated,
-                                       options.options.rows(),
-                                       model.attributes[0].scale.size());
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-    efyj_info(ctx,
-              boost::format("finished computation at %1% elapsed time: %2% s.\n") %
+
+    efyj_info(ctx, boost::format(
+                  "finished computation at %1% elapsed time: %2% s.\n") %
               std::ctime(&end_time) % elapsed_seconds.count());
-    {
-        std::ofstream ofs("obs-sim.csv");
 
-        if (ofs) {
-            ofs << "observated;simulated\n";
+    efyj_info(ctx, boost::format("kappa founded: %1%") % ret);
 
-            for (auto i = 0ul, e = options.ids.size(); i != e; ++i)
-                ofs << options.ids[i].observated << ';'
-                    << simulated[i] << '\n';
-        }
-    }
     return ret;
 }
 
-template <typename Solver>
-double compute1(Context ctx, const Model& model, const Options&
-                options, int rank, int world_size)
+inline std::tuple <unsigned long, double>
+compute_best_kappa(Context ctx, const Model& model,
+                   const Options& options, int walker_number)
+{
+    for_each_model_solver_stack solver(model, walker_number);
+    std::tuple <unsigned long, double> best {0, 0};
+    std::vector <int> simulated(options.options.rows());
+
+    do {
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+            simulated[i] = solver.solve(options.options.row(i));
+
+        // Debug mode only.
+        // for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
+        //     try {
+        //         simulated[i] = solver.solve(options.options.row(i));
+        //     } catch (const std::exception &e) {
+        //         efyj_info(ctx, boost::format(
+        //                       "solve failure option at row %1%: %2%") % i %
+        //                   e.what());
+        //     }
+        // }
+
+        double ret = squared_weighted_kappa(model, options, simulated,
+                                            options.options.rows(),
+                                            model.attributes[0].scale.size());
+
+        std::get <1>(best) = std::max(ret, std::get<1>(best));
+        std::get <0>(best)++;
+    } while (solver.next() == true);
+
+    return best;
+}
+
+inline double
+computen(Context ctx, const Model& model, const Options& options,
+         int rank, int world_size, int walker_number)
 {
     (void)rank;
     (void)world_size;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-    Solver slv(model);
-    double best_kappa = 0.0;
-    std::ofstream ofs("output.csv");
 
-    line_updater current {0, 0, 0};
-    line_updater best;
-    slv.update_line_init();
-
-    int computed = 0;
-    ofs << "attribte;line;value;kappa\n";
-
-    std::vector <int> simulated(options.options.rows());
-
-    do {
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-            try {
-                simulated[i] = slv.solve(options.options.row(i));
-            } catch (const std::exception &e) {
-                efyj_info(ctx, boost::format(
-                        "solve failure option at row %1%: %2%") % i % e.what());
-            }
-        }
-
-        double ret = squared_weighted_kappa(model, options, simulated,
-                                            options.options.rows(),
-                                            model.attributes[0].scale.size());
-        ofs << current.attribute << ';' << current.line << ';'
-            << current.value << ';' << ret << '\n';
-
-        if (ret > best_kappa) {
-            best_kappa = ret;
-            best = current;
-        }
-
-        ++computed;
-    } while (slv.update_line(current));
+    auto ret = compute_best_kappa(ctx, model, options, walker_number);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj_info(ctx, boost::format("Best kappa %1% (for attribute %2%"
-        " line %3% with value %4%)\nDefault kappa: %5%\n%6% lines"
-        " changed\nComputation ends at %7% elapsed time: %8%") % best_kappa %
-              best.attribute % best.line % best.value %
-              compute0 <Solver>(ctx, model, options, rank,
-        world_size) % computed % std::ctime(&end_time) %
-        elapsed_seconds.count());
+    efyj_info(ctx, boost::format("Lines changed: %1%\n"
+                                 "Best kappa: %2%\n"
+                                 "Computation ends at: %3%\n"
+                                 "Elapsed time: %4%\n")
+              % std::get<0>(ret) % std::get<1>(ret)
+              % std::ctime(&end_time) % elapsed_seconds.count());
 
-    return best_kappa;
+    return std::get <1>(ret);
 }
 
-inline
-void show(const Model &model, std::size_t att, std::size_t space,
+inline double
+compute_1_to_n(Context ctx, const Model& model, const Options& options,
+               int rank, int world_size, int walker_number)
+{
+    (void)rank;
+    (void)world_size;
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    efyj_info(ctx, boost::format("- 0 kappa: %1%\n")
+              % compute_kappa <solver_stack>(ctx, model, options));;
+
+    for_each_model_solver_stack solver(model);
+    std::vector <int> simulated(options.options.rows());
+    std::vector <line_updater> bestupdaters;
+    double bestkappa = 0;
+
+    for (int step = 1; step <= walker_number; ++step) {
+        std::tuple <unsigned long, double> best {0, 0};
+
+        do {
+            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+                simulated[i] = solver.solve(options.options.row(i));
+
+            double ret = squared_weighted_kappa(model, options, simulated,
+                                                options.options.rows(),
+                                                model.attributes[0].scale.size());
+
+            if (ret > std::get<1>(best)) {
+                std::get<1>(best) = ret;
+                bestupdaters = solver.updaters();
+            }
+
+            ++std::get<0>(best);
+        } while (solver.next() == true);
+
+        efyj_info(ctx, boost::format("- %1% kappa: %1% / loop: %2% / updaters: %3%\n")
+                  % std::get<1>(best) % std::get<0>(best) % bestupdaters);
+
+        bestkappa = std::max(bestkappa, std::get <1>(best));
+
+        //
+        // TODO: be carefull, solver.init can throw when end of
+        // computation is reached.
+        //
+
+        solver.init(step + 1);
+    }
+
+    return bestkappa;
+}
+
+inline void
+show(const Model &model, std::size_t att, std::size_t space,
           std::ostream &os)
 {
     os << std::string(space, ' ') << model.attributes[att].name << '\n';
@@ -194,11 +255,13 @@ void show(const Model &model, std::size_t att, std::size_t space,
         os << std::string(space, ' ') << "| " << sc.name << '\n';
 
     if (model.attributes[att].is_aggregate()) {
-        os << std::string(space + 1,
-                          ' ') << "\\ -> (" << model.attributes[att].functions.low << ")\n";
+        os << std::string(space + 1, ' ')
+           << "\\ -> ("
+           << model.attributes[att].functions.low
+           << ")\n";
 
         for (std::size_t child : model.attributes[att].children) {
-            show(model, child, space + 2, os);
+                        show(model, child, space + 2, os);
         }
     }
 }

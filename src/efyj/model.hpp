@@ -23,7 +23,6 @@
 #define INRA_EFYj_MODEL_HPP
 
 #include <efyj/exception.hpp>
- 
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -40,8 +39,8 @@ namespace efyj {
  * The @e scale_id is used to represent possible value when solving
  * problem. The range of @e scale_id is [0..127].
  */
-typedef std::int_fast8_t scale_id;
-// typedef int scale_id;
+//typedef std::int_fast8_t scale_id;
+typedef int scale_id;
 
 template <typename T>
 constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type

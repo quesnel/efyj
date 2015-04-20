@@ -318,7 +318,9 @@ private:
                     try {
                         att = std::stoi(pd->char_data);
                     } catch (...) {
-                        //std::cout << "fail to convert " << pd->char_data << " in integer\n";
+                        throw efyj::xml_parser_error(
+                            std::string("Can not convert option string ") +
+                            pd->char_data + std::string(" in integer"));
                     }
 
                     pd->model.attributes.back().options.emplace_back(att);

@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_OPTIONS_HPP
 #define INRA_EFYj_OPTIONS_HPP
 
+#include <efyj/context.hpp>
 #include <efyj/model.hpp>
 #include <efyj/types.hpp>
 
@@ -43,7 +44,7 @@ struct Options {
     Array options;
 };
 
-Options array_options_read(std::istream &is, const efyj::Model &model);
+Options array_options_read(Context ctx, std::istream &is, const efyj::Model &model);
 
 }
 

@@ -38,12 +38,17 @@ template <typename Solver>
 double compute0(Context ctx, const Model& model, const Options& options,
                 int rank, int world_size);
 
-template <typename Solver>
-double compute1(Context ctx, const Model& model, const Options& options,
-                int rank, int world_size);
+inline double
+computen(Context ctx, const Model& model, const Options& options,
+         int rank, int world_size);
+
+inline double
+compute_1_to_n(Context ctx, const Model& model, const Options& options,
+               int rank, int world_size, int walker_number);
 
 double prediction(Context ctx, const Model& model, const Options& options,
-                int rank, int world_size);
+                  int rank, int world_size);
+
 
 void model_show(const Model &model, std::ostream &os);
 
