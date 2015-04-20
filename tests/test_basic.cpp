@@ -23,7 +23,6 @@
 #include <efyj/problem.hpp>
 #include <efyj/model.hpp>
 #include <efyj/solver-bigmem.hpp>
-#include <efyj/solver-gmp.hpp>
 #include <efyj/solver-stack.hpp>
 
 #include <sstream>
@@ -294,17 +293,6 @@ TEST_CASE("test basic solver for Car", "[model]")
         REQUIRE(s.solve(opt_v2) == 2);
         REQUIRE(s.solve(opt_v4) == 3);
         REQUIRE(s.solve(opt_v5) == 0);
-    }
-    {
-        efyj::solver_gmp s(model);
-
-        bool equal;
-
-        equal = (s.solve(opt_v3) == 3);
-        REQUIRE(equal);
-
-        equal = (s.solve(opt_v2) == 2);
-        REQUIRE(equal);
     }
 }
 

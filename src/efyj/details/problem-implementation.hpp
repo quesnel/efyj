@@ -23,7 +23,6 @@
 #define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 
 #include <efyj/solver-bigmem.hpp>
-#include <efyj/solver-gmp.hpp>
 #include <efyj/solver-stack.hpp>
 #include <efyj/model.hpp>
 #include <efyj/context.hpp>

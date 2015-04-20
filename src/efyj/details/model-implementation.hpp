@@ -593,7 +593,7 @@ void Model::write_options(std::ostream& os) const
     os << attributes[0].name << '\n';
 
     for (std::size_t opt = 0; opt != options.size(); ++opt) {
-        os << options[opt] << ";-;0;0;";
+        os << options[opt] << "../;-;0;0;";
 
         for (int child : ordered_att)
             os << attributes[child].scale.scale[attributes[child].options[opt]].name << ';';
