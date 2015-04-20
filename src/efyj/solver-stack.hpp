@@ -33,9 +33,8 @@ namespace efyj {
 
 namespace solver_stack_details {
 
-class aggregate_attribute
+struct aggregate_attribute
 {
-public:
     aggregate_attribute(const Model& model, std::size_t att)
         : stack_size(0)
     {
@@ -62,6 +61,13 @@ public:
 
         stack = Vector::Zero(scale_size.size());
         stack_size = 0u;
+
+        scale = model.attributes[att].scale_size();
+    }
+
+    inline scale_id scale_result() const
+    {
+        return scale;
     }
 
     inline std::size_t option_size() const
@@ -95,11 +101,11 @@ public:
         return functions[coeffs.dot(stack)];
     }
 
-private:
     Vector coeffs;
     std::vector <scale_id> functions;
     std::vector <std::size_t> scale_size;
     Vector stack;
+    scale_id scale;
     int stack_size;
 };
 
@@ -133,6 +139,8 @@ public:
 
         int value_id = 0;
         recursive_fill(model, 0, value_id);
+
+        atts_copy = atts;
     }
 
     ~solver_stack()
@@ -164,8 +172,31 @@ public:
             return result[0];
         }
 
+    bool update_line(int &attribute, int &line, int &value)
+    {
+        atts[attribute].functions[line] = value;
+
+        ++value;
+        if (value >= atts[attribute].scale_result()) {
+            value = 0;
+            atts[attribute].functions[line] = atts_copy[attribute].functions[line];
+            ++line;
+
+            if (line >= (int)atts[attribute].functions.size()) {
+                line = 0;
+                ++attribute;
+
+                if (attribute >= (int)atts.size()) 
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
 private:
     std::vector <solver_stack_details::aggregate_attribute> atts;
+    std::vector <solver_stack_details::aggregate_attribute> atts_copy;
 
     // @e function is a Reverse Polish notation.
     std::vector <solver_stack_details::Block> function;

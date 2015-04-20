@@ -371,7 +371,7 @@ TEST_CASE("test problem Model file", "[model]")
         pb.extract("/tmp/toto.csv");
         pb.options("/tmp/toto.csv");
 
-        double kappa = pb.compute <efyj::solver_stack>(0, 1);
+        double kappa = pb.compute0 <efyj::solver_stack>(0, 1);
 
         REQUIRE(kappa == 1.0);
     }

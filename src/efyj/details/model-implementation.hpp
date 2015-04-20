@@ -293,8 +293,15 @@ private:
             case stack_identifier::OPTION:
                 if (pd->stack.top() == stack_identifier::DEXi)
                     pd->model.options.emplace_back(pd->char_data);
-                else if (pd->stack.top() == stack_identifier::ATTRIBUTE)
-                    pd->model.attributes.back().options.emplace_back(std::stoi(pd->char_data));
+                else if (pd->stack.top() == stack_identifier::ATTRIBUTE) {
+                    int att = 0;
+                    try {
+                        att = std::stoi(pd->char_data);
+                    } catch (...) {
+                        std::cout << "fail to convert " << pd->char_data << " in integer\n";
+                    }
+                    pd->model.attributes.back().options.emplace_back(att);
+                }
                 else
                     throw std::invalid_argument("bad stack");
 

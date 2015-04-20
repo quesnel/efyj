@@ -37,7 +37,10 @@ struct problem
     void options(const std::string &file);
 
     template <typename Solver>
-    double compute(int rank, int world_size);
+    double compute0(int rank, int world_size);
+
+    template <typename Solver>
+    double compute1(int rank, int world_size);
 
     Context m_context;
     Options m_options;

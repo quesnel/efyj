@@ -43,6 +43,7 @@ void usage() noexcept
               << "    -m model.dexi        The model file\n"
               << "    -o options.csv       The options file\n"
               << "    -s solver_name       Select the specified solver\n"
+              << "    -a limit             Compute the best model for kappa\n"
               << "\n"
               << "Available solvers:\n"
               << "   stack              (default) stack and reverse polish notation\n"
@@ -58,8 +59,9 @@ int main(int argc, char *argv[])
     int opt;
     std::string modelfilepath, optionfilepath, extractfile;
     std::string solvername;
+    int limit = 0;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:e:h")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:e:ha::")) != -1) {
         switch (opt) {
         case 'e':
             extractfile.assign(::optarg);
@@ -75,6 +77,14 @@ int main(int argc, char *argv[])
 
         case 's':
             solvername.assign(::optarg);
+            break;
+
+        case 'a':
+            limit = 1;
+
+            if (::optarg)
+                limit = std::stoi(::optarg);
+
             break;
 
         case 'h':
@@ -100,10 +110,13 @@ int main(int argc, char *argv[])
         if (!optionfilepath.empty()) {
             pb.options(optionfilepath);
 
-            if (solvername == "bigmem")
-                pb.compute <efyj::solver_bigmem>(0, 1);
-            else
-                pb.compute <efyj::solver_stack>(0, 1);
+            if (limit == 0) {
+                if (solvername == "bigmem")
+                    pb.compute0 <efyj::solver_bigmem>(0, 1);
+                else
+                    pb.compute0 <efyj::solver_stack>(0, 1);
+            } else
+                pb.compute1 <efyj::solver_stack>(0, 1);
         }
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
