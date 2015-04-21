@@ -43,7 +43,7 @@ void usage() noexcept
               << "    -m model.dexi        The model file\n"
               << "    -o options.csv       The options file\n"
               << "    -s solver_name       Select the specified solver\n"
-              << "    -a limit             Compute the best model for kappa\n"
+              << "    -a[limit]            Compute the best model for kappa\n"
               << "\n"
               << "Available solvers:\n"
               << "   stack              (default) stack and reverse polish notation\n"
