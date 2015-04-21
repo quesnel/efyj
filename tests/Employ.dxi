@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DEXi>
+  <VERSION>4.01</VERSION>
+  <CREATED>2015-04-21T11:36:42</CREATED>
   <NAME>Employ</NAME>
   <DESCRIPTION>
     <LINE>This is a DEXi multi-attribute model for the assessment of applicants for a &quot;Project Manager&quot; position in a small company. This is a demo model for educational purposes.</LINE>
     <LINE/>
     <LINE>An earlier version of the model was first published in:</LINE>
     <LINE/>
-    <LINE>Bohanec, M., Urh, B., Rajkovič, V.: Evaluating options by combined qualitative and quantitative methods, Acta Psychologica 80, 67-89, North-Holland, 1992.  Available from http://kt.ijs.si/MarkoBohanec/pub/ActaPsych1992.pdf</LINE>
+    <LINE>Bohanec, M., Urh, B., Rajkovic, V.: Evaluating options by combined qualitative and quantitative methods, Acta Psychologica 80, 67-89, North-Holland, 1992.  Available from http://kt.ijs.si/MarkoBohanec/pub/ActaPsych1992.pdf</LINE>
     <LINE/>
     <LINE>This particular version of the model is part of the installation package of DEXi, a program for qualitative multi-attribute decision modelling, http://kt.ijs.si/MarkoBohanec/dexi.html.</LINE>
   </DESCRIPTION>
@@ -14,6 +16,7 @@
   <OPTION>B</OPTION>
   <OPTION>C</OPTION>
   <OPTION>D</OPTION>
+  <OPTION>E</OPTION>
   <SETTINGS>
     <REPORTS>0;1;2;4;5;6;7;8</REPORTS>
   </SETTINGS>
@@ -43,6 +46,7 @@
     <OPTION>0</OPTION>
     <OPTION>0</OPTION>
     <OPTION>3</OPTION>
+    <OPTION>0</OPTION>
     <ATTRIBUTE>
       <NAME>Educat</NAME>
       <DESCRIPTION>Education</DESCRIPTION>
@@ -67,6 +71,7 @@
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>Formal</NAME>
         <DESCRIPTION>Formal education (degree)</DESCRIPTION>
@@ -93,6 +98,7 @@
         <OPTION>4</OPTION>
         <OPTION>4</OPTION>
         <OPTION>4</OPTION>
+        <OPTION>0</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>For.lang</NAME>
@@ -114,6 +120,7 @@
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
     <ATTRIBUTE>
@@ -139,6 +146,7 @@
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>Exper</NAME>
         <DESCRIPTION>Professional experience in the field</DESCRIPTION>
@@ -165,6 +173,7 @@
         <OPTION>4</OPTION>
         <OPTION>3</OPTION>
         <OPTION>3</OPTION>
+        <OPTION>0</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>Age</NAME>
@@ -191,6 +200,7 @@
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
     <ATTRIBUTE>
@@ -216,6 +226,7 @@
       <OPTION>0</OPTION>
       <OPTION>0</OPTION>
       <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>Abilit</NAME>
         <DESCRIPTION>Abilities</DESCRIPTION>
@@ -239,6 +250,7 @@
         <OPTION>0</OPTION>
         <OPTION>0</OPTION>
         <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
         <ATTRIBUTE>
           <NAME>Comm</NAME>
           <DESCRIPTION>Cummunicability</DESCRIPTION>
@@ -262,6 +274,7 @@
           <OPTION>1</OPTION>
           <OPTION>2</OPTION>
           <OPTION>3</OPTION>
+          <OPTION>0</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>Leader</NAME>
@@ -283,6 +296,7 @@
           <OPTION>0</OPTION>
           <OPTION>0</OPTION>
           <OPTION>2</OPTION>
+          <OPTION>0</OPTION>
         </ATTRIBUTE>
       </ATTRIBUTE>
       <ATTRIBUTE>
@@ -308,6 +322,7 @@
         <OPTION>2</OPTION>
         <OPTION>1</OPTION>
         <OPTION>3</OPTION>
+        <OPTION>0</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
   </ATTRIBUTE>

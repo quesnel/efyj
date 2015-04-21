@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DEXi>
+  <VERSION>4.01</VERSION>
+  <CREATED>2015-04-21T11:35:10</CREATED>
   <NAME>Nursery</NAME>
   <DESCRIPTION>
     <LINE>This is a DEXi multi-attribute model for the assessment and priority ranking of applications for a nursery school. Based on the project published in</LINE>
     <LINE/>
-    <LINE>Olave, M., Rajkovič, V., Bohanec, M.: An application for admission in public school systems, in Expert systems in public administration (eds. Snellen, I.Th.M., van de Donk, W.B.H.J., Baquiast, J.-P.), 145-160, Elsevier, 1989. Available from: http://kt.ijs.si/MarkoBohanec/pub/Nursery89.pdf</LINE>
+    <LINE>Olave, M., Rajkovic, V., Bohanec, M.: An application for admission in public school systems, in Expert systems in public administration (eds. Snellen, I.Th.M., van de Donk, W.B.H.J., Baquiast, J.-P.), 145-160, Elsevier, 1989. Available from: http://kt.ijs.si/MarkoBohanec/pub/Nursery89.pdf</LINE>
     <LINE/>
     <LINE>The NURSERY model, expanded into a flat data table, appears in the UCI Machine Learning Repository: http://archive.ics.uci.edu/ml/datasets/Nursery</LINE>
     <LINE/>
     <LINE>This particular version of the model is included in the installation package of DEXi, a program for qualitative multi-attribute decision modelling, http://kt.ijs.si/MarkoBohanec/dexi.html.</LINE>
   </DESCRIPTION>
   <OPTION>Test</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
   <SETTINGS>
     <REPORTS>0;1;2;4;5;6;7;8</REPORTS>
   </SETTINGS>
@@ -40,6 +46,10 @@
       <LOW>013023033023023033033033034033034044</LOW>
     </FUNCTION>
     <OPTION>0</OPTION>
+    <OPTION>1</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>0</OPTION>
     <ATTRIBUTE>
       <NAME>EMPLOY</NAME>
       <DESCRIPTION>Emplyment of parents and child&apos;s nursery</DESCRIPTION>
@@ -63,6 +73,10 @@
         <LOW>011231123322333</LOW>
       </FUNCTION>
       <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>3</OPTION>
       <ATTRIBUTE>
         <NAME>PARENTS</NAME>
         <DESCRIPTION>Parents&apos; occupation</DESCRIPTION>
@@ -80,6 +94,10 @@
           </SCALEVALUE>
         </SCALE>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>HAS_NURS</NAME>
@@ -104,6 +122,10 @@
           </SCALEVALUE>
         </SCALE>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
     <ATTRIBUTE>
@@ -126,6 +148,10 @@
         <LOW>011111111122122222</LOW>
       </FUNCTION>
       <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
       <ATTRIBUTE>
         <NAME>STRUCTURE</NAME>
         <DESCRIPTION>Family structure</DESCRIPTION>
@@ -146,6 +172,10 @@
           <LOW>0122112212222222</LOW>
         </FUNCTION>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
         <ATTRIBUTE>
           <NAME>FORM</NAME>
           <DESCRIPTION>Form of the family</DESCRIPTION>
@@ -166,6 +196,10 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>2</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>CHILDREN</NAME>
@@ -187,6 +221,10 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>2</OPTION>
         </ATTRIBUTE>
       </ATTRIBUTE>
       <ATTRIBUTE>
@@ -206,6 +244,10 @@
           </SCALEVALUE>
         </SCALE>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>2</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>FINANCE</NAME>
@@ -220,6 +262,10 @@
             <GROUP>GOOD</GROUP>
           </SCALEVALUE>
         </SCALE>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>
@@ -243,6 +289,10 @@
         <LOW>120120220</LOW>
       </FUNCTION>
       <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>0</OPTION>
       <ATTRIBUTE>
         <NAME>SOCIAL</NAME>
         <DESCRIPTION>Social conditions</DESCRIPTION>
@@ -260,6 +310,10 @@
           </SCALEVALUE>
         </SCALE>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>HEALTH</NAME>
@@ -276,6 +330,10 @@
             <NAME>not_recom</NAME>
           </SCALEVALUE>
         </SCALE>
+        <OPTION>2</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>2</OPTION>
       </ATTRIBUTE>
     </ATTRIBUTE>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DEXi>
+  <VERSION>4.01</VERSION>
+  <CREATED>2015-04-21T11:34:43</CREATED>
   <NAME>Shuttle Autolanding Problem</NAME>
   <DESCRIPTION>
     <LINE>The decision problem is to determine the conditions under which an autolanding owould be preferable to manual control of the Shuttle spacecraft. The problem is a well-known in machine learning, as it was put forward by Professor Donald Michie to illustrate the purpose and benefits of decision-tree learning algorithms:</LINE>
@@ -10,6 +12,10 @@
     <LINE/>
     <LINE>Usually, the solution of the problem is formulated in terma of a decision tree. This particular file represents the solution in terms of a DEXi model, that is, in terms of a hierarchy of qualitative attributes and corresponding decision rules.</LINE>
   </DESCRIPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
   <SETTINGS>
     <REPORTS>0;1;2;4;5;6;7;8</REPORTS>
   </SETTINGS>
@@ -29,6 +35,10 @@
     <FUNCTION>
       <LOW>0100</LOW>
     </FUNCTION>
+    <OPTION>1</OPTION>
+    <OPTION>1</OPTION>
+    <OPTION>1</OPTION>
+    <OPTION>0</OPTION>
     <ATTRIBUTE>
       <NAME>VISIBILITY</NAME>
       <SCALE>
@@ -41,6 +51,10 @@
           <GROUP>GOOD</GROUP>
         </SCALEVALUE>
       </SCALE>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
     </ATTRIBUTE>
     <ATTRIBUTE>
       <NAME>DANGER</NAME>
@@ -58,6 +72,10 @@
       <FUNCTION>
         <LOW>0111</LOW>
       </FUNCTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
+      <OPTION>1</OPTION>
       <ATTRIBUTE>
         <NAME>STABILITY</NAME>
         <SCALE>
@@ -70,6 +88,10 @@
             <GROUP>GOOD</GROUP>
           </SCALEVALUE>
         </SCALE>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
       </ATTRIBUTE>
       <ATTRIBUTE>
         <NAME>DISTURB</NAME>
@@ -87,6 +109,10 @@
         <FUNCTION>
           <LOW>001011</LOW>
         </FUNCTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
         <ATTRIBUTE>
           <NAME>SIGN</NAME>
           <SCALE>
@@ -99,6 +125,10 @@
               <GROUP>GOOD</GROUP>
             </SCALEVALUE>
           </SCALE>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
         </ATTRIBUTE>
         <ATTRIBUTE>
           <NAME>SITUATION</NAME>
@@ -119,6 +149,10 @@
           <FUNCTION>
             <LOW>222122002</LOW>
           </FUNCTION>
+          <OPTION>2</OPTION>
+          <OPTION>2</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
           <ATTRIBUTE>
             <NAME>ERROR</NAME>
             <SCALE>
@@ -134,6 +168,10 @@
                 <GROUP>GOOD</GROUP>
               </SCALEVALUE>
             </SCALE>
+            <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>1</OPTION>
+            <OPTION>1</OPTION>
           </ATTRIBUTE>
           <ATTRIBUTE>
             <NAME>EXTERNAL</NAME>
@@ -154,6 +192,10 @@
             <FUNCTION>
               <LOW>012002</LOW>
             </FUNCTION>
+            <OPTION>0</OPTION>
+            <OPTION>1</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
             <ATTRIBUTE>
               <NAME>WIND</NAME>
               <SCALE>
@@ -166,6 +208,10 @@
                   <GROUP>GOOD</GROUP>
                 </SCALEVALUE>
               </SCALE>
+              <OPTION>0</OPTION>
+              <OPTION>0</OPTION>
+              <OPTION>0</OPTION>
+              <OPTION>1</OPTION>
             </ATTRIBUTE>
             <ATTRIBUTE>
               <NAME>MAGNITUDE</NAME>
@@ -182,6 +228,10 @@
                   <GROUP>GOOD</GROUP>
                 </SCALEVALUE>
               </SCALE>
+              <OPTION>0</OPTION>
+              <OPTION>1</OPTION>
+              <OPTION>0</OPTION>
+              <OPTION>1</OPTION>
             </ATTRIBUTE>
           </ATTRIBUTE>
         </ATTRIBUTE>

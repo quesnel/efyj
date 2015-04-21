@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DEXi>
+  <VERSION>4.01</VERSION>
+  <CREATED>2015-04-21T11:36:09</CREATED>
   <NAME>Enterprise</NAME>
   <DESCRIPTION>
     <LINE>This is a DEXi multi-attribute model for performance evaluation of public enterprises, as published in</LINE>
     <LINE/>
-    <LINE>Bohanec, M., Rajkovič, V.: DEX: An expert system shell for decision support, Sistemica 1(1), 145-157, 1990. Available from: http://kt.ijs.si/MarkoBohanec/pub/Sistemica90.pdf</LINE>
+    <LINE>Bohanec, M., Rajkovic, V.: DEX: An expert system shell for decision support, Sistemica 1(1), 145-157, 1990. Available from: http://kt.ijs.si/MarkoBohanec/pub/Sistemica90.pdf</LINE>
     <LINE/>
     <LINE>This particular model is included in the installation package of DEXi, a program for qualitative multi-attribute decision modelling, http://kt.ijs.si/MarkoBohanec/dexi.html.</LINE>
   </DESCRIPTION>
   <OPTION>Enterp.1</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
+  <OPTION>New</OPTION>
   <OPTION>Enterp.2</OPTION>
   <OPTION>Enterp.3</OPTION>
   <SETTINGS>
@@ -39,6 +44,9 @@
       <LOW>01010101010101021212011213131311121323231213232424</LOW>
     </FUNCTION>
     <OPTION>1</OPTION>
+    <OPTION>0</OPTION>
+    <OPTION>3</OPTION>
+    <OPTION>2</OPTION>
     <OPTION>3</OPTION>
     <OPTION>4</OPTION>
     <ATTRIBUTE>
@@ -66,6 +74,9 @@
         <LOW>000022244</LOW>
       </FUNCTION>
       <OPTION>0</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>2</OPTION>
       <OPTION>2</OPTION>
       <OPTION>4</OPTION>
       <ATTRIBUTE>
@@ -87,6 +98,9 @@
           <LOW>001012112</LOW>
         </FUNCTION>
         <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>2</OPTION>
         <ATTRIBUTE>
@@ -108,6 +122,9 @@
             <LOW>001001122</LOW>
           </FUNCTION>
           <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>2</OPTION>
+          <OPTION>2</OPTION>
           <OPTION>2</OPTION>
           <OPTION>1</OPTION>
           <ATTRIBUTE>
@@ -125,6 +142,9 @@
                 <GROUP>GOOD</GROUP>
               </SCALEVALUE>
             </SCALE>
+            <OPTION>2</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>2</OPTION>
             <OPTION>2</OPTION>
             <OPTION>2</OPTION>
             <OPTION>2</OPTION>
@@ -145,6 +165,9 @@
               </SCALEVALUE>
             </SCALE>
             <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>2</OPTION>
+            <OPTION>2</OPTION>
             <OPTION>1</OPTION>
             <OPTION>0</OPTION>
           </ATTRIBUTE>
@@ -167,6 +190,9 @@
           <FUNCTION>
             <LOW>0000111222</LOW>
           </FUNCTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>0</OPTION>
           <OPTION>1</OPTION>
           <OPTION>2</OPTION>
@@ -192,6 +218,9 @@
               </SCALEVALUE>
             </SCALE>
             <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>2</OPTION>
+            <OPTION>1</OPTION>
             <OPTION>2</OPTION>
             <OPTION>4</OPTION>
           </ATTRIBUTE>
@@ -208,6 +237,9 @@
               </SCALEVALUE>
             </SCALE>
             <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>0</OPTION>
+            <OPTION>1</OPTION>
             <OPTION>1</OPTION>
             <OPTION>0</OPTION>
           </ATTRIBUTE>
@@ -232,6 +264,9 @@
           <LOW>00011222</LOW>
         </FUNCTION>
         <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>2</OPTION>
         <ATTRIBUTE>
@@ -253,6 +288,9 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>2</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>2</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>2</OPTION>
           <OPTION>2</OPTION>
         </ATTRIBUTE>
@@ -269,6 +307,9 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>0</OPTION>
           <OPTION>1</OPTION>
         </ATTRIBUTE>
@@ -299,6 +340,9 @@
         <LOW>000112011223122334</LOW>
       </FUNCTION>
       <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>2</OPTION>
+      <OPTION>1</OPTION>
       <OPTION>3</OPTION>
       <OPTION>3</OPTION>
       <ATTRIBUTE>
@@ -319,6 +363,9 @@
         <FUNCTION>
           <LOW>0000111222</LOW>
         </FUNCTION>
+        <OPTION>0</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>0</OPTION>
         <OPTION>2</OPTION>
         <OPTION>2</OPTION>
@@ -344,6 +391,9 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>2</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>4</OPTION>
           <OPTION>4</OPTION>
         </ATTRIBUTE>
@@ -360,6 +410,9 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>0</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
         </ATTRIBUTE>
@@ -383,6 +436,9 @@
           <LOW>000112</LOW>
         </FUNCTION>
         <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <ATTRIBUTE>
@@ -401,6 +457,9 @@
             </SCALEVALUE>
           </SCALE>
           <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>2</OPTION>
         </ATTRIBUTE>
@@ -416,6 +475,9 @@
               <GROUP>GOOD</GROUP>
             </SCALEVALUE>
           </SCALE>
+          <OPTION>1</OPTION>
+          <OPTION>0</OPTION>
+          <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>1</OPTION>
           <OPTION>0</OPTION>
@@ -434,6 +496,9 @@
           </SCALEVALUE>
         </SCALE>
         <OPTION>1</OPTION>
+        <OPTION>0</OPTION>
+        <OPTION>1</OPTION>
+        <OPTION>1</OPTION>
         <OPTION>1</OPTION>
         <OPTION>1</OPTION>
       </ATTRIBUTE>
@@ -450,6 +515,9 @@
           <GROUP>GOOD</GROUP>
         </SCALEVALUE>
       </SCALE>
+      <OPTION>1</OPTION>
+      <OPTION>0</OPTION>
+      <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
       <OPTION>1</OPTION>
