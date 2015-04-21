@@ -77,16 +77,22 @@ TEST_CASE("test classic Model file", "[model]")
                                           };
 
     for (const auto &filepath : filepaths) {
-        std::ifstream is(filepath);
-        REQUIRE(is.is_open());
-        efyj::Model dex;
-        REQUIRE_NOTHROW(is >> dex);
-
+        efyj::Model dex1, dex2;
         std::string output("/tmp/");
         output += filepath;
-
-        std::ofstream os(output);
-        os << dex;
+        {
+            std::ifstream is(filepath);
+            REQUIRE(is.is_open());
+            REQUIRE_NOTHROW(is >> dex1);
+            std::ofstream os(output);
+            os << dex1;
+        }
+        {
+            std::ifstream is(filepath);
+            REQUIRE(is.is_open());
+            REQUIRE_NOTHROW(is >> dex2);
+        }
+        REQUIRE(dex1 == dex2);
     }
 }
 
@@ -177,11 +183,9 @@ TEST_CASE("test Car.dxi", "[model]")
     REQUIRE(car.attributes[0].name == "CAR");
     REQUIRE(car.attributes[0].children.size() == 2u);
     REQUIRE(car.attributes[0].children == std::vector <std::size_t>({1, 4}));
-
     REQUIRE(car.attributes[1].name == "PRICE");
     REQUIRE(car.attributes[1].children.size() == 2u);
     REQUIRE(car.attributes[1].children == std::vector <std::size_t>({ 2, 3 }));
-
     REQUIRE(car.attributes[2].name == "BUY.PRICE");
     REQUIRE(car.attributes[2].children.empty() == true);
     REQUIRE(car.attributes[3].name == "MAINT.PRICE");
@@ -189,11 +193,9 @@ TEST_CASE("test Car.dxi", "[model]")
     REQUIRE(car.attributes[4].name == "TECH.CHAR.");
     REQUIRE(car.attributes[4].children.size() == 2u);
     REQUIRE(car.attributes[4].children == std::vector <std::size_t>({5, 9}));
-
     REQUIRE(car.attributes[5].name == "COMFORT");
     REQUIRE(car.attributes[5].children.size() == 3u);
     REQUIRE(car.attributes[5].children == std::vector <std::size_t>({6, 7, 8}));
-
     REQUIRE(car.attributes[6].name == "#PERS");
     REQUIRE(car.attributes[6].children.empty() == true);
     REQUIRE(car.attributes[7].name == "#DOORS");
@@ -227,7 +229,6 @@ TEST_CASE("test multiple Car.Model", "[model]")
         REQUIRE_NOTHROW(is >> dst2);
     }
     REQUIRE(dst2 == dst);
-
     dst2.attributes[0].name = "change";
     REQUIRE(dst2 != dst);
 }
@@ -242,7 +243,6 @@ TEST_CASE("test solver Car", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
     std::size_t problem_size = 1;
     std::size_t basic_scale_number = 0;
     std::size_t scale_number = 0;
@@ -274,12 +274,10 @@ TEST_CASE("test basic solver for Car", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
     efyj::Vector opt_v3(6); opt_v3 << 1, 2, 2, 2, 2, 2;
     efyj::Vector opt_v2(6); opt_v2 << 1, 1, 2, 2, 2, 1;
     efyj::Vector opt_v4(6); opt_v4 << 2, 2, 2, 3, 2, 2;
     efyj::Vector opt_v5(6); opt_v5 << 0, 0, 0, 0, 0, 0;
-
     {
         efyj::solver_bigmem s(model);
         REQUIRE(s.solve(opt_v3) == 3);
@@ -300,20 +298,15 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model model;
-
     {
         std::ifstream is("Enterprise.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
     efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
-
     efyj::solver_bigmem sb(model);
     REQUIRE(sb.solve(opt_v) == 1);
-
     efyj::solver_stack ss(model);
     REQUIRE(ss.solve(opt_v) == 1);
 }
@@ -322,34 +315,25 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model *model = new efyj::Model;
-
     {
         std::ifstream is("IPSIM_PV_simulation1-1.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> *model);
     }
-
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-
         efyj::solver_bigmem sb(*model);
         REQUIRE(sb.solve(opt_v) == 6);
-
         efyj::solver_stack ss(*model);
         REQUIRE(ss.solve(opt_v) == 6);
     }
-
     efyj::Model copy1(*model);
     delete model;
-
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-
         efyj::solver_bigmem sb(copy1);
         REQUIRE(sb.solve(opt_v) == 6);
-
         efyj::solver_stack ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
     }
@@ -362,7 +346,6 @@ TEST_CASE("test problem Model file", "[model]")
     std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
                                             "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi"
                                           };
-
     ::efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
 
     for (const auto &filepath : filepaths) {
@@ -370,9 +353,7 @@ TEST_CASE("test problem Model file", "[model]")
         efyj::problem pb(ctx, filepath);
         pb.extract("/tmp/toto.csv");
         pb.options("/tmp/toto.csv");
-
         double kappa = pb.compute0 <efyj::solver_stack>(0, 1);
-
         REQUIRE(kappa == 1.0);
     }
 }
@@ -381,35 +362,29 @@ TEST_CASE("test multiple solver for Car", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-
     efyj::Model model;
-
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-
-//     const std::string opt_s3 = "1*2222";
-//     const std::string opt_s2 = "122**1";
-
-//     {
-//         efyj::solver_basic s(model);
-//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-//     }
-
-//     {
-//         efyj::solver_hash s(model);
-//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-//     }
-
-//     {
-//         efyj::solver_bigmem s(model);
-//         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-//         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-//     }
+    //     const std::string opt_s3 = "1*2222";
+    //     const std::string opt_s2 = "122**1";
+    //     {
+    //         efyj::solver_basic s(model);
+    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+    //     }
+    //     {
+    //         efyj::solver_hash s(model);
+    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+    //     }
+    //     {
+    //         efyj::solver_bigmem s(model);
+    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
+    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
+    //     }
 }
 
 #endif

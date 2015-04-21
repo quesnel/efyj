@@ -97,9 +97,9 @@ private:
     efyj::Model &dex;
 
     enum class stack_identifier {
-        DEXi, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS, ATTRIBUTE, NAME,
-        DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP, FUNCTION, LOW,
-        ENTERED, CONSIST
+        DEXi, VERSION, CREATED, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS,
+        ATTRIBUTE, NAME, DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP,
+        FUNCTION, LOW, ENTERED, CONSIST
     };
 
     static stack_identifier str_to_stack_identifier(const char *name)
@@ -108,6 +108,8 @@ private:
         const char *, stack_identifier, str_hash, str_compare >
         stack_identifier_map( {
             {"DEXi", stack_identifier::DEXi},
+            {"VERSION", stack_identifier::VERSION},
+            {"CREATED", stack_identifier::CREATED},
             {"LINE", stack_identifier::LINE},
             {"OPTION", stack_identifier::OPTION},
             {"SETTINGS", stack_identifier::SETTINGS},
@@ -175,6 +177,14 @@ private:
                     throw std::invalid_argument("Bad parent");
 
                 pd->stack.push(id);
+                break;
+
+            case stack_identifier::VERSION:
+                pd->is_parent({stack_identifier::DEXi});
+                break;
+
+            case stack_identifier::CREATED:
+                pd->is_parent({stack_identifier::DEXi});
                 break;
 
             case stack_identifier::LINE:
@@ -287,7 +297,16 @@ private:
                 pd->stack.pop();
                 break;
 
+            case stack_identifier::VERSION:
+                pd->model.version.assign(pd->char_data);
+                break;
+
+            case stack_identifier::CREATED:
+                pd->model.created.assign(pd->char_data);
+                break;
+
             case stack_identifier::LINE:
+                pd->model.description.emplace_back(pd->char_data);
                 break;
 
             case stack_identifier::OPTION:
@@ -316,6 +335,7 @@ private:
                 break;
 
             case stack_identifier::REPORTS:
+                pd->model.reports.assign(pd->char_data);
                 pd->stack.pop();
                 break;
 
@@ -348,8 +368,6 @@ private:
 
                 if (pd->stack.top() == stack_identifier::ATTRIBUTE)
                     pd->model.attributes.back().description.assign(pd->char_data);
-                else if (pd->stack.top() == stack_identifier::DEXi)
-                    pd->model.description.assign(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::SCALEVALUE)
                     pd->model.attributes.back().scale.scale.back().description.assign(
                         pd->char_data);
@@ -477,13 +495,28 @@ struct Model_writer {
     {
         os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
            << "<DEXi>\n"
+           << "  <VERSION>" << to_xml(dex.version) << "</VERSION>\n"
+           << "  <CREATED>" << to_xml(dex.created) << "</CREATED>\n"
            << "  <NAME>" << to_xml(dex.name) << "</NAME>\n"
-           << "  <DESCRIPTION>\n"
-           << "    " << to_xml(dex.description) << "\n"
-           << "  </DESCRIPTION>\n";
+           << "  <DESCRIPTION>\n";
+
+        for (const auto& desc : dex.description) {
+            if (desc.empty())
+                os << "    <LINE/>\n";
+            else
+                os << "    <LINE>" << to_xml(desc) << "</LINE>\n";
+        }
+
+        os << "  </DESCRIPTION>\n";
 
         space = 2;
         write_Model_option(dex.options);
+
+        if (!dex.reports.empty()) {
+            os << "  <SETTINGS>\n"
+               << "    <REPORTS>" << to_xml(dex.reports) << "</REPORTS>\n"
+               << "  </SETTINGS>\n";
+        }
 
         if (!dex.attributes.empty())
             write_Model_attribute(0);
@@ -658,8 +691,11 @@ inline
 bool operator==(const Model &lhs, const Model &rhs)
 {
     return lhs.name == rhs.name &&
-//           lhs.description == rhs.description &&
+           lhs.version == rhs.version &&
+           lhs.created == rhs.created &&
+           lhs.description == rhs.description &&
            lhs.options == rhs.options &&
+           lhs.reports == rhs.reports &&
            lhs.basic_attribute_scale_size == rhs.basic_attribute_scale_size &&
            lhs.group == rhs.group &&
            lhs.attributes == rhs.attributes;

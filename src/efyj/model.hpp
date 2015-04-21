@@ -149,7 +149,10 @@ struct attribute
 struct Model
 {
     std::string name;
-    std::string description;
+    std::string version;
+    std::string created;
+    std::string reports;
+    std::vector <std::string> description;
     std::vector <std::string> options;
     std::vector <scale_id> basic_attribute_scale_size;
     std::vector <std::string> group;
