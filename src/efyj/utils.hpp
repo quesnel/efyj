@@ -26,8 +26,7 @@
 
 namespace efyj {
 
-struct scope_exit
-{
+struct scope_exit {
     scope_exit(std::function <void (void)> fct)
         : fct(fct)
     {}
