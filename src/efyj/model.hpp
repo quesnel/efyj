@@ -22,6 +22,8 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
+#include <efyj/exception.hpp>
+ 
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -38,8 +40,8 @@ namespace efyj {
  * The @e scale_id is used to represent possible value when solving
  * problem. The range of @e scale_id is [0..127].
  */
-// typedef std::uint_fast8_t scale_id;
-typedef int scale_id;
+typedef std::int_fast8_t scale_id;
+// typedef int scale_id;
 
 template <typename T>
 constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
@@ -92,18 +94,26 @@ struct scales
     bool order;
     std::vector <scalevalue> scale;
 
-    int find_scale_value(const std::string& name) const
+    scale_id find_scale_value(const std::string& name) const
     {
-        for (std::size_t i = 0, e = scale.size(); i != e; ++i)
-            if (scale[i].name == name)
+        for (std::size_t i = 0, e = scale.size(); i != e; ++i) {
+            if (scale[i].name == name) {
+                if (not is_valid_scale_id(i)) {
+                    throw efyj_error("bad scale definition");
+                }
                 return static_cast <int>(i);
+            }
+        }
 
-        return -1;
+        throw efyj_error("scale not found");
     }
 
     scale_id size() const noexcept
     {
-        return scale.size();
+        if (not is_valid_scale_id(scale.size()))
+            throw efyj_error("bad scale definition");
+
+        return static_cast <int>(scale.size());
     }
 };
 
@@ -118,7 +128,7 @@ struct attribute
         return children.size();
     }
 
-    std::size_t scale_size() const noexcept
+    scale_id scale_size() const noexcept
     {
         return scale.size();
     }
@@ -166,11 +176,6 @@ struct Model
             return -1;
 
         return it - group.cbegin();
-    }
-
-    const attribute& child() const
-    {
-        return attributes[0];
     }
 
     void write_options(std::ostream& os) const;
