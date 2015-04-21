@@ -314,14 +314,15 @@ private:
                     pd->model.options.emplace_back(pd->char_data);
                 else if (pd->stack.top() == stack_identifier::ATTRIBUTE) {
                     int att = 0;
+
                     try {
                         att = std::stoi(pd->char_data);
                     } catch (...) {
                         //std::cout << "fail to convert " << pd->char_data << " in integer\n";
                     }
+
                     pd->model.attributes.back().options.emplace_back(att);
-                }
-                else
+                } else
                     throw std::invalid_argument("bad stack");
 
                 break;
@@ -500,7 +501,7 @@ struct Model_writer {
            << "  <NAME>" << to_xml(dex.name) << "</NAME>\n"
            << "  <DESCRIPTION>\n";
 
-        for (const auto& desc : dex.description) {
+        for (const auto &desc : dex.description) {
             if (desc.empty())
                 os << "    <LINE/>\n";
             else
@@ -508,7 +509,6 @@ struct Model_writer {
         }
 
         os << "  </DESCRIPTION>\n";
-
         space = 2;
         write_Model_option(dex.options);
 
@@ -608,7 +608,8 @@ private:
     }
 };
 
-void reorder_basic_attribute(const Model& model, std::size_t att, std::vector <std::size_t> &out)
+void reorder_basic_attribute(const Model &model, std::size_t att,
+                             std::vector <std::size_t> &out)
 {
     if (model.attributes[att].is_basic())
         out.push_back(att);
@@ -619,12 +620,10 @@ void reorder_basic_attribute(const Model& model, std::size_t att, std::vector <s
 
 } // model-details namespace
 
-void Model::write_options(std::ostream& os) const
+void Model::write_options(std::ostream &os) const
 {
     std::vector <std::size_t> ordered_att;
-
     model_details::reorder_basic_attribute(*this, 0, ordered_att);
-
     os << "simulation;place;department;year;";
 
     for (int child : ordered_att)
@@ -699,7 +698,6 @@ bool operator==(const Model &lhs, const Model &rhs)
            lhs.basic_attribute_scale_size == rhs.basic_attribute_scale_size &&
            lhs.group == rhs.group &&
            lhs.attributes == rhs.attributes;
-    return false;
 }
 
 inline
