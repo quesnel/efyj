@@ -156,7 +156,7 @@ private:
                         return;
             }
 
-            throw std::invalid_argument("Bad parent");
+            throw xml_parser_error("Bad parent");
         }
     };
 
@@ -174,7 +174,7 @@ private:
             switch (id) {
             case stack_identifier::DEXi:
                 if (!pd->stack.empty())
-                    throw std::invalid_argument("Bad parent");
+                    throw xml_parser_error("Bad parent");
 
                 pd->stack.push(id);
                 break;
@@ -323,7 +323,7 @@ private:
 
                     pd->model.attributes.back().options.emplace_back(att);
                 } else
-                    throw std::invalid_argument("bad stack");
+                    throw xml_parser_error("bad stack");
 
                 break;
 
@@ -363,7 +363,7 @@ private:
 
             case stack_identifier::DESCRIPTION:
                 if (pd->stack.top() != stack_identifier::DESCRIPTION)
-                    throw std::invalid_argument("DESCRIPTION");
+                    throw xml_parser_error("DESCRIPTION");
 
                 pd->stack.pop();
 

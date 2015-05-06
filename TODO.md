@@ -1,7 +1,6 @@
 efyj's todo list
 ================
 
-- Cleanup: All thrown exceptions should use `efyj_error` class.
 - Cleanup: remove dead code, simplify algorithms.
 - Add option to unread OPTION in DEXi files.
 - Switch internal source code into C++11 template.
