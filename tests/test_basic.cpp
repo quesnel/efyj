@@ -350,10 +350,12 @@ TEST_CASE("test problem Model file", "[model]")
 
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
-        efyj::problem pb(ctx, filepath);
-        pb.extract("/tmp/toto.csv");
-        pb.options("/tmp/toto.csv");
-        double kappa = pb.compute0 <efyj::solver_stack>(0, 1);
+
+        efyj::Model model = efyj::model_read(ctx, filepath);
+        efyj::option_extract(ctx, model, "/tmp/toto.csv");
+        efyj::Options options = efyj::option_read(ctx, model, "/tmp/toto.csv");
+
+        double kappa = efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
         REQUIRE(kappa == 1.0);
     }
 }

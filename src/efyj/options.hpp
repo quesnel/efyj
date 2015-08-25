@@ -36,7 +36,6 @@ struct OptionId {
     int department;
     int year;
     int observated;
-    int simulated;
 };
 
 struct Options {

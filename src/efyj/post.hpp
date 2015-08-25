@@ -31,12 +31,13 @@
 namespace efyj {
 
 double rmsep(const efyj::Model &, const Options &options,
+             const std::vector <int>& simulated,
              const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
-    for (const auto &id : options.ids)
-        matrix(id.observated, id.simulated)++;
+    for (auto i = 0ul, e = options.ids.size(); i != e; ++i)
+        matrix(options.ids[i].observated, simulated[i])++;
 
     unsigned long sum = 0.0;
 
@@ -48,15 +49,16 @@ double rmsep(const efyj::Model &, const Options &options,
 }
 
 double linear_weighted_kappa(const efyj::Model &, const Options &options,
+                             const std::vector <int> &simulated,
                              const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.ids[i].observated, options.ids[i].simulated);
+        ++observed(options.ids[i].observated, simulated[i]);
         ++distributions(options.ids[i].observated, 0);
-        ++distributions(options.ids[i].simulated, 1);
+        ++distributions(simulated[i], 1);
     }
 
     observed /= (double)N;
@@ -78,15 +80,16 @@ double linear_weighted_kappa(const efyj::Model &, const Options &options,
 }
 
 double squared_weighted_kappa(const efyj::Model &, const Options &options,
+                              const std::vector <int>& simulated,
                               const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.ids[i].observated, options.ids[i].simulated);
+        ++observed(options.ids[i].observated, simulated[i]);
         ++distributions(options.ids[i].observated, 0);
-        ++distributions(options.ids[i].simulated, 1);
+        ++distributions(simulated[i], 1);
     }
 
     observed /= (double)N;

@@ -53,7 +53,7 @@ unsigned long make_key(const V &options,
 } // namespace bigmem details
 
 struct solver_bigmem {
-    solver_bigmem(Model &model)
+    solver_bigmem(const Model &model)
         : binary_scale_value_size(0)
         , basic_attribute_scale_size(model.basic_attribute_scale_size)
     {

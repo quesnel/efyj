@@ -138,7 +138,7 @@ struct line_updater
 class solver_stack
 {
 public:
-    solver_stack(Model &model)
+    solver_stack(const Model &model)
     {
         atts.reserve(model.attributes.size());
 

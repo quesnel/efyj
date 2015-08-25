@@ -28,26 +28,24 @@
 
 namespace efyj {
 
-struct problem
-{
-    problem(const efyj::Context &context, const std::string &model);
+Model model_read(Context ctx, const std::string& filename);
 
-    void extract(const std::string &file);
+Options option_read(Context ctx, const Model& model, const std::string &filename);
 
-    void options(const std::string &file);
+void option_extract(Context ctx, const Model& model, const std::string& filename);
 
-    template <typename Solver>
-    double compute0(int rank, int world_size);
+template <typename Solver>
+double compute0(Context ctx, const Model& model, const Options& options,
+                int rank, int world_size);
 
-    template <typename Solver>
-    double compute1(int rank, int world_size);
+template <typename Solver>
+double compute1(Context ctx, const Model& model, const Options& options,
+                int rank, int world_size);
 
-    Context m_context;
-    Options m_options;
-    Model m_model;
-};
+double prediction(Context ctx, const Model& model, const Options& options,
+                int rank, int world_size);
 
-void show(const Model &model, std::ostream &os);
+void model_show(const Model &model, std::ostream &os);
 
 }
 

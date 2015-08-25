@@ -101,22 +101,23 @@ int main(int argc, char *argv[])
 
     try {
         efyj::Context ctx = std::make_shared <efyj::ContextImpl>(efyj::LOG_OPTION_ERR);
-        efyj::problem pb(ctx, modelfilepath);
-        efyj::show(pb.m_model, std::cout);
+
+        efyj::Model model = model_read(ctx, modelfilepath);
+        efyj::model_show(model, std::cout);
 
         if (!extractfile.empty())
-            pb.extract(extractfile);
+            efyj::option_extract(ctx, model, extractfile);
 
         if (!optionfilepath.empty()) {
-            pb.options(optionfilepath);
+            efyj::Options options = option_read(ctx, model, optionfilepath);
 
             if (limit == 0) {
                 if (solvername == "bigmem")
-                    pb.compute0 <efyj::solver_bigmem>(0, 1);
+                    efyj::compute0 <efyj::solver_bigmem>(ctx, model, options, 0, 1);
                 else
-                    pb.compute0 <efyj::solver_stack>(0, 1);
+                    efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
             } else
-                pb.compute1 <efyj::solver_stack>(0, 1);
+                efyj::compute1 <efyj::solver_stack>(ctx, model, options, 0, 1);
         }
     } catch (const std::exception &e) {
         std::cerr << "failure: " << e.what() << '\n';
