@@ -99,7 +99,7 @@ private:
     enum class stack_identifier {
         DEXi, VERSION, CREATED, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS,
         ATTRIBUTE, NAME, DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP,
-        FUNCTION, LOW, ENTERED, CONSIST
+        FUNCTION, LOW, ENTERED, CONSIST, WEIGHTS, LOCWEIGHTS, NORMLOCWEIGHTS
     };
 
     static stack_identifier str_to_stack_identifier(const char *name)
@@ -125,7 +125,10 @@ private:
             {"FUNCTION", stack_identifier::FUNCTION},
             {"LOW", stack_identifier::LOW},
             {"ENTERED", stack_identifier::ENTERED},
-            {"CONSIST", stack_identifier::CONSIST}
+            {"CONSIST", stack_identifier::CONSIST},
+            {"WEIGHTS", stack_identifier::WEIGHTS},
+            {"LOCWEIGHTS", stack_identifier::LOCWEIGHTS},
+            {"NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS}
         });
 
         try {
@@ -268,14 +271,11 @@ private:
                 break;
 
             case stack_identifier::LOW:
-                pd->is_parent({stack_identifier::FUNCTION});
-                break;
-
             case stack_identifier::ENTERED:
-                pd->is_parent({stack_identifier::FUNCTION});
-                break;
-
             case stack_identifier::CONSIST:
+            case stack_identifier::WEIGHTS:
+            case stack_identifier::LOCWEIGHTS:
+            case stack_identifier::NORMLOCWEIGHTS:
                 pd->is_parent({stack_identifier::FUNCTION});
                 break;
             }
@@ -423,6 +423,10 @@ private:
                 if (pd->stack.top() == stack_identifier::FUNCTION)
                     pd->model.attributes.back().functions.consist = pd->char_data;
 
+                break;
+            case stack_identifier::WEIGHTS:
+            case stack_identifier::LOCWEIGHTS:
+            case stack_identifier::NORMLOCWEIGHTS:
                 break;
             }
         } catch (const std::exception &e) {
