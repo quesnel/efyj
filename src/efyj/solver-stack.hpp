@@ -68,31 +68,34 @@ struct aggregate_attribute
         scale = model.attributes[att].scale_size();
     }
 
-    inline constexpr
-    scale_id
-    scale_size() const
+    inline scale_id
+    scale_size() const noexcept
     {
         return scale;
     }
 
-    inline std::size_t option_size() const
+    inline std::size_t
+    option_size() const
     {
         return coeffs.size();
     }
 
-    inline void push(int i)
+    inline void
+    push(int i)
     {
         assert(stack_size >= 0 && "too many attribute in function's stack");
 
         stack(stack_size--) = i;
     }
 
-    inline void clear()
+    inline void
+    clear()
     {
         stack_size = coeffs.size() - 1;
     }
 
-    inline int result() const
+    inline int
+    result() const
     {
 #ifndef NDEBUG
         for (long i = 0; i < coeffs.size(); ++i) {
@@ -181,9 +184,6 @@ struct solver_stack
         atts_copy = atts;
     }
 
-    ~solver_stack()
-    {}
-
     template <typename V>
     scale_id solve(const V &options)
     {
@@ -209,8 +209,7 @@ struct solver_stack
         return result[0];
     }
 
-    inline
-    void
+    inline void
     functions_restore() noexcept
     {
         for (std::size_t i = 0, e = atts.size(); i != e; ++i)
@@ -219,8 +218,7 @@ struct solver_stack
                       atts[i].functions.begin());
     }
 
-    inline constexpr
-    int
+    inline int
     attribute_size() const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -228,8 +226,7 @@ struct solver_stack
         return static_cast <int>(atts.size());
     }
 
-    inline constexpr
-    int
+    inline int
     function_size(int attribute) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -239,8 +236,7 @@ struct solver_stack
         return static_cast <int>(atts[attribute].functions.size());
     }
 
-    inline constexpr
-    int
+    inline int
     scale_size(int attribute) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -249,8 +245,7 @@ struct solver_stack
         return static_cast <int>(atts[attribute].scale_size());
     }
 
-    inline constexpr
-    int
+    inline int
     value(int attribute, int line) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -262,8 +257,7 @@ struct solver_stack
         return static_cast <int>(atts[attribute].functions[line]);
     }
 
-    inline
-    void
+    inline void
     value_restore(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -275,8 +269,7 @@ struct solver_stack
         atts[attribute].functions[line] = atts_copy[attribute].functions[line];
     }
 
-    inline
-    void
+    inline void
     value_increase(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -290,8 +283,7 @@ struct solver_stack
         assert(atts[attribute].functions[line] < atts[attribute].scale_size());
     }
 
-    inline
-    void
+    inline void
     value_clear(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -303,7 +295,8 @@ struct solver_stack
         atts[attribute].functions[line] = 0;
     }
 
-    void recursive_fill(const efyj::Model& model, std::size_t att, int &value_id)
+    void
+    recursive_fill(const efyj::Model& model, std::size_t att, int &value_id)
     {
         if (model.attributes[att].is_basic()) {
             function.emplace_back(value_id++);
@@ -473,8 +466,7 @@ public:
         return m_solver.solve(options);
     }
 
-    inline constexpr
-    int
+    inline int
     walker_number() const noexcept
     {
         return m_walker_number;
