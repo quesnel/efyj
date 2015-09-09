@@ -49,7 +49,8 @@ struct aggregate_attribute
         std::transform(model.attributes[att].functions.low.cbegin(),
                        model.attributes[att].functions.low.cend(),
                        std::back_inserter(functions),
-                       [](const char id) {
+                       [](const char id)
+                       {
                            return id - '0';
                        });
 

@@ -134,8 +134,7 @@ double compute0(Context ctx, const Model& model, const Options&
 }
 
 inline std::tuple <unsigned long, double>
-compute_best_kappa(Context ctx, const Model& model,
-                   const Options& options, int walker_number)
+compute_best_kappa(const Model& model, const Options& options, int walker_number)
 {
     for_each_model_solver_stack solver(model, walker_number);
     std::tuple <unsigned long, double> best {0, 0};
@@ -176,7 +175,7 @@ computen(Context ctx, const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    auto ret = compute_best_kappa(ctx, model, options, walker_number);
+    auto ret = compute_best_kappa(model, options, walker_number);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
