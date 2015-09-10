@@ -143,17 +143,6 @@ compute_best_kappa(const Model& model, const Options& options, int walker_number
         for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
             simulated[i] = solver.solve(options.options.row(i));
 
-        // Debug mode only.
-        // for (std::size_t i = 0, e = options.options.rows(); i != e; ++i) {
-        //     try {
-        //         simulated[i] = solver.solve(options.options.row(i));
-        //     } catch (const std::exception &e) {
-        //         efyj_info(ctx, boost::format(
-        //                       "solve failure option at row %1%: %2%") % i %
-        //                   e.what());
-        //     }
-        // }
-
         double ret = squared_weighted_kappa(model, options, simulated,
                                             options.options.rows(),
                                             model.attributes[0].scale.size());
