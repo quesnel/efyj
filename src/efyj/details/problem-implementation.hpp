@@ -216,8 +216,9 @@ compute_1_to_n(Context ctx, const Model& model, const Options& options,
             ++std::get<0>(best);
         } while (solver.next() == true);
 
-        efyj_info(ctx, boost::format("- %1% kappa: %1% / loop: %2% / updaters: %3%\n")
-                  % std::get<1>(best) % std::get<0>(best) % bestupdaters);
+        efyj_info(ctx,
+                  boost::format("- %1% kappa: %2% / loop: %3% / updaters: %4%\n")
+                  % step % std::get<1>(best) % std::get<0>(best) % bestupdaters);
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
 
