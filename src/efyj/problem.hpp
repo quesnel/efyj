@@ -34,9 +34,9 @@ Options option_read(Context ctx, const Model& model, const std::string &filename
 
 void option_extract(Context ctx, const Model& model, const std::string& filename);
 
-template <typename Solver>
-double compute0(Context ctx, const Model& model, const Options& options,
-                int rank, int world_size);
+inline double
+compute0(Context ctx, const Model& model, const Options& options,
+         int rank, int world_size);
 
 inline double
 computen(Context ctx, const Model& model, const Options& options,

@@ -22,7 +22,6 @@
 #ifndef INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 #define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
 
-#include <efyj/solver-bigmem.hpp>
 #include <efyj/solver-stack.hpp>
 #include <efyj/model.hpp>
 #include <efyj/context.hpp>
@@ -80,10 +79,10 @@ void option_extract(Context ctx, const Model& model, const std::string& filename
     model.write_options(ofs);
 }
 
-template <typename Solver>
-double compute_kappa(Context ctx, const Model& model, const Options& options)
+inline double
+compute_kappa(Context ctx, const Model& model, const Options& options)
 {
-    Solver slv(model);
+    solver_stack slv(model);
 
     std::vector <int> simulated(options.options.rows());
 
@@ -108,9 +107,9 @@ double compute_kappa(Context ctx, const Model& model, const Options& options)
     return ret;
 }
 
-template <typename Solver>
-double compute0(Context ctx, const Model& model, const Options&
-                options, int rank, int world_size)
+inline double
+compute0(Context ctx, const Model& model, const Options&
+         options, int rank, int world_size)
 {
     (void)rank;
     (void)world_size;
@@ -118,7 +117,7 @@ double compute0(Context ctx, const Model& model, const Options&
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    double ret = compute_kappa <Solver>(ctx, model, options);
+    double ret = compute_kappa(ctx, model, options);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
@@ -202,7 +201,7 @@ compute_1_to_n(Context ctx, const Model& model, const Options& options,
     start = std::chrono::system_clock::now();
 
     efyj_info(ctx, boost::format("- 0 kappa: %1%\n")
-              % compute_kappa <solver_stack>(ctx, model, options));;
+              % compute_kappa(ctx, model, options));;
 
     for_each_model_solver_stack solver(model);
     std::vector <int> simulated(options.options.rows());

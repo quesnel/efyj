@@ -22,7 +22,6 @@
 #include <efyj/context.hpp>
 #include <efyj/problem.hpp>
 #include <efyj/model.hpp>
-#include <efyj/solver-bigmem.hpp>
 #include <efyj/solver-stack.hpp>
 
 #include <sstream>
@@ -279,13 +278,6 @@ TEST_CASE("test basic solver for Car", "[model]")
     efyj::Vector opt_v4(6); opt_v4 << 2, 2, 2, 3, 2, 2;
     efyj::Vector opt_v5(6); opt_v5 << 0, 0, 0, 0, 0, 0;
     {
-        efyj::solver_bigmem s(model);
-        REQUIRE(s.solve(opt_v3) == 3);
-        REQUIRE(s.solve(opt_v2) == 2);
-        REQUIRE(s.solve(opt_v4) == 3);
-        REQUIRE(s.solve(opt_v5) == 0);
-    }
-    {
         efyj::solver_stack s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
@@ -305,8 +297,6 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE_NOTHROW(is >> model);
     }
     efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
-    efyj::solver_bigmem sb(model);
-    REQUIRE(sb.solve(opt_v) == 1);
     efyj::solver_stack ss(model);
     REQUIRE(ss.solve(opt_v) == 1);
 }
@@ -323,8 +313,6 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     }
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::solver_bigmem sb(*model);
-        REQUIRE(sb.solve(opt_v) == 6);
         efyj::solver_stack ss(*model);
         REQUIRE(ss.solve(opt_v) == 6);
     }
@@ -332,8 +320,6 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     delete model;
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::solver_bigmem sb(copy1);
-        REQUIRE(sb.solve(opt_v) == 6);
         efyj::solver_stack ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
     }
@@ -343,10 +329,11 @@ TEST_CASE("test problem Model file", "[model]")
 {
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-    std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
-                                            "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi"
-                                          };
-    ::efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
+    std::vector <std::string> filepaths = {
+        "Car.dxi", "Employ.dxi", "Enterprise.dxi",
+        "IPSIM_PV_simulation1-1.dxi" };
+
+    efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
 
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
@@ -355,7 +342,7 @@ TEST_CASE("test problem Model file", "[model]")
         efyj::option_extract(ctx, model, "/tmp/toto.csv");
         efyj::Options options = efyj::option_read(ctx, model, "/tmp/toto.csv");
 
-        double kappa = efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
+        double kappa = efyj::compute0(ctx, model, options, 0, 1);
         REQUIRE(kappa == 1.0);
     }
 }
@@ -370,23 +357,6 @@ TEST_CASE("test multiple solver for Car", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(is >> model);
     }
-    //     const std::string opt_s3 = "1*2222";
-    //     const std::string opt_s2 = "122**1";
-    //     {
-    //         efyj::solver_basic s(model);
-    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    //     }
-    //     {
-    //         efyj::solver_hash s(model);
-    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    //     }
-    //     {
-    //         efyj::solver_bigmem s(model);
-    //         REQUIRE(s.solve(opt_s3) == efyj::result_type({0, 3}));
-    //         REQUIRE(s.solve(opt_s2) == efyj::result_type({0, 2, 3}));
-    //     }
 }
 
 #endif

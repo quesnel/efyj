@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 
             if (limit == 0) {
                 std::cout << "compute Kappa:\n";
-                efyj::compute0 <efyj::solver_stack>(ctx, model, options, 0, 1);
+                efyj::compute0(ctx, model, options, 0, 1);
             } else if (limit > 0) {
                 std::cout << "compute best Kappa with " << limit << ":\n";
                 efyj::computen(ctx, model, options, 0, 1, limit);
