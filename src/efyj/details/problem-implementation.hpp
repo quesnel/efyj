@@ -180,8 +180,8 @@ computen(Context ctx, const Model& model, const Options& options,
 }
 
 inline double
-compute_1_to_n(Context ctx, const Model& model, const Options& options,
-               int rank, int world_size, int walker_number)
+compute_for_ever(Context ctx, const Model& model, const Options& options,
+                 int rank, int world_size)
 {
     (void)rank;
     (void)world_size;
@@ -189,13 +189,16 @@ compute_1_to_n(Context ctx, const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    efyj_info(ctx, boost::format("- 0 kappa: %1%\n")
-              % compute_kappa(ctx, model, options));;
-
     for_each_model_solver_stack solver(model);
     std::vector <int> simulated(options.options.rows());
     std::vector <line_updater> bestupdaters;
     double bestkappa = 0;
+    int walker_number = solver.get_max_updaters();
+
+    efyj_info(ctx,
+              boost::format("Needs to compute from 0 to %1% updaters\n"
+                            "- 0 kappa: %2%\n")
+              % walker_number % compute_kappa(ctx, model, options));
 
     for (int step = 1; step <= walker_number; ++step) {
         std::tuple <unsigned long, double> best {0, 0};

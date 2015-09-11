@@ -43,8 +43,8 @@ computen(Context ctx, const Model& model, const Options& options,
          int rank, int world_size);
 
 inline double
-compute_1_to_n(Context ctx, const Model& model, const Options& options,
-               int rank, int world_size, int walker_number);
+compute_for_ever(Context ctx, const Model& model, const Options& options,
+                 int rank, int world_size, int walker_number);
 
 double prediction(Context ctx, const Model& model, const Options& options,
                   int rank, int world_size);

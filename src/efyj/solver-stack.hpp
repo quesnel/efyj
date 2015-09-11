@@ -480,6 +480,19 @@ public:
         return m_updaters;
     }
 
+    inline
+    int get_max_updaters() const noexcept
+    {
+        std::size_t sz = 1ul;
+
+        for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
+            sz *= m_solver.function_size(i);
+
+        assert(sz < INT_MAX);
+
+        return static_cast<int>(sz);
+    }
+
 private:
     solver_stack m_solver;
     std::vector <line_updater> m_updaters;

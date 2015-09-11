@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
                 std::cout << "compute best Kappa with " << limit << ":\n";
                 efyj::computen(ctx, model, options, 0, 1, limit);
             } else {
-                std::cout << "compute best Kappa from 0 to " << -limit << "\n";
-                efyj::compute_1_to_n(ctx, model, options, 0, 1, -limit);
+                std::cout << "compute best Kappa for all model\n";
+                efyj::compute_for_ever(ctx, model, options, 0, 1);
             }
         }
     } catch (const std::exception &e) {
