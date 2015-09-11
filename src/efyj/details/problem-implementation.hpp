@@ -135,7 +135,7 @@ compute0(Context ctx, const Model& model, const Options&
 inline std::tuple <unsigned long, double>
 compute_best_kappa(const Model& model, const Options& options, int walker_number)
 {
-    for_each_model_solver_stack solver(model, walker_number);
+    for_each_model_solver <solver_stack> solver(model, walker_number);
     std::tuple <unsigned long, double> best {0, 0};
     std::vector <int> simulated(options.options.rows());
 
@@ -189,7 +189,7 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    for_each_model_solver_stack solver(model);
+    for_each_model_solver<solver_stack> solver(model);
     std::vector <int> simulated(options.options.rows());
     std::vector <line_updater> bestupdaters;
     double bestkappa = 0;

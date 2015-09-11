@@ -166,12 +166,15 @@ operator==(const line_updater& lhs, const line_updater& rhs) noexcept
     return lhs.attribute == rhs.attribute and lhs.line == rhs.line;
 }
 
-class for_each_model_solver_stack;
+template<typename Solver>
+class for_each_model_solver;
 std::ostream& operator<<(std::ostream& os, const line_updater& line);
 std::ostream& operator<<(std::ostream& os,
                          const std::vector<line_updater>& updaters);
-std::ostream& operator<<(std::ostream& os,
-                         const for_each_model_solver_stack& solver);
+template<typename Solver>
+std::ostream&
+operator<<(std::ostream& os,
+           const for_each_model_solver<Solver>& solver);
 
 struct solver_stack
 {
@@ -320,16 +323,17 @@ struct solver_stack
     std::vector <int> result;
 };
 
-class for_each_model_solver_stack
+template <typename Solver>
+class for_each_model_solver
 {
 public:
-    for_each_model_solver_stack(const Model& model)
+    for_each_model_solver(const Model& model)
         : m_solver(model)
     {
         init(1);
     }
 
-    for_each_model_solver_stack(const Model& model, int walker_number)
+    for_each_model_solver(const Model& model, int walker_number)
         : m_solver(model)
     {
         init(walker_number);
@@ -494,7 +498,7 @@ public:
     }
 
 private:
-    solver_stack m_solver;
+    Solver m_solver;
     std::vector <line_updater> m_updaters;
     int m_walker_number;
 
@@ -537,13 +541,15 @@ private:
     }
 };
 
-std::ostream& operator<<(std::ostream& os, const line_updater& updater)
+std::ostream&
+operator<<(std::ostream& os, const line_updater& updater)
 {
     return os << "[" << updater.attribute << "," << updater.line << "]";
 }
 
-std::ostream& operator<<(std::ostream& os,
-                         const std::vector<line_updater>& updaters)
+std::ostream&
+operator<<(std::ostream& os,
+           const std::vector<line_updater>& updaters)
 {
     std::copy(updaters.cbegin(),
               updaters.cend(),
@@ -552,8 +558,10 @@ std::ostream& operator<<(std::ostream& os,
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os,
-                         const for_each_model_solver_stack& solver)
+template <typename Solver>
+std::ostream&
+operator<<(std::ostream& os,
+           const for_each_model_solver<Solver>& solver)
 {
     return os << "walker(s): " << solver.walker_number()
               << " states: " << solver.updaters()
