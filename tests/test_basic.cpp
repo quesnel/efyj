@@ -341,7 +341,6 @@ TEST_CASE("test problem Model file", "[model]")
         efyj::Model model = efyj::model_read(ctx, filepath);
         efyj::option_extract(ctx, model, "/tmp/toto.csv");
         efyj::Options options = efyj::option_read(ctx, model, "/tmp/toto.csv");
-
         double kappa = efyj::compute0(ctx, model, options, 0, 1);
         REQUIRE(kappa == 1.0);
     }
@@ -349,13 +348,28 @@ TEST_CASE("test problem Model file", "[model]")
 
 TEST_CASE("test multiple solver for Car", "[model]")
 {
+    efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
+
     int ret = ::chdir(EXAMPLES_DIR);
     REQUIRE(ret == 0);
-    efyj::Model model;
+    efyj::Model model = efyj::model_read(ctx, "Car.dxi");
+    efyj::option_extract(ctx, model, "/tmp/Car.csv");
+    efyj::Options options = efyj::option_read(ctx, model, "/tmp/Car.csv");
+
+    // We change the simulation result.
+    options.options(options.options.cols() - 1, 0) = 0;
+
+    double kappa = efyj::compute0(ctx, model, options, 0, 1);
+    REQUIRE(kappa == Approx(0.6667).epsilon(0.01));
+
     {
-        std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> model);
+        auto kappa_11 = efyj::compute_best_kappa
+            <efyj::solver_stack>(model, options, 1);
+        auto kappa_12 = efyj::compute_best_kappa
+            <efyj::solver_stack_with_cache>(model, options, 1);
+        REQUIRE(std::get<1>(kappa_11) == 1);
+        REQUIRE(std::get<1>(kappa_12) == 1);
+        REQUIRE(std::get<0>(kappa_11) == std::get<0>(kappa_12));
     }
 }
 

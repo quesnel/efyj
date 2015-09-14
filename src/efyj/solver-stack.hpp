@@ -25,7 +25,7 @@
 #include <efyj/model.hpp>
 #include <efyj/exception.hpp>
 #include <efyj/types.hpp>
-
+#include <boost/functional/hash/hash.hpp>
 #include <algorithm>
 #include <numeric>
 
@@ -53,6 +53,8 @@ struct aggregate_attribute
                        {
                            return id - '0';
                        });
+
+        saved_functions = functions;
 
         coeffs = Vector::Zero(m_scale_size.size());
         coeffs(m_scale_size.size() - 1) = 1;
@@ -110,14 +112,41 @@ struct aggregate_attribute
         return functions[coeffs.dot(stack)];
     }
 
+    inline void
+    function_restore() noexcept
+    {
+        functions = saved_functions;
+    }
+
     Vector coeffs;
     std::vector <scale_id> functions;
+    std::vector <scale_id> saved_functions;
     std::vector <std::size_t> m_scale_size;
     Vector stack;
     scale_id scale;
     int stack_size;
 };
 
+std::ostream& operator<<(std::ostream& os, const aggregate_attribute& att)
+{
+    os << "f:";
+    std::copy(att.functions.cbegin(), att.functions.cend(),
+              std::ostream_iterator<int>(os, ""));
+
+    return os << " sz:" << att.scale;
+}
+
+std::ostream& operator<<(std::ostream& os,
+                         const std::vector <aggregate_attribute>& atts)
+{
+    std::copy(atts.cbegin(), atts.cend(),
+              std::ostream_iterator<aggregate_attribute>(os, "\n"));
+
+    return os;
+}
+
+// TODO perhaps replace Block with a boost::variant<int,
+// solver_stack_details::aggregate_attribute*>.
 struct Block
 {
     inline constexpr
@@ -184,8 +213,13 @@ struct solver_stack
 
         int value_id = 0;
         recursive_fill(model, 0, value_id);
+    }
 
-        atts_copy = atts;
+    inline void
+    reinit()
+    {
+        for (auto& att : atts)
+            att.function_restore();
     }
 
     template <typename V>
@@ -211,15 +245,6 @@ struct solver_stack
         assert(result.size() == 1 && "internal error in solver stack");
 
         return result[0];
-    }
-
-    inline void
-    functions_restore() noexcept
-    {
-        for (std::size_t i = 0, e = atts.size(); i != e; ++i)
-            std::copy(atts_copy[i].functions.cbegin(),
-                      atts_copy[i].functions.cend(),
-                      atts[i].functions.begin());
     }
 
     inline int
@@ -270,7 +295,7 @@ struct solver_stack
         assert(line >= 0 and
                line < static_cast <int>(atts[attribute].functions.size()));
 
-        atts[attribute].functions[line] = atts_copy[attribute].functions[line];
+        atts[attribute].functions[line] = atts[attribute].saved_functions[line];
     }
 
     inline void
@@ -282,7 +307,7 @@ struct solver_stack
         assert(line >= 0 and
                line < static_cast <int>(atts[attribute].functions.size()));
 
-        ++atts[attribute].functions[line];
+        atts[attribute].functions[line] += 1;
 
         assert(atts[attribute].functions[line] < atts[attribute].scale_size());
     }
@@ -313,14 +338,208 @@ struct solver_stack
         }
     }
 
+private:
     std::vector <solver_stack_details::aggregate_attribute> atts;
-    std::vector <solver_stack_details::aggregate_attribute> atts_copy;
 
     // @e function is a Reverse Polish notation.
     std::vector <solver_stack_details::Block> function;
 
     // To avoid reallocation each solve(), we store the stack into the solver.
     std::vector <int> result;
+};
+
+inline std::ostream&
+operator<<(std::ostream& os, const std::vector<scale_id>& v)
+{
+    std::copy(v.cbegin(), v.cend(),
+              std::ostream_iterator<int>(os, ""));
+    return os;
+}
+
+struct concatenated_function_hash
+{
+    inline std::size_t
+    operator()(const std::vector<scale_id>& v) const noexcept
+    {
+        return boost::hash_range(v.cbegin(), v.cend());
+    }
+};
+
+struct concatenated_function_compare
+{
+    inline bool
+    operator()(const std::vector<scale_id>& lhs,
+               const std::vector<scale_id>& rhs) const noexcept
+    {
+        for (std::size_t i = 0, e = lhs.size(); i != e; ++i)
+            if (lhs[i] != rhs[i])
+                return false;
+
+        return true;
+    }
+};
+
+/**
+ * Same solver thant solver_stack but it stores all functions and theirs
+ * results into a cache based on vector<scale_id>.
+ *
+ * For example: 0.................n.....m
+ * - from 0 to n-1, we store the concatenated attribute's function.
+ * - from n to m, we store the option.
+ */
+struct solver_stack_with_cache
+{
+    solver_stack_with_cache(const Model &model)
+        : m_solver(model)
+        , m_current_functions_option(0)
+    {
+        int current = 0;
+        m_attribute.push_back(0);
+
+        for (int i = 1, e = m_solver.attribute_size(); i != e; ++i) {
+            current += m_solver.function_size(i - 1);
+            m_attribute.push_back(current);
+        }
+
+        /* We compute the size of the m_current_functions_option vector by
+         * assign the size of the concatenated function and the size of
+         * the option.
+         */
+
+        {
+            std::size_t sz = 0ul;
+            for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
+                sz += m_solver.function_size(i);
+
+            assert(sz < INT_MAX);
+            m_current_functions_option_size = sz;
+
+            for (const auto& att : model.attributes)
+                if (att.children.empty())
+                    ++sz;
+
+            assert(sz < INT_MAX);
+            m_current_functions_option.resize(sz);
+        }
+
+        /* Fill the concatenated functions. */
+        int id = 0;
+        for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
+            for (int j = 0, f = m_solver.function_size(i); j != f; ++j)
+                m_current_functions_option[id++] = m_solver.value(i, j);
+    }
+
+    inline void
+    reinit()
+    {
+        m_solver.reinit();
+
+        /* Fill the concatenated functions. */
+        int id = 0;
+        for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
+            for (int j = 0, f = m_solver.function_size(i); j != f; ++j)
+                m_current_functions_option[id++] = m_solver.value(i, j);
+    }
+
+    template <typename V>
+    scale_id solve(const V &options)
+    {
+        for (int i = m_current_functions_option_size,
+                 e = m_current_functions_option_size + options.cols(),
+                 id = 0; i != e; ++i, ++id)
+            m_current_functions_option[i] = options(id);
+
+        auto it = m_cached.find(m_current_functions_option);
+        if (it != m_cached.end())
+            return it->second;
+
+        int ret = m_solver.solve(options);
+        m_cached[m_current_functions_option] = ret;
+
+        return ret;
+    }
+
+    inline int
+    attribute_size() const noexcept
+    {
+        return m_solver.attribute_size();
+    }
+
+    inline int
+    function_size(int attribute) const noexcept
+    {
+        return m_solver.function_size(attribute);
+    }
+
+    inline int
+    scale_size(int attribute) const noexcept
+    {
+        return m_solver.scale_size(attribute);
+    }
+
+    inline int
+    value(int attribute, int line) const noexcept
+    {
+        assert(id >= 0);
+        assert(id < m_current_functions_option_size);
+        assert(m_current_functions_option[m_attribute[attribute] + line]
+               == m_solver.value(attribute, line));
+
+        return m_solver.value(attribute, line);
+    }
+
+    inline void
+    value_restore(int attribute, int line) noexcept
+    {
+        m_solver.value_restore(attribute, line);
+
+        value_set(attribute, line, m_solver.value(attribute, line));
+    }
+
+    inline void
+    value_increase(int attribute, int line) noexcept
+    {
+        m_solver.value_increase(attribute, line);
+
+        value_set(attribute, line, m_solver.value(attribute, line));
+    }
+
+    inline void
+    value_clear(int attribute, int line) noexcept
+    {
+        m_solver.value_clear(attribute, line);
+
+        value_set(attribute, line, m_solver.value(attribute, line));
+    }
+
+private:
+    inline void
+    value_set(int attribute, int line, int value) noexcept
+    {
+        int id = m_attribute[attribute] + line;
+
+        // int id = m_attribute[attribute] +
+        //     m_solver.function_size(attribute) - line;
+
+        assert(id >= 0);
+        assert(id < m_current_functions_option_size);
+
+        m_current_functions_option[id] = value;
+
+        assert(m_current_functions_option[id] == m_solver.value(attribute, line));
+    }
+
+    solver_stack m_solver;
+    std::vector<scale_id> m_current_functions_option;
+    std::vector<int> m_attribute;
+
+    std::unordered_map<
+        std::vector<scale_id>,
+        int,
+        concatenated_function_hash,
+        concatenated_function_compare> m_cached;
+
+    int m_current_functions_option_size;
 };
 
 template <typename Solver>
@@ -358,7 +577,6 @@ public:
 
         m_updaters.back().attribute = 0;
         m_updaters.back().line = 0;
-
         init_walker_from(m_updaters.size() - 1);
     }
 
@@ -437,30 +655,6 @@ public:
                 }
             }
         }
-
-        // static int max = 1;
-        // static int current = 0;
-        // current++;
-
-        // if (current % max == 0) {
-        //     current = 0;
-        //     std::cout << "next(): ";
-        //     for (int i = 0, e = (int)m_updaters.size(); i != e; ++i) {
-        //         if (m_updaters[i].attribute == -1 or
-        //             m_updaters[i].line == -1)
-        //             std::cout << "[" << m_updaters[i].attribute
-        //                       << "," << m_updaters[i].line
-        //                       << "," << -1
-        //                       << "] ";
-        //         else
-        //             std::cout << "[" << m_updaters[i].attribute
-        //                       << "," << m_updaters[i].line
-        //                       << "," << m_solver.value(m_updaters[i].attribute,
-        //                                                m_updaters[i].line)
-        //                       << "] ";
-        //     }
-        //     std::cout << "\n";
-        // }
 
         return i >= 0;
     }

@@ -29,7 +29,6 @@
 #include <efyj/utils.hpp>
 #include <efyj/options.hpp>
 #include <efyj/post.hpp>
-
 #include <iterator>
 #include <fstream>
 #include <chrono>
@@ -132,24 +131,28 @@ compute0(Context ctx, const Model& model, const Options&
     return ret;
 }
 
+template <typename Solver>
 inline std::tuple <unsigned long, double>
 compute_best_kappa(const Model& model, const Options& options, int walker_number)
 {
-    for_each_model_solver <solver_stack> solver(model, walker_number);
     std::tuple <unsigned long, double> best {0, 0};
     std::vector <int> simulated(options.options.rows());
 
-    do {
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
-            simulated[i] = solver.solve(options.options.row(i));
+    {
+        for_each_model_solver <Solver> solver(model, walker_number);
 
-        double ret = squared_weighted_kappa(model, options, simulated,
-                                            options.options.rows(),
-                                            model.attributes[0].scale.size());
+        do {
+            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+                simulated[i] = solver.solve(options.options.row(i));
 
-        std::get <1>(best) = std::max(ret, std::get<1>(best));
-        std::get <0>(best)++;
-    } while (solver.next() == true);
+            double ret = squared_weighted_kappa(model, options, simulated,
+                                                options.options.rows(),
+                                                model.attributes[0].scale.size());
+
+            std::get <1>(best) = std::max(ret, std::get<1>(best));
+            std::get <0>(best)++;
+        } while (solver.next() == true);
+    }
 
     return best;
 }
@@ -163,7 +166,7 @@ computen(Context ctx, const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    auto ret = compute_best_kappa(model, options, walker_number);
+    auto ret = compute_best_kappa<solver_stack>(model, options, walker_number);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
@@ -238,7 +241,7 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
 
 inline void
 show(const Model &model, std::size_t att, std::size_t space,
-          std::ostream &os)
+     std::ostream &os)
 {
     os << std::string(space, ' ') << model.attributes[att].name << '\n';
 
@@ -252,7 +255,7 @@ show(const Model &model, std::size_t att, std::size_t space,
            << ")\n";
 
         for (std::size_t child : model.attributes[att].children) {
-                        show(model, child, space + 2, os);
+            show(model, child, space + 2, os);
         }
     }
 }
