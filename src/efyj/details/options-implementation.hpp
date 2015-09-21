@@ -64,11 +64,33 @@ inline std::size_t get_basic_attribute_id(const std::vector
     return it - att.begin();
 }
 
+inline void
+build_ordered_options(Options &options) noexcept
+{
+    assert(options.ids.size() == options.options.rows());
+
+    for (std::size_t i = 0, end_i = options.ids.size(); i != end_i; ++i) {
+        auto it = options.ordered.end();
+
+        for (std::size_t j = 0, end_j = options.ids.size(); j != end_j; ++j) {
+            if (i != j and
+                options.ids[i].department != options.ids[j].department and
+                options.ids[i].year != options.ids[j].year) {
+                if (it == options.ordered.end())
+                    it = options.ordered.emplace(i, j);
+                else
+                    options.ordered.emplace_hint(it, i, j);
+            }
+        }
+    }
+}
+
 } // options_details namespace
 
-inline OptionId::OptionId(const std::string &simulation_,
-                          const std::string &place_,
-                          int department_, int year_, int observated_)
+inline
+OptionId::OptionId(const std::string &simulation_,
+                   const std::string &place_,
+                   int department_, int year_, int observated_)
     : simulation(simulation_)
     , place(place_)
     , department(department_)
@@ -182,14 +204,14 @@ inline Options array_options_read(Context ctx, std::istream &is, const efyj::Mod
         ret.options.conservativeResize(ret.options.rows() + 1, Eigen::NoChange_t());
     }
 
-    ret.options.conservativeResize(ret.options.rows() - 1, Eigen::NoChange_t());
+    ret.options.conservativeResize(ret.options.rows() - 1,
+                                   Eigen::NoChange_t());
 
-    efyj_info(ctx, "Options matrix:\n");
-    efyj_info(ctx, ret.options);
+    assert(ret.options.row() == ret.ids.size());
 
+    options_details::build_ordered_options(ret);
     return std::move(ret);
 }
-
 }
 
 #endif

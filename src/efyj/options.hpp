@@ -25,6 +25,7 @@
 #include <efyj/context.hpp>
 #include <efyj/model.hpp>
 #include <efyj/types.hpp>
+#include <boost/container/flat_map.hpp>
 
 namespace efyj {
 
@@ -39,12 +40,22 @@ struct OptionId {
     int observated;
 };
 
+/** @e The Options class stores the complete option file: a vector of
+ * @e OptionId and an array of integet that correspond to option.
+ */
 struct Options {
     std::vector <OptionId> ids;
     Array options;
+
+    /** @e ordered stores the link between and OptionId (id is place,
+     * departement and year) and a list of another OptionId where simulation,
+     * place, departement and year are different.
+     */
+    boost::container::flat_multimap <int, int> ordered;
 };
 
-Options array_options_read(Context ctx, std::istream &is, const efyj::Model &model);
+Options array_options_read(Context ctx, std::istream &is,
+                           const efyj::Model &model);
 
 }
 
