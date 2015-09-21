@@ -113,6 +113,8 @@ int main(int argc, char *argv[])
         if (!optionfilepath.empty()) {
             efyj::Options options = option_read(ctx, model, optionfilepath);
 
+            std::cout << options << "\n";
+
             if (limit == 0) {
                 std::cout << "compute Kappa:\n";
                 efyj::compute0(ctx, model, options, 0, 1);

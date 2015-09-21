@@ -99,7 +99,56 @@ OptionId::OptionId(const std::string &simulation_,
 {
 }
 
-inline Options array_options_read(Context ctx, std::istream &is, const efyj::Model &model)
+inline std::ostream &
+operator<<(std::ostream &os, const OptionId &optionid) noexcept
+{
+    return os << optionid.simulation << ' '
+           << optionid.place << ' '
+           << optionid.department << ' '
+           << optionid.year;
+}
+
+inline std::ostream &
+operator<<(std::ostream &os,
+           const boost::container::flat_multimap <int, int> &map) noexcept
+{
+    if (not map.empty()) {
+        auto previous = map.cbegin();
+        os << previous->first << ' ' << previous->second;
+
+        if (map.size() > 2) {
+            auto it = previous + 1;
+
+            while (it != map.cend()) {
+                if (it->first != previous->first) {
+                    os << '\n' << it->first << ' ' << it->second;
+                } else {
+                    os << ' ' << it->second;
+                }
+
+                previous = it;
+            }
+        }
+    }
+
+    return os;
+}
+
+inline std::ostream &
+operator<<(std::ostream &os, const Options &options) noexcept
+{
+    os << "option identifiers\n------------------\n";
+
+    for (std::size_t i = 0, e = options.ids.size(); i != e;  ++i)
+        os << i << ' ' << options.ids[i] << '\n';
+
+    return os << "\noption matrix\n-------------\n" << options.options
+              << "\nordered option\n--------------\n" << options.ordered
+              << "\n";
+}
+
+inline Options array_options_read(Context ctx, std::istream &is,
+                                  const efyj::Model &model)
 {
     std::vector <const efyj::attribute *> atts =
         options_details::get_basic_attribute(model);
@@ -147,10 +196,11 @@ inline Options array_options_read(Context ctx, std::istream &is, const efyj::Mod
         }
 
         int obs;
+
         try {
             obs = model.attributes[0].scale.find_scale_value(
-                columns[columns.size() - 1]);
-        } catch (const efyj_error& e) {
+                      columns[columns.size() - 1]);
+        } catch (const efyj_error &e) {
             efyj_info(ctx,
                       boost::format(
                           "error in csv file line %1%: convertion failure of `%2%'")
