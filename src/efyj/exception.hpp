@@ -105,6 +105,4 @@ private:
 
 }
 
-#include "details/exception-implementation.hpp"
-
 #endif

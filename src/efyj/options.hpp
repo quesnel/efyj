@@ -22,14 +22,13 @@
 #ifndef INRA_EFYj_OPTIONS_HPP
 #define INRA_EFYj_OPTIONS_HPP
 
-#include <efyj/context.hpp>
-#include <efyj/model.hpp>
+#include <efyj/efyj.hpp>
 #include <efyj/types.hpp>
 #include <boost/container/flat_map.hpp>
 
 namespace efyj {
 
-struct OptionId {
+struct EFYJ_API OptionId {
     OptionId(const std::string &simulation, const std::string &place,
              int deparment, int year, int observated);
 
@@ -43,7 +42,7 @@ struct OptionId {
 /** @e The Options class stores the complete option file: a vector of
  * @e OptionId and an array of integet that correspond to option.
  */
-struct Options {
+struct EFYJ_API Options {
     std::vector <OptionId> ids;
     Array options;
 
@@ -54,11 +53,16 @@ struct Options {
     boost::container::flat_multimap <int, int> ordered;
 };
 
+EFYJ_API
 Options array_options_read(Context ctx, std::istream &is,
                            const efyj::Model &model);
 
-}
+EFYJ_API
+std::ostream& operator<<(std::ostream& os, const OptionId&);
 
-#include "details/options-implementation.hpp"
+EFYJ_API
+std::ostream& operator<<(std::ostream& os, const Options&);
+
+}
 
 #endif

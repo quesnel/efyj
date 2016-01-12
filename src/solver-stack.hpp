@@ -22,10 +22,11 @@
 #ifndef INRA_EFYj_SOLVER_STACK_HPP
 #define INRA_EFYj_SOLVER_STACK_HPP
 
-#include <efyj/model.hpp>
-#include <efyj/exception.hpp>
-#include <efyj/types.hpp>
+#include "model.hpp"
+#include "exception.hpp"
+#include "types.hpp"
 #include <boost/functional/hash/hash.hpp>
+#include <unordered_map>
 #include <algorithm>
 #include <numeric>
 
@@ -480,8 +481,6 @@ struct solver_stack_with_cache
     inline int
     value(int attribute, int line) const noexcept
     {
-        assert(id >= 0);
-        assert(id < m_current_functions_option_size);
         assert(m_current_functions_option[m_attribute[attribute] + line]
                == m_solver.value(attribute, line));
 

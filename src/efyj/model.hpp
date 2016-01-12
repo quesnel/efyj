@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
+#include <efyj/efyj.hpp>
 #include <efyj/exception.hpp>
 #include <algorithm>
 #include <deque>
@@ -61,7 +62,7 @@ constexpr scale_id scale_id_unknown() noexcept
     return std::numeric_limits <scale_id>::max();
 }
 
-struct scalevalue
+struct EFYJ_API scalevalue
 {
     scalevalue(const std::string& name)
         : name(name), group(-1)
@@ -72,7 +73,7 @@ struct scalevalue
     int group;
 };
 
-struct function
+struct EFYJ_API function
 {
     std::string low;
     std::string entered;
@@ -84,7 +85,7 @@ struct function
     }
 };
 
-struct scales
+struct EFYJ_API scales
 {
     scales()
         : order(true)
@@ -116,7 +117,7 @@ struct scales
     }
 };
 
-struct attribute
+struct EFYJ_API attribute
 {
     attribute(const std::string& name)
         : name(name)
@@ -155,7 +156,7 @@ struct attribute
     std::vector <std::size_t> children;
 };
 
-struct Model
+struct EFYJ_API Model
 {
     std::string name;
     std::string version;
@@ -180,14 +181,16 @@ struct Model
     void write_options(std::ostream& os) const;
 };
 
+EFYJ_API
 bool operator<(const Model& lhs, const Model& rhs);
+EFYJ_API
 bool operator==(const Model& lhs, const Model& rhs);
 
+EFYJ_API
 std::ostream& operator<<(std::ostream& os, const Model& Model_data);
+EFYJ_API
 std::istream& operator>>(std::istream& is, Model& Model_data);
 
 }
-
-#include "details/model-implementation.hpp"
 
 #endif

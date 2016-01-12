@@ -22,38 +22,49 @@
 #ifndef INRA_EFYj_PROBLEM_HPP
 #define INRA_EFYj_PROBLEM_HPP
 
-#include <efyj/context.hpp>
-#include <efyj/options.hpp>
+#include <efyj/efyj.hpp>
 #include <efyj/model.hpp>
+#include <efyj/options.hpp>
+#include <efyj/context.hpp>
 
 namespace efyj {
 
-Model model_read(Context ctx, const std::string& filename);
+EFYJ_API
+Model
+model_read(Context ctx, const std::string& filename);
 
-Options option_read(Context ctx, const Model& model, const std::string &filename);
+EFYJ_API
+Options
+option_read(Context ctx, const Model& model, const std::string &filename);
 
-void option_extract(Context ctx, const Model& model, const std::string& filename);
+EFYJ_API
+void
+option_extract(Context ctx, const Model& model, const std::string& filename);
 
-inline double
+EFYJ_API
+double
 compute0(Context ctx, const Model& model, const Options& options,
          int rank, int world_size);
 
-inline double
+EFYJ_API
+double
 computen(Context ctx, const Model& model, const Options& options,
-         int rank, int world_size);
+         int rank, int world_size, int walker_number);
 
-inline double
+EFYJ_API
+double
 compute_for_ever(Context ctx, const Model& model, const Options& options,
-                 int rank, int world_size, int walker_number);
+                 int rank, int world_size);
 
-double prediction(Context ctx, const Model& model, const Options& options,
-                  int rank, int world_size);
+EFYJ_API
+double
+prediction(Context ctx, const Model& model, const Options&
+                options, int rank, int world_size);
 
-
-void model_show(const Model &model, std::ostream &os);
+EFYJ_API
+void
+model_show(const Model &model, std::ostream &os);
 
 }
-
-#include "details/problem-implementation.hpp"
 
 #endif

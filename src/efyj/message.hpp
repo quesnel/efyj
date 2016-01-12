@@ -22,16 +22,19 @@
 #ifndef INRA_EFYj_MESSAGE_HPP
 #define INRA_EFYj_MESSAGE_HPP
 
+#include <efyj/efyj.hpp>
 #include <string>
 #include <thread>
 #include <ostream>
+#include <sstream>
 #include <boost/format.hpp>
 
 namespace efyj {
 
 enum LogOption { LOG_OPTION_DEBUG, LOG_OPTION_INFO, LOG_OPTION_ERR };
 
-struct message {
+struct EFYJ_API message {
+
     template <typename T>
     message(LogOption priority, const T &t);
 
@@ -48,10 +51,36 @@ struct message {
     int line;
 };
 
+EFYJ_API
 std::ostream &operator<<(std::ostream &os, const message &msg);
 
+template <typename T>
+message::message(LogOption priority, const T &t)
+    : thread_id(std::this_thread::get_id())
+    , priority(priority)
+    , pid(::getpid())
+{
+    std::stringstream os;
+    os << t;
+    msg = os.str();
 }
 
-#include "details/message-implementation.hpp"
+template <typename T>
+message::message(LogOption priority, const char *file, int line,
+                        const char *fn, const T &t)
+    : file(file)
+    , fn(fn)
+    , thread_id(std::this_thread::get_id())
+    , priority(priority)
+    , pid(::getpid())
+    , line(line)
+{
+    std::stringstream os;
+    os << t;
+    msg = os.str();
+}
+
+
+}
 
 #endif

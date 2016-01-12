@@ -19,29 +19,25 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_DETAILS_CONTEXT_IMPLEMENTATION_HPP
-#define INRA_EFYj_DETAILS_CONTEXT_IMPLEMENTATION_HPP
-
+#include "context.hpp"
 #include <chrono>
 #include <iostream>
 #include <fstream>
 #include <memory>
 
-namespace efyj {
+namespace {
 
-namespace context_details {
-
-inline void cout_no_deleter(std::ostream *os)
+void cout_no_deleter(std::ostream *os)
 {
     (void)os;
 }
 
-inline std::shared_ptr<std::ostream> make_cout_stream()
+std::shared_ptr<std::ostream> make_cout_stream()
 {
     return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
 }
 
-inline std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
+std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
 {
     {
         std::shared_ptr <std::ofstream> tmp(new std::ofstream(filepath));
@@ -59,10 +55,12 @@ inline std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath
     return make_cout_stream();
 }
 
-inline void writer_run(std::shared_ptr <std::ostream> &os, std::deque <message> &queue,
-                       std::mutex &queue_locker, std::mutex &os_locker, bool &close)
+void writer_run(std::shared_ptr <std::ostream> &os,
+                std::deque <efyj::message> &queue,
+                std::mutex &queue_locker,
+                std::mutex &os_locker, bool &close)
 {
-    std::deque <message> copy;
+    std::deque <efyj::message> copy;
 
     while (not close) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -95,29 +93,33 @@ inline void writer_run(std::shared_ptr <std::ostream> &os, std::deque <message> 
     }
 }
 
-} // namespace context_details
+} // anonymous namespace
 
-inline ContextImpl::ContextImpl(LogOption option)
-    : m_os(context_details::make_cout_stream())
+namespace efyj {
+
+ContextImpl::ContextImpl(LogOption option)
+    : m_os(::make_cout_stream())
     , m_priority(option)
     , m_close(false)
 {
-    m_writer = std::thread(context_details::writer_run,
-                           std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
-                           std::ref(m_os_locker), std::ref(m_close));
+    m_writer = std::thread(
+        ::writer_run,
+        std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
+        std::ref(m_os_locker), std::ref(m_close));
 }
 
-inline ContextImpl::ContextImpl(const std::string &filepath, LogOption option)
-    : m_os(context_details::make_log_stream(filepath))
+ContextImpl::ContextImpl(const std::string &filepath, LogOption option)
+    : m_os(::make_log_stream(filepath))
     , m_priority(option)
     , m_close(false)
 {
-    m_writer = std::thread(context_details::writer_run,
-                           std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
-                           std::ref(m_os_locker), std::ref(m_close));
+    m_writer = std::thread(
+        ::writer_run,
+        std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
+        std::ref(m_os_locker), std::ref(m_close));
 }
 
-inline ContextImpl::~ContextImpl()
+ContextImpl::~ContextImpl()
 {
     m_close = true;
 
@@ -125,35 +127,26 @@ inline ContextImpl::~ContextImpl()
         m_writer.join();
 }
 
-inline void ContextImpl::set_log_stream(const std::string &filepath)
+void ContextImpl::set_log_stream(const std::string &filepath)
 {
     std::lock_guard <std::mutex> lock(m_os_locker);
-    m_os = context_details::make_log_stream(filepath);
+    m_os = ::make_log_stream(filepath);
 }
 
-inline void ContextImpl::set_console_log_stream()
+void ContextImpl::set_console_log_stream()
 {
     std::lock_guard <std::mutex> lock(m_os_locker);
-    m_os = context_details::make_cout_stream();
+    m_os = ::make_cout_stream();
 }
 
-template <typename... _Args>
-void ContextImpl::log(_Args &&... args)
-{
-    std::lock_guard <std::mutex> lock(m_queue_locker);
-    m_queue.emplace_back(std::forward <_Args>(args)...);
-}
-
-inline LogOption ContextImpl::log_priority() const
+LogOption ContextImpl::log_priority() const
 {
     return m_priority;
 }
 
-inline void ContextImpl::set_log_priority(LogOption priority)
+void ContextImpl::set_log_priority(LogOption priority)
 {
     m_priority = priority;
 }
 
-}
-
-#endif
+} // namespace efyj

@@ -19,23 +19,19 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
-#define INRA_EFYj_DETAILS_PROBLEM_IMPLEMENTATION_HPP
-
-#include <efyj/solver-stack.hpp>
-#include <efyj/model.hpp>
-#include <efyj/context.hpp>
-#include <efyj/exception.hpp>
-#include <efyj/utils.hpp>
-#include <efyj/options.hpp>
-#include <efyj/post.hpp>
+#include "solver-stack.hpp"
+#include "model.hpp"
+#include "context.hpp"
+#include "exception.hpp"
+#include "utils.hpp"
+#include "options.hpp"
+#include "post.hpp"
 #include <iterator>
 #include <fstream>
 #include <chrono>
 
 namespace efyj {
 
-inline
 Model model_read(Context ctx, const std::string &filename)
 {
     std::ifstream ifs(filename);
@@ -52,7 +48,6 @@ Model model_read(Context ctx, const std::string &filename)
     return std::move(model);
 }
 
-inline
 Options option_read(Context ctx, const Model& model, const std::string &filename)
 {
     std::ifstream ifs(filename);
@@ -65,7 +60,6 @@ Options option_read(Context ctx, const Model& model, const std::string &filename
     return array_options_read(ctx, ifs, model);
 }
 
-inline
 void option_extract(Context ctx, const Model& model, const std::string& filename)
 {
     std::ofstream ofs(filename);
@@ -78,7 +72,7 @@ void option_extract(Context ctx, const Model& model, const std::string& filename
     model.write_options(ofs);
 }
 
-inline double
+double
 compute_kappa(Context ctx, const Model& model, const Options& options)
 {
     solver_stack slv(model);
@@ -106,7 +100,7 @@ compute_kappa(Context ctx, const Model& model, const Options& options)
     return ret;
 }
 
-inline double
+double
 compute0(Context ctx, const Model& model, const Options&
          options, int rank, int world_size)
 {
@@ -123,8 +117,8 @@ compute0(Context ctx, const Model& model, const Options&
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     efyj_info(ctx, boost::format(
-                  "finished computation at %1% elapsed time: %2% s.\n") %
-              std::ctime(&end_time) % elapsed_seconds.count());
+            "finished computation at %1% elapsed time: %2% s.\n") %
+        std::ctime(&end_time) % elapsed_seconds.count());
 
     efyj_info(ctx, boost::format("kappa founded: %1%") % ret);
 
@@ -132,7 +126,7 @@ compute0(Context ctx, const Model& model, const Options&
 }
 
 template <typename Solver>
-inline std::tuple <unsigned long, double>
+std::tuple <unsigned long, double>
 compute_best_kappa(const Model& model, const Options& options, int walker_number)
 {
     std::tuple <unsigned long, double> best {0, 0};
@@ -157,7 +151,7 @@ compute_best_kappa(const Model& model, const Options& options, int walker_number
     return best;
 }
 
-inline double
+double
 computen(Context ctx, const Model& model, const Options& options,
          int rank, int world_size, int walker_number)
 {
@@ -182,7 +176,7 @@ computen(Context ctx, const Model& model, const Options& options,
     return std::get <1>(ret);
 }
 
-inline double
+double
 compute_for_ever(Context ctx, const Model& model, const Options& options,
                  int rank, int world_size)
 {
@@ -239,7 +233,7 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
     return bestkappa;
 }
 
-inline void
+void
 show(const Model &model, std::size_t att, std::size_t space,
      std::ostream &os)
 {
@@ -250,11 +244,11 @@ show(const Model &model, std::size_t att, std::size_t space,
 
     if (model.attributes[att].is_aggregate()) {
         os << std::string(space + 1, ' ')
-           << "\\ -> (fct: "
-           << model.attributes[att].functions.low
-           << "), (scale size: "
-           << model.attributes[att].scale_size()
-           << ")\n";
+            << "\\ -> (fct: "
+            << model.attributes[att].functions.low
+            << "), (scale size: "
+            << model.attributes[att].scale_size()
+            << ")\n";
 
         for (std::size_t child : model.attributes[att].children) {
             show(model, child, space + 2, os);
@@ -262,12 +256,9 @@ show(const Model &model, std::size_t att, std::size_t space,
     }
 }
 
-inline
 void model_show(const Model &model, std::ostream &os)
 {
     show(model, 0, 0, os);
 }
 
-}
-
-#endif
+} // namespace efyj

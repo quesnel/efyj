@@ -19,11 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_DETAILS_OPTIONS_IMPLEMENTATION_HPP
-#define INRA_EFYj_DETAILS_OPTIONS_IMPLEMENTATION_HPP
-
-#include <efyj/exception.hpp>
-
+#include "options.hpp"
+#include "exception.hpp"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
@@ -31,11 +28,10 @@
 #include <string>
 #include <istream>
 
-namespace efyj {
-namespace options_details {
+namespace {
 
-inline std::vector <const efyj::attribute *> get_basic_attribute(
-    const efyj::Model &model)
+std::vector <const efyj::attribute *>
+get_basic_attribute(const efyj::Model &model)
 {
     std::vector <const efyj::attribute *> ret;
     ret.reserve(model.attributes.size());
@@ -47,10 +43,11 @@ inline std::vector <const efyj::attribute *> get_basic_attribute(
     return std::move(ret);
 }
 
-inline std::size_t get_basic_attribute_id(const std::vector
-        <const efyj::attribute *>
-        &att,
-        const std::string &name)
+std::size_t
+get_basic_attribute_id(
+    const std::vector <const efyj::attribute *>
+    &att,
+    const std::string &name)
 {
     auto it = std::find_if(att.begin(),
     att.end(), [&name](const efyj::attribute * att) {
@@ -64,8 +61,8 @@ inline std::size_t get_basic_attribute_id(const std::vector
     return it - att.begin();
 }
 
-inline void
-build_ordered_options(Options &options) noexcept
+void
+build_ordered_options(efyj::Options &options) noexcept
 {
     assert(options.ids.size() == options.options.rows());
 
@@ -85,9 +82,10 @@ build_ordered_options(Options &options) noexcept
     }
 }
 
-} // options_details namespace
+} // anonymous namespace
 
-inline
+namespace efyj {
+
 OptionId::OptionId(const std::string &simulation_,
                    const std::string &place_,
                    int department_, int year_, int observated_)
@@ -99,16 +97,16 @@ OptionId::OptionId(const std::string &simulation_,
 {
 }
 
-inline std::ostream &
+std::ostream &
 operator<<(std::ostream &os, const OptionId &optionid) noexcept
 {
     return os << optionid.simulation << ' '
-           << optionid.place << ' '
-           << optionid.department << ' '
-           << optionid.year;
+        << optionid.place << ' '
+        << optionid.department << ' '
+        << optionid.year;
 }
 
-inline std::ostream &
+std::ostream &
 operator<<(std::ostream &os,
            const boost::container::flat_multimap <int, int> &map) noexcept
 {
@@ -134,7 +132,7 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &
+std::ostream &
 operator<<(std::ostream &os, const Options &options) noexcept
 {
     os << "option identifiers\n------------------\n";
@@ -143,15 +141,15 @@ operator<<(std::ostream &os, const Options &options) noexcept
         os << i << ' ' << options.ids[i] << '\n';
 
     return os << "\noption matrix\n-------------\n" << options.options
-              << "\nordered option\n--------------\n" << options.ordered
-              << "\n";
+        << "\nordered option\n--------------\n" << options.ordered
+        << "\n";
 }
 
-inline Options array_options_read(Context ctx, std::istream &is,
-                                  const efyj::Model &model)
+Options array_options_read(Context ctx, std::istream &is,
+                           const efyj::Model &model)
 {
     std::vector <const efyj::attribute *> atts =
-        options_details::get_basic_attribute(model);
+        ::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
     std::vector <std::string> columns;
     std::string line;
@@ -165,13 +163,13 @@ inline Options array_options_read(Context ctx, std::istream &is,
             throw efyj::csv_parser_error(
                 0, 0, std::string(),
                 (boost::format(
-                     "csv file have not correct number of column %1% "
-                     "(expected: %2%)") % columns.size() %
-                 (atts.size() + 5u)).str());
+                        "csv file have not correct number of column %1% "
+                        "(expected: %2%)") % columns.size() %
+                    (atts.size() + 5u)).str());
 
         for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i)
-            convertheader[i - 4] = options_details::get_basic_attribute_id(atts,
-                                   columns[i]);
+            convertheader[i - 4] = ::get_basic_attribute_id(atts,
+                                                                           columns[i]);
     }
 
     ret.options = Eigen::ArrayXXi::Zero(1, atts.size());
@@ -199,7 +197,7 @@ inline Options array_options_read(Context ctx, std::istream &is,
 
         try {
             obs = model.attributes[0].scale.find_scale_value(
-                      columns[columns.size() - 1]);
+                columns[columns.size() - 1]);
         } catch (const efyj_error &e) {
             efyj_info(ctx,
                       boost::format(
@@ -257,11 +255,10 @@ inline Options array_options_read(Context ctx, std::istream &is,
     ret.options.conservativeResize(ret.options.rows() - 1,
                                    Eigen::NoChange_t());
 
-    assert(ret.options.row() == ret.ids.size());
+    assert(ret.options.rows() == ret.ids.size());
 
-    options_details::build_ordered_options(ret);
+    ::build_ordered_options(ret);
     return std::move(ret);
 }
-}
 
-#endif
+} // namespace efyj

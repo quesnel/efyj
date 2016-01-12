@@ -19,10 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/model.hpp>
-#include <efyj/exception.hpp>
+#include <efyj/context.hpp>
 #include <efyj/problem.hpp>
-
 #include <iostream>
 #include <chrono>
 #include <fstream>

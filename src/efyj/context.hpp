@@ -22,8 +22,8 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
+#include <efyj/efyj.hpp>
 #include <efyj/message.hpp>
-
 #include <deque>
 #include <fstream>
 #include <thread>
@@ -64,7 +64,7 @@ typedef std::shared_ptr <ContextImpl> Context;
 
 namespace efyj {
 
-class ContextImpl
+class EFYJ_API ContextImpl
 {
 public:
     ContextImpl(LogOption option = LOG_OPTION_DEBUG);
@@ -78,7 +78,12 @@ public:
     void set_console_log_stream();
 
     template <typename... _Args>
-    void log(_Args &&... args);
+    void log(_Args &&... args)
+    {
+            std::lock_guard <std::mutex> lock(m_queue_locker);
+            m_queue.emplace_back(std::forward <_Args>(args)...);
+    }
+
 
     LogOption log_priority() const;
 
@@ -95,7 +100,5 @@ private:
 };
 
 }
-
-#include "details/context-implementation.hpp"
 
 #endif

@@ -19,15 +19,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_DETAILS_EXCEPTION_IMPLEMENTATION_HPP
-#define INRA_EFYj_DETAILS_EXCEPTION_IMPLEMENTATION_HPP
-
+#include "exception.hpp"
 #include <boost/format.hpp>
 
-namespace efyj {
-namespace exception_details {
+namespace {
 
-inline
 std::string csv_parser_error_format(std::size_t line,
                                     std::size_t column,
                                     const std::string &filepath,
@@ -57,14 +53,12 @@ std::string csv_parser_error_format(std::size_t line,
     }
 }
 
-inline
 std::string xml_parser_error_format(const std::string &msg)
 {
     return boost::str(
                boost::format("DEXI error: %1%") % msg);
 }
 
-inline
 std::string xml_parser_error_format(const std::string &msg,
                                     const std::string &filepath)
 {
@@ -72,7 +66,6 @@ std::string xml_parser_error_format(const std::string &msg,
                boost::format("DEXI error: %1% %2%") % filepath % msg);
 }
 
-inline
 std::string xml_parser_error_format(const std::string &msg, int line,
                                     int column, int error)
 {
@@ -81,47 +74,42 @@ std::string xml_parser_error_format(const std::string &msg, int line,
                error);
 }
 
-inline
 std::string solver_error_format(const std::string &msg)
 {
     return boost::str(
                boost::format("Solver error: %1%") % msg);
 }
 
-inline
 std::string solver_option_error_format(const std::string &opt)
 {
     return boost::str(
                boost::format("option `%1%' is unknown") % opt);
 }
 
-} // exception_details namespace
+} // anonymous namespace
 
-inline
+namespace efyj {
+
 solver_error::solver_error(const std::string &msg)
-    : efyj_error(exception_details::solver_error_format(msg))
+    : efyj_error(::solver_error_format(msg))
 {
 }
 
-inline
 solver_error::~solver_error()
 {
 }
 
-inline
 solver_option_error::solver_option_error(const std::string &option)
-    : solver_error(exception_details::solver_option_error_format(option))
+    : solver_error(::solver_option_error_format(option))
 {
 }
 
-inline
 solver_option_error::~solver_option_error()
 {
 }
 
-inline
 xml_parser_error::xml_parser_error(const std::string &msg)
-    : efyj_error(exception_details::xml_parser_error_format(msg))
+    : efyj_error(::xml_parser_error_format(msg))
     , m_line(0)
     , m_column(0)
     , m_internal_error_code(0)
@@ -129,10 +117,9 @@ xml_parser_error::xml_parser_error(const std::string &msg)
 {
 }
 
-inline
 xml_parser_error::xml_parser_error(const std::string &msg,
                                    const std::string &filepath)
-    : efyj_error(exception_details::xml_parser_error_format(filepath, msg))
+    : efyj_error(::xml_parser_error_format(filepath, msg))
     , m_line(0)
     , m_column(0)
     , m_internal_error_code(0)
@@ -141,11 +128,9 @@ xml_parser_error::xml_parser_error(const std::string &msg,
 {
 }
 
-inline
 xml_parser_error::xml_parser_error(const std::string &msg, int line, int column,
                                    int error)
-    : efyj_error(exception_details::xml_parser_error_format(msg, line, column,
-                 error))
+    : efyj_error(::xml_parser_error_format(msg, line, column, error))
     , m_line(line)
     , m_column(column)
     , m_internal_error_code(error)
@@ -153,36 +138,30 @@ xml_parser_error::xml_parser_error(const std::string &msg, int line, int column,
 {
 }
 
-inline
 xml_parser_error::~xml_parser_error()
 {
 }
 
-inline
 efyj_error::efyj_error(const std::string &msg)
     : std::runtime_error(msg)
 {
 }
 
-inline
 efyj_error::~efyj_error()
 {
 }
 
-inline
 csv_parser_error::csv_parser_error(const std::string &msg)
-    : efyj_error(exception_details::csv_parser_error_format(0, 0, std::string(),
-                 msg))
+    : efyj_error(::csv_parser_error_format(0, 0, std::string(), msg))
     , m_line(0)
     , m_column(0)
     , m_msg(msg)
 {
 }
 
-inline
 csv_parser_error::csv_parser_error(const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(exception_details::csv_parser_error_format(0, 0, filepath, msg))
+    : efyj_error(::csv_parser_error_format(0, 0, filepath, msg))
     , m_line(0)
     , m_column(0)
     , m_filepath(filepath)
@@ -190,11 +169,10 @@ csv_parser_error::csv_parser_error(const std::string &filepath,
 {
 }
 
-inline
 csv_parser_error::csv_parser_error(std::size_t line,
                                    const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(exception_details::csv_parser_error_format(line, 0, filepath, msg))
+    : efyj_error(::csv_parser_error_format(line, 0, filepath, msg))
     , m_line(line)
     , m_column(0)
     , m_filepath(filepath)
@@ -202,12 +180,10 @@ csv_parser_error::csv_parser_error(std::size_t line,
 {
 }
 
-inline
 csv_parser_error::csv_parser_error(std::size_t line, std::size_t column,
                                    const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(exception_details::csv_parser_error_format(line, column, filepath,
-                 msg))
+    : efyj_error(::csv_parser_error_format(line, column, filepath, msg))
     , m_line(line)
     , m_column(column)
     , m_filepath(filepath)
@@ -215,11 +191,8 @@ csv_parser_error::csv_parser_error(std::size_t line, std::size_t column,
 {
 }
 
-inline
 csv_parser_error::~csv_parser_error()
 {
 }
 
-}
-
-#endif
+} // namespace efyj

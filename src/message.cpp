@@ -19,29 +19,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_MESSAGE_IMPLEMENTATION_HPP
-#define INRA_EFYj_MESSAGE_IMPLEMENTATION_HPP
-
-#include <sstream>
-
+#include "message.hpp"
 #include <sys/types.h>
 #include <unistd.h>
 
 namespace efyj {
 
-template <typename T>
-inline message::message(LogOption priority, const T &t)
-    : thread_id(std::this_thread::get_id())
-    , priority(priority)
-    , pid(::getpid())
-{
-    std::stringstream os;
-    os << t;
-    msg = os.str();
-}
-
 template <>
-inline message::message(LogOption priority, const std::string &msg)
+message::message(LogOption priority, const std::string &msg)
     : msg(msg)
     , thread_id(std::this_thread::get_id())
     , priority(priority)
@@ -49,23 +34,8 @@ inline message::message(LogOption priority, const std::string &msg)
 {
 }
 
-template <typename T>
-inline message::message(LogOption priority, const char *file, int line,
-                        const char *fn, const T &t)
-    : file(file)
-    , fn(fn)
-    , thread_id(std::this_thread::get_id())
-    , priority(priority)
-    , pid(::getpid())
-    , line(line)
-{
-    std::stringstream os;
-    os << t;
-    msg = os.str();
-}
-
 template <>
-inline message::message(LogOption priority, const char *file,
+message::message(LogOption priority, const char *file,
                         int line,
                         const char *fn, const std::string &msg)
     : msg(msg)
@@ -78,7 +48,7 @@ inline message::message(LogOption priority, const char *file,
 {
 }
 
-inline std::ostream &operator<<(std::ostream &os, const message &msg)
+std::ostream &operator<<(std::ostream &os, const message &msg)
 {
 #if 0
     os << msg.pid << '@' << msg.thread_id << ": " << msg.priority << "\n";
@@ -90,6 +60,4 @@ inline std::ostream &operator<<(std::ostream &os, const message &msg)
     return os << msg.msg;
 }
 
-}
-
-#endif
+} // namespace efyj

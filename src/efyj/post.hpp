@@ -24,7 +24,6 @@
 
 #include <efyj/model.hpp>
 #include <efyj/options.hpp>
-
 #include <Eigen/Core>
 #include <cmath>
 

@@ -19,13 +19,10 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_DETAILS_EFYj_MODEL_IMPLEMENTATION_HPP
-#define INRA_DETAILS_EFYj_MODEL_IMPLEMENTATION_HPP
-
+#include "model.hpp"
+#include "exception.hpp"
+#include "utils.hpp"
 #include <algorithm>
-#include <efyj/exception.hpp>
-#include <efyj/utils.hpp>
-
 #include <istream>
 #include <ostream>
 #include <functional>
@@ -33,11 +30,11 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <cassert>
 #include <cstring>
 #include <expat.h>
 
-namespace efyj {
-namespace model_details {
+namespace {
 
 struct str_compare {
     bool operator()(const char *lhs, const char *rhs) const noexcept
@@ -97,7 +94,7 @@ private:
     efyj::Model &dex;
 
     enum class stack_identifier {
-        DEXi, VERSION, CREATED, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS,
+        DEXi, TAG_VERSION, CREATED, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS,
         ATTRIBUTE, NAME, DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP,
         FUNCTION, LOW, ENTERED, CONSIST, WEIGHTS, LOCWEIGHTS, NORMLOCWEIGHTS
     };
@@ -108,7 +105,7 @@ private:
         const char *, stack_identifier, str_hash, str_compare >
         stack_identifier_map( {
             {"DEXi", stack_identifier::DEXi},
-            {"VERSION", stack_identifier::VERSION},
+            {"VERSION", stack_identifier::TAG_VERSION},
             {"CREATED", stack_identifier::CREATED},
             {"LINE", stack_identifier::LINE},
             {"OPTION", stack_identifier::OPTION},
@@ -159,7 +156,7 @@ private:
                         return;
             }
 
-            throw xml_parser_error("Bad parent");
+            throw efyj::xml_parser_error("Bad parent");
         }
     };
 
@@ -177,12 +174,12 @@ private:
             switch (id) {
             case stack_identifier::DEXi:
                 if (!pd->stack.empty())
-                    throw xml_parser_error("Bad parent");
+                    throw efyj::xml_parser_error("Bad parent");
 
                 pd->stack.push(id);
                 break;
 
-            case stack_identifier::VERSION:
+            case stack_identifier::TAG_VERSION:
                 pd->is_parent({stack_identifier::DEXi});
                 break;
 
@@ -297,7 +294,7 @@ private:
                 pd->stack.pop();
                 break;
 
-            case stack_identifier::VERSION:
+            case stack_identifier::TAG_VERSION:
                 pd->model.version.assign(pd->char_data);
                 break;
 
@@ -325,7 +322,7 @@ private:
 
                     pd->model.attributes.back().options.emplace_back(att);
                 } else
-                    throw xml_parser_error("bad stack");
+                    throw efyj::xml_parser_error("bad stack");
 
                 break;
 
@@ -365,7 +362,7 @@ private:
 
             case stack_identifier::DESCRIPTION:
                 if (pd->stack.top() != stack_identifier::DESCRIPTION)
-                    throw xml_parser_error("DESCRIPTION");
+                    throw efyj::xml_parser_error("DESCRIPTION");
 
                 pd->stack.pop();
 
@@ -555,7 +552,7 @@ private:
     void write_Model_attribute(std::size_t child)
     {
         assert(child <= dex.attributes.size());
-        const attribute &att(dex.attributes[child]);
+        const efyj::attribute &att(dex.attributes[child]);
         os << make_space() << "<ATTRIBUTE>\n";
         space += 2;
         os << make_space() << "<NAME>" << to_xml(att.name) << "</NAME>\n"
@@ -614,7 +611,7 @@ private:
     }
 };
 
-void reorder_basic_attribute(const Model &model, std::size_t att,
+void reorder_basic_attribute(const efyj::Model &model, std::size_t att,
                              std::vector <std::size_t> &out)
 {
     if (model.attributes[att].is_basic())
@@ -624,12 +621,14 @@ void reorder_basic_attribute(const Model &model, std::size_t att,
             reorder_basic_attribute(model, child, out);
 }
 
-} // model-details namespace
+} // anonymous namespace
+
+namespace efyj {
 
 void Model::write_options(std::ostream &os) const
 {
     std::vector <std::size_t> ordered_att;
-    model_details::reorder_basic_attribute(*this, 0, ordered_att);
+    ::reorder_basic_attribute(*this, 0, ordered_att);
     os << "simulation;place;department;year;";
 
     for (int child : ordered_att)
@@ -647,13 +646,13 @@ void Model::write_options(std::ostream &os) const
     }
 }
 
-inline
+
 bool operator<(const attribute &lhs, const attribute &rhs)
 {
     return lhs.name < rhs.name;
 }
 
-inline
+
 bool operator==(const scalevalue &lhs, const scalevalue &rhs)
 {
     return lhs.name == rhs.name &&
@@ -661,14 +660,14 @@ bool operator==(const scalevalue &lhs, const scalevalue &rhs)
            lhs.group == rhs.group;
 }
 
-inline
+
 bool operator==(const scales &lhs, const scales &rhs)
 {
     return lhs.order == rhs.order &&
            lhs.scale == rhs.scale;
 }
 
-inline
+
 bool operator==(const function &lhs, const function &rhs)
 {
     return lhs.low == rhs.low &&
@@ -676,7 +675,7 @@ bool operator==(const function &lhs, const function &rhs)
            lhs.consist == rhs.consist;
 }
 
-inline
+
 bool operator==(const attribute &lhs, const attribute &rhs)
 {
     return lhs.name == rhs.name &&
@@ -686,13 +685,13 @@ bool operator==(const attribute &lhs, const attribute &rhs)
            lhs.children == rhs.children;
 }
 
-inline
+
 bool operator<(const Model &lhs, const Model &rhs)
 {
     return lhs.name < rhs.name;
 }
 
-inline
+
 bool operator==(const Model &lhs, const Model &rhs)
 {
     return lhs.name == rhs.name &&
@@ -706,7 +705,6 @@ bool operator==(const Model &lhs, const Model &rhs)
            lhs.attributes == rhs.attributes;
 }
 
-inline
 bool operator!=(const Model &lhs, const Model &rhs)
 {
     return not (lhs == rhs);
@@ -714,18 +712,16 @@ bool operator!=(const Model &lhs, const Model &rhs)
 
 std::ostream &operator<<(std::ostream &os, const Model &Model_data)
 {
-    model_details::Model_writer dw(os, Model_data);
+    ::Model_writer dw(os, Model_data);
     dw.write();
     return os;
 }
 
 std::istream &operator>>(std::istream &is, Model &Model_data)
 {
-    model_details::Model_reader dr(is, Model_data);
+    ::Model_reader dr(is, Model_data);
     dr.read(4096u);
     return is;
 }
 
 }
-
-#endif

@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: efyj
+Description: A C++ library for DEXi statistical analysis
+Version: @VERSION@
+Libs: -L${libdir} -lefyj
+Libs.private: -lm -lpthread
+Cflags: -I${includedir}
