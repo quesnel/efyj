@@ -250,8 +250,10 @@ show(const Model &model, std::size_t att, std::size_t space,
 
     if (model.attributes[att].is_aggregate()) {
         os << std::string(space + 1, ' ')
-           << "\\ -> ("
+           << "\\ -> (fct: "
            << model.attributes[att].functions.low
+           << "), (scale size: "
+           << model.attributes[att].scale_size()
            << ")\n";
 
         for (std::size_t child : model.attributes[att].children) {
