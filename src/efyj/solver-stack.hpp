@@ -380,7 +380,7 @@ struct concatenated_function_compare
 };
 
 /**
- * Same solver thant solver_stack but it stores all functions and theirs
+ * Same solver that solver_stack but it stores all functions and theirs
  * results into a cache based on vector<scale_id>.
  *
  * For example: 0.................n.....m
