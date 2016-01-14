@@ -60,11 +60,17 @@ struct aggregate_attribute
         coeffs = Vector::Zero(m_scale_size.size());
         coeffs(m_scale_size.size() - 1) = 1;
 
-        assert(m_scale_size.size() < std::numeric_limits<int>::max());
-        assert(m_scale_size.size() >= 2);
+	err() << "attribute: " << att
+	       << " " << model.attributes[att].name
+	       << " with children size= " << m_scale_size.size() << "\n";
 
-        for (int i = (int)m_scale_size.size() - 2; i >= 0; --i)
-            coeffs(i) = m_scale_size[i + 1] * coeffs(i + 1);
+        assert(m_scale_size.size() < std::numeric_limits<int>::max());
+	assert(m_scale_size.size() >= 1);
+
+	if (m_scale_size.size() >= 2) {
+            for (int i = (int)m_scale_size.size() - 2; i >= 0; --i)
+	        coeffs(i) = m_scale_size[i + 1] * coeffs(i + 1);
+	}
 
         stack = Vector::Zero(m_scale_size.size());
         stack_size = 0;
@@ -128,20 +134,20 @@ struct aggregate_attribute
     int stack_size;
 };
 
-std::ostream& operator<<(std::ostream& os, const aggregate_attribute& att)
+cstream& operator<<(cstream& os, const aggregate_attribute& att)
 {
     os << "f:";
-    std::copy(att.functions.cbegin(), att.functions.cend(),
-              std::ostream_iterator<int>(os, ""));
+    for (const auto& x : att.functions)
+        os << x;
 
     return os << " sz:" << att.scale;
 }
 
-std::ostream& operator<<(std::ostream& os,
-                         const std::vector <aggregate_attribute>& atts)
+cstream& operator<<(cstream& os,
+                    const std::vector <aggregate_attribute>& atts)
 {
-    std::copy(atts.cbegin(), atts.cend(),
-              std::ostream_iterator<aggregate_attribute>(os, "\n"));
+    for (const auto& x : atts)
+        os << x << "\n";
 
     return os;
 }
@@ -198,12 +204,12 @@ operator==(const line_updater& lhs, const line_updater& rhs) noexcept
 
 template<typename Solver>
 class for_each_model_solver;
-std::ostream& operator<<(std::ostream& os, const line_updater& line);
-std::ostream& operator<<(std::ostream& os,
+cstream& operator<<(cstream& os, const line_updater& line);
+cstream& operator<<(cstream& os,
                          const std::vector<line_updater>& updaters);
 template<typename Solver>
-std::ostream&
-operator<<(std::ostream& os,
+cstream&
+operator<<(cstream& os,
            const for_each_model_solver<Solver>& solver);
 
 struct solver_stack
@@ -349,11 +355,12 @@ private:
     std::vector <int> result;
 };
 
-inline std::ostream&
-operator<<(std::ostream& os, const std::vector<scale_id>& v)
+inline cstream&
+operator<<(cstream& os, const std::vector<scale_id>& v)
 {
-    std::copy(v.cbegin(), v.cend(),
-              std::ostream_iterator<int>(os, ""));
+    for (auto x : v)
+        os << x;
+
     return os;
 }
 
@@ -734,26 +741,25 @@ private:
     }
 };
 
-std::ostream&
-operator<<(std::ostream& os, const line_updater& updater)
+cstream&
+operator<<(cstream& os, const line_updater& updater)
 {
     return os << "[" << updater.attribute << "," << updater.line << "]";
 }
 
-std::ostream&
-operator<<(std::ostream& os,
+cstream&
+operator<<(cstream& os,
            const std::vector<line_updater>& updaters)
 {
-    std::copy(updaters.cbegin(),
-              updaters.cend(),
-              std::ostream_iterator<line_updater>(os, " "));
+    for (const auto& x : updaters)
+        os << x << " ";
 
     return os;
 }
 
 template <typename Solver>
-std::ostream&
-operator<<(std::ostream& os,
+cstream&
+operator<<(cstream& os,
            const for_each_model_solver<Solver>& solver)
 {
     return os << "walker(s): " << solver.walker_number()

@@ -97,8 +97,8 @@ OptionId::OptionId(const std::string &simulation_,
 {
 }
 
-std::ostream &
-operator<<(std::ostream &os, const OptionId &optionid) noexcept
+cstream &
+operator<<(cstream &os, const OptionId &optionid) noexcept
 {
     return os << optionid.simulation << ' '
         << optionid.place << ' '
@@ -106,8 +106,8 @@ operator<<(std::ostream &os, const OptionId &optionid) noexcept
         << optionid.year;
 }
 
-std::ostream &
-operator<<(std::ostream &os,
+cstream &
+operator<<(cstream &os,
            const boost::container::flat_multimap <int, int> &map) noexcept
 {
     if (not map.empty()) {
@@ -132,28 +132,29 @@ operator<<(std::ostream &os,
     return os;
 }
 
-std::ostream &
-operator<<(std::ostream &os, const Options &options) noexcept
+cstream &
+operator<<(cstream &os, const Options &options) noexcept
 {
     os << "option identifiers\n------------------\n";
 
     for (std::size_t i = 0, e = options.ids.size(); i != e;  ++i)
-        os << i << ' ' << options.ids[i] << '\n';
+        os << i << " " << options.ids[i] << "\n";
 
-    return os << "\noption matrix\n-------------\n" << options.options
+    std::ostringstream ss;
+    ss << options.options;
+
+    return os << "\noption matrix\n-------------\n" << ss.str()
         << "\nordered option\n--------------\n" << options.ordered
         << "\n";
 }
 
-Options array_options_read(Context ctx, std::istream &is,
-                           const efyj::Model &model)
+void Options::read(std::istream& is, const efyj::Model& model)
 {
     std::vector <const efyj::attribute *> atts =
         ::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
     std::vector <std::string> columns;
     std::string line;
-    Options ret;
 
     if (is) {
         std::getline(is, line);
@@ -168,11 +169,10 @@ Options array_options_read(Context ctx, std::istream &is,
                     (atts.size() + 5u)).str());
 
         for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i)
-            convertheader[i - 4] = ::get_basic_attribute_id(atts,
-                                                                           columns[i]);
+	    convertheader[i - 4] = ::get_basic_attribute_id(atts, columns[i]);
     }
 
-    ret.options = Eigen::ArrayXXi::Zero(1, atts.size());
+    options = Eigen::ArrayXXi::Zero(1, atts.size());
     int line_number = -1;
 
     while (true) {
@@ -183,82 +183,89 @@ Options array_options_read(Context ctx, std::istream &is,
             break;
 
         boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
-
         if (columns.size() != atts.size() + 5u) {
-            efyj_info(ctx,
-                      boost::format(
-                          "error in csv file line %1%: not correct number of column %2%"
-                          " (expected: %3%)") % line_number % columns.size()
-                      % (atts.size() + 5u));
+            err().printf("Options: error in csv file line %d:"
+                         " not correct number of column %d"
+                         " (expected: %d)",
+                         line_number,
+                         static_cast<int>(columns.size()),
+                         static_cast<int>(atts.size() + 5u));
             continue;
         }
 
         int obs;
-
         try {
             obs = model.attributes[0].scale.find_scale_value(
                 columns[columns.size() - 1]);
         } catch (const efyj_error &e) {
-            efyj_info(ctx,
-                      boost::format(
-                          "error in csv file line %1%: convertion failure of `%2%'")
-                      % line_number % columns[columns.size() - 1]);
+            err().printf("Options: error in csv file line %d:"
+                         " convertion failure of `%s'",
+                         line_number,
+                         columns[columns.size() - 1].c_str());
             continue;
         }
 
         if (obs == -1) {
-            efyj_info(ctx,
-                      boost::format(
-                          "error in csv file line %1%: fail to convert observated `%2%'")
-                      % line_number % columns[columns.size() - 1]);
+            err().printf("Options: error in csv file line %d:"
+                         " fail to convert observated `%s'",
+                         line_number,
+                         columns[columns.size() - 1].c_str());
             continue;
         }
 
         int department, year;
-
         try {
             department = std::stoi(columns[2]);
             year = std::stoi(columns[3]);
         } catch (const std::exception &e) {
-            efyj_info(ctx,
-                      boost::format(
-                          "error in csv file line %1%: unknown id (`%2%' `%3%' `%4%'"
-                          "`%5%')") % line_number % columns[0] % columns[1]
-                      % columns[2] % columns[3]);;
+            err().printf("Options: error in csv file line %d:"
+                         " unknown id (`%s' `%s' `%s' `%5%')",
+                         line_number,
+                         columns[0].c_str(),
+                         columns[1].c_str(),
+                         columns[2].c_str(),
+                         columns[3].c_str());
             continue;
         }
 
-        ret.ids.emplace_back(columns[0], columns[1], department, year, obs);
+        ids.emplace_back(columns[0], columns[1], department, year, obs);
 
         for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i) {
             std::size_t attid = convertheader[i - 4];
             int option = atts[attid]->scale.find_scale_value(columns[i]);
 
             if (option < 0) {
-                efyj_info(ctx,
-                          boost::format(
-                              "error in csv file line %1%: "
-                              "unknown scale value `%2%' for attribute `%3%'")
-                          % line_number % columns[i] % atts[attid]->name);
-                ret.ids.pop_back();
-                ret.options.conservativeResize(ret.options.rows() - 1,
-                                               Eigen::NoChange_t());
+                err().printf("Options: error in csv file line %d: "
+                             "unknown scale value `%s' for attribute `%s'",
+                             line_number,
+                             columns[i].c_str(),
+                             atts[attid]->name.c_str());
+                ids.pop_back();
+                options.conservativeResize(options.rows() - 1,
+                                           Eigen::NoChange_t());
                 break;
             } else {
-                ret.options(ret.options.rows() - 1, attid) = option;
+                options(options.rows() - 1, attid) = option;
             }
         }
 
-        ret.options.conservativeResize(ret.options.rows() + 1, Eigen::NoChange_t());
+        options.conservativeResize(options.rows() + 1,
+                                   Eigen::NoChange_t());
     }
 
-    ret.options.conservativeResize(ret.options.rows() - 1,
-                                   Eigen::NoChange_t());
+    options.conservativeResize(options.rows() - 1,
+                               Eigen::NoChange_t());
 
-    assert(ret.options.rows() == ret.ids.size());
+    assert(options.rows() == ids.size());
 
-    ::build_ordered_options(ret);
-    return std::move(ret);
+    ::build_ordered_options(*this);
+}
+
+void Options::clear() noexcept
+{
+    std::vector <OptionId>().swap(ids);
+    Array().swap(options);
+    boost::container::flat_multimap <int, int>().swap(ordered);
 }
 
 } // namespace efyj

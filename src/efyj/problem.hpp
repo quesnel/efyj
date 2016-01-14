@@ -30,40 +30,24 @@
 namespace efyj {
 
 EFYJ_API
-Model
-model_read(Context ctx, const std::string& filename);
-
-EFYJ_API
-Options
-option_read(Context ctx, const Model& model, const std::string &filename);
-
-EFYJ_API
-void
-option_extract(Context ctx, const Model& model, const std::string& filename);
-
-EFYJ_API
 double
-compute0(Context ctx, const Model& model, const Options& options,
+compute0(const Model& model, const Options& options,
          int rank, int world_size);
 
 EFYJ_API
 double
-computen(Context ctx, const Model& model, const Options& options,
+computen(const Model& model, const Options& options,
          int rank, int world_size, int walker_number);
 
 EFYJ_API
 double
-compute_for_ever(Context ctx, const Model& model, const Options& options,
+compute_for_ever(const Model& model, const Options& options,
                  int rank, int world_size);
 
 EFYJ_API
 double
-prediction(Context ctx, const Model& model, const Options&
-                options, int rank, int world_size);
-
-EFYJ_API
-void
-model_show(const Model &model, std::ostream &os);
+prediction(const Model& model, const Options&
+           options, int rank, int world_size);
 
 }
 

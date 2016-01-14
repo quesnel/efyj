@@ -621,6 +621,34 @@ void reorder_basic_attribute(const efyj::Model &model, std::size_t att,
             reorder_basic_attribute(model, child, out);
 }
 
+efyj::cstream& model_show(efyj::cstream& cs, const efyj::Model &model,
+		std::size_t att, std::size_t space)
+{
+    cs.indent(space);
+    cs << cs.red() << model.attributes[att].name
+       << cs.def() << "\n";
+
+    for (const auto &sc : model.attributes[att].scale.scale) {
+	cs.indent(space);
+	cs << "| " << sc.name << "\n";
+    }
+
+    if (model.attributes[att].is_aggregate()) {
+	cs.indent(space + 1);
+        cs << "\\ -> (fct: "
+           << model.attributes[att].functions.low
+           << "), (scale size: "
+           << model.attributes[att].scale_size()
+           << ")\n";
+
+        for (std::size_t child : model.attributes[att].children) {
+            ::model_show(cs, model, child, space + 2);
+        }
+    }
+
+    return cs;
+}
+
 } // anonymous namespace
 
 namespace efyj {
@@ -646,12 +674,30 @@ void Model::write_options(std::ostream &os) const
     }
 }
 
-
-bool operator<(const attribute &lhs, const attribute &rhs)
+void Model::read(std::istream& is)
 {
-    return lhs.name < rhs.name;
+    ::Model_reader dr(is, *this);
+    dr.read(4096u);
 }
 
+void Model::write(std::ostream& os)
+{
+    ::Model_writer dw(os, *this);
+    dw.write();
+}
+
+void Model::clear()
+{
+    std::string().swap(name);
+    std::string().swap(version);
+    std::string().swap(created);
+    std::string().swap(created);
+    std::vector <std::string>().swap(description);
+    std::vector <std::string>().swap(options);
+    std::vector <scale_id>().swap(basic_attribute_scale_size);
+    std::vector <std::string>().swap(group);
+    std::deque <attribute>().swap(attributes);
+}
 
 bool operator==(const scalevalue &lhs, const scalevalue &rhs)
 {
@@ -674,7 +720,6 @@ bool operator==(const function &lhs, const function &rhs)
            lhs.entered == rhs.entered &&
            lhs.consist == rhs.consist;
 }
-
 
 bool operator==(const attribute &lhs, const attribute &rhs)
 {
@@ -710,18 +755,14 @@ bool operator!=(const Model &lhs, const Model &rhs)
     return not (lhs == rhs);
 }
 
-std::ostream &operator<<(std::ostream &os, const Model &Model_data)
+bool operator<(const attribute &lhs, const attribute &rhs)
 {
-    ::Model_writer dw(os, Model_data);
-    dw.write();
-    return os;
+    return lhs.name < rhs.name;
 }
 
-std::istream &operator>>(std::istream &is, Model &Model_data)
+efyj::cstream& operator<<(efyj::cstream& cs, const Model &model) noexcept
 {
-    ::Model_reader dr(is, Model_data);
-    dr.read(4096u);
-    return is;
+    return ::model_show(cs, model, 0, 0);
 }
 
 }

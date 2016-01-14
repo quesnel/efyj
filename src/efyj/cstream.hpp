@@ -20,16 +20,17 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef FR_INRA_MITM_CSTREAM_HPP
-#define FR_INRA_MITM_CSTREAM_HPP
+#ifndef FR_INRA_EFYJ_CSTREAM_HPP
+#define FR_INRA_EFYJ_CSTREAM_HPP
 
 #include <string>
 #include <cstdio>
 #include <cstdarg>
+#include <cinttypes>
 
-namespace mitm {
+namespace efyj {
 
-/** mitm::cstream is an inspired class from the std::ostream.
+/** efyj::cstream is an inspired class from the std::ostream.
  *
  * @code
  * #include "cstream.hpp"

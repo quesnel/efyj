@@ -23,6 +23,10 @@
 #define INRA_EFYj_OPTIONS_HPP
 
 #include <efyj/efyj.hpp>
+#include <efyj/context.hpp>
+#include <efyj/cstream.hpp>
+#include <efyj/options.hpp>
+#include <efyj/model.hpp>
 #include <efyj/types.hpp>
 #include <boost/container/flat_map.hpp>
 
@@ -47,21 +51,30 @@ struct EFYJ_API Options {
     Array options;
 
     /** @e ordered stores the link between and OptionId (id is place,
-     * departement and year) and a list of another OptionId where simulation,
-     * place, departement and year are different.
+     * departement and year) and a list of another OptionId where
+     * simulation, place, departement and year are different.
      */
     boost::container::flat_multimap <int, int> ordered;
+
+    /** Reads CSV from the input stream and ensures correspondence between
+     * the readed data and the model.
+     *
+     * @param [in] is input stream where read the CSV data.
+     * @param [in] model to ensure correspondence.
+     *
+     * @throw std::bad_alloc or csv_parser_error.
+     */
+    void read(std::istream& is, const Model& model);
+
+    /** Release all dynamically allocated memory. */
+    void clear() noexcept;
 };
 
 EFYJ_API
-Options array_options_read(Context ctx, std::istream &is,
-                           const efyj::Model &model);
+cstream& operator<<(cstream& os, const OptionId&) noexcept;
 
 EFYJ_API
-std::ostream& operator<<(std::ostream& os, const OptionId&);
-
-EFYJ_API
-std::ostream& operator<<(std::ostream& os, const Options&);
+cstream& operator<<(cstream& os, const Options&) noexcept;
 
 }
 

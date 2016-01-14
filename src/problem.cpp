@@ -32,48 +32,8 @@
 
 namespace efyj {
 
-Model model_read(Context ctx, const std::string &filename)
-{
-    std::ifstream ifs(filename);
-
-    if (!ifs) {
-        efyj_err(ctx, boost::format("fails to open model %1%") % filename);
-        throw efyj::xml_parser_error(filename, "fail to open");
-    }
-
-    Model model;
-
-    ifs >> model;
-
-    return std::move(model);
-}
-
-Options option_read(Context ctx, const Model& model, const std::string &filename)
-{
-    std::ifstream ifs(filename);
-
-    if (!ifs) {
-        efyj_err(ctx, boost::format("fails to open option %1%") % filename);
-        throw efyj::csv_parser_error(filename, "fail to open");
-    }
-
-    return array_options_read(ctx, ifs, model);
-}
-
-void option_extract(Context ctx, const Model& model, const std::string& filename)
-{
-    std::ofstream ofs(filename);
-
-    if (!ofs) {
-        efyj_err(ctx, boost::format("fails to extract options in file %1%") % filename);
-        throw efyj::efyj_error("bad extract options file");
-    }
-
-    model.write_options(ofs);
-}
-
 double
-compute_kappa(Context ctx, const Model& model, const Options& options)
+compute_kappa(const Model& model, const Options& options)
 {
     solver_stack slv(model);
 
@@ -86,22 +46,25 @@ compute_kappa(Context ctx, const Model& model, const Options& options)
                                        options.options.rows(),
                                        model.attributes[0].scale.size());
 
-    if (ctx->log_priority() >= LOG_OPTION_INFO) {
-        for (auto i = 0ul, e = options.ids.size(); i != e; ++i) {
-            if (options.ids[i].observated != simulated[i]) {
-                efyj_info(ctx,
-                          boost::format("observation (%1%) != simulated (%2%)"
-                                        " at line %3%")
-                          % options.ids[i].observated % simulated[i] % i);
-            }
+#ifndef NDEBUG
+    for (auto i = 0ul, e = options.ids.size(); i != e; ++i) {
+        if (options.ids[i].observated != simulated[i]) {
+            efyj::err() << efyj::err().red() << "Error: "
+                        << efyj::err().def();
+
+            efyj::err().printf("observation (%d) != simulated (%d) at line %d\n",
+                               options.ids[i].observated,
+                               simulated[i],
+                               i);
         }
     }
+#endif
 
     return ret;
 }
 
 double
-compute0(Context ctx, const Model& model, const Options&
+compute0(const Model& model, const Options&
          options, int rank, int world_size)
 {
     (void)rank;
@@ -110,17 +73,17 @@ compute0(Context ctx, const Model& model, const Options&
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    double ret = compute_kappa(ctx, model, options);
+    double ret = compute_kappa(model, options);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj_info(ctx, boost::format(
-            "finished computation at %1% elapsed time: %2% s.\n") %
-        std::ctime(&end_time) % elapsed_seconds.count());
-
-    efyj_info(ctx, boost::format("kappa founded: %1%") % ret);
+    efyj::out().printf("finished computation at %f elapsed time: %f s.\n"
+                       "kappa founded: %f\n",
+                       std::ctime(&end_time),
+                       elapsed_seconds.count(),
+                       ret);
 
     return ret;
 }
@@ -152,7 +115,7 @@ compute_best_kappa(const Model& model, const Options& options, int walker_number
 }
 
 double
-computen(Context ctx, const Model& model, const Options& options,
+computen(const Model& model, const Options& options,
          int rank, int world_size, int walker_number)
 {
     (void)rank;
@@ -166,18 +129,20 @@ computen(Context ctx, const Model& model, const Options& options,
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj_info(ctx, boost::format("Lines changed: %1%\n"
-                                 "Best kappa: %2%\n"
-                                 "Computation ends at: %3%\n"
-                                 "Elapsed time: %4%\n")
-              % std::get<0>(ret) % std::get<1>(ret)
-              % std::ctime(&end_time) % elapsed_seconds.count());
+    efyj::out().printf("Lines changed: %" PRIuMAX "\n"
+                       "Best kappa: %f\n"
+                       "Computation ends at: %s\n"
+                       "Elapsed time: %f\n",
+                       std::get<0>(ret),
+                       std::get<1>(ret),
+                       std::ctime(&end_time),
+                       elapsed_seconds.count());
 
     return std::get <1>(ret);
 }
 
 double
-compute_for_ever(Context ctx, const Model& model, const Options& options,
+compute_for_ever(const Model& model, const Options& options,
                  int rank, int world_size)
 {
     (void)rank;
@@ -192,10 +157,10 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
     double bestkappa = 0;
     int walker_number = solver.get_max_updaters();
 
-    efyj_info(ctx,
-              boost::format("Needs to compute from 0 to %1% updaters\n"
-                            "- 0 kappa: %2%\n")
-              % walker_number % compute_kappa(ctx, model, options));
+    efyj::out().printf("Needs to compute from 0 to %d updaters\n"
+                       "- 0 kappa: %f\n",
+                       walker_number,
+                       compute_kappa(model, options));
 
     for (int step = 1; step <= walker_number; ++step) {
         std::tuple <unsigned long, double> best {0, 0};
@@ -216,9 +181,12 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
             ++std::get<0>(best);
         } while (solver.next() == true);
 
-        efyj_info(ctx,
-                  boost::format("- %1% kappa: %2% / loop: %3% / updaters: %4%\n")
-                  % step % std::get<1>(best) % std::get<0>(best) % bestupdaters);
+        efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
+                           " / updaters: ",
+                           step,
+                           std::get<1>(best),
+                           std::get<0>(best));
+        efyj::out() << bestupdaters << "\n";
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
 
@@ -231,34 +199,6 @@ compute_for_ever(Context ctx, const Model& model, const Options& options,
     }
 
     return bestkappa;
-}
-
-void
-show(const Model &model, std::size_t att, std::size_t space,
-     std::ostream &os)
-{
-    os << std::string(space, ' ') << model.attributes[att].name << '\n';
-
-    for (const auto &sc : model.attributes[att].scale.scale)
-        os << std::string(space, ' ') << "| " << sc.name << '\n';
-
-    if (model.attributes[att].is_aggregate()) {
-        os << std::string(space + 1, ' ')
-            << "\\ -> (fct: "
-            << model.attributes[att].functions.low
-            << "), (scale size: "
-            << model.attributes[att].scale_size()
-            << ")\n";
-
-        for (std::size_t child : model.attributes[att].children) {
-            show(model, child, space + 2, os);
-        }
-    }
-}
-
-void model_show(const Model &model, std::ostream &os)
-{
-    show(model, 0, 0, os);
 }
 
 } // namespace efyj

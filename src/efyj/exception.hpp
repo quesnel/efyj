@@ -94,7 +94,7 @@ public:
     std::size_t line() const { return m_line; }
     std::size_t column() const { return m_column; }
     std::string filepath() const { return m_filepath; }
-    std::string msg() const { return m_msg; }
+    std::string message() const { return m_msg; }
 
 private:
     std::size_t m_line;

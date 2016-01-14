@@ -52,7 +52,7 @@ std::size_t array_lenght(T (&)[N])
 }
 
 const char*
-color_to_str(mitm::cstream::colors c) noexcept
+color_to_str(efyj::cstream::colors c) noexcept
 {
     static const char colors[][10] = {
         "\033[39m",
@@ -79,7 +79,7 @@ color_to_str(mitm::cstream::colors c) noexcept
 }
 
 const char*
-setter_to_str(mitm::cstream::setters s) noexcept
+setter_to_str(efyj::cstream::setters s) noexcept
 {
     static const char setters[][10] = {
         "\033[0m",
@@ -94,9 +94,9 @@ setter_to_str(mitm::cstream::setters s) noexcept
 
 void err_conversion_error(const char *what) noexcept
 {
-    mitm::err() << mitm::err().red()
+    efyj::err() << efyj::err().red()
                 << "stream conversion error "
-                << mitm::err().def()
+                << efyj::err().def()
                 << what
                 << "\n";
 }
@@ -110,9 +110,9 @@ void err_write_error(int error_code) noexcept
         try {
             buf.resize(size);
         } catch (const std::bad_alloc&) {
-            mitm::err() << mitm::err().red()
+            efyj::err() << efyj::err().red()
                 << "write error"
-                << mitm::err().def()
+                << efyj::err().def()
                 << "\n";
             return;
         }
@@ -124,9 +124,9 @@ void err_write_error(int error_code) noexcept
                 size *= 2;
                 continue;
             } else {
-                mitm::err() << mitm::err().red()
+                efyj::err() << efyj::err().red()
                     << "write error: unknown errno code"
-                    << mitm::err().def()
+                    << efyj::err().def()
                     << "\n";
                 return;
             }
@@ -134,18 +134,18 @@ void err_write_error(int error_code) noexcept
 #else
         char *msg = ::strerror_r(error_code, buf.data(), buf.size());
         if (msg != buf.data()) {
-            mitm::err() << mitm::err().red()
+            efyj::err() << efyj::err().red()
                 << "write error: "
-                << mitm::err().def ()
+                << efyj::err().def ()
                 << msg
                 << "\n";
             return;
         }
 #endif
         else {
-            mitm::err() << mitm::err().red()
+            efyj::err() << efyj::err().red()
                 << "write error: "
-                << mitm::err().def()
+                << efyj::err().def()
                 << buf.data()
                 << "\n";
             return;
@@ -155,7 +155,7 @@ void err_write_error(int error_code) noexcept
 
 } // anonymous namespace
 
-namespace mitm {
+namespace efyj {
 
 cstream::cstream(int fd_, bool try_color_mode) noexcept
     : fd(fd_)
@@ -171,19 +171,34 @@ cstream::~cstream() noexcept
 cstream&
 cstream::operator<<(char c) noexcept
 {
-    return write(c);
+    assert(fd >= 0 && "file already closed");
+
+    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
+	    err_write_error(errno);
+
+    return *this;
 }
 
 cstream&
 cstream::operator<<(unsigned char c) noexcept
 {
-    return write(c);
+    assert(fd >= 0 && "file already closed");
+
+    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
+	    err_write_error(errno);
+
+    return *this;
 }
 
 cstream&
 cstream::operator<<(signed char c) noexcept
 {
-    return write(c);
+    assert(fd >= 0 && "file already closed");
+
+    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
+	    err_write_error(errno);
+
+    return *this;
 }
 
 cstream&

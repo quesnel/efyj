@@ -24,6 +24,7 @@
 
 #include <efyj/efyj.hpp>
 #include <efyj/exception.hpp>
+#include <efyj/cstream.hpp>
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -168,6 +169,13 @@ struct EFYJ_API Model
     std::vector <std::string> group;
     std::deque <attribute> attributes;
 
+    void read(std::istream& is);
+
+    void write(std::ostream& os);
+
+    /** Release all dynamically allocated memory. */
+    void clear();
+
     int group_id(const std::string& name) const
     {
         auto it = std::find(group.cbegin(), group.cend(), name);
@@ -187,9 +195,7 @@ EFYJ_API
 bool operator==(const Model& lhs, const Model& rhs);
 
 EFYJ_API
-std::ostream& operator<<(std::ostream& os, const Model& Model_data);
-EFYJ_API
-std::istream& operator>>(std::istream& is, Model& Model_data);
+cstream& operator<<(cstream& os, const Model& Model_data) noexcept;
 
 }
 
