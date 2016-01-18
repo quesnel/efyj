@@ -64,7 +64,8 @@ get_basic_attribute_id(
 void
 build_ordered_options(efyj::Options &options) noexcept
 {
-    assert(options.ids.size() == options.options.rows());
+    assert(options.ids.size() ==
+		    static_cast<std::size_t>(options.options.rows()));
 
     for (std::size_t i = 0, end_i = options.ids.size(); i != end_i; ++i) {
         auto it = options.ordered.end();
@@ -256,7 +257,7 @@ void Options::read(std::istream& is, const efyj::Model& model)
     options.conservativeResize(options.rows() - 1,
                                Eigen::NoChange_t());
 
-    assert(options.rows() == ids.size());
+    assert(static_cast<std::size_t>(options.rows()) == ids.size());
 
     ::build_ordered_options(*this);
 }
