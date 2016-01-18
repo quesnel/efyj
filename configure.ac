@@ -29,7 +29,7 @@ LT_INIT([
 	pic-only
 ])
 
-AX_CXX_COMPILE_STDCXX_14([noext])
+AX_CXX_COMPILE_STDCXX_14([noext],[optional])
 AC_PREFIX_DEFAULT([/usr])
 
 AC_PROG_SED
