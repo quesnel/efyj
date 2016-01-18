@@ -32,6 +32,11 @@ LT_INIT([
 AX_CXX_COMPILE_STDCXX_14([noext],[optional])
 AC_PREFIX_DEFAULT([/usr])
 
+AC_CHECK_HEADERS([unistd.h])
+AC_LANG_PUSH(C++)
+AC_CHECK_HEADER([catch.hpp], [], [AC_MSG_ERROR([Could not find catch.hpp. Please download and install it from https://github.com/philsquared/Catch])])
+AC_LANG_POP
+
 AC_PROG_SED
 AC_PROG_MKDIR_P
 

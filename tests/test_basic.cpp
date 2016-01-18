@@ -51,12 +51,12 @@ TEST_CASE("test empty object read/write", "[model]")
         std::string result;
         {
             std::ostringstream os;
-            os << x1;
+            x1.write(os);
             result = os.str();
         }
         {
             std::istringstream is(result);
-            is >> x2;
+            x2.read(is);
         }
     }
     bool is_equal = x1 == x2;
