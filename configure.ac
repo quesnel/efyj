@@ -54,6 +54,8 @@ AC_CHECK_FUNCS([ \
 	secure_getenv\
 ])
 
+AX_PTHREAD([],[AC_MSG_ERROR([Please install libdw library : libdw-dev])])
+
 AX_LIB_EXPAT([2.1])
 enableoptional=yes
 CONFIGURE_EIGEN([],[yes])
