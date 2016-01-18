@@ -66,6 +66,5 @@ efyj_LDADD = src/libefyj.la $(EXPAT_LIBS)
 TESTS = src/test-libefyj
 check_PROGRAMS = src/test-basic
 src_test_basic_SOURCES = src/test-basic.cpp
-src_test_basic_LDADD = src/libefyj.la
 src_test_basic_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS)
 src_test_basic_LDADD = src/libefyj.la $(EXPAT_LIBS)
