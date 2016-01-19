@@ -29,7 +29,27 @@ LT_INIT([
 	pic-only
 ])
 
-AX_CXX_COMPILE_STDCXX_14([noext],[optional])
+AC_LANG(C++)
+AX_CHECK_COMPILE_FLAG([-std=c++14], [CXX="$CXX -std=c++14"],
+AX_CHECK_COMPILE_FLAG([-std=c++1y], [CXX="$CXX -std=c++1y"],
+AX_CHECK_COMPILE_FLAG([-std=c++11], [CXX="$CXX -std=c++1y"],
+AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXX="$CXX -std=c++1y"],
+AC_MSG_ERROR([Compiler does not support C++11])))))
+
+AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
+AX_CHECK_COMPILE_FLAG([-Wextra], [CXXFLAGS="$CXXFLAGS -Wextra"])
+AX_CHECK_COMPILE_FLAG([-pedantic], [CXXFLAGS="$CXXFLAGS -pedantic"])
+AX_CHECK_COMPILE_FLAG([-Wbool-conversion], [CXXFLAGS="$CXXFLAGS -Wbool-conversion"])
+AX_CHECK_COMPILE_FLAG([-Wheader-guard], [CXXFLAGS="$CXXFLAGS -Wheader-guard"])
+AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough], [CXXFLAGS="$CXXFLAGS -Wimplicit-fallthrough"])
+AX_CHECK_COMPILE_FLAG([-Wlogical-not-parentheses], [CXXFLAGS="$CXXFLAGS -Wlogical-not-parentheses"])
+AX_CHECK_COMPILE_FLAG([-Wloop-analysis], [CXXFLAGS="$CXXFLAGS -Wloop-analysis"])
+AX_CHECK_COMPILE_FLAG([-Woverloaded-shift-op-parentheses], [CXXFLAGS="$CXXFLAGS -Woverloaded-shift-op-parentheses"])
+AX_CHECK_COMPILE_FLAG([-Wsizeof-array-argument], [CXXFLAGS="$CXXFLAGS -Wsizeof-array-argument"])
+AX_CHECK_COMPILE_FLAG([-Wstring-conversion], [CXXFLAGS="$CXXFLAGS -Wstring-conversion"])
+AX_CHECK_COMPILE_FLAG([-Wunique-enum], [CXXFLAGS="$CXXFLAGS -Wunique-enum"])
+AX_CHECK_COMPILE_FLAG([-Wformat-security], [CXXFLAGS="$CXXFLAGS -Wformat-security"])
+
 AC_PREFIX_DEFAULT([/usr])
 
 AC_CHECK_HEADERS([unistd.h])
@@ -64,22 +84,6 @@ AX_PTHREAD([],[AC_MSG_ERROR([Please install libdw library : libdw-dev])])
 AX_LIB_EXPAT([2.1])
 enableoptional=yes
 CONFIGURE_EIGEN([],[yes])
-
-my_CFLAGS="\
--Wall \
--Wchar-subscripts \
--Wformat-security \
--Wmissing-declarations \
--Wmissing-prototypes \
--Wnested-externs \
--Wpointer-arith \
--Wshadow \
--Wsign-compare \
--Wstrict-prototypes \
--Wtype-limits \
-"
-
-AC_SUBST([my_CFLAGS])
 
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES([
