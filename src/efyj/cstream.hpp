@@ -79,6 +79,8 @@ public:
 
     cstream(const cstream&) = delete;
     cstream& operator=(const cstream&) = delete;
+    cstream(cstream&&) = delete;
+    cstream& operator=(cstream&&) = delete;
 
     cstream& operator<<(char c) noexcept;
     cstream& operator<<(unsigned char c) noexcept;
