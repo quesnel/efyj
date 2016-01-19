@@ -39,12 +39,12 @@ class EFYJ_API ContextImpl
 {
 public:
     ContextImpl(LogOption option = LOG_OPTION_DEBUG);
+    ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
 
     ContextImpl(const ContextImpl&) = delete;
+    ContextImpl(ContextImpl&&) = delete;
     ContextImpl& operator=(const ContextImpl&) = delete;
     ContextImpl& operator=(ContextImpl&&) = delete;
-
-    ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
 
     ~ContextImpl();
 
