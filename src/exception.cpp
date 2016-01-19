@@ -31,23 +31,23 @@ std::string csv_parser_error_format(std::size_t line,
 {
     if (filepath.empty()) {
         return boost::str(
-                   boost::format("CSV Error: %1%") % msg);
+            boost::format("CSV Error: %1%") % msg);
     } else {
         if (line == 0u) {
             return boost::str(
-                       boost::format(
-                           "CSV Error: file `%1%': %2%") % filepath % msg);
+                boost::format(
+                    "CSV Error: file `%1%': %2%") % filepath % msg);
         } else {
             if (column == 0u) {
                 return boost::str(
-                           boost::format(
-                               "CSV Error: file `%1%' line %2%: %3%") %
-                           filepath % line % msg);
+                    boost::format(
+                        "CSV Error: file `%1%' line %2%: %3%") %
+                    filepath % line % msg);
             } else {
                 return boost::str(
-                           boost::format(
-                               "CSV Error: file `%1%' %2%:%3%: %4%") %
-                           filepath % line % column % msg);
+                    boost::format(
+                        "CSV Error: file `%1%' %2%:%3%: %4%") %
+                    filepath % line % column % msg);
             }
         }
     }
@@ -56,34 +56,34 @@ std::string csv_parser_error_format(std::size_t line,
 std::string xml_parser_error_format(const std::string &msg)
 {
     return boost::str(
-               boost::format("DEXI error: %1%") % msg);
+        boost::format("DEXI error: %1%") % msg);
 }
 
 std::string xml_parser_error_format(const std::string &msg,
                                     const std::string &filepath)
 {
     return boost::str(
-               boost::format("DEXI error: %1% %2%") % filepath % msg);
+        boost::format("DEXI error: %1% %2%") % filepath % msg);
 }
 
 std::string xml_parser_error_format(const std::string &msg, int line,
                                     int column, int error)
 {
     return boost::str(
-               boost::format("DEXI error: error %1% at %2%:%3%, %4%") % msg % line % column %
-               error);
+        boost::format("DEXI error: error %1% at %2%:%3%, %4%")
+        % msg % line % column % error);
 }
 
 std::string solver_error_format(const std::string &msg)
 {
     return boost::str(
-               boost::format("Solver error: %1%") % msg);
+        boost::format("Solver error: %1%") % msg);
 }
 
 std::string solver_option_error_format(const std::string &opt)
 {
     return boost::str(
-               boost::format("option `%1%' is unknown") % opt);
+        boost::format("option `%1%' is unknown") % opt);
 }
 
 } // anonymous namespace

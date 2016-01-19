@@ -24,7 +24,7 @@
 
 #include <efyj/efyj.hpp>
 #include <efyj/message.hpp>
-#include <deque>
+#include <list>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -35,39 +35,14 @@ class ContextImpl;
 
 typedef std::shared_ptr <ContextImpl> Context;
 
-} // namespace efyj
-
-#define efyj_log_cond(ctx, prio, arg...)                                \
-    do {                                                                \
-        if ((ctx) && (ctx)->log_priority() >= prio) {                   \
-            if (prio == LOG_OPTION_DEBUG)                               \
-                (ctx)->log(prio, __FILE__, __LINE__,                    \
-                           __PRETTY_FUNCTION__,  ## arg);               \
-            else                                                        \
-                (ctx)->log(prio, ## arg);                               \
-        }                                                               \
-    } while (0)
-
-#ifdef ENABLE_LOGGING
-    #ifdef ENABLE_DEBUG
-        #define efyj_dbg(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_DEBUG, ## arg)
-    #else
-        #define efyj_dbg(ctx, arg...)
-    #endif
-    #define efyj_info(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_INFO, ## arg)
-    #define efyj_err(ctx, arg...) efyj_log_cond((ctx), LOG_OPTION_ERR, ## arg)
-#else
-    #define efyj_dbg(ctx, arg...)
-    #define efyj_info(ctx, arg...)
-    #define efyj_err(ctx, arg...)
-#endif
-
-namespace efyj {
-
 class EFYJ_API ContextImpl
 {
 public:
     ContextImpl(LogOption option = LOG_OPTION_DEBUG);
+
+    ContextImpl(const ContextImpl&) = delete;
+    ContextImpl& operator=(const ContextImpl&) = delete;
+    ContextImpl& operator=(ContextImpl&&) = delete;
 
     ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
 
@@ -80,10 +55,9 @@ public:
     template <typename... _Args>
     void log(_Args &&... args)
     {
-            std::lock_guard <std::mutex> lock(m_queue_locker);
-            m_queue.emplace_back(std::forward <_Args>(args)...);
+        std::lock_guard <std::mutex> lock(m_queue_locker);
+        m_queue.emplace_back(std::forward <_Args>(args)...);
     }
-
 
     LogOption log_priority() const;
 
@@ -91,7 +65,7 @@ public:
 
 private:
     std::shared_ptr <std::ostream> m_os;
-    std::deque <message> m_queue;
+    std::list <message> m_queue;
     LogOption m_priority;
     std::mutex m_queue_locker;
     std::mutex m_os_locker;

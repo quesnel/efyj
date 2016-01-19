@@ -56,39 +56,40 @@ std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
 }
 
 void writer_run(std::shared_ptr <std::ostream> &os,
-                std::deque <efyj::message> &queue,
+                std::list <efyj::message> &queue,
                 std::mutex &queue_locker,
                 std::mutex &os_locker, bool &close)
 {
-    std::deque <efyj::message> copy;
+    std::list <efyj::message> to_write;
 
     while (not close) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         {
             std::lock_guard <std::mutex> lock(queue_locker);
-            copy = queue;
-            queue.clear();
+            to_write.splice(to_write.begin(), queue);
         }
         {
             std::lock_guard <std::mutex> lock(os_locker);
 
-            for (const auto &msg : copy)
+            for (const auto &msg : to_write)
                 (*os) << msg << '\n';
+
+            to_write.clear();
         }
     }
 
     if (not queue.empty()) {
         {
             std::lock_guard <std::mutex> lock(queue_locker);
-            copy = std::move(queue);
-            queue.clear();
+            to_write.splice(to_write.begin(), queue);
         }
         {
             std::lock_guard <std::mutex> lock(os_locker);
 
-            for (const auto &msg : copy) {
+            for (const auto &msg : to_write)
                 (*os) << msg << '\n';
-            }
+
+            to_write.clear();
         }
     }
 }
