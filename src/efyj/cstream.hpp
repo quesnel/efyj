@@ -108,32 +108,32 @@ public:
 
     cstream& indent(unsigned space_number) noexcept;
 
-    modifier def() const noexcept { return { Default, No_setter_change }; }
+    modifier def() const noexcept { return { Default, Reset }; }
     modifier defb() const noexcept { return { Default, Bold }; }
     modifier defd() const noexcept { return { Default, Dim }; }
     modifier defu() const noexcept { return { Default, Underlined }; }
 
-    modifier red() const noexcept { return { Red, No_setter_change }; }
+    modifier red() const noexcept { return { Red, Reset }; }
     modifier redb() const noexcept { return { Red, Bold }; }
     modifier redd() const noexcept { return { Red, Dim }; }
     modifier redu() const noexcept { return { Red, Underlined }; }
 
-    modifier green() const noexcept { return { Green, No_setter_change }; }
+    modifier green() const noexcept { return { Green, Reset }; }
     modifier greenb() const noexcept { return { Green, Bold }; }
     modifier greend() const noexcept { return { Green, Dim }; }
     modifier greenu() const noexcept { return { Green, Underlined }; }
 
-    modifier yellow() const noexcept { return { Yellow, No_setter_change }; }
+    modifier yellow() const noexcept { return { Yellow, Reset }; }
     modifier yellowb() const noexcept { return { Yellow, Bold }; }
     modifier yellowd() const noexcept { return { Yellow, Dim }; }
     modifier yellowu() const noexcept { return { Yellow, Underlined }; }
 
-    modifier magenta() const noexcept { return { Magenta, No_setter_change }; }
+    modifier magenta() const noexcept { return { Magenta, Reset }; }
     modifier magentab() const noexcept { return { Magenta, Bold }; }
     modifier magentad() const noexcept { return { Magenta, Dim }; }
     modifier magentau() const noexcept { return { Magenta, Underlined }; }
 
-    modifier cyan() const noexcept { return { Cyan, No_setter_change }; }
+    modifier cyan() const noexcept { return { Cyan, Reset }; }
     modifier cyanb() const noexcept { return { Cyan, Bold }; }
     modifier cyand() const noexcept { return { Cyan, Dim }; }
     modifier cyanu() const noexcept { return { Cyan, Underlined }; }
