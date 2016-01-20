@@ -22,7 +22,7 @@
 #include <efyj/context.hpp>
 #include <efyj/problem.hpp>
 #include <efyj/model.hpp>
-#include <efyj/solver-stack.hpp>
+#include <efyj/solver.hpp>
 
 #include <sstream>
 #include <cstdlib>
@@ -278,7 +278,7 @@ TEST_CASE("test basic solver for Car", "[model]")
     efyj::Vector opt_v4(6); opt_v4 << 2, 2, 2, 3, 2, 2;
     efyj::Vector opt_v5(6); opt_v5 << 0, 0, 0, 0, 0, 0;
     {
-        efyj::solver_stack s(model);
+        efyj::Solver s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
         REQUIRE(s.solve(opt_v4) == 3);
@@ -297,7 +297,7 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE_NOTHROW(is >> model);
     }
     efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
-    efyj::solver_stack ss(model);
+    efyj::Solver ss(model);
     REQUIRE(ss.solve(opt_v) == 1);
 }
 
@@ -313,14 +313,14 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     }
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::solver_stack ss(*model);
+        efyj::Solver ss(*model);
         REQUIRE(ss.solve(opt_v) == 6);
     }
     efyj::Model copy1(*model);
     delete model;
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::solver_stack ss(copy1);
+        efyj::Solver ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
     }
 }
@@ -364,7 +364,7 @@ TEST_CASE("test multiple solver for Car", "[model]")
 
     {
         auto kappa_11 = efyj::compute_best_kappa
-            <efyj::solver_stack>(model, options, 1);
+            <efyj::Solver>(model, options, 1);
         REQUIRE(std::get<1>(kappa_11) == 1);
     }
 }

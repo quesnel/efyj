@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,36 +19,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_PROBLEM_HPP
-#define INRA_EFYj_PROBLEM_HPP
-
-#include <efyj/efyj.hpp>
-#include <efyj/model.hpp>
-#include <efyj/options.hpp>
-#include <efyj/context.hpp>
+#include <efyj/solver.hpp>
+#include "solver-stack.hpp"
 
 namespace efyj {
 
-EFYJ_API
-double
-compute0(const Model& model, const Options& options,
-          int rank, int world_size);
+struct Solver::solver_impl
+{
+    solver_impl(const Model& model)
+        : solver(model)
+    {}
 
-EFYJ_API
-double
-computen(const Model& model, const Options& options,
-         int rank, int world_size, int walker_number);
+    solver_details::solver_stack solver;
+};
 
-EFYJ_API
-double
-compute_for_ever(const Model& model, const Options& options,
-                 int rank, int world_size);
-
-EFYJ_API
-double
-prediction(const Model& model, const Options& options,
-           int rank, int world_size);
-
+Solver::Solver(const Model& model)
+    : m_impl(new Solver::solver_impl(model))
+{
 }
 
-#endif
+Solver::~Solver()
+{
+}
+
+scale_id Solver::solve(const Vector& opt)
+{
+    return m_impl->solver.solve(opt);
+}
+
+} // namespace efyj

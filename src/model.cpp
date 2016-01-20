@@ -762,7 +762,27 @@ bool operator<(const attribute &lhs, const attribute &rhs)
 
 efyj::cstream& operator<<(efyj::cstream& cs, const Model &model) noexcept
 {
-    return ::model_show(cs, model, 0, 0);
+    ::model_show(cs, model, 0, 0);
+
+    cs << "\n";
+
+    long long int option_scale = 1, model_scale = 1;
+    for (const auto& att : model.attributes) {
+        if (att.children.empty()) {
+            cs << "- " << att.name << " is a leaf with "
+               << att.scale_size() << " scale values\n";
+            option_scale *= att.scale_size();
+        } else {
+            cs << "- " << att.name << " is a function with "
+               << att.scale_size() << " scale values\n";
+            model_scale *= att.scale_size();
+        }
+    }
+
+    return cs << cs.defu() << "Option, full line numbers:" << cs.def()
+              << " " << cs.red() << option_scale << cs.def() << "\n"
+              << cs.defu() << "Model, full line numbers:" << cs.def()
+              << " " << cs.red() << model_scale << cs.def() << "\n";
 }
 
 }

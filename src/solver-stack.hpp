@@ -31,11 +31,11 @@
 #include <numeric>
 
 namespace efyj {
-
-namespace solver_stack_details {
+namespace solver_details {
 
 struct aggregate_attribute
 {
+    inline
     aggregate_attribute(const Model& model, std::size_t att)
         : stack_size(0)
     {
@@ -134,7 +134,7 @@ struct aggregate_attribute
     int stack_size;
 };
 
-cstream& operator<<(cstream& os, const aggregate_attribute& att)
+inline cstream& operator<<(cstream& os, const aggregate_attribute& att)
 {
     os << "f:";
     for (const auto& x : att.functions)
@@ -143,7 +143,7 @@ cstream& operator<<(cstream& os, const aggregate_attribute& att)
     return os << " sz:" << att.scale;
 }
 
-cstream& operator<<(cstream& os,
+inline cstream& operator<<(cstream& os,
                     const std::vector <aggregate_attribute>& atts)
 {
     for (const auto& x : atts)
@@ -163,7 +163,7 @@ struct Block
     {}
 
     inline constexpr
-    Block(solver_stack_details::aggregate_attribute *att) noexcept
+    Block(aggregate_attribute *att) noexcept
         : att(att)
         , type(BlockType::BLOCK_ATTRIBUTE)
     {}
@@ -177,12 +177,10 @@ struct Block
 
     union {
         int value;
-        solver_stack_details::aggregate_attribute *att;
+        aggregate_attribute *att;
     };
     enum class BlockType {BLOCK_VALUE, BLOCK_ATTRIBUTE} type;
 };
-
-} // namespace solver_stack_details
 
 struct line_updater
 {
@@ -214,6 +212,7 @@ operator<<(cstream& os,
 
 struct solver_stack
 {
+    inline
     solver_stack(const Model &model)
     {
         atts.reserve(model.attributes.size());
@@ -346,10 +345,10 @@ struct solver_stack
     }
 
 private:
-    std::vector <solver_stack_details::aggregate_attribute> atts;
+    std::vector <aggregate_attribute> atts;
 
     // @e function is a Reverse Polish notation.
-    std::vector <solver_stack_details::Block> function;
+    std::vector <Block> function;
 
     // To avoid reallocation each solve(), we store the stack into the solver.
     std::vector <int> result;
@@ -557,13 +556,13 @@ private:
     }
 };
 
-cstream&
+inline cstream&
 operator<<(cstream& os, const line_updater& updater)
 {
     return os << "[" << updater.attribute << "," << updater.line << "]";
 }
 
-cstream&
+inline cstream&
 operator<<(cstream& os,
            const std::vector<line_updater>& updaters)
 {
@@ -583,6 +582,6 @@ operator<<(cstream& os,
               << '\n';
 }
 
-} // namespace efyj
+}} // namespace efyj
 
 #endif

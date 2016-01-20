@@ -35,7 +35,7 @@ namespace efyj {
 double
 compute_kappa(const Model& model, const Options& options)
 {
-    solver_stack slv(model);
+    solver_details::solver_stack slv(model);
 
     std::vector <int> simulated(options.options.rows());
 
@@ -96,7 +96,8 @@ compute_best_kappa(const Model& model, const Options& options, int walker_number
     std::vector <int> simulated(options.options.rows());
 
     {
-        for_each_model_solver <Solver> solver(model, walker_number);
+        solver_details::for_each_model_solver <Solver> solver(
+            model, walker_number);
 
         do {
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
@@ -123,7 +124,8 @@ computen(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    auto ret = compute_best_kappa<solver_stack>(model, options, walker_number);
+    auto ret = compute_best_kappa<solver_details::solver_stack>(
+        model, options, walker_number);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
@@ -151,9 +153,10 @@ compute_for_ever(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    for_each_model_solver<solver_stack> solver(model);
+    solver_details::for_each_model_solver<solver_details::solver_stack> solver(
+        model);
     std::vector <int> simulated(options.options.rows());
-    std::vector <line_updater> bestupdaters;
+    std::vector <solver_details::line_updater> bestupdaters;
     double bestkappa = 0;
     int walker_number = solver.get_max_updaters();
 

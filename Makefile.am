@@ -36,7 +36,7 @@ LIBEFYJ_CURRENT=2
 LIBEFYJ_REVISION=0
 LIBEFYJ_AGE=2
 
-pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver-stack.hpp	\
+pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver.hpp		\
 		     src/efyj/problem.hpp src/efyj/post.hpp		\
 		     src/efyj/options.hpp src/efyj/model.hpp		\
 		     src/efyj/message.hpp src/efyj/exception.hpp	\
@@ -45,10 +45,12 @@ pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver-stack.hpp	\
 
 lib_LTLIBRARIES = src/libefyj.la
 
-src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp		\
-			 src/exception.cpp src/message.cpp		\
-			 src/model.cpp src/options.cpp			\
-			 src/problem.cpp src/utils.cpp src/utils.hpp
+src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp	\
+			 src/exception.cpp src/message.cpp	\
+			 src/model.cpp src/options.cpp		\
+			 src/problem.cpp src/solver.cpp		\
+			 src/solver-stack.hpp src/utils.cpp	\
+			 src/utils.hpp
 
 src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) \
 			 $(EXPAT_LDFLAGS) \
