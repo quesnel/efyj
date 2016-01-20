@@ -365,11 +365,7 @@ TEST_CASE("test multiple solver for Car", "[model]")
     {
         auto kappa_11 = efyj::compute_best_kappa
             <efyj::solver_stack>(model, options, 1);
-        auto kappa_12 = efyj::compute_best_kappa
-            <efyj::solver_stack_with_cache>(model, options, 1);
         REQUIRE(std::get<1>(kappa_11) == 1);
-        REQUIRE(std::get<1>(kappa_12) == 1);
-        REQUIRE(std::get<0>(kappa_11) == std::get<0>(kappa_12));
     }
 }
 
