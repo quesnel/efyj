@@ -31,12 +31,42 @@
 #include <fstream>
 #include <chrono>
 
-namespace efyj {
+namespace {
+
+template <typename Solver>
+std::tuple <unsigned long, double>
+compute_best_kappa(const efyj::Model& model,
+                   const efyj::Options& options,
+                   int walker_number)
+{
+    std::tuple <unsigned long, double> best {0, 0};
+    std::vector <int> simulated(options.options.rows());
+
+    {
+        efyj::solver_details::for_each_model_solver <Solver> solver(
+            model, walker_number);
+
+        do {
+            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+                simulated[i] = solver.solve(options.options.row(i));
+
+            double ret = efyj::squared_weighted_kappa(
+                model, options, simulated,
+                options.options.rows(),
+                model.attributes[0].scale.size());
+
+            std::get <1>(best) = std::max(ret, std::get<1>(best));
+            std::get <0>(best)++;
+        } while (solver.next() == true);
+    }
+
+    return best;
+}
 
 double
-compute_kappa(const Model& model, const Options& options)
+compute_kappa(const efyj::Model& model, const efyj::Options& options)
 {
-    solver_details::solver_stack slv(model);
+    efyj::solver_details::solver_stack slv(model);
 
     std::vector <int> simulated(options.options.rows());
 
@@ -64,13 +94,32 @@ compute_kappa(const Model& model, const Options& options)
     return ret;
 }
 
-double
-compute0(const Model& model, const Options&
-         options, int rank, int world_size)
-{
-    (void)rank;
-    (void)world_size;
+} // anonymous namespace
 
+namespace efyj {
+
+struct Problem::problem_impl
+{
+    problem_impl(int rank_, int world_size_)
+        : rank(rank_)
+        , world_size(world_size_)
+    {}
+
+    int rank, world_size;
+};
+
+Problem::Problem(int rank, int world_size)
+    : m_impl(new Problem::problem_impl(rank, world_size))
+{
+}
+
+Problem::~Problem()
+{
+}
+
+double
+Problem::compute0(const Model& model, const Options& options)
+{
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
@@ -89,39 +138,10 @@ compute0(const Model& model, const Options&
     return ret;
 }
 
-template <typename Solver>
-std::tuple <unsigned long, double>
-compute_best_kappa(const Model& model, const Options& options, int walker_number)
-{
-    std::tuple <unsigned long, double> best {0, 0};
-    std::vector <int> simulated(options.options.rows());
-
-    {
-        solver_details::for_each_model_solver <Solver> solver(
-            model, walker_number);
-
-        do {
-            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
-                simulated[i] = solver.solve(options.options.row(i));
-
-            double ret = squared_weighted_kappa(model, options, simulated,
-                                                options.options.rows(),
-                                                model.attributes[0].scale.size());
-
-            std::get <1>(best) = std::max(ret, std::get<1>(best));
-            std::get <0>(best)++;
-        } while (solver.next() == true);
-    }
-
-    return best;
-}
-
 double
-computen(const Model& model, const Options& options,
-         int rank, int world_size, int walker_number)
+Problem::computen(const Model& model, const Options& options,
+                  int walker_number)
 {
-    (void)rank;
-    (void)world_size;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
@@ -145,12 +165,8 @@ computen(const Model& model, const Options& options,
 }
 
 double
-compute_for_ever(const Model& model, const Options& options,
-                 int rank, int world_size)
+Problem::compute_for_ever(const Model& model, const Options& options)
 {
-    (void)rank;
-    (void)world_size;
-
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 

@@ -193,17 +193,18 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
 
     efyj::out() << options << "\n";
+    efyj::Problem problem(0, 1);
 
     try {
         if (limit == 0) {
             efyj::out() << "compute Kappa:\n";
-            efyj::compute0(model, options, 0, 1);
+            problem.compute0(model, options);
         } else if (limit > 0) {
             efyj::out() << "compute best Kappa with " << limit << ":\n";
-            efyj::computen(model, options, 0, 1, limit);
+            problem.computen(model, options, limit);
         } else {
             efyj::out() << "compute best Kappa for all model\n";
-            efyj::compute_for_ever(model, options, 0, 1);
+            problem.compute_for_ever(model, options);
         }
     } catch (const std::exception &e) {
         efyj::err() << "failure: " << e.what() << '\n';

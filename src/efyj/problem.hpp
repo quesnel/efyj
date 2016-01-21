@@ -29,26 +29,30 @@
 
 namespace efyj {
 
-EFYJ_API
-double
-compute0(const Model& model, const Options& options,
-          int rank, int world_size);
+class EFYJ_API Problem
+{
+    struct problem_impl;
+    std::unique_ptr<problem_impl> m_impl;
 
-EFYJ_API
-double
-computen(const Model& model, const Options& options,
-         int rank, int world_size, int walker_number);
+public:
+    Problem(int rank, int world_size);
+    ~Problem();
 
-EFYJ_API
-double
-compute_for_ever(const Model& model, const Options& options,
-                 int rank, int world_size);
+    Problem(const Problem&) = delete;
+    Problem(Problem&&) = delete;
+    Problem& operator=(const Problem&) = delete;
+    Problem& operator=(Problem&&) = delete;
 
-EFYJ_API
-double
-prediction(const Model& model, const Options& options,
-           int rank, int world_size);
+    double compute0(const Model& model, const Options& options);
 
-}
+    double computen(const Model& model, const Options& options,
+                    int walker_number);
+
+    double compute_for_ever(const Model& model, const Options& options);
+
+    double prediction(const Model& model, const Options& options);
+};
+
+} // namespace efyj
 
 #endif
