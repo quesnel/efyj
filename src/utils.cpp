@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,32 +19,37 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_UTILS_HPP
-#define INRA_EFYj_UTILS_HPP
+#include <thread>
 
-#include <functional>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+namespace {
+
+inline unsigned
+hardware_concurrency_from_std() noexcept
+{
+    unsigned ret = std::thread::hardware_concurrency();
+
+    return ret == 0 ? 1 : ret;
+}
+
+} // anonymous namespace
 
 namespace efyj {
 
-struct scope_exit {
-    scope_exit(std::function <void (void)> fct)
-        : fct(fct)
-    {}
+unsigned get_hardware_concurrency() noexcept
+{
+#ifdef HAVE_UNISTD_H
+    long nb_procs = ::sysconf(_SC_NPROCESSORS_ONLN);
+    if (nb_procs == -1)
+        return ::hardware_concurrency_from_std();
 
-    ~scope_exit()
-    {
-        fct();
-    }
-
-    std::function <void (void)> fct;
-};
-
-/**
- * Return number of available concurrency processor.
- * @return An integer greater or equal to 1.
- */
-unsigned get_hardware_concurrency() noexcept;
-
+    return static_cast<unsigned>(nb_procs);
+#else
+    return ::hardware_concurrency_from_std();
+#endif
 }
 
-#endif
+} // namespace efyj
