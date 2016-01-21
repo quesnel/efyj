@@ -29,9 +29,10 @@
 
 namespace efyj {
 
-double rmsep(const efyj::Model &, const Options &options,
-             const std::vector <int>& simulated,
-             const std::size_t N, const std::size_t NC)
+inline double
+rmsep(const efyj::Model &, const Options &options,
+      const std::vector <int>& simulated,
+      const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
@@ -47,9 +48,10 @@ double rmsep(const efyj::Model &, const Options &options,
     return std::sqrt((double)sum / (double)N);
 }
 
-double linear_weighted_kappa(const efyj::Model &, const Options &options,
-                             const std::vector <int> &simulated,
-                             const std::size_t N, const std::size_t NC)
+inline double
+linear_weighted_kappa(const efyj::Model &, const Options &options,
+                      const std::vector <int> &simulated,
+                      const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
@@ -78,9 +80,10 @@ double linear_weighted_kappa(const efyj::Model &, const Options &options,
                   (weighted * expected).sum());
 }
 
-double squared_weighted_kappa(const efyj::Model &, const Options &options,
-                              const std::vector <int>& simulated,
-                              const std::size_t N, const std::size_t NC)
+inline double
+squared_weighted_kappa(const efyj::Model &, const Options &options,
+                       const std::vector <int>& simulated,
+                       const std::size_t N, const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);

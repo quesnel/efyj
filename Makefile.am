@@ -52,8 +52,12 @@ src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp	\
 			 src/solver-stack.hpp src/utils.cpp	\
 			 src/utils.hpp
 
-src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) \
-			 $(EXPAT_LDFLAGS) \
+if VISIBILITY
+src_libefyj_la_CPPFLAGS = $(AM_CPPFLAGS) -DEFYJ_DLL -Dlibefyj_EXPORTS \
+    -fvisibility=hidden -fvisibility-inlines-hidden
+endif
+
+src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) \
 			 -version-info $(LIBEFYJ_CURRENT):$(LIBEFYJ_REVISION):$(LIBEFYJ_AGE)
 
 src_libefyj_la_LIBADD = $(EXPAT_LIBS)

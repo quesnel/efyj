@@ -19,7 +19,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "exception.hpp"
+#include <efyj/exception.hpp>
 #include <boost/format.hpp>
 
 namespace {

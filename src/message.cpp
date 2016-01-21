@@ -19,9 +19,25 @@
  * IN THE SOFTWARE.
  */
 
-#include "message.hpp"
+#include <efyj/message.hpp>
 #include <sys/types.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+namespace {
+
+inline unsigned long int efyj_get_pid() noexcept
+{
+#ifdef HAVE_UNISTD_H
+    return ::getpid();
+#else
+    return 0;
+#endif
+}
+
+} // anonymous namespace
 
 namespace efyj {
 
@@ -30,7 +46,7 @@ message::message(LogOption priority, const std::string &msg)
     : msg(msg)
     , thread_id(std::this_thread::get_id())
     , priority(priority)
-    , pid(::getpid())
+    , pid(::efyj_get_pid())
 {
 }
 
@@ -43,7 +59,7 @@ message::message(LogOption priority, const char *file,
     , fn(fn)
     , thread_id(std::this_thread::get_id())
     , priority(priority)
-    , pid(::getpid())
+    , pid(::efyj_get_pid())
     , line(line)
 {
 }

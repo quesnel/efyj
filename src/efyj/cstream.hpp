@@ -22,6 +22,7 @@
 #ifndef FR_INRA_EFYJ_CSTREAM_HPP
 #define FR_INRA_EFYJ_CSTREAM_HPP
 
+#include <efyj/efyj.hpp>
 #include <string>
 #include <cstdio>
 #include <cstdarg>
@@ -39,7 +40,7 @@ namespace efyj {
  * }
  * @endcode
  */
-class cstream
+class EFYJ_API cstream
 {
 public:
     enum colors { Default = 0, Black, Red, Green, Yellow, Blue, Magenta,
@@ -151,11 +152,11 @@ private:
 
 /** Give an access to the standard output stream (stdout).
  */
-cstream& out();
+EFYJ_API cstream& out();
 
 /** Give an access to the standard output error stream (stderr).
  */
-cstream& err();
+EFYJ_API cstream& err();
 
 //
 // implementation part.

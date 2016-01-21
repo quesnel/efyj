@@ -19,6 +19,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "problem.hpp"
 #include "solver-stack.hpp"
 #include "model.hpp"
 #include "context.hpp"

@@ -21,7 +21,7 @@ AM_INIT_AUTOMAKE([
 AC_PROG_CXX
 AC_PROG_CC_STDC
 AC_USE_SYSTEM_EXTENSIONS
-AC_SYS_LARGEFILE
+AC1_SYS_LARGEFILE
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
 LT_INIT([
@@ -49,6 +49,18 @@ AX_CHECK_COMPILE_FLAG([-Wsizeof-array-argument], [CXXFLAGS="$CXXFLAGS -Wsizeof-a
 AX_CHECK_COMPILE_FLAG([-Wstring-conversion], [CXXFLAGS="$CXXFLAGS -Wstring-conversion"])
 AX_CHECK_COMPILE_FLAG([-Wunique-enum], [CXXFLAGS="$CXXFLAGS -Wunique-enum"])
 AX_CHECK_COMPILE_FLAG([-Wformat-security], [CXXFLAGS="$CXXFLAGS -Wformat-security"])
+
+# check whether to build tesseract with -fvisibility=hidden
+# -fvisibility-inlines-hidden http://gcc.gnu.org/wiki/Visibility
+AC_MSG_CHECKING(--enable-visibility argument)
+AC_ARG_ENABLE([visibility],
+  [AC_HELP_STRING([--enable-visibility],
+                  [enable build with fvisibility=hidden (default=yes)])],
+  [enable_visibility=$enableval],
+  [enable_visibility="yes"])
+
+AC_MSG_RESULT($enable_visibility)
+AM_CONDITIONAL([VISIBILITY], [test "$enable_visibility" = "yes"])
 
 AC_PREFIX_DEFAULT([/usr])
 

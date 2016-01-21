@@ -22,12 +22,13 @@
 #ifndef INRA_EFYj_EXCEPTION_HPP
 #define INRA_EFYj_EXCEPTION_HPP
 
+#include <efyj/efyj.hpp>
 #include <stdexcept>
 #include <string>
 
 namespace efyj {
 
-class efyj_error : public std::runtime_error
+class EFYJ_API efyj_error : public std::runtime_error
 {
 public:
     efyj_error(const std::string &msg);
@@ -35,7 +36,7 @@ public:
     virtual ~efyj_error();
 };
 
-class solver_error : public efyj_error
+class EFYJ_API solver_error : public efyj_error
 {
 public:
     solver_error(const std::string &msg);
@@ -43,7 +44,7 @@ public:
     virtual ~solver_error();
 };
 
-class solver_option_error : solver_error
+class EFYJ_API solver_option_error : solver_error
 {
 public:
     solver_option_error(const std::string &msg);
@@ -51,7 +52,7 @@ public:
     virtual ~solver_option_error();
 };
 
-class xml_parser_error : public efyj_error
+class EFYJ_API xml_parser_error : public efyj_error
 {
 public:
     xml_parser_error(const std::string &msg);
@@ -75,7 +76,7 @@ private:
     std::string m_message;
 };
 
-class csv_parser_error : public efyj_error
+class EFYJ_API csv_parser_error : public efyj_error
 {
 public:
     csv_parser_error(const std::string &msg);
