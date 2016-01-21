@@ -27,7 +27,6 @@ config.h.in
 config.log
 config.status
 configure
-efyj
 tests/test_basic
 libtool
 m4/libtool.m4

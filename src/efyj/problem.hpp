@@ -48,7 +48,9 @@ public:
     double computen(const Model& model, const Options& options,
                     int walker_number);
 
-    double compute_for_ever(const Model& model, const Options& options);
+    double compute_for_ever(const Model& model,
+                            const Options& options,
+                            bool with_reduce);
 
     double prediction(const Model& model, const Options& options);
 };

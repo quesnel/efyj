@@ -43,6 +43,7 @@ void usage() noexcept
           << "                         0: compute kappa\n"
           << "                         1..n: number of walkers\n"
           << "                         -n: from 1 to n walkers\n"
+          << "    -r                   without reduce models generator\n"
           << "\n"
           << "Available solvers:\n"
           << "   stack              (default) stack and reverse polish "
@@ -140,8 +141,9 @@ int main(int argc, char *argv[])
     std::string modelfilepath, optionfilepath, extractfile;
     std::string solvername;
     int limit = 0;
+    bool without_reduce = false;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:e:ha:")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:e:hra:")) != -1) {
         switch (opt) {
         case 'e':
             extractfile.assign(::optarg);
@@ -163,6 +165,10 @@ int main(int argc, char *argv[])
             if (::optarg)
                 limit = std::stoi(::optarg);
 
+            break;
+
+        case 'r':
+            without_reduce = true;
             break;
 
         case 'h':
@@ -204,7 +210,7 @@ int main(int argc, char *argv[])
             problem.computen(model, options, limit);
         } else {
             efyj::out() << "compute best Kappa for all model\n";
-            problem.compute_for_ever(model, options);
+            problem.compute_for_ever(model, options, not without_reduce);
         }
     } catch (const std::exception &e) {
         efyj::err() << "failure: " << e.what() << '\n';

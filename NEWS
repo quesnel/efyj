@@ -1,7 +1,4 @@
-efyj
-====
+efyj 1.0 - First release - 2016-xx-yy
 
-1.0
----
-
-* Initial release
+- Initial feature set: read/write DEXi files, extract options, import
+  options as csv files and perform statistical analysis.

@@ -44,7 +44,7 @@ compute_best_kappa(const efyj::Model& model,
 
     {
         efyj::solver_details::for_each_model_solver <Solver> solver(
-            model, walker_number);
+            model, options, walker_number);
 
         do {
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
@@ -165,13 +165,14 @@ Problem::computen(const Model& model, const Options& options,
 }
 
 double
-Problem::compute_for_ever(const Model& model, const Options& options)
+Problem::compute_for_ever(const Model& model, const Options& options,
+                          bool with_reduce)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
     solver_details::for_each_model_solver<solver_details::solver_stack> solver(
-        model);
+        model, options, with_reduce);
     std::vector <int> simulated(options.options.rows());
     std::vector <solver_details::line_updater> bestupdaters;
     double bestkappa = 0;

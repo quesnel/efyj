@@ -25,8 +25,6 @@
 #include "model.hpp"
 #include "exception.hpp"
 #include "types.hpp"
-#include <boost/functional/hash/hash.hpp>
-#include <unordered_map>
 #include <algorithm>
 #include <numeric>
 
@@ -36,8 +34,9 @@ namespace solver_details {
 struct aggregate_attribute
 {
     inline
-    aggregate_attribute(const Model& model, std::size_t att)
+    aggregate_attribute(const Model& model, std::size_t att, int id_)
         : stack_size(0)
+        , id(id_)
     {
         std::transform(model.attributes[att].children.cbegin(),
                        model.attributes[att].children.cend(),
@@ -59,10 +58,6 @@ struct aggregate_attribute
 
         coeffs = Vector::Zero(m_scale_size.size());
         coeffs(m_scale_size.size() - 1) = 1;
-
-	err() << "attribute: " << att
-	       << " " << model.attributes[att].name
-	       << " with children size= " << m_scale_size.size() << "\n";
 
         assert(m_scale_size.size() < std::numeric_limits<int>::max());
 	assert(m_scale_size.size() >= 1);
@@ -119,6 +114,79 @@ struct aggregate_attribute
         return functions[coeffs.dot(stack)];
     }
 
+    /** The @e reduce function returns the list of authorized lines in the
+     * utility function of the aggregate attribute.
+     *
+     * We replace the -1 in the stack(i) (scale value from another
+     * aggregate attribute and not option) with the scale values for each
+     * columns. It produces a list of all line authorized for the model
+     * generator. For example:
+     *
+     * opt1 opt2 -1 opt3 -1
+     * --------------------
+     * opt1 opt2  0 opt3  0
+     * opt1 opt2  0 opt3  1
+     * opt1 opt2  0 opt3  2
+     * opt1 opt2  1 opt3  0
+     * opt1 opt2  1 opt3  1
+     * opt1 opt2  1 opt3  2
+     */
+    inline void
+    reduce(std::set<int>& whitelist)
+    {
+#ifndef NDEBUG
+        for (long i = 0; i < coeffs.size(); ++i) {
+            assert(stack(i) < (int)m_scale_size[i] && "too big scale size");
+        }
+#endif
+
+        struct walker {
+            walker(int column_, int current_, int max_)
+                : column(column_), current(current_), max(max_)
+            {}
+
+            int column, current, max;
+        };
+
+        std::vector<walker> walker;
+        for (std::size_t i = 0, e = stack.size(); i != e; ++i) {
+            if (stack[i] == -1) {
+                walker.emplace_back(static_cast<int>(i), 0, m_scale_size[i]);
+                stack[i] = 0;
+            }
+        }
+
+        if (walker.empty()) {
+            whitelist.emplace(coeffs.dot(stack));
+            return;
+        }
+
+        bool end = false;
+        do {
+            std::size_t i = walker.size() - 1;
+            do {
+                whitelist.emplace(coeffs.dot(stack));
+
+                walker[i].current++;
+                stack[walker[i].column] = walker[i].current;
+
+                if (walker[i].current >= walker[i].max) {
+                    walker[i].current = 0;
+                    stack[walker[i].column] = 0;
+
+                    if (i == 0) {
+                        end = true;
+                        break;
+                    } else {
+                        i--;
+                    }
+                } else {
+                    break;
+                }
+            } while (not end);
+        } while (not end);
+    }
+
     inline void
     function_restore() noexcept
     {
@@ -132,6 +200,7 @@ struct aggregate_attribute
     Vector stack;
     scale_id scale;
     int stack_size;
+    int id; /* Reference in the solver_stack atts attribute. */
 };
 
 inline cstream& operator<<(cstream& os, const aggregate_attribute& att)
@@ -182,12 +251,15 @@ struct Block
     enum class BlockType {BLOCK_VALUE, BLOCK_ATTRIBUTE} type;
 };
 
-struct line_updater
-{
-    inline constexpr
-    line_updater() noexcept
+struct line_updater {
+    constexpr line_updater() noexcept
         : attribute(0)
         , line(0)
+    {}
+
+    constexpr line_updater(int attribute_, int line_) noexcept
+        : attribute(attribute_)
+        , line(line_)
     {}
 
     int attribute;
@@ -251,6 +323,31 @@ struct solver_stack
         assert(result.size() == 1 && "internal error in solver stack");
 
         return result[0];
+    }
+
+    template <typename V>
+    void reduce(const V& options,
+                std::vector<std::set<int>>& whitelist)
+    {
+        result.clear();
+
+        for (auto &block : function) {
+            if (block.is_value()) {
+                result.emplace_back(options(block.value));
+            } else {
+                block.att->clear();
+
+                for (std::size_t i = 0; i != block.att->option_size(); ++i) {
+                    block.att->push(result.back());
+                    result.pop_back();
+                }
+
+                block.att->reduce(whitelist[block.att->id]);
+                result.emplace_back(-1); // -1 means computed value.
+            }
+        }
+
+        assert(result.size() == 1 && "internal error in solver stack");
     }
 
     inline int
@@ -339,7 +436,7 @@ struct solver_stack
             for (auto& child : model.attributes[att].children)
                 recursive_fill(model, child, value_id);
 
-            atts.emplace_back(model, att);
+            atts.emplace_back(model, att, static_cast<int>(atts.size()));
             function.emplace_back(&atts.back());
         }
     }
@@ -366,16 +463,82 @@ operator<<(cstream& os, const std::vector<scale_id>& v)
 template <typename Solver>
 class for_each_model_solver
 {
-public:
-    for_each_model_solver(const Model& model)
-        : m_solver(model)
+    Solver m_solver;
+    std::vector <line_updater> m_updaters;
+    std::vector<std::vector<int>> m_whitelist;
+    int m_walker_number;
+    bool m_with_reduce;
+
+    /** @e reduce is used to reduce the size of the problem. It removes
+     * from the solver, all lines from the solver based on options.
+     */
+    void reduce(const Options& options)
     {
+        out() << out().red() << "Reducing problem size\n" << out().def();
+
+        m_whitelist.clear();
+        m_whitelist.resize(m_solver.attribute_size());
+
+        std::vector<std::set<int>> whitelist;
+        whitelist.resize(m_solver.attribute_size());
+
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+            m_solver.reduce(options.options.row(i), whitelist);
+
+        for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
+            out() << " whitelist ";
+            for (const auto v : whitelist[i])
+                out() << v << ' ';
+
+            out() << '(' << m_solver.function_size(i) << ")\n";
+        }
+
+        /* convert the set into vector of vector. */
+        for (int i = 0ul, e = whitelist.size(); i != e; ++i) {
+            m_whitelist[i].resize(whitelist[i].size());
+
+            std::copy(whitelist[i].begin(), whitelist[i].end(),
+                      m_whitelist[i].begin());
+        }
+    }
+
+    void full()
+    {
+        out() << out().red() << "Full problem size\n" << out().def();
+
+        m_whitelist.clear();
+        m_whitelist.resize(m_solver.attribute_size());
+
+        for (int i = 0ul, e = m_whitelist.size(); i != e; ++i)
+            for (int j = 0ul, endj = m_solver.function_size(i); j != endj; ++j)
+                m_whitelist[i].emplace_back(j);
+    }
+
+public:
+    for_each_model_solver(const Model& model, const Options& options,
+                          bool with_reduce = true)
+        : m_solver(model)
+        , m_with_reduce(with_reduce)
+    {
+        if (m_with_reduce)
+            reduce(options);
+        else
+            full();
+
         init(1);
     }
 
-    for_each_model_solver(const Model& model, int walker_number)
+    for_each_model_solver(const Model& model, const Options& options,
+                          int walker_number, bool with_reduce = true)
+
         : m_solver(model)
+        , m_with_reduce(with_reduce)
     {
+        if (m_with_reduce)
+            reduce(options);
+        else
+            full();
+
         init(walker_number);
     }
 
@@ -395,6 +558,8 @@ public:
                 throw solver_error(
                     "solver: param greater than sum of lines in all functions");
         }
+
+        assert(not m_whitelist[0].empty());
 
         m_updaters.back().attribute = 0;
         m_updaters.back().line = 0;
@@ -422,7 +587,8 @@ public:
             m_updaters[i].attribute = attribute;
             m_updaters[i].line = ++line;
 
-            if (line >= m_solver.function_size(attribute)) {
+            // if (line >= m_solver.function_size(attribute)) {
+            if (line >= m_whitelist[attribute].size()) {
                 m_updaters[i].line = 0;
                 m_updaters[i].attribute = ++attribute;
                 line = -1;
@@ -496,7 +662,16 @@ public:
     std::vector <line_updater>
     updaters() const noexcept
     {
-        return m_updaters;
+        /* if mode with reduce, we recompute attributes/lines otherwise,
+         * we can return m_updaters directly.
+         */
+
+        std::vector<line_updater> ret;
+
+        for (const auto& lu : m_updaters)
+            ret.emplace_back(lu.attribute, m_whitelist[lu.attribute][lu.line]);
+
+        return ret;
     }
 
     inline
@@ -512,11 +687,6 @@ public:
         return static_cast<int>(sz);
     }
 
-private:
-    Solver m_solver;
-    std::vector <line_updater> m_updaters;
-    int m_walker_number;
-
     /** Advance the @e i walker.
      *
      * If we reach the max of the value for (attribute,line), we restore
@@ -531,12 +701,13 @@ private:
         if (attribute == -1 or line == -1)
             return false;
 
-        if (m_solver.value(attribute, line) + 1 >=
+        if (m_solver.value(attribute, m_whitelist[attribute][line]) + 1 >=
             m_solver.scale_size(attribute)) {
-            m_solver.value_restore(attribute, line);
+            m_solver.value_restore(attribute, m_whitelist[attribute][line]);
+
             ++line;
 
-            if (line >= m_solver.function_size(attribute)) {
+            if (line >= m_whitelist[attribute].size()) {
                 line = 0;
                 ++attribute;
 
@@ -547,9 +718,9 @@ private:
                 }
             }
 
-            m_solver.value_clear(attribute, line);
+            m_solver.value_clear(attribute, m_whitelist[attribute][line]);
         } else {
-            m_solver.value_increase(attribute, line);
+            m_solver.value_increase(attribute, m_whitelist[attribute][line]);
         }
 
         return true;
