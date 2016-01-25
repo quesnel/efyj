@@ -21,5 +21,6 @@ echo "----------------------------------------------------------------"
 echo "Initialized build system. For a common configuration please run:"
 echo "----------------------------------------------------------------"
 echo
-echo "./configure CFLAGS='-g -O0' $args"
+echo "./configure CXXFLAGS='-g -O0' $args"
+echo "./configure CPPFLAGS=-DDEBUG CXXFLAGS='-O2 -msse2 -ftree-vectorize -ftree-vectorizer-verbose=2' $args"
 echo
