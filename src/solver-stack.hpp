@@ -587,8 +587,7 @@ public:
             m_updaters[i].attribute = attribute;
             m_updaters[i].line = ++line;
 
-            // if (line >= m_solver.function_size(attribute)) {
-            if (line >= m_whitelist[attribute].size()) {
+            if (static_cast<std::size_t>(line) >= m_whitelist[attribute].size()) {
                 m_updaters[i].line = 0;
                 m_updaters[i].attribute = ++attribute;
                 line = -1;
@@ -707,7 +706,7 @@ public:
 
             ++line;
 
-            if (line >= m_whitelist[attribute].size()) {
+            if (static_cast<std::size_t>(line) >= m_whitelist[attribute].size()) {
                 line = 0;
                 ++attribute;
 
