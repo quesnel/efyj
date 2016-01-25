@@ -66,7 +66,8 @@ AC_PREFIX_DEFAULT([/usr])
 
 AC_CHECK_HEADERS([unistd.h])
 AC_LANG_PUSH(C++)
-AC_CHECK_HEADER([catch.hpp], [], [AC_MSG_ERROR([Could not find catch.hpp. Please download and install it from https://github.com/philsquared/Catch])])
+AC_CHECK_HEADER([catch.hpp],, [missing_catch=yes}])
+AM_CONDITIONAL([HAVE_CATCH],[test -z "$missing_catch"])
 AC_LANG_POP
 
 AC_PROG_SED

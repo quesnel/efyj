@@ -72,8 +72,10 @@ efyj_SOURCES = src/main.cpp
 efyj_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) $(PTHREAD_CFLAGS)
 efyj_LDADD = src/libefyj.la $(EXPAT_LIBS) $(PTHREAD_LIBS)
 
+if HAVE_CATCH
 TESTS = tests/test_basic
 check_PROGRAMS = tests/test_basic
 tests_test_basic_SOURCES = tests/test_basic.cpp
 tests_test_basic_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) $(PTHREAD_CFLAGS)
 tests_test_basic_LDADD = src/libefyj.la $(EXPAT_LIBS) $(PTHREAD_LIBS)
+endif
