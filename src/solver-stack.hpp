@@ -140,8 +140,9 @@ struct aggregate_attribute
         }
 #endif
 
-        struct walker {
-            walker(int column_, int current_, int max_)
+        struct walker
+        {
+            inline walker(int column_, int current_, int max_) noexcept
                 : column(column_), current(current_), max(max_)
             {}
 
@@ -248,10 +249,12 @@ struct Block
         int value;
         aggregate_attribute *att;
     };
+
     enum class BlockType {BLOCK_VALUE, BLOCK_ATTRIBUTE} type;
 };
 
-struct line_updater {
+struct line_updater
+{
     constexpr line_updater() noexcept
         : attribute(0)
         , line(0)
@@ -262,6 +265,12 @@ struct line_updater {
         , line(line_)
     {}
 
+    friend cstream&
+    operator<<(cstream& os, const line_updater& updater) noexcept
+    {
+        return os << "[" << updater.attribute << "," << updater.line << "]";
+    }
+
     int attribute;
     int line;
 };
@@ -271,16 +280,6 @@ operator==(const line_updater& lhs, const line_updater& rhs) noexcept
 {
     return lhs.attribute == rhs.attribute and lhs.line == rhs.line;
 }
-
-template<typename Solver>
-class for_each_model_solver;
-cstream& operator<<(cstream& os, const line_updater& line);
-cstream& operator<<(cstream& os,
-                         const std::vector<line_updater>& updaters);
-template<typename Solver>
-cstream&
-operator<<(cstream& os,
-           const for_each_model_solver<Solver>& solver);
 
 struct solver_stack
 {
@@ -293,6 +292,9 @@ struct solver_stack
         recursive_fill(model, 0, value_id);
     }
 
+    /** Restores the default function (e.g. read from model file) for each
+     * aggregate attributes.
+     */
     inline void
     reinit()
     {
@@ -441,6 +443,24 @@ struct solver_stack
         }
     }
 
+    void string_functions(std::string& function)
+    {
+        function.clear();
+
+        for (const auto& att : atts)
+            for (auto id : att.functions)
+                function += id + '0';
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const solver_stack& s)
+    {
+        for (const auto& att : s.atts)
+            for (auto id : att.functions)
+                os << id;
+
+        return os;
+    }
+
 private:
     std::vector <aggregate_attribute> atts;
 
@@ -460,10 +480,10 @@ operator<<(cstream& os, const std::vector<scale_id>& v)
     return os;
 }
 
-template <typename Solver>
 class for_each_model_solver
 {
-    Solver m_solver;
+public:
+    solver_stack m_solver;
     std::vector <line_updater> m_updaters;
     std::vector<std::vector<int>> m_whitelist;
     int m_walker_number;
@@ -474,7 +494,7 @@ class for_each_model_solver
      */
     void reduce(const Options& options)
     {
-        out() << out().red() << "Reducing problem size\n" << out().def();
+        out() << out().redb() << "Reducing problem size\n" << out().reset();
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -502,9 +522,12 @@ class for_each_model_solver
         }
     }
 
+    /** @e full is used to enable all lines for all aggregate
+     * attributes. It's the opposite of the @e reduce function.
+     */
     void full()
     {
-        out() << out().red() << "Full problem size\n" << out().def();
+        out() << out().redb() << "Full problem size\n" << out().def();
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -587,7 +610,8 @@ public:
             m_updaters[i].attribute = attribute;
             m_updaters[i].line = ++line;
 
-            if (static_cast<std::size_t>(line) >= m_whitelist[attribute].size()) {
+            if (static_cast<std::size_t>(line) >=
+                m_whitelist[attribute].size()) {
                 m_updaters[i].line = 0;
                 m_updaters[i].attribute = ++attribute;
                 line = -1;
@@ -706,7 +730,8 @@ public:
 
             ++line;
 
-            if (static_cast<std::size_t>(line) >= m_whitelist[attribute].size()) {
+            if (static_cast<std::size_t>(line) >=
+                m_whitelist[attribute].size()) {
                 line = 0;
                 ++attribute;
 
@@ -727,12 +752,6 @@ public:
 };
 
 inline cstream&
-operator<<(cstream& os, const line_updater& updater)
-{
-    return os << "[" << updater.attribute << "," << updater.line << "]";
-}
-
-inline cstream&
 operator<<(cstream& os,
            const std::vector<line_updater>& updaters)
 {
@@ -742,10 +761,8 @@ operator<<(cstream& os,
     return os;
 }
 
-template <typename Solver>
-cstream&
-operator<<(cstream& os,
-           const for_each_model_solver<Solver>& solver)
+inline cstream&
+operator<<(cstream& os, const for_each_model_solver& solver)
 {
     return os << "walker(s): " << solver.walker_number()
               << " states: " << solver.updaters()
