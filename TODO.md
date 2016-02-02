@@ -1,8 +1,9 @@
 efyj's todo list
-================
+----------------
 
-- Cleanup: remove dead code, simplify algorithms.
-- Add option to unread OPTION in DEXi files.
-- Switch internal source code into C++11 template.
-  - C++11 template for libexpat or libxml2 SAX API.
-- Homogeneize read/write with `std::[io]stream` and `operator<<`.
+- GUI: Tdds a simple QT GUI for Windows users.
+- ABI: providEs a Ltable API:
+  - pimpl for complex class (context?)
+  - remove dead code
+  - use exception and noexcept
+  - simplify algorithms
