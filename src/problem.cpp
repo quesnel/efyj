@@ -185,13 +185,14 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     for (int step = 1; step <= walker_number; ++step) {
         std::tuple <unsigned long, double> best {0, 0};
 
+        start = std::chrono::system_clock::now();
         do {
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
                 simulated[i] = solver.solve(options.options.row(i));
 
-            double ret = squared_weighted_kappa(model, options, simulated,
-                                                options.options.rows(),
-                                                model.attributes[0].scale.size());
+            auto ret = squared_weighted_kappa(model, options, simulated,
+                                              options.options.rows(),
+                                              model.attributes[0].scale.size());
 
             if (ret > std::get<1>(best)) {
                 std::get<1>(best) = ret;
@@ -201,12 +202,17 @@ Problem::compute_for_ever(const Model& model, const Options& options,
             ++std::get<0>(best);
         } while (solver.next() == true);
 
+        end = std::chrono::system_clock::now();
+
         efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
                            " / updaters: ",
                            step,
                            std::get<1>(best),
                            std::get<0>(best));
-        efyj::out() << bestupdaters << "\n";
+
+        efyj::out() << bestupdaters << " "
+                    << std::chrono::duration<double>(end - start).count()
+                    << "s\n";
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
 
