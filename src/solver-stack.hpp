@@ -391,6 +391,18 @@ struct solver_stack
         return static_cast <int>(atts[attribute].functions[line]);
     }
 
+    inline int
+    default_value(int attribute, int line) const noexcept
+    {
+        assert(atts.size() > 0 && atts.size() < INT_MAX);
+        assert(attribute >= 0 and attribute < static_cast <int>(atts.size()));
+        assert(atts[attribute].saved_functions.size() < INT_MAX);
+        assert(line >= 0 and line
+               < static_cast<int>(atts[attribute].saved_functions.size()));
+
+        return static_cast <int>(atts[attribute].saved_functions[line]);
+    }
+
     inline void
     value_restore(int attribute, int line) noexcept
     {
@@ -710,7 +722,7 @@ public:
         return static_cast<int>(sz);
     }
 
-    /** Advance the @e i walker.
+    /** Advance the @e nth walker.
      *
      * If we reach the max of the value for (attribute,line), we restore
      * the default value for (attribute, line) and try to jump to the next
@@ -724,27 +736,35 @@ public:
         if (attribute == -1 or line == -1)
             return false;
 
-        if (m_solver.value(attribute, m_whitelist[attribute][line]) + 1 >=
-            m_solver.scale_size(attribute)) {
-            m_solver.value_restore(attribute, m_whitelist[attribute][line]);
+        for (;;) {
+            if (m_solver.value(attribute, m_whitelist[attribute][line]) + 1 >=
+                m_solver.scale_size(attribute)) {
+                m_solver.value_restore(attribute, m_whitelist[attribute][line]);
 
-            ++line;
+                ++line;
 
-            if (static_cast<std::size_t>(line) >=
-                m_whitelist[attribute].size()) {
-                line = 0;
-                ++attribute;
+                if (static_cast<std::size_t>(line) >=
+                    m_whitelist[attribute].size()) {
+                    line = 0;
+                    ++attribute;
 
-                if (attribute >= m_solver.attribute_size()) {
-                    attribute = -1;
-                    line = -1;
-                    return false;
+                    if (attribute >= m_solver.attribute_size()) {
+                        attribute = -1;
+                        line = -1;
+                        return false;
+                    }
                 }
+
+                m_solver.value_clear(attribute, m_whitelist[attribute][line]);
+            } else {
+                m_solver.value_increase(attribute, m_whitelist[attribute][line]);
             }
 
-            m_solver.value_clear(attribute, m_whitelist[attribute][line]);
-        } else {
-            m_solver.value_increase(attribute, m_whitelist[attribute][line]);
+            /* Checks is the assigned value is different from the default
+               value of the function in aggreage attribute. */
+            if (m_solver.value(attribute, m_whitelist[attribute][line]) !=
+                m_solver.default_value(attribute, m_whitelist[attribute][line]))
+                break;
         }
 
         return true;
