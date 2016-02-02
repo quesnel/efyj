@@ -549,6 +549,40 @@ public:
                 m_whitelist[i].emplace_back(j);
     }
 
+    void detect_missing_scale_value()
+    {
+        out() << out().redb() << "Detect unused scale value\n" << out().def();
+
+        for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
+            int sv = m_solver.scale_size(i);
+
+            out() << out().defu() << "Attribute " << out().def() << i
+                  << "\n- scale size........ : " << sv
+                  << "\n- used rows......... : ";
+            for (std::size_t x = 0, endx = m_whitelist[i].size(); x != endx; ++x)
+                out() << m_whitelist[i][x] << ' ';
+
+            out() << "\n- function.......... : ";
+            for (std::size_t x = 0, endx = m_solver.function_size(i);
+                 x != endx; ++x)
+                out() << m_solver.value(i, x) << ' ';
+
+            out() << "\n- unused scale value : ";
+            for (int j = 0, endj = sv; j != endj; ++j) {
+                std::size_t x, endx;
+
+                for (x = 0, endx = m_whitelist[i].size(); x != endx; ++x) {
+                    if (m_solver.value(i, m_whitelist[i][x]) == j)
+                        break;
+                }
+
+                if (x == endx)
+                    out() << j << ' ';
+            }
+            out() << "\n";
+        }
+    }
+
 public:
     for_each_model_solver(const Model& model, const Options& options,
                           bool with_reduce = true)
@@ -561,11 +595,12 @@ public:
             full();
 
         init(1);
+
+        detect_missing_scale_value();
     }
 
     for_each_model_solver(const Model& model, const Options& options,
                           int walker_number, bool with_reduce = true)
-
         : m_solver(model)
         , m_with_reduce(with_reduce)
     {
@@ -575,6 +610,8 @@ public:
             full();
 
         init(walker_number);
+
+        detect_missing_scale_value();
     }
 
     void init(int walker_number)
