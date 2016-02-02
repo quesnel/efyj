@@ -132,19 +132,47 @@ options_read(const std::string& filename, const efyj::Model& model,
     return 0;
 }
 
+int
+models_generate(const std::string& filename, const efyj::Model& model,
+                const efyj::Options& options) noexcept
+{
+    std::ofstream ofs(filename);
+    if (not ofs.is_open()) {
+        efyj::err() << "fail to open file: " << efyj::err().red()
+                    << filename << efyj::err().def() << "\n";
+        return -EINVAL;
+    }
+
+    try {
+        efyj::Problem problem(0, 1);
+        problem.generate_all_models(model, options, ofs);
+    } catch (const std::bad_alloc& e) {
+        efyj::err() << "not enough memory to generate all models: "
+                    << efyj::err().red() << filename
+                    << efyj::err().def() << "\n";
+        return -ENOMEM;
+    }
+
+    return 0;
+}
+
 } // anonymous namespace
 
 int main(int argc, char *argv[])
 {
     int ret = EXIT_SUCCESS;
     int opt;
-    std::string modelfilepath, optionfilepath, extractfile;
+    std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
     std::string solvername;
     int limit = 0;
     bool without_reduce = false;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:e:hra:")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:g:e:hra:")) != -1) {
         switch (opt) {
+        case 'g':
+            generatedfilepath.assign(::optarg);
+            break;
+
         case 'e':
             extractfile.assign(::optarg);
             break;
@@ -198,8 +226,17 @@ int main(int argc, char *argv[])
     if (::options_read(optionfilepath, model, options))
         return EXIT_FAILURE;
 
+#ifndef NDEBUG
     efyj::out() << options << "\n";
+#endif
+
     efyj::Problem problem(0, 1);
+
+    if (not generatedfilepath.empty()) {
+        efyj::out() << "Generates all models.\n";
+        ::models_generate(generatedfilepath, model, options);
+    }
+
 
     try {
         if (limit == 0) {

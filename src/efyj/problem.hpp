@@ -48,6 +48,10 @@ public:
     double computen(const Model& model, const Options& options,
                     int walker_number);
 
+    void generate_all_models(const Model& model,
+                             const Options& options,
+                             std::ostream& os);
+
     double compute_for_ever(const Model& model,
                             const Options& options,
                             bool with_reduce);

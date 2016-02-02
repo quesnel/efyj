@@ -227,4 +227,36 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     return bestkappa;
 }
 
+void
+Problem::generate_all_models(const Model& model,
+                             const Options& options,
+                             std::ostream& os)
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::set<std::string> limit;
+    solver_details::for_each_model_solver solver(model, options, true);
+    int walker_number = solver.get_max_updaters();
+    std::string current(256, '\0');
+    long long int count = 0;
+
+    for (int step = 1; step <= walker_number; ++step) {
+        end = std::chrono::system_clock::now();
+        efyj::out() << efyj::out().red() << "walker " << out().def()
+                    << step << " " << "("
+                    << std::chrono::duration<double>(end - start).count()
+                    << "s) and " << count << " duplicates\n";
+        do {
+            solver.m_solver.string_functions(current);
+            if (limit.emplace(current).second == true)
+                os << solver.m_solver << "\n";
+            else
+                count++;
+        } while (solver.next() == true);
+
+        solver.init(step + 1);
+    }
+}
+
 } // namespace efyj
