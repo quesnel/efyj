@@ -27,11 +27,13 @@
 
 namespace {
 
-void cout_no_deleter(std::ostream *os)
+inline
+void cout_no_deleter(std::ostream *os) noexcept
 {
     (void)os;
 }
 
+inline
 std::shared_ptr<std::ostream> make_cout_stream()
 {
     return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
@@ -40,13 +42,14 @@ std::shared_ptr<std::ostream> make_cout_stream()
 std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
 {
     {
-        std::shared_ptr <std::ofstream> tmp(new std::ofstream(filepath));
+        auto tmp = std::make_shared <std::ofstream>(filepath);
 
         if (tmp->is_open())
             return tmp;
     }
+
     {
-        std::shared_ptr <std::ofstream> tmp(new std::ofstream("efyj.log"));
+        auto tmp = std::make_shared <std::ofstream>("efyj.log");
 
         if (tmp->is_open())
             return tmp;

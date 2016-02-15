@@ -47,7 +47,6 @@ AX_CHECK_COMPILE_FLAG([-Wloop-analysis], [CXXFLAGS="$CXXFLAGS -Wloop-analysis"])
 AX_CHECK_COMPILE_FLAG([-Woverloaded-shift-op-parentheses], [CXXFLAGS="$CXXFLAGS -Woverloaded-shift-op-parentheses"])
 AX_CHECK_COMPILE_FLAG([-Wsizeof-array-argument], [CXXFLAGS="$CXXFLAGS -Wsizeof-array-argument"])
 AX_CHECK_COMPILE_FLAG([-Wstring-conversion], [CXXFLAGS="$CXXFLAGS -Wstring-conversion"])
-AX_CHECK_COMPILE_FLAG([-Wunique-enum], [CXXFLAGS="$CXXFLAGS -Wunique-enum"])
 AX_CHECK_COMPILE_FLAG([-Wformat-security], [CXXFLAGS="$CXXFLAGS -Wformat-security"])
 
 # check whether to build tesseract with -fvisibility=hidden
@@ -73,8 +72,7 @@ AC_LANG_POP
 AC_PROG_SED
 AC_PROG_MKDIR_P
 
-AX_PTHREAD([],[AC_MSG_ERROR([Please install libdw library : libdw-dev])])
-
+AX_PTHREAD
 AX_LIB_EXPAT([2.1])
 enableoptional=yes
 CONFIGURE_EIGEN([],[yes])

@@ -109,7 +109,7 @@ struct Problem::problem_impl
 };
 
 Problem::Problem(int rank, int world_size)
-    : m_impl(new Problem::problem_impl(rank, world_size))
+    : m_impl(std::make_unique<Problem::problem_impl>(rank, world_size))
 {
 }
 

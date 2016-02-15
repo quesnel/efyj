@@ -34,7 +34,7 @@ struct Solver::solver_impl
 };
 
 Solver::Solver(const Model& model)
-    : m_impl(new Solver::solver_impl(model))
+    : m_impl(std::make_unique<Solver::solver_impl>(model))
 {
 }
 

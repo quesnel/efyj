@@ -72,7 +72,8 @@ color_to_str(efyj::cstream::colors c) noexcept
         "\033[96m",
         "\033[97m" };
 
-    assert(static_cast<int>(c) < array_lenght(colors));
+    assert(static_cast<int>(c) <
+           static_cast<int>(array_lenght(colors)));
 
     return colors[static_cast<int>(c)];
 }
@@ -86,7 +87,8 @@ setter_to_str(efyj::cstream::setters s) noexcept
         "\033[2m",
         "\033[4m" };
 
-    assert(static_cast<int>(s) < array_lenght(setters));
+    assert(static_cast<int>(s) <
+           static_cast<int>(array_lenght(setters)));
 
     return setters[static_cast<int>(s)];
 }
