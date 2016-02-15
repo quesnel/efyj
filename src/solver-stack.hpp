@@ -551,6 +551,18 @@ public:
 
     void detect_missing_scale_value()
     {
+        out() << out().redb() << "Number of models available\n" << out().def();
+        double model_number = {1};
+        for (auto i = 0ul, e = m_whitelist.size(); i != e; ++i) {
+            out() << m_solver.scale_size(i) << '^' << m_whitelist[i].size();
+            if (i + 1 != e)
+                out() << " * ";
+
+            model_number *= std::pow(m_solver.scale_size(i), m_whitelist[i].size());
+        }
+
+        out() << " = " << model_number << '\n';
+
         out() << out().redb() << "Detect unused scale value\n" << out().def();
 
         for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
