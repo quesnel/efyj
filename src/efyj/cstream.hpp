@@ -93,6 +93,7 @@ public:
     cstream& operator<<(signed long n) noexcept;
     cstream& operator<<(unsigned long long n) noexcept;
     cstream& operator<<(signed long long n) noexcept;
+    cstream& operator<<(long double n) noexcept;
     cstream& operator<<(double n) noexcept;
     cstream& operator<<(float n) noexcept;
     cstream& operator<<(modifier m) noexcept;

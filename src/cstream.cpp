@@ -281,6 +281,17 @@ cstream::operator<<(signed long long n) noexcept
 }
 
 cstream&
+cstream::operator<<(long double n) noexcept
+{
+    try {
+        return write(std::to_string(n));
+    } catch (const std::exception& e) {
+        err_conversion_error(e.what());
+        return *this;
+    }
+}
+
+cstream&
 cstream::operator<<(double n) noexcept
 {
     try {
