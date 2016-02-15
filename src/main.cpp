@@ -31,24 +31,22 @@ void usage() noexcept
 {
     using efyj::out;
 
-    out() << "efyj [-h][-m file.dexi][-o file.csv]\n\n"
+    out() << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
           << "Options:\n"
           << "    -h                   This help message\n"
-          << "    -e output.csv        Extract the option from dexi files "
-          << "into csv file\n"
           << "    -m model.dexi        The model file\n"
           << "    -o options.csv       The options file\n"
-          << "    -s solver_name       Select the specified solver\n"
+          << "    -e output.csv        Extract the option from dexi files "
+          << "into csv file\n"
+          << "    -g generate.data     Extract all models from model and "
+          << "options.\n"
+          << "    -r                   Without the reduce models generator "
+          << "algorithm\n"
           << "    -a [limit]           Compute the best model for kappa\n"
           << "                         0: compute kappa\n"
           << "                         1..n: number of walkers\n"
           << "                         -n: from 1 to n walkers\n"
-          << "    -r                   without reduce models generator\n"
-          << "\n"
-          << "Available solvers:\n"
-          << "   stack              (default) stack and reverse polish "
-          << "notation\n"
-          << "   bigmem             default solver fill a big memory space\n";
+          << "\n";
 }
 
 int
@@ -163,7 +161,6 @@ int main(int argc, char *argv[])
     int ret = EXIT_SUCCESS;
     int opt;
     std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
-    std::string solvername;
     int limit = 0;
     bool without_reduce = false;
 
@@ -183,10 +180,6 @@ int main(int argc, char *argv[])
 
         case 'o':
             optionfilepath.assign(::optarg);
-            break;
-
-        case 's':
-            solvername.assign(::optarg);
             break;
 
         case 'a':
@@ -236,7 +229,6 @@ int main(int argc, char *argv[])
         efyj::out() << "Generates all models.\n";
         ::models_generate(generatedfilepath, model, options);
     }
-
 
     try {
         if (limit == 0) {
