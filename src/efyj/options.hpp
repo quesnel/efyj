@@ -32,22 +32,18 @@
 
 namespace efyj {
 
-struct EFYJ_API OptionId {
-    OptionId(const std::string &simulation, const std::string &place,
-             int deparment, int year, int observated);
-
-    std::string simulation;
-    std::string place;
-    int department;
-    int year;
-    int observated;
-};
-
-/** @e The Options class stores the complete option file: a vector of
- * @e OptionId and an array of integet that correspond to option.
+/** @e The Options class stores the complete option file. (i) A lot of
+ * vectors to store simulations identifiers, places, departements, years
+ * and observation, (ii) the complete matrix of option and a ordered
+ * structure to build link between simulations.
  */
-struct EFYJ_API Options {
-    std::vector <OptionId> ids;
+struct EFYJ_API Options
+{
+    std::vector <std::string> simulations;
+    std::vector <std::string> places;
+    std::vector <int> departments;
+    std::vector <int> years;
+    std::vector <int> observated;
     Array options;
 
     /** @e ordered stores the link between and OptionId (id is place,
@@ -69,9 +65,6 @@ struct EFYJ_API Options {
     /** Release all dynamically allocated memory. */
     void clear() noexcept;
 };
-
-EFYJ_API
-cstream& operator<<(cstream& os, const OptionId&) noexcept;
 
 EFYJ_API
 cstream& operator<<(cstream& os, const Options&) noexcept;

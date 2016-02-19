@@ -64,50 +64,28 @@ get_basic_attribute_id(
 void
 build_ordered_options(efyj::Options &options) noexcept
 {
-    assert(options.ids.size() ==
-		    static_cast<std::size_t>(options.options.rows()));
+    assert(options.simulations.size() == options.departments.size() &&
+           options.simulations.size() == options.years.size() &&
+           options.simulations.size() == options.observated.size() &&
+           (options.simulations.size() == options.places.size() ||
+            options.places.empty()) &&
+           options.simulations.size() ==
+           static_cast<std::size_t>(options.options.rows()));
 
-    for (std::size_t i = 0, end_i = options.ids.size(); i != end_i; ++i) {
-        auto it = options.ordered.end();
+    const std::size_t size = options.simulations.size();
 
-        for (std::size_t j = 0, end_j = options.ids.size(); j != end_j; ++j) {
-            if (i != j and
-                options.ids[i].department != options.ids[j].department and
-                options.ids[i].year != options.ids[j].year) {
-                if (it == options.ordered.end())
-                    it = options.ordered.emplace(i, j);
-                else
-                    options.ordered.emplace_hint(it, i, j);
-            }
-        }
-    }
+    for (std::size_t i = 0; i != size; ++i)
+        for (std::size_t j = 0; j != size; ++j)
+            if (i != j and options.departments[i] != options.departments[j]
+                and options.years[i] != options.years[j])
+                options.ordered.emplace(i, j);
 }
 
 } // anonymous namespace
 
 namespace efyj {
 
-OptionId::OptionId(const std::string &simulation_,
-                   const std::string &place_,
-                   int department_, int year_, int observated_)
-    : simulation(simulation_)
-    , place(place_)
-    , department(department_)
-    , year(year_)
-    , observated(observated_)
-{
-}
-
-cstream &
-operator<<(cstream &os, const OptionId &optionid) noexcept
-{
-    return os << optionid.simulation << ' '
-        << optionid.place << ' '
-        << optionid.department << ' '
-        << optionid.year;
-}
-
-cstream &
+cstream&
 operator<<(cstream &os,
            const boost::container::flat_multimap <int, int> &map) noexcept
 {
@@ -125,7 +103,7 @@ operator<<(cstream &os,
                     os << ' ' << it->second;
                 }
 
-                previous = it;
+                previous = it++;
             }
         }
     }
@@ -133,13 +111,27 @@ operator<<(cstream &os,
     return os;
 }
 
-cstream &
+cstream&
 operator<<(cstream &os, const Options &options) noexcept
 {
     os << "option identifiers\n------------------\n";
 
-    for (std::size_t i = 0, e = options.ids.size(); i != e;  ++i)
-        os << i << " " << options.ids[i] << "\n";
+    if (not options.places.empty()) {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i]
+               << options.places[i] << '.'
+               << options.departments[i] << '.'
+               << options.years[i] << '.'
+               << options.observated[i] << "\n";
+        }
+    } else {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i]
+               << options.departments[i] << '.'
+               << options.years[i] << '.'
+               << options.observated[i] << "\n";
+        }
+    }
 
     std::ostringstream ss;
     ss << options.options;
@@ -151,26 +143,36 @@ operator<<(cstream &os, const Options &options) noexcept
 
 void Options::read(std::istream& is, const efyj::Model& model)
 {
-    std::vector <const efyj::attribute *> atts =
-        ::get_basic_attribute(model);
+    std::vector <const efyj::attribute *> atts = ::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
     std::vector <std::string> columns;
     std::string line;
+    int id = -1;
 
     if (is) {
         std::getline(is, line);
         boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
 
-        if (columns.size() != atts.size() + 5u)
+        if (columns.size() == atts.size() + 4)
+            id = 3;
+        else if (columns.size() == atts.size() + 5)
+            id = 4;
+        else
             throw efyj::csv_parser_error(
                 0, 0, std::string(),
                 (boost::format(
-                        "csv file have not correct number of column %1% "
-                        "(expected: %2%)") % columns.size() %
-                    (atts.size() + 5u)).str());
+                    "csv have not correct number of column %1% "
+                    "(expected: %2%)") % columns.size() %
+                 (atts.size() + 5u)).str());
+    }
 
-        for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i)
-	    convertheader[i - 4] = ::get_basic_attribute_id(atts, columns[i]);
+    for (std::size_t i = 0, e = atts.size(); i != e; ++i)
+        out() << "column " << i << ' ' << columns[i] << '\n';
+
+    for (std::size_t i = id, e = id + atts.size(); i != e; ++i) {
+        out() << "try to get_basic_atribute_id " << i << " : "
+              << columns[i] << '\n';
+        convertheader[i - id] = ::get_basic_attribute_id(atts, columns[i]);
     }
 
     options = Eigen::ArrayXXi::Zero(1, atts.size());
@@ -184,55 +186,56 @@ void Options::read(std::istream& is, const efyj::Model& model)
             break;
 
         boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
-        if (columns.size() != atts.size() + 5u) {
+        if (columns.size() != atts.size() + id + 1) {
             err().printf("Options: error in csv file line %d:"
                          " not correct number of column %d"
-                         " (expected: %d)",
+                         " (expected: %d)\n",
                          line_number,
                          static_cast<int>(columns.size()),
-                         static_cast<int>(atts.size() + 5u));
+                         static_cast<int>(atts.size() + id + 1));
             continue;
         }
 
         int obs;
         try {
-            obs = model.attributes[0].scale.find_scale_value(
-                columns[columns.size() - 1]);
+            obs = model.attributes[0].scale.find_scale_value(columns.back());
         } catch (const efyj_error &e) {
             err().printf("Options: error in csv file line %d:"
-                         " convertion failure of `%s'",
+                         " convertion failure of `%s'\n",
                          line_number,
-                         columns[columns.size() - 1].c_str());
+                         columns.back().c_str());
             continue;
         }
 
-        if (obs == -1) {
+        if (obs < 0) {
             err().printf("Options: error in csv file line %d:"
-                         " fail to convert observated `%s'",
+                         " fail to convert observated `%s'\n",
                          line_number,
-                         columns[columns.size() - 1].c_str());
+                         columns.back().c_str());
             continue;
         }
 
         int department, year;
         try {
-            department = std::stoi(columns[2]);
-            year = std::stoi(columns[3]);
+            year = std::stoi(columns[id - 1]);
+            department = std::stoi(columns[id - 2]);
         } catch (const std::exception &e) {
-            err().printf("Options: error in csv file line %d:"
-                         " unknown id (`%s' `%s' `%s' `%5%')",
-                         line_number,
-                         columns[0].c_str(),
-                         columns[1].c_str(),
-                         columns[2].c_str(),
-                         columns[3].c_str());
+            err().printf("Options: error in csv file line %d."
+                         " Malformed year or department\n",
+                         line_number);
             continue;
         }
 
-        ids.emplace_back(columns[0], columns[1], department, year, obs);
+        simulations.push_back(columns[0]);
+        if (id == 4)
+            places.push_back(columns[1]);
 
-        for (std::size_t i = 4, e = 4 + atts.size(); i != e; ++i) {
-            std::size_t attid = convertheader[i - 4];
+        departments.push_back(department);
+        years.push_back(year);
+        observated.push_back(obs);
+
+        for (std::size_t i = id, e = id + atts.size(); i != e; ++i) {
+            std::size_t attid = convertheader[i - id];
             int option = atts[attid]->scale.find_scale_value(columns[i]);
 
             if (option < 0) {
@@ -241,7 +244,14 @@ void Options::read(std::istream& is, const efyj::Model& model)
                              line_number,
                              columns[i].c_str(),
                              atts[attid]->name.c_str());
-                ids.pop_back();
+
+                simulations.pop_back();
+                if (id == 4)
+                    places.pop_back();
+                departments.pop_back();
+                years.pop_back();
+                observated.pop_back();
+
                 options.conservativeResize(options.rows() - 1,
                                            Eigen::NoChange_t());
                 break;
@@ -257,14 +267,19 @@ void Options::read(std::istream& is, const efyj::Model& model)
     options.conservativeResize(options.rows() - 1,
                                Eigen::NoChange_t());
 
-    assert(static_cast<std::size_t>(options.rows()) == ids.size());
+    assert(static_cast<std::size_t>(options.rows()) == simulations.size());
 
     ::build_ordered_options(*this);
 }
 
 void Options::clear() noexcept
 {
-    std::vector <OptionId>().swap(ids);
+    std::vector <std::string>().swap(simulations);
+    std::vector <std::string>().swap(places);
+    std::vector <int>().swap(departments);
+    std::vector <int>().swap(years);
+    std::vector <int>().swap(observated);
+
     Array().swap(options);
     boost::container::flat_multimap <int, int>().swap(ordered);
 }

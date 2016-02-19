@@ -36,8 +36,8 @@ rmsep(const efyj::Model &, const Options &options,
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
-    for (auto i = 0ul, e = options.ids.size(); i != e; ++i)
-        matrix(options.ids[i].observated, simulated[i])++;
+    for (auto i = 0ul, e = options.observated.size(); i != e; ++i)
+        matrix(options.observated[i], simulated[i])++;
 
     unsigned long sum = 0.0;
 
@@ -57,8 +57,8 @@ linear_weighted_kappa(const efyj::Model &, const Options &options,
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.ids[i].observated, simulated[i]);
-        ++distributions(options.ids[i].observated, 0);
+        ++observed(options.observated[i], simulated[i]);
+        ++distributions(options.observated[i], 0);
         ++distributions(simulated[i], 1);
     }
 
@@ -89,8 +89,8 @@ squared_weighted_kappa(const efyj::Model &, const Options &options,
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.ids[i].observated, simulated[i]);
-        ++distributions(options.ids[i].observated, 0);
+        ++observed(options.observated[i], simulated[i]);
+        ++distributions(options.observated[i], 0);
         ++distributions(simulated[i], 1);
     }
 

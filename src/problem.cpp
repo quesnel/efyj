@@ -78,13 +78,13 @@ compute_kappa(const efyj::Model& model, const efyj::Options& options)
                                        model.attributes[0].scale.size());
 
 #ifndef NDEBUG
-    for (auto i = 0ul, e = options.ids.size(); i != e; ++i) {
-        if (options.ids[i].observated != simulated[i]) {
+    for (auto i = 0ul, e = options.observated.size(); i != e; ++i) {
+        if (options.observated[i] != simulated[i]) {
             efyj::err() << efyj::err().red() << "Error: "
                         << efyj::err().def();
 
             efyj::err().printf("observation (%d) != simulated (%d) at line %d\n",
-                               options.ids[i].observated,
+                               options.observated[i],
                                simulated[i],
                                i);
         }
