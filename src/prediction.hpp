@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,47 +19,15 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_PROBLEM_HPP
-#define INRA_EFYj_PROBLEM_HPP
-
-#include <efyj/efyj.hpp>
-#include <efyj/model.hpp>
-#include <efyj/options.hpp>
-#include <efyj/context.hpp>
+#ifndef INRA_EFYj_INTERNAL_PREDICTION_HPP
+#define INRA_EFYj_INTERNAL_PREDICTION_HPP
 
 namespace efyj {
 
-class EFYJ_API Problem
-{
-    struct problem_impl;
-    std::unique_ptr<problem_impl> m_impl;
+void prediction_0(const Model& model, const Options& options);
 
-public:
-    Problem();
-    Problem(unsigned int thread_number);
-
-    ~Problem();
-
-    Problem(const Problem&) = delete;
-    Problem(Problem&&) = delete;
-    Problem& operator=(const Problem&) = delete;
-    Problem& operator=(Problem&&) = delete;
-
-    double compute0(const Model& model, const Options& options);
-
-    double computen(const Model& model, const Options& options,
-                    int walker_number);
-
-    void generate_all_models(const Model& model,
-                             const Options& options,
-                             std::ostream& os);
-
-    double compute_for_ever(const Model& model,
-                            const Options& options,
-                            bool with_reduce);
-
-    void prediction(const Model& model, const Options& options);
-};
+void prediction_n(const Model& model, const Options& options,
+                  unsigned int threads);
 
 } // namespace efyj
 

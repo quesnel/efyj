@@ -43,10 +43,11 @@ void usage() noexcept
           << "    -r                   Without the reduce models generator "
           << "algorithm\n"
           << "    -a [limit]           Compute the best model for kappa\n"
-          << "    -p                   Compute prediction\n"
           << "                         0: compute kappa\n"
           << "                         1..n: number of walkers\n"
           << "                         -n: from 1 to n walkers\n"
+          << "    -p                   Compute prediction\n"
+          << "    -j [threads]         Use threads [int]\n"
           << "\n";
 }
 
@@ -143,7 +144,7 @@ models_generate(const std::string& filename, const efyj::Model& model,
     }
 
     try {
-        efyj::Problem problem(0, 1);
+        efyj::Problem problem;
         problem.generate_all_models(model, options, ofs);
     } catch (const std::bad_alloc& e) {
         efyj::err() << "not enough memory to generate all models: "
@@ -163,11 +164,19 @@ int main(int argc, char *argv[])
     int opt;
     std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
     int limit = 0;
+    unsigned int threads = 0;
     bool without_reduce = false;
     bool with_prediction = false;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:g:e:phra:")) != -1) {
+    while ((opt = ::getopt(argc, argv, "j::m:o:s:g:e:phra:")) != -1) {
         switch (opt) {
+        case 'j':
+            if (::optarg)
+                threads = std::stoi(::optarg);
+            else
+                threads = 1;
+            break;
+
         case 'g':
             generatedfilepath.assign(::optarg);
             break;
@@ -229,7 +238,13 @@ int main(int argc, char *argv[])
     efyj::out() << options << "\n";
 #endif
 
-    efyj::Problem problem(0, 1);
+    std::unique_ptr<efyj::Problem> problem;
+
+    if (threads == 0)
+        problem = std::make_unique<efyj::Problem>();
+    else
+        problem = std::make_unique<efyj::Problem>(
+            threads == 1 ? 0 : threads);
 
     if (not generatedfilepath.empty()) {
         efyj::out() << "Generates all models.\n";
@@ -239,17 +254,17 @@ int main(int argc, char *argv[])
     try {
         if (with_prediction) {
             efyj::out() << "compute prediction:\n";
-            problem.prediction(model, options);
+            problem->prediction(model, options);
         } else {
             if (limit == 0) {
                 efyj::out() << "compute Kappa:\n";
-                problem.compute0(model, options);
+                problem->compute0(model, options);
             } else if (limit > 0) {
                 efyj::out() << "compute best Kappa with " << limit << ":\n";
-                problem.computen(model, options, limit);
+                problem->computen(model, options, limit);
             } else {
                 efyj::out() << "compute best Kappa for all model\n";
-                problem.compute_for_ever(model, options, not without_reduce);
+                problem->compute_for_ever(model, options, not without_reduce);
             }
         }
     } catch (const std::exception &e) {

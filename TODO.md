@@ -12,7 +12,7 @@ efyj's todo list
   - simplify algorithms
 
 
-### Example prediction (french)
+* Example prediction (french)
 
 Le choix du critère pour la validation croisée.
 

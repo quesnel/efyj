@@ -27,9 +27,12 @@
 #include "utils.hpp"
 #include "options.hpp"
 #include "post.hpp"
+#include "prediction.hpp"
 #include <iterator>
 #include <fstream>
 #include <chrono>
+#include <memory>
+#include <thread>
 
 namespace {
 
@@ -102,22 +105,44 @@ namespace efyj {
 
 struct Problem::problem_impl
 {
-    problem_impl(int rank_, int world_size_)
-        : rank(rank_)
-        , world_size(world_size_)
+    enum problem_solver_type {
+        PROBLEM_MONO_SOLVER,
+        PROBLEM_THREAD_SOLVER,
+        PROBLEM_MPI_SOLVER
+    };
+
+    problem_impl()
+        : problem_type(PROBLEM_MONO_SOLVER)
     {}
 
+    problem_impl(unsigned int thread)
+        : thread_number(thread)
+        , problem_type(PROBLEM_THREAD_SOLVER)
+    {
+        if (thread == 0)
+            thread_number = get_hardware_concurrency();
+    }
+
+    unsigned int get_thread_number()
+    {
+        return thread_number;
+    }
+
     int rank, world_size;
+    unsigned int thread_number;
+    problem_solver_type problem_type;
 };
 
-Problem::Problem(int rank, int world_size)
-    : m_impl(std::make_unique<Problem::problem_impl>(rank, world_size))
-{
-}
+Problem::Problem()
+    : m_impl(std::make_unique<Problem::problem_impl>())
+{}
+
+Problem::Problem(unsigned int thread_number)
+    : m_impl(std::make_unique<Problem::problem_impl>(thread_number))
+{}
 
 Problem::~Problem()
-{
-}
+{}
 
 double
 Problem::compute0(const Model& model, const Options& options)
@@ -265,75 +290,17 @@ Problem::generate_all_models(const Model& model,
 void
 Problem::prediction(const Model& model, const Options& options)
 {
-    efyj::out() << efyj::out().redb() << "Prediction started\n"
-                << efyj::out().def();
-
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-
-    std::vector <int> simulated(options.observated.size(), 0);
-    std::vector <solver_details::line_updater> bestupdaters;
-
-    solver_details::for_each_model_solver solver(model, options, true);
-    int walker_number = solver.get_max_updaters();
-
-    for (int step = 1; step < walker_number; ++step) {
-        start = std::chrono::system_clock::now();
-        std::tuple <unsigned long, double> best {0, 0};
-        unsigned long long int number_bestkappa = 0;
-
-        do {
-            auto it = options.ordered.cbegin();
-            while (it != options.ordered.cend()) {
-                auto id = it->first;
-
-                std::fill(simulated.begin(), simulated.end(), 0);
-                for (; it != options.ordered.cend() && it->first == id; ++it)
-                    simulated[it->second] = solver.solve(options.options.row(
-                                                             it->second));
-
-                auto ret = squared_weighted_kappa(
-                    options.observated,
-                    simulated,
-                    options.options.rows(),
-                    model.attributes[0].scale.size());
-
-                if (ret > std::get<1>(best)) {
-                    number_bestkappa = 0;
-                    std::get<1>(best) = ret;
-                    bestupdaters = solver.updaters();
-
-                    efyj::out().printf("  - best kappa found: %f\n",
-                                       std::get<1>(best));
-                } else if (ret == std::get<1>(best)) {
-                    number_bestkappa++;
-                }
-
-                ++std::get<0>(best);
-            }
-        } while (solver.next() == true);
-
-        end = std::chrono::system_clock::now();
-
-        efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
-                           " / updaters: %d ",
-                           step,
-                           std::get<1>(best),
-                           std::get<0>(best),
-                           number_bestkappa);
-
-        efyj::out() << bestupdaters << " "
-                    << std::chrono::duration<double>(end - start).count()
-                    << "s\n";
-
-        //
-        // TODO: be carefull, solver.init can throw when end of
-        // computation is reached.
-        //
-
-        solver.init(step + 1);
-    }
+    switch (m_impl->problem_type) {
+    case Problem::problem_impl::PROBLEM_MONO_SOLVER:
+        prediction_0(model, options);
+        break;
+    case Problem::problem_impl::PROBLEM_THREAD_SOLVER:
+        prediction_n(model, options, m_impl->get_thread_number());
+        break;
+    case Problem::problem_impl::PROBLEM_MPI_SOLVER:
+    default:
+        efyj::err() << "unknown prediction solver.\n";
+    };
 }
-
 
 } // namespace efyj

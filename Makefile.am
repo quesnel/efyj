@@ -45,12 +45,13 @@ pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver.hpp		\
 
 lib_LTLIBRARIES = src/libefyj.la
 
-src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp	\
-			 src/exception.cpp src/message.cpp	\
-			 src/model.cpp src/options.cpp		\
-			 src/problem.cpp src/solver.cpp		\
-			 src/solver-stack.hpp src/utils.cpp	\
-			 src/utils.hpp
+src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp		\
+			 src/exception.cpp src/message.cpp		\
+			 src/model.cpp src/options.cpp			\
+			 src/prediction.hpp src/prediction.cpp		\
+			 src/prediction-thread.cpp src/problem.cpp	\
+			 src/solver.cpp src/solver-stack.hpp		\
+			 src/utils.cpp src/utils.hpp
 
 if VISIBILITY
 src_libefyj_la_CPPFLAGS = $(AM_CPPFLAGS) -DEFYJ_DLL -Dlibefyj_EXPORTS \
