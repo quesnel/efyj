@@ -56,7 +56,7 @@ public:
                             const Options& options,
                             bool with_reduce);
 
-    double prediction(const Model& model, const Options& options);
+    void prediction(const Model& model, const Options& options);
 };
 
 } // namespace efyj
