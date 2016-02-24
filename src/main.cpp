@@ -43,6 +43,7 @@ void usage() noexcept
           << "    -r                   Without the reduce models generator "
           << "algorithm\n"
           << "    -a [limit]           Compute the best model for kappa\n"
+          << "    -p                   Compute prediction\n"
           << "                         0: compute kappa\n"
           << "                         1..n: number of walkers\n"
           << "                         -n: from 1 to n walkers\n"
@@ -163,8 +164,9 @@ int main(int argc, char *argv[])
     std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
     int limit = 0;
     bool without_reduce = false;
+    bool with_prediction = false;
 
-    while ((opt = ::getopt(argc, argv, "m:o:s:g:e:hra:")) != -1) {
+    while ((opt = ::getopt(argc, argv, "m:o:s:g:e:phra:")) != -1) {
         switch (opt) {
         case 'g':
             generatedfilepath.assign(::optarg);
@@ -190,6 +192,10 @@ int main(int argc, char *argv[])
 
         case 'r':
             without_reduce = true;
+            break;
+
+        case 'p':
+            with_prediction = true;
             break;
 
         case 'h':
@@ -231,15 +237,20 @@ int main(int argc, char *argv[])
     }
 
     try {
-        if (limit == 0) {
-            efyj::out() << "compute Kappa:\n";
-            problem.compute0(model, options);
-        } else if (limit > 0) {
-            efyj::out() << "compute best Kappa with " << limit << ":\n";
-            problem.computen(model, options, limit);
+        if (with_prediction) {
+            efyj::out() << "compute prediction:\n";
+            problem.prediction(model, options);
         } else {
-            efyj::out() << "compute best Kappa for all model\n";
-            problem.compute_for_ever(model, options, not without_reduce);
+            if (limit == 0) {
+                efyj::out() << "compute Kappa:\n";
+                problem.compute0(model, options);
+            } else if (limit > 0) {
+                efyj::out() << "compute best Kappa with " << limit << ":\n";
+                problem.computen(model, options, limit);
+            } else {
+                efyj::out() << "compute best Kappa for all model\n";
+                problem.compute_for_ever(model, options, not without_reduce);
+            }
         }
     } catch (const std::exception &e) {
         efyj::err() << "failure: " << e.what() << '\n';
