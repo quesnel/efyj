@@ -51,7 +51,8 @@ compute_best_kappa(const efyj::Model& model,
                 simulated[i] = solver.solve(options.options.row(i));
 
             double ret = efyj::squared_weighted_kappa(
-                model, options, simulated,
+                options.observated,
+                simulated,
                 options.options.rows(),
                 model.attributes[0].scale.size());
 
@@ -73,9 +74,10 @@ compute_kappa(const efyj::Model& model, const efyj::Options& options)
     for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
         simulated[i] = slv.solve(options.options.row(i));
 
-    double ret = linear_weighted_kappa(model, options, simulated,
-                                       options.options.rows(),
-                                       model.attributes[0].scale.size());
+    double ret = efyj::linear_weighted_kappa(options.observated,
+                                             simulated,
+                                             options.options.rows(),
+                                             model.attributes[0].scale.size());
 
 #ifndef NDEBUG
     for (auto i = 0ul, e = options.observated.size(); i != e; ++i) {
@@ -190,7 +192,8 @@ Problem::compute_for_ever(const Model& model, const Options& options,
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
                 simulated[i] = solver.solve(options.options.row(i));
 
-            auto ret = squared_weighted_kappa(model, options, simulated,
+            auto ret = squared_weighted_kappa(options.observated,
+                                              simulated,
                                               options.options.rows(),
                                               model.attributes[0].scale.size());
 
@@ -290,7 +293,8 @@ Problem::prediction(const Model& model, const Options& options)
                                                              it->second));
 
                 auto ret = squared_weighted_kappa(
-                    model, options, simulated,
+                    options.observated,
+                    simulated,
                     options.options.rows(),
                     model.attributes[0].scale.size());
 

@@ -22,22 +22,22 @@
 #ifndef INRA_EFYj_POST_HPP
 #define INRA_EFYj_POST_HPP
 
-#include <efyj/model.hpp>
-#include <efyj/options.hpp>
 #include <Eigen/Core>
+#include <vector>
 #include <cmath>
 
 namespace efyj {
 
 inline double
-rmsep(const efyj::Model &, const Options &options,
+rmsep(const std::vector <int>& observated,
       const std::vector <int>& simulated,
-      const std::size_t N, const std::size_t NC)
+      const std::size_t N,
+      const std::size_t NC)
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
-    for (auto i = 0ul, e = options.observated.size(); i != e; ++i)
-        matrix(options.observated[i], simulated[i])++;
+    for (auto i = 0ul, e = observated.size(); i != e; ++i)
+        matrix(observated[i], simulated[i])++;
 
     unsigned long sum = 0.0;
 
@@ -49,16 +49,17 @@ rmsep(const efyj::Model &, const Options &options,
 }
 
 inline double
-linear_weighted_kappa(const efyj::Model &, const Options &options,
-                      const std::vector <int> &simulated,
-                      const std::size_t N, const std::size_t NC)
+linear_weighted_kappa(const std::vector <int>& observated,
+                      const std::vector <int>& simulated,
+                      const std::size_t N,
+                      const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.observated[i], simulated[i]);
-        ++distributions(options.observated[i], 0);
+        ++observed(observated[i], simulated[i]);
+        ++distributions(observated[i], 0);
         ++distributions(simulated[i], 1);
     }
 
@@ -81,16 +82,17 @@ linear_weighted_kappa(const efyj::Model &, const Options &options,
 }
 
 inline double
-squared_weighted_kappa(const efyj::Model &, const Options &options,
+squared_weighted_kappa(const std::vector <int>& observated,
                        const std::vector <int>& simulated,
-                       const std::size_t N, const std::size_t NC)
+                       const std::size_t N,
+                       const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
 
     for (int i = 0; i != (int)N; ++i) {
-        ++observed(options.observated[i], simulated[i]);
-        ++distributions(options.observated[i], 0);
+        ++observed(observated[i], simulated[i]);
+        ++distributions(observated[i], 0);
         ++distributions(simulated[i], 1);
     }
 
