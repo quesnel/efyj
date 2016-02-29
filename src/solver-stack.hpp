@@ -60,12 +60,12 @@ struct aggregate_attribute
         coeffs(m_scale_size.size() - 1) = 1;
 
         assert(m_scale_size.size() < std::numeric_limits<int>::max());
-	assert(m_scale_size.size() >= 1);
+        assert(m_scale_size.size() >= 1);
 
-	if (m_scale_size.size() >= 2) {
+        if (m_scale_size.size() >= 2) {
             for (int i = (int)m_scale_size.size() - 2; i >= 0; --i)
-	        coeffs(i) = m_scale_size[i + 1] * coeffs(i + 1);
-	}
+                coeffs(i) = m_scale_size[i + 1] * coeffs(i + 1);
+        }
 
         stack = Vector::Zero(m_scale_size.size());
         stack_size = 0;
@@ -499,40 +499,6 @@ public:
     std::vector <line_updater> m_updaters;
     std::vector<std::vector<int>> m_whitelist;
     int m_walker_number;
-    bool m_with_reduce;
-
-    /** @e reduce is used to reduce the size of the problem. It removes
-     * from the solver, all lines from the solver based on options.
-     */
-    void reduce(const Options& options)
-    {
-        out() << out().redb() << "Reducing problem size\n" << out().reset();
-
-        m_whitelist.clear();
-        m_whitelist.resize(m_solver.attribute_size());
-
-        std::vector<std::set<int>> whitelist;
-        whitelist.resize(m_solver.attribute_size());
-
-        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
-            m_solver.reduce(options.options.row(i), whitelist);
-
-        for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
-            out() << " whitelist ";
-            for (const auto v : whitelist[i])
-                out() << v << ' ';
-
-            out() << '(' << m_solver.function_size(i) << ")\n";
-        }
-
-        /* convert the set into vector of vector. */
-        for (int i = 0ul, e = whitelist.size(); i != e; ++i) {
-            m_whitelist[i].resize(whitelist[i].size());
-
-            std::copy(whitelist[i].begin(), whitelist[i].end(),
-                      m_whitelist[i].begin());
-        }
-    }
 
     /** @e full is used to enable all lines for all aggregate
      * attributes. It's the opposite of the @e reduce function.
@@ -559,7 +525,8 @@ public:
             if (i + 1 != e)
                 out() << " * ";
 
-            model_number *= std::pow(m_solver.scale_size(i), m_whitelist[i].size());
+            model_number *= std::pow(m_solver.scale_size(i),
+                                     m_whitelist[i].size());
         }
 
         out() << " = " << model_number << '\n';
@@ -597,31 +564,19 @@ public:
     }
 
 public:
-    for_each_model_solver(const Model& model, const Options& options,
-                          bool with_reduce = true)
+    for_each_model_solver(const Model& model)
         : m_solver(model)
-        , m_with_reduce(with_reduce)
     {
-        if (m_with_reduce)
-            reduce(options);
-        else
-            full();
-
+        full();
         init(1);
 
         detect_missing_scale_value();
     }
 
-    for_each_model_solver(const Model& model, const Options& options,
-                          int walker_number, bool with_reduce = true)
+    for_each_model_solver(const Model& model, int walker_number)
         : m_solver(model)
-        , m_with_reduce(with_reduce)
     {
-        if (m_with_reduce)
-            reduce(options);
-        else
-            full();
-
+        full();
         init(walker_number);
 
         detect_missing_scale_value();
@@ -649,6 +604,73 @@ public:
         m_updaters.back().attribute = 0;
         m_updaters.back().line = 0;
         init_walker_from(m_updaters.size() - 1);
+    }
+
+    /** @e reduce is used to reduce the size of the problem. It removes
+     * from the solver, all lines from the solver based on options.
+     */
+    void reduce(const Options& options)
+    {
+        out() << out().redb() << "Reducing problem size\n" << out().reset();
+
+        m_whitelist.clear();
+        m_whitelist.resize(m_solver.attribute_size());
+
+        std::vector<std::set<int>> whitelist;
+        whitelist.resize(m_solver.attribute_size());
+
+        for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+            m_solver.reduce(options.options.row(i), whitelist);
+
+        for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
+            out() << " whitelist ";
+            for (const auto v : whitelist[i])
+                out() << v << ' ';
+
+            out() << '(' << m_solver.function_size(i) << ")\n";
+        }
+
+        /* convert the set into vector of vector. */
+        for (int i = 0ul, e = whitelist.size(); i != e; ++i) {
+            m_whitelist[i].resize(whitelist[i].size());
+
+            std::copy(whitelist[i].begin(), whitelist[i].end(),
+                      m_whitelist[i].begin());
+        }
+    }
+
+    /** @e reduce is used to reduce the size of the problem. It removes
+     * from the solver, all lines from the solver based on part (@e ids)
+     * of the options.
+     */
+    void reduce(const Options& options, const std::vector<int>& ids)
+    {
+        out() << out().redb() << "Reducing problem size\n" << out().reset();
+
+        m_whitelist.clear();
+        m_whitelist.resize(m_solver.attribute_size());
+
+        std::vector<std::set<int>> whitelist;
+        whitelist.resize(m_solver.attribute_size());
+
+        for (std::size_t i = 0, e = ids.size(); i != e; ++i)
+            m_solver.reduce(options.options.row(ids[i]), whitelist);
+
+        for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
+            out() << " whitelist ";
+            for (const auto v : whitelist[i])
+                out() << v << ' ';
+
+            out() << '(' << m_solver.function_size(i) << ")\n";
+        }
+
+        /* convert the set into vector of vector. */
+        for (int i = 0ul, e = whitelist.size(); i != e; ++i) {
+            m_whitelist[i].resize(whitelist[i].size());
+
+            std::copy(whitelist[i].begin(), whitelist[i].end(),
+                      m_whitelist[i].begin());
+        }
     }
 
     /** Initialize walkers from walker @id - 1 to 0.

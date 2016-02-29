@@ -45,7 +45,9 @@ void prediction_0(const Model& model, const Options& options)
     std::vector <int> simulated(options.observated.size(), 0);
     std::vector <solver_details::line_updater> bestupdaters;
 
-    solver_details::for_each_model_solver solver(model, options, true);
+    solver_details::for_each_model_solver solver(model);
+    solver.reduce(options);
+
     int walker_number = solver.get_max_updaters();
 
     for (int step = 1; step < walker_number; ++step) {
