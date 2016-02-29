@@ -1,16 +1,26 @@
 efyj's todo list
 ----------------
 
-- Problem updates:
-  - Add time limit (4 days, 4096 hours?)
-  - Add kappa limit (==1 or when kappa decrease)
-- GUI: Tdds a simple QT GUI for Windows users.
-- ABI: providEs a Ltable API:
+- Problem updates for prediction mode:
+  - Add a time limit (4 days, 4096 hours?)
+  - Add a kappa limit (==1 or when kappa decrease)
+  - Parallel prediction: reduce the options possibilities in
+    solver-stack.hpp but change the API.
+
+*- Log system:
+  - Chooses best loggin system (threads' efyj::out() are too
+    important). Perharps we can give a cstream object for each classes
+    and specific constructor?
+
+- ABI: Provides a stable API...
+  - move all classes, structures and public typedef into a unique
+    efyj/efyj.hpp file
   - pimpl for complex class (context?)
   - remove dead code
   - use exception and noexcept
   - simplify algorithms
 
+- GUI: Tdds a simple QT GUI for Windows users.
 
 * Example prediction (french)
 
