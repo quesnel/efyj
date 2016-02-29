@@ -653,8 +653,11 @@ public:
         std::vector<std::set<int>> whitelist;
         whitelist.resize(m_solver.attribute_size());
 
-        for (std::size_t i = 0, e = ids.size(); i != e; ++i)
-            m_solver.reduce(options.options.row(ids[i]), whitelist);
+        for (std::size_t i = 0, e = ids.size(); i != e; ++i) {
+            auto bounds = options.ordered.equal_range(ids[i]);
+            for (auto it = bounds.first; it != bounds.second; ++it)
+                m_solver.reduce(options.options.row(it->second), whitelist);
+        }
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
             out() << " whitelist ";

@@ -141,6 +141,7 @@ void parallel_prediction_worker(const Model& model,
                 std::fill(simulated.begin(), simulated.end(), 0);
 
                 auto bounds = options.ordered.equal_range(*it);
+
                 for (auto jt = bounds.first; jt != bounds.second; ++jt)
                     simulated[jt->second] = solver.solve(
                         options.options.row(jt->second));
