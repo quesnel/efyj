@@ -4,13 +4,17 @@ efyj's todo list
 - Problem updates for prediction mode:
   - Add a time limit (4 days, 4096 hours?)
   - Add a kappa limit (==1 or when kappa decrease)
+  - Add the feature to keep all paths to the best kappa found (in
+    prediction nad compute_for_ever modes.
   - Parallel prediction: reduce the options possibilities in
     solver-stack.hpp but change the API.
 
-*- Log system:
-  - Chooses best loggin system (threads' efyj::out() are too
-    important). Perharps we can give a cstream object for each classes
-    and specific constructor?
+- Log system:
+  - Chooses best logging system (threads efyj::out() calls are too
+    importants). Perharps we can give a cstream object for each
+    classes and specific constructor?
+  - The context and messages classes are not use. Keep or remove it
+    but do something.
 
 - ABI: Provides a stable API...
   - move all classes, structures and public typedef into a unique
@@ -20,7 +24,7 @@ efyj's todo list
   - use exception and noexcept
   - simplify algorithms
 
-- GUI: Tdds a simple QT GUI for Windows users.
+- GUI: Adds a simple QT GUI for Windows users.
 
 * Example prediction (french)
 
