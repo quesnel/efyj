@@ -23,54 +23,67 @@
 #define INRA_EFYj_CONTEXT_HPP
 
 #include <efyj/efyj.hpp>
-#include <efyj/message.hpp>
-#include <list>
 #include <fstream>
-#include <thread>
-#include <mutex>
+#include <memory>
 
 namespace efyj {
 
-class ContextImpl;
+enum LogOption
+{
+    LOG_OPTION_NOTHING,
+    LOG_OPTION_ERROR,
+    LOG_OPTION_INFO,
+    LOG_OPTION_DEBUG
+};
 
-typedef std::shared_ptr <ContextImpl> Context;
-
-class EFYJ_API ContextImpl
+/**
+ * @attention Prefers to use a context object per thread to avoid the use
+ * of mutex, conditions etc.
+ *
+ * @code
+ * auto ctx = std::make_shared<efyj::Context>(efyj::LOG_OPTION_DEBUG);
+ * ctx->set_log_file_stream("efyj.log");
+ *
+ * ctx->info() << "Context initialized.\n";
+ * @endcode
+ */
+class EFYJ_API Context
 {
 public:
-    ContextImpl(LogOption option = LOG_OPTION_DEBUG);
-    ContextImpl(const std::string &filepath, LogOption option = LOG_OPTION_DEBUG);
+    Context(LogOption option = LOG_OPTION_DEBUG);
 
-    ContextImpl(const ContextImpl&) = delete;
-    ContextImpl(ContextImpl&&) = delete;
-    ContextImpl& operator=(const ContextImpl&) = delete;
-    ContextImpl& operator=(ContextImpl&&) = delete;
+    Context(const Context&) = delete;
+    Context(Context&&) = delete;
+    Context& operator=(const Context&) = delete;
+    Context& operator=(Context&&) = delete;
 
-    ~ContextImpl();
+    ~Context();
 
-    void set_log_stream(const std::string &filepath);
+    void set_log_file_stream(const std::string &filepath) noexcept;
+
+    std::string get_log_filename() const noexcept;
 
     void set_console_log_stream();
 
-    template <typename... _Args>
-    void log(_Args &&... args)
-    {
-        std::lock_guard <std::mutex> lock(m_queue_locker);
-        m_queue.emplace_back(std::forward <_Args>(args)...);
-    }
+    std::ostream& info() const noexcept;
+
+    std::ostream& dbg() const noexcept;
+
+    std::ostream& err() const noexcept;
 
     LogOption log_priority() const;
 
     void set_log_priority(LogOption priority);
 
+    std::string log_dirname() const;
+
+    std::string log_template() const;
+
 private:
     std::shared_ptr <std::ostream> m_os;
-    std::list <message> m_queue;
-    LogOption m_priority;
-    std::mutex m_queue_locker;
-    std::mutex m_os_locker;
-    std::thread m_writer;
-    bool m_close;
+    mutable std::ofstream m_null_os;
+    std::string m_log_filename;
+    LogOption m_log_priority;
 };
 
 }

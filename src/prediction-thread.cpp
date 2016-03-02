@@ -31,6 +31,7 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 namespace efyj {
 

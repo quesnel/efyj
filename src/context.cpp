@@ -24,6 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <cassert>
 
 namespace {
 
@@ -39,118 +40,81 @@ std::shared_ptr<std::ostream> make_cout_stream()
     return std::shared_ptr <std::ostream>(&std::cout, cout_no_deleter);
 }
 
-std::shared_ptr<std::ostream> make_log_stream(const std::string &filepath)
-{
-    {
-        auto tmp = std::make_shared <std::ofstream>(filepath);
-
-        if (tmp->is_open())
-            return tmp;
-    }
-
-    {
-        auto tmp = std::make_shared <std::ofstream>("efyj.log");
-
-        if (tmp->is_open())
-            return tmp;
-    }
-
-    return make_cout_stream();
-}
-
-void writer_run(std::shared_ptr <std::ostream> &os,
-                std::list <efyj::message> &queue,
-                std::mutex &queue_locker,
-                std::mutex &os_locker, bool &close)
-{
-    std::list <efyj::message> to_write;
-
-    while (not close) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        {
-            std::lock_guard <std::mutex> lock(queue_locker);
-            to_write.splice(to_write.begin(), queue);
-        }
-        {
-            std::lock_guard <std::mutex> lock(os_locker);
-
-            for (const auto &msg : to_write)
-                (*os) << msg << '\n';
-
-            to_write.clear();
-        }
-    }
-
-    if (not queue.empty()) {
-        {
-            std::lock_guard <std::mutex> lock(queue_locker);
-            to_write.splice(to_write.begin(), queue);
-        }
-        {
-            std::lock_guard <std::mutex> lock(os_locker);
-
-            for (const auto &msg : to_write)
-                (*os) << msg << '\n';
-
-            to_write.clear();
-        }
-    }
-}
-
 } // anonymous namespace
 
 namespace efyj {
 
-ContextImpl::ContextImpl(LogOption option)
+Context::Context(LogOption option)
     : m_os(::make_cout_stream())
-    , m_priority(option)
-    , m_close(false)
+    , m_log_priority(option)
 {
-    m_writer = std::thread(
-        ::writer_run,
-        std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
-        std::ref(m_os_locker), std::ref(m_close));
+    m_null_os.setstate(std::ios_base::badbit);
 }
 
-ContextImpl::ContextImpl(const std::string &filepath, LogOption option)
-    : m_os(::make_log_stream(filepath))
-    , m_priority(option)
-    , m_close(false)
+Context::~Context()
 {
-    m_writer = std::thread(
-        ::writer_run,
-        std::ref(m_os), std::ref(m_queue), std::ref(m_queue_locker),
-        std::ref(m_os_locker), std::ref(m_close));
 }
 
-ContextImpl::~ContextImpl()
+void Context::set_log_file_stream(const std::string &filepath) noexcept
 {
-    m_close = true;
+    auto tmp = std::make_shared <std::ofstream>(filepath);
 
-    if (m_writer.joinable())
-        m_writer.join();
+    if (not tmp->is_open()) {
+        err() << "Failed to change log file stream ("
+              << filepath << ")\n";
+        return;
+    }
+
+    m_os = tmp;
+    m_log_filename = filepath;
 }
 
-void ContextImpl::set_log_stream(const std::string &filepath)
+std::string Context::get_log_filename() const noexcept
 {
-    std::lock_guard <std::mutex> lock(m_os_locker);
-    m_os = ::make_log_stream(filepath);
+    return m_log_filename;
 }
 
-void ContextImpl::set_console_log_stream()
+void Context::set_console_log_stream()
 {
-    std::lock_guard <std::mutex> lock(m_os_locker);
     m_os = ::make_cout_stream();
+    m_log_filename.clear();
 }
 
-LogOption ContextImpl::log_priority() const
+LogOption Context::log_priority() const
 {
-    return m_priority;
+    return m_log_priority;
 }
 
-void ContextImpl::set_log_priority(LogOption priority)
+void Context::set_log_priority(LogOption priority)
 {
-    m_priority = priority;
+    m_log_priority = priority;
+}
+
+std::ostream& Context::info() const noexcept
+{
+    if (static_cast<unsigned>(m_log_priority) >=
+        static_cast<unsigned>(LOG_OPTION_INFO))
+        return *m_os.get();
+
+    return m_null_os;
+}
+
+std::ostream& Context::dbg() const noexcept
+{
+    if (static_cast<unsigned>(m_log_priority) >=
+        static_cast<unsigned>(LOG_OPTION_DEBUG))
+        return *m_os.get();
+
+    return m_null_os;
+}
+
+std::ostream& Context::err() const noexcept
+{
+    if (static_cast<unsigned>(m_log_priority) >=
+        static_cast<unsigned>(LOG_OPTION_ERROR))
+        return *m_os.get();
+
+    return m_null_os;
 }
 
 } // namespace efyj
