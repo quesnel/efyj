@@ -33,6 +33,44 @@
 #include <thread>
 #include <mutex>
 
+namespace {
+
+std::string
+make_new_name(const std::string& filepath, unsigned int thread_id) noexcept
+{
+    if (filepath.empty()) {
+        std::ostringstream os;
+        os << "worker-" << thread_id << ".log";
+        return os.str();
+    }
+
+    auto dotposition = filepath.find_last_of('.');
+
+    if (dotposition == 0u) {
+        std::ostringstream os;
+        os << "worker-" << thread_id << ".log";
+        return os.str();
+    }
+
+    if (dotposition == filepath.size() - 1) {
+        std::ostringstream os;
+        os << filepath.substr(0, dotposition)
+           << '-' << thread_id;
+
+        return os.str();
+    }
+
+    std::ostringstream os;
+    os << filepath.substr(0, dotposition)
+       << '-' << thread_id
+       << filepath.substr(dotposition + 1);
+
+    return os.str();
+
+}
+
+}
+
 namespace efyj {
 
 class Results
@@ -63,7 +101,8 @@ public:
         m_level[0] = threads;
     }
 
-    void emplace_result(int i, double kappa, unsigned long loop,
+    void emplace_result(int i, double kappa,
+                        unsigned long loop,
                         const std::vector <solver_details::line_updater>& updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
@@ -119,12 +158,15 @@ public:
     }
 };
 
-void parallel_prediction_worker(const Model& model,
+void parallel_prediction_worker(std::shared_ptr<Context> context,
+                                const Model& model,
                                 const Options& options,
                                 const std::vector<int>& ids,
                                 const bool& stop,
                                 Results& results)
 {
+    context->info() << "Parallel prediction worker starts\n" << std::endl;
+
     std::vector <int> simulated(options.observated.size(), 0);
     std::vector <solver_details::line_updater> bestupdaters;
 
@@ -169,6 +211,9 @@ void parallel_prediction_worker(const Model& model,
 
         } while (solver.next() == true);
 
+        context->err() << "Send kappa: " << kappa << " " << loop << '\n'
+                       << std::endl;
+
         results.push(step, kappa, loop, bestupdaters);
 
         bestupdaters.clear();
@@ -182,15 +227,17 @@ void parallel_prediction_worker(const Model& model,
     }
 }
 
-void prediction_n(const Model& model, const Options& options,
+void prediction_n(std::shared_ptr<Context> context,
+                  const Model& model,
+                  const Options& options,
                   unsigned int threads)
 {
-    efyj::out() << efyj::out().redb() << "Parallelized Prediction started\n"
-                << efyj::out().def();
+    context->info() << "Parallelized Prediction started\n"
+                    << "- Threads: "
+                    << threads
+                    << '\n';
 
     assert(threads > 1);
-
-    efyj::out() << "- Threads: " << threads << '\n';
 
     std::vector<std::vector<int>> jobs(threads);
     auto sz = options.observated.size();
@@ -211,13 +258,20 @@ void prediction_n(const Model& model, const Options& options,
     bool stop = false;
 
     std::vector<std::thread> workers { threads };
-    for (auto i = 0u; i != threads; ++i)
+
+    for (auto i = 0u; i != threads; ++i) {
+        auto filepath = ::make_new_name(context->get_log_filename(), i);
+        auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
+        new_ctx->set_log_file_stream(filepath);
+
         workers[i] = std::thread(parallel_prediction_worker,
+                                 new_ctx,
                                  std::cref(model),
                                  std::cref(options),
                                  std::cref(jobs[i]),
                                  std::cref(stop),
                                  std::ref(results));
+    }
 
     /* Here try to read outputs of compuation from prediction workers. */
     /* TODO what use? */

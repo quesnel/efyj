@@ -24,9 +24,13 @@
 
 namespace efyj {
 
-void prediction_0(const Model& model, const Options& options);
+void prediction_0(std::shared_ptr<Context> context,
+                  const Model& model,
+                  const Options& options);
 
-void prediction_n(const Model& model, const Options& options,
+void prediction_n(std::shared_ptr<Context> context,
+                  const Model& model,
+                  const Options& options,
                   unsigned int threads);
 
 } // namespace efyj

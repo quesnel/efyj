@@ -34,10 +34,10 @@
 
 namespace efyj {
 
-void prediction_0(const Model& model, const Options& options)
+void prediction_0(std::shared_ptr<Context> context,
+                  const Model& model, const Options& options)
 {
-    efyj::out() << efyj::out().redb() << "Prediction started\n"
-                << efyj::out().def();
+    context->info() << "Prediction started\n";
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -76,8 +76,10 @@ void prediction_0(const Model& model, const Options& options)
                     std::get<1>(best) = ret;
                     bestupdaters = solver.updaters();
 
-                    efyj::out().printf("  - best kappa found: %f\n",
-                                       std::get<1>(best));
+                    context->info() << "  - best kappa found: "
+                                   << std::get<1>(best)
+                                   << '\n';
+
                 } else if (ret == std::get<1>(best)) {
                     number_bestkappa++;
                 }
@@ -88,16 +90,17 @@ void prediction_0(const Model& model, const Options& options)
 
         end = std::chrono::system_clock::now();
 
-        efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
-                           " / updaters: %d ",
-                           step,
-                           std::get<1>(best),
-                           std::get<0>(best),
-                           number_bestkappa);
+        context->info() << "- " << step
+                        << " / kappa: " << std::get<1>(best)
+                        << " / loop: " << std::get<0>(best)
+                        << " / updaters: ";
 
-        efyj::out() << bestupdaters << " "
-                    << std::chrono::duration<double>(end - start).count()
-                    << "s\n";
+        for (const auto& upd : bestupdaters)
+            context->info() << '[' << upd.attribute << ',' << upd.line << ']';
+
+        context->info() << " / time: "
+                        << std::chrono::duration<double>(end - start).count()
+                        << "s\n";
 
         //
         // TODO: be carefull, solver.init can throw when end of

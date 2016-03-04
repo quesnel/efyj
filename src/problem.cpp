@@ -111,11 +111,13 @@ struct Problem::problem_impl
     };
 
     problem_impl()
-        : problem_type(PROBLEM_MONO_SOLVER)
+        : context(std::make_shared<Context>(LOG_OPTION_DEBUG))
+        , problem_type(PROBLEM_MONO_SOLVER)
     {}
 
     problem_impl(unsigned int thread)
-        : thread_number(thread)
+        : context(std::make_shared<Context>(LOG_OPTION_DEBUG))
+        , thread_number(thread)
         , problem_type(PROBLEM_THREAD_SOLVER)
     {
         if (thread == 0)
@@ -127,6 +129,7 @@ struct Problem::problem_impl
         return thread_number;
     }
 
+    std::shared_ptr<Context> context;
     int rank, world_size;
     unsigned int thread_number;
     problem_solver_type problem_type;
@@ -295,10 +298,11 @@ Problem::prediction(const Model& model, const Options& options)
 {
     switch (m_impl->problem_type) {
     case Problem::problem_impl::PROBLEM_MONO_SOLVER:
-        prediction_0(model, options);
+        prediction_0(m_impl->context, model, options);
         break;
     case Problem::problem_impl::PROBLEM_THREAD_SOLVER:
-        prediction_n(model, options, m_impl->get_thread_number());
+        prediction_n(m_impl->context, model, options,
+                     m_impl->get_thread_number());
         break;
     case Problem::problem_impl::PROBLEM_MPI_SOLVER:
     default:
