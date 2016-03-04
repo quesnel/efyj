@@ -93,113 +93,65 @@ setter_to_str(efyj::cstream::setters s) noexcept
     return setters[static_cast<int>(s)];
 }
 
-void err_conversion_error(const char *what) noexcept
+void err_conversion_error(efyj::cstream& cs, const char *what) noexcept
 {
-    efyj::err() << efyj::err().red()
-                << "stream conversion error "
-                << efyj::err().def()
-                << what
-                << "\n";
-}
-
-void err_write_error(int error_code) noexcept
-{
-    std::vector<char>::size_type size {512};
-    std::vector<char> buf;
-
-    for (;;) {
-        try {
-            buf.resize(size);
-        } catch (const std::bad_alloc&) {
-            efyj::err() << efyj::err().red()
-                << "write error"
-                << efyj::err().def()
-                << "\n";
-            return;
-        }
-
-#if ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE)
-        errno = 0;
-        if (::strerror_r(error_code, buf.data(), buf.size()) != 0) {
-            if (errno == ERANGE) {
-                size *= 2;
-                continue;
-            } else {
-                efyj::err() << efyj::err().red()
-                    << "write error: unknown errno code"
-                    << efyj::err().def()
-                    << "\n";
-                return;
-            }
-        }
-#else
-        char *msg = ::strerror_r(error_code, buf.data(), buf.size());
-        if (msg != buf.data()) {
-            efyj::err() << efyj::err().red()
-                << "write error: "
-                << efyj::err().def ()
-                << msg
-                << "\n";
-            return;
-        }
-#endif
-        else {
-            efyj::err() << efyj::err().red()
-                << "write error: "
-                << efyj::err().def()
-                << buf.data()
-                << "\n";
-            return;
-        }
-    }
+    cs << cs.red()
+       << "stream conversion error "
+       << cs.def()
+       << what
+       << "\n";
 }
 
 } // anonymous namespace
 
 namespace efyj {
 
-cstream::cstream(int fd_, bool try_color_mode) noexcept
-    : fd(fd_)
-    , color_mode(::is_use_color_mode(fd, try_color_mode))
+cstream::cstream(int fd_, bool try_color_mode_, bool close_fd_) noexcept
+: fd(fd_)
+    , color_mode(::is_use_color_mode(fd_, try_color_mode_))
+    , error_detected(false)
+    , close_fd(close_fd_)
 {
 }
 
 cstream::~cstream() noexcept
 {
-    ::fsync(fd);
+    if (fd >= 0) {
+        ::fsync(fd);
+
+        if (close_fd)
+            ::close(fd);
+    }
+}
+
+bool
+cstream::have_color_mode() const noexcept
+{
+    return color_mode;
+}
+
+bool
+cstream::error() const noexcept
+{
+    return error_detected;
 }
 
 cstream&
 cstream::operator<<(char c) noexcept
 {
-    assert(fd >= 0 && "file already closed");
-
-    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
-	    err_write_error(errno);
-
-    return *this;
+    return write(&c, 1);
 }
 
 cstream&
 cstream::operator<<(unsigned char c) noexcept
 {
-    assert(fd >= 0 && "file already closed");
-
-    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
-	    err_write_error(errno);
-
-    return *this;
+    return write(reinterpret_cast<const char*>(&c), 1);
 }
 
 cstream&
 cstream::operator<<(signed char c) noexcept
 {
-    assert(fd >= 0 && "file already closed");
-
-    if (::write(fd, &c, 1) != static_cast<ssize_t>(1))
-	    err_write_error(errno);
-
-    return *this;
+    return write(reinterpret_cast<const char*>(&c), 1);
 }
 
 cstream&
@@ -217,100 +169,136 @@ cstream::operator<<(const std::string& str) noexcept
 cstream&
 cstream::operator<<(unsigned int n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(signed int n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(unsigned long n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(signed long n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(unsigned long long n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(signed long long n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(long double n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(double n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
 cstream::operator<<(float n) noexcept
 {
+    std::string str;
+
     try {
-        return write(std::to_string(n));
+        str = std::to_string(n);
     } catch (const std::exception& e) {
-        err_conversion_error(e.what());
+        err_conversion_error(*this, e.what());
         return *this;
     }
+
+    return write(str.data(), str.size());
 }
 
 cstream&
@@ -334,6 +322,13 @@ cstream::printf(const char *format, ...) noexcept
 cstream&
 cstream::printf(const char *format, va_list ap) noexcept
 {
+#if XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L
+    // If we use the glibc2 library, we can use the vdprintf. The function
+    // vdprintf() is exact analog of vfprintf, except that they output to
+    // a file descriptor fd instead of to a stdio stream.
+
+    ::vdprintf(fd, format, ap);
+#else
     std::vector<char>::size_type size {100};
     std::vector<char> buffer;
 
@@ -341,13 +336,11 @@ cstream::printf(const char *format, va_list ap) noexcept
         try {
             buffer.resize(size);
         } catch (const std::bad_alloc&) {
-            err() << red() << "stream printf error: bad alloc\n";
             return *this;
         }
 
         int n = std::vsnprintf(buffer.data(), size, format, ap);
         if (n < 0) {
-            err() << red() <<  "stream printf error" << def() << "\n";
             return *this;
         }
 
@@ -356,6 +349,9 @@ cstream::printf(const char *format, va_list ap) noexcept
 
         size = static_cast<std::string::size_type>(n) + 1;
     }
+#endif
+
+    return *this;
 }
 
 cstream&
@@ -363,9 +359,31 @@ cstream::write(const char *buf, std::size_t count) noexcept
 {
     assert(fd >= 0 && "file already closed");
 
-    if (buf != nullptr or count > 0)
-        if (::write(fd, buf, count) != static_cast<ssize_t>(count))
-            err_write_error(errno);
+    if (buf == nullptr or count == 0)
+        return *this;
+
+    do {
+        ssize_t ret = ::write(fd, buf, count);
+
+        if (ret < 0) {
+            if (errno == EINTR || errno == EAGAIN)
+                continue;
+
+            perror("cstream::write");
+#ifndef NDEBUG
+            {
+                const char *buf = "cstream::write error. Turn off logging\n";
+                ::write(STDERR_FILENO, buf, strlen(buf));
+            }
+#endif
+
+            error_detected = true;
+            break;
+        }
+
+        count -= ret;
+        buf += ret;
+    } while (count > 0);
 
     return *this;
 }
@@ -432,16 +450,16 @@ cstream::indent(unsigned space_number) noexcept
     return *this;
 }
 
-cstream& out()
-{
-    static cstream cs(STDOUT_FILENO);
-    return cs;
-}
+// cstream& out()
+// {
+//     static cstream cs(STDOUT_FILENO, true, false);
+//     return cs;
+// }
 
-cstream& err()
-{
-    static cstream cs(STDERR_FILENO);
-    return cs;
-}
+// cstream& err()
+// {
+//     static cstream cs(STDERR_FILENO, true, false);
+//     return cs;
+// }
 
 }

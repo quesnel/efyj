@@ -75,6 +75,7 @@ namespace efyj {
 
 class Results
 {
+    std::shared_ptr<Context> m_context;
     std::mutex m_container_mutex;
 
     struct Result {
@@ -89,8 +90,9 @@ class Results
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(unsigned int threads)
-        : m_threads(threads)
+    Results(std::shared_ptr<Context> context, unsigned int threads)
+        : m_context(context)
+        , m_threads(threads)
         , m_start(std::chrono::system_clock::now())
     {
         m_results.reserve(32);
@@ -143,17 +145,19 @@ public:
 
         if (m_level[step - 1] <= 0) {
             m_end = std::chrono::system_clock::now();
-            efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
-                               " / time: %fs / updaters: ",
-                               step,
-                               m_results[step - 1].kappa,
-                               m_results[step - 1].loop,
-                               (std::chrono::duration<double>(m_end - m_start).count()));
+            auto duration = std::chrono::duration<double>(m_end - m_start).count();
+
+            m_context->info().printf("- %d kappa: %f / loop: %" PRIuMAX
+                                     " / time: %fs / updaters: ",
+                                     step,
+                                     m_results[step - 1].kappa,
+                                     m_results[step - 1].loop,
+                                     duration);
 
             for (const auto& x : m_results[step - 1].updaters)
-                efyj::out() << '[' << x.first << ',' << x.second << ']';
+                m_context->info() << '[' << x.first << ',' << x.second << ']';
 
-            efyj::out() << '\n';
+            m_context->info()  << '\n';
         }
     }
 };
@@ -165,12 +169,12 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                                 const bool& stop,
                                 Results& results)
 {
-    context->info() << "Parallel prediction worker starts\n" << std::endl;
+    context->info() << "Parallel prediction worker starts\n";
 
     std::vector <int> simulated(options.observated.size(), 0);
     std::vector <solver_details::line_updater> bestupdaters;
 
-    solver_details::for_each_model_solver solver(model);
+    solver_details::for_each_model_solver solver(context, model);
     solver.reduce(options, ids);
     int walker_number = solver.get_max_updaters();
 
@@ -211,8 +215,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
         } while (solver.next() == true);
 
-        context->err() << "Send kappa: " << kappa << " " << loop << '\n'
-                       << std::endl;
+        context->err() << "Send kappa: " << kappa << " " << loop << '\n';
 
         results.push(step, kappa, loop, bestupdaters);
 
@@ -254,7 +257,7 @@ void prediction_n(std::shared_ptr<Context> context,
 
     assert(id == sz);
 
-    Results results(threads);
+    Results results(context, threads);
     bool stop = false;
 
     std::vector<std::thread> workers { threads };
@@ -262,7 +265,12 @@ void prediction_n(std::shared_ptr<Context> context,
     for (auto i = 0u; i != threads; ++i) {
         auto filepath = ::make_new_name(context->get_log_filename(), i);
         auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
-        new_ctx->set_log_file_stream(filepath);
+        auto ret = new_ctx->set_log_file_stream(filepath);
+
+        if (not ret)
+            context->err().printf("Failed to assign '%s' to thread %d. Switch "
+                                  "to console.\n", filepath.c_str(), i);
+
 
         workers[i] = std::thread(parallel_prediction_worker,
                                  new_ctx,

@@ -30,13 +30,23 @@
 
 namespace efyj {
 
-/** efyj::cstream is an inspired class from the std::ostream.
+/** efyj::cstream is an inspired class from the std::ostream. This class
+ * implements an extremely fast and simple output stream that can only
+ * output to a stream. It does not support seeking, reopening, rewinding,
+ * etc.
  *
  * @code
  * #include "cstream.hpp"
  * int main()
  * {
  *     out() << out().red() << "In red " << out().def() << "\n";
+ *
+ *     int fd = ::open("output.log", O_CREATE);
+ *     if (fd >= 0) {
+ *         efyj::cstream cs(fd);
+ *         cs << "Hello world!\n";
+ *         cs.printf("Hello world %d\n", fd);
+ *     }
  * }
  * @endcode
  */
@@ -44,8 +54,8 @@ class EFYJ_API cstream
 {
 public:
     enum colors { Default = 0, Black, Red, Green, Yellow, Blue, Magenta,
-        Cyan, Light_gray, Dark_gray, Light_red, Light_green, Light_yellow,
-        Light_blue, Light_magenta, Light_cyan, White, No_color_change };
+                  Cyan, Light_gray, Dark_gray, Light_red, Light_green, Light_yellow,
+                  Light_blue, Light_magenta, Light_cyan, White, No_color_change };
 
     enum setters { Reset = 0, Bold, Dim, Underlined, No_setter_change };
 
@@ -74,8 +84,14 @@ public:
         setters setter;
     };
 
-    cstream(int fd, bool try_color_mode = true) noexcept;
+    cstream(int fd, bool try_color_mode, bool close_fd) noexcept;
     ~cstream() noexcept;
+
+    bool have_color_mode() const noexcept;
+
+    /// \e error returns true if an internal write operation failed in
+    /// a previous write.
+    bool error() const noexcept;
 
     cstream(const cstream&) = delete;
     cstream& operator=(const cstream&) = delete;
@@ -149,14 +165,22 @@ private:
     /// \e tty is true if the file descriptor allows colors (windows
     /// console or tty on unix).
     bool color_mode;
+
+    /// \e error_detected reports fatal error in a write operation.
+    bool error_detected;
+
+    /// \e close_fd is true if the file descriptor must be close in
+    /// destructor. \e close_fd is true for regular file, false for
+    /// standard output and error stream.
+    bool close_fd;
 };
 
-/** Give an access to the standard output stream (stdout).
- */
+// /** Give an access to the standard output stream (stdout).
+//  */
 EFYJ_API cstream& out();
 
-/** Give an access to the standard output error stream (stderr).
- */
+// /** Give an access to the standard output error stream (stderr).
+//  */
 EFYJ_API cstream& err();
 
 //

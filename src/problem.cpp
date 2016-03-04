@@ -38,7 +38,8 @@ namespace {
 
 template <typename Solver>
 std::tuple <unsigned long, double>
-compute_best_kappa(const efyj::Model& model,
+compute_best_kappa(std::shared_ptr<efyj::Context> context,
+                   const efyj::Model& model,
                    const efyj::Options& options,
                    int walker_number)
 {
@@ -46,7 +47,7 @@ compute_best_kappa(const efyj::Model& model,
     std::vector <int> simulated(options.options.rows());
 
     {
-        efyj::solver_details::for_each_model_solver solver(model, walker_number);
+        efyj::solver_details::for_each_model_solver solver(context, model, walker_number);
 
         do {
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
@@ -76,26 +77,10 @@ compute_kappa(const efyj::Model& model, const efyj::Options& options)
     for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
         simulated[i] = slv.solve(options.options.row(i));
 
-    double ret = efyj::linear_weighted_kappa(options.observated,
-                                             simulated,
-                                             options.options.rows(),
-                                             model.attributes[0].scale.size());
-
-#ifndef NDEBUG
-    for (auto i = 0ul, e = options.observated.size(); i != e; ++i) {
-        if (options.observated[i] != simulated[i]) {
-            efyj::err() << efyj::err().red() << "Error: "
-                        << efyj::err().def();
-
-            efyj::err().printf("observation (%d) != simulated (%d) at line %d\n",
-                               options.observated[i],
-                               simulated[i],
-                               i);
-        }
-    }
-#endif
-
-    return ret;
+    return efyj::linear_weighted_kappa(options.observated,
+                                       simulated,
+                                       options.options.rows(),
+                                       model.attributes[0].scale.size());
 }
 
 } // anonymous namespace
@@ -110,13 +95,13 @@ struct Problem::problem_impl
         PROBLEM_MPI_SOLVER
     };
 
-    problem_impl()
-        : context(std::make_shared<Context>(LOG_OPTION_DEBUG))
+    problem_impl(std::shared_ptr<Context> context_)
+        : context(context_)
         , problem_type(PROBLEM_MONO_SOLVER)
     {}
 
-    problem_impl(unsigned int thread)
-        : context(std::make_shared<Context>(LOG_OPTION_DEBUG))
+    problem_impl(std::shared_ptr<Context> context_, unsigned int thread)
+        : context(context_)
         , thread_number(thread)
         , problem_type(PROBLEM_THREAD_SOLVER)
     {
@@ -135,12 +120,13 @@ struct Problem::problem_impl
     problem_solver_type problem_type;
 };
 
-Problem::Problem()
-    : m_impl(std::make_unique<Problem::problem_impl>())
+Problem::Problem(std::shared_ptr<Context> context)
+    : m_impl(std::make_unique<Problem::problem_impl>(context))
 {}
 
-Problem::Problem(unsigned int thread_number)
-    : m_impl(std::make_unique<Problem::problem_impl>(thread_number))
+Problem::Problem(std::shared_ptr<Context> context,
+                 unsigned int thread_number)
+    : m_impl(std::make_unique<Problem::problem_impl>(context, thread_number))
 {}
 
 Problem::~Problem()
@@ -158,7 +144,7 @@ Problem::compute0(const Model& model, const Options& options)
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj::out().printf("finished computation at %f elapsed time: %f s.\n"
+    m_impl->context->info().printf("finished computation at %f elapsed time: %f s.\n"
                        "kappa founded: %f\n",
                        std::ctime(&end_time),
                        elapsed_seconds.count(),
@@ -175,13 +161,13 @@ Problem::computen(const Model& model, const Options& options,
     start = std::chrono::system_clock::now();
 
     auto ret = compute_best_kappa<solver_details::solver_stack>(
-        model, options, walker_number);
+        m_impl->context, model, options, walker_number);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    efyj::out().printf("Lines changed: %" PRIuMAX "\n"
+    m_impl->context->info().printf("Lines changed: %" PRIuMAX "\n"
                        "Best kappa: %f\n"
                        "Computation ends at: %s\n"
                        "Elapsed time: %f\n",
@@ -200,7 +186,7 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    solver_details::for_each_model_solver solver(model);
+    solver_details::for_each_model_solver solver(m_impl->context, model);
     if (with_reduce)
         solver.reduce(options);
 
@@ -209,7 +195,7 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     double bestkappa = 0;
     int walker_number = solver.get_max_updaters();
 
-    efyj::out().printf("Needs to compute from 0 to %d updaters\n"
+    m_impl->context->info().printf("Needs to compute from 0 to %d updaters\n"
                        "- 0 kappa: %f\n",
                        walker_number,
                        compute_kappa(model, options));
@@ -237,15 +223,15 @@ Problem::compute_for_ever(const Model& model, const Options& options,
 
         end = std::chrono::system_clock::now();
 
-        efyj::out().printf("- %d kappa: %f / loop: %" PRIuMAX
+        m_impl->context->info().printf("- %d kappa: %f / loop: %" PRIuMAX
                            " / updaters: ",
                            step,
                            std::get<1>(best),
                            std::get<0>(best));
 
-        efyj::out() << bestupdaters << " "
-                    << std::chrono::duration<double>(end - start).count()
-                    << "s\n";
+        m_impl->context->info() << bestupdaters << " "
+                                << std::chrono::duration<double>(end - start).count()
+                                << "s\n";
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
 
@@ -269,7 +255,7 @@ Problem::generate_all_models(const Model& model,
     start = std::chrono::system_clock::now();
 
     std::set<std::string> limit;
-    solver_details::for_each_model_solver solver(model);
+    solver_details::for_each_model_solver solver(m_impl->context, model);
     solver.reduce(options);
     int walker_number = solver.get_max_updaters();
     std::string current(256, '\0');
@@ -277,10 +263,9 @@ Problem::generate_all_models(const Model& model,
 
     for (int step = 1; step <= walker_number; ++step) {
         end = std::chrono::system_clock::now();
-        efyj::out() << efyj::out().red() << "walker " << out().def()
-                    << step << " " << "("
-                    << std::chrono::duration<double>(end - start).count()
-                    << "s) and " << count << " duplicates\n";
+        m_impl->context->info() << "walker " << step << " " << "("
+                                << std::chrono::duration<double>(end - start).count()
+                                << "s) and " << count << " duplicates\n";
         do {
             solver.m_solver.string_functions(current);
             if (limit.emplace(current).second == true)
@@ -306,7 +291,7 @@ Problem::prediction(const Model& model, const Options& options)
         break;
     case Problem::problem_impl::PROBLEM_MPI_SOLVER:
     default:
-        efyj::err() << "unknown prediction solver.\n";
+        m_impl->context->err() << "unknown prediction solver.\n";
     };
 }
 

@@ -23,7 +23,7 @@
 #define INRA_EFYj_CONTEXT_HPP
 
 #include <efyj/efyj.hpp>
-#include <fstream>
+#include <efyj/cstream.hpp>
 #include <memory>
 
 namespace efyj {
@@ -59,17 +59,25 @@ public:
 
     ~Context();
 
-    void set_log_file_stream(const std::string &filepath) noexcept;
+    /** Try to assign a new output file to output message. If the file \e
+     *  filepath can not be open, do nothing.
+     *
+     *  \param filepath The file path to open and where to write.
+     *
+     *  \return true if success, false if an error occured. In this case,
+     *  the previous log is used.
+     */
+    bool set_log_file_stream(std::string filepath) noexcept;
 
     std::string get_log_filename() const noexcept;
 
     void set_console_log_stream();
 
-    std::ostream& info() const noexcept;
+    cstream& info() const noexcept;
 
-    std::ostream& dbg() const noexcept;
+    cstream& dbg() const noexcept;
 
-    std::ostream& err() const noexcept;
+    cstream& err() const noexcept;
 
     LogOption log_priority() const;
 
@@ -80,8 +88,8 @@ public:
     std::string log_template() const;
 
 private:
-    std::shared_ptr <std::ostream> m_os;
-    mutable std::ofstream m_null_os;
+    std::shared_ptr <cstream> m_cs;
+    mutable cstream m_null_cs;
     std::string m_log_filename;
     LogOption m_log_priority;
 };

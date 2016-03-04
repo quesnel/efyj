@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_SOLVER_STACK_HPP
 #define INRA_EFYj_SOLVER_STACK_HPP
 
+#include "context.hpp"
 #include "model.hpp"
 #include "exception.hpp"
 #include "types.hpp"
@@ -495,6 +496,7 @@ operator<<(cstream& os, const std::vector<scale_id>& v)
 class for_each_model_solver
 {
 public:
+    std::shared_ptr<Context> m_context;
     solver_stack m_solver;
     std::vector <line_updater> m_updaters;
     std::vector<std::vector<int>> m_whitelist;
@@ -505,7 +507,7 @@ public:
      */
     void full()
     {
-        out() << out().redb() << "Full problem size\n" << out().def();
+        m_context->info() << "Full problem size\n";
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -517,37 +519,37 @@ public:
 
     void detect_missing_scale_value()
     {
-        out() << out().redb() << "Number of models available\n" << out().def();
+        m_context->info() << "Number of models available\n";
 
         long double model_number {1};
         for (auto i = 0ul, e = m_whitelist.size(); i != e; ++i) {
-            out() << m_solver.scale_size(i) << '^' << m_whitelist[i].size();
+            m_context->info() << m_solver.scale_size(i) << '^' << m_whitelist[i].size();
             if (i + 1 != e)
-                out() << " * ";
+                m_context->info() << " * ";
 
             model_number *= std::pow(m_solver.scale_size(i),
                                      m_whitelist[i].size());
         }
 
-        out() << " = " << model_number << '\n';
+        m_context->info() << " = " << model_number << '\n';
 
-        out() << out().redb() << "Detect unused scale value\n" << out().def();
+        m_context->info() << "Detect unused scale value\n";
 
         for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
             int sv = m_solver.scale_size(i);
 
-            out() << out().defu() << "Attribute " << out().def() << i
+            m_context->info() << "Attribute " << i
                   << "\n- scale size........ : " << sv
                   << "\n- used rows......... : ";
             for (std::size_t x = 0, endx = m_whitelist[i].size(); x != endx; ++x)
-                out() << m_whitelist[i][x] << ' ';
+                m_context->info() << m_whitelist[i][x] << ' ';
 
-            out() << "\n- function.......... : ";
+            m_context->info() << "\n- function.......... : ";
             for (std::size_t x = 0, endx = m_solver.function_size(i);
                  x != endx; ++x)
-                out() << m_solver.value(i, x) << ' ';
+                m_context->info() << m_solver.value(i, x) << ' ';
 
-            out() << "\n- unused scale value : ";
+            m_context->info() << "\n- unused scale value : ";
             for (int j = 0, endj = sv; j != endj; ++j) {
                 std::size_t x, endx;
 
@@ -557,15 +559,16 @@ public:
                 }
 
                 if (x == endx)
-                    out() << j << ' ';
+                    m_context->info() << j << ' ';
             }
-            out() << "\n";
+            m_context->info() << "\n";
         }
     }
 
 public:
-    for_each_model_solver(const Model& model)
-        : m_solver(model)
+    for_each_model_solver(std::shared_ptr<Context> context, const Model& model)
+        : m_context(context)
+        , m_solver(model)
     {
         full();
         init(1);
@@ -573,8 +576,10 @@ public:
         detect_missing_scale_value();
     }
 
-    for_each_model_solver(const Model& model, int walker_number)
-        : m_solver(model)
+    for_each_model_solver(std::shared_ptr<Context> context, const Model& model,
+                          int walker_number)
+        : m_context(context)
+        , m_solver(model)
     {
         full();
         init(walker_number);
@@ -611,7 +616,7 @@ public:
      */
     void reduce(const Options& options)
     {
-        out() << out().redb() << "Reducing problem size\n" << out().reset();
+        m_context->info() << "Reducing problem size\n";
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -623,11 +628,11 @@ public:
             m_solver.reduce(options.options.row(i), whitelist);
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
-            out() << " whitelist ";
+            m_context->info() << " whitelist ";
             for (const auto v : whitelist[i])
-                out() << v << ' ';
+                m_context->info() << v << ' ';
 
-            out() << '(' << m_solver.function_size(i) << ")\n";
+            m_context->info() << '(' << m_solver.function_size(i) << ")\n";
         }
 
         /* convert the set into vector of vector. */
@@ -645,7 +650,7 @@ public:
      */
     void reduce(const Options& options, const std::vector<int>& ids)
     {
-        out() << out().redb() << "Reducing problem size\n" << out().reset();
+        m_context->info() << "Reducing problem size\n";
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -660,11 +665,11 @@ public:
         }
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
-            out() << " whitelist ";
+            m_context->info() << " whitelist ";
             for (const auto v : whitelist[i])
-                out() << v << ' ';
+                m_context->info() << v << ' ';
 
-            out() << '(' << m_solver.function_size(i) << ")\n";
+            m_context->info() << '(' << m_solver.function_size(i) << ")\n";
         }
 
         /* convert the set into vector of vector. */

@@ -141,7 +141,9 @@ operator<<(cstream &os, const Options &options) noexcept
         << "\n";
 }
 
-void Options::read(std::istream& is, const efyj::Model& model)
+void Options::read(std::shared_ptr<Context> context,
+                   std::istream& is,
+                   const efyj::Model& model)
 {
     std::vector <const efyj::attribute *> atts = ::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
@@ -167,11 +169,11 @@ void Options::read(std::istream& is, const efyj::Model& model)
     }
 
     for (std::size_t i = 0, e = atts.size(); i != e; ++i)
-        out() << "column " << i << ' ' << columns[i] << '\n';
+        context->info() << "column " << i << ' ' << columns[i] << '\n';
 
     for (std::size_t i = id, e = id + atts.size(); i != e; ++i) {
-        out() << "try to get_basic_atribute_id " << i << " : "
-              << columns[i] << '\n';
+        context->info() << "try to get_basic_atribute_id " << i << " : "
+                        << columns[i] << '\n';
         convertheader[i - id] = ::get_basic_attribute_id(atts, columns[i]);
     }
 
@@ -187,12 +189,12 @@ void Options::read(std::istream& is, const efyj::Model& model)
 
         boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
         if (columns.size() != atts.size() + id + 1) {
-            err().printf("Options: error in csv file line %d:"
-                         " not correct number of column %d"
-                         " (expected: %d)\n",
-                         line_number,
-                         static_cast<int>(columns.size()),
-                         static_cast<int>(atts.size() + id + 1));
+            context->err().printf("Options: error in csv file line %d:"
+                                  " not correct number of column %d"
+                                  " (expected: %d)\n",
+                                  line_number,
+                                  static_cast<int>(columns.size()),
+                                  static_cast<int>(atts.size() + id + 1));
             continue;
         }
 
@@ -200,18 +202,18 @@ void Options::read(std::istream& is, const efyj::Model& model)
         try {
             obs = model.attributes[0].scale.find_scale_value(columns.back());
         } catch (const efyj_error &e) {
-            err().printf("Options: error in csv file line %d:"
-                         " convertion failure of `%s'\n",
-                         line_number,
-                         columns.back().c_str());
+            context->err().printf("Options: error in csv file line %d:"
+                                  " convertion failure of `%s'\n",
+                                  line_number,
+                                  columns.back().c_str());
             continue;
         }
 
         if (obs < 0) {
-            err().printf("Options: error in csv file line %d:"
-                         " fail to convert observated `%s'\n",
-                         line_number,
-                         columns.back().c_str());
+            context->err().printf("Options: error in csv file line %d:"
+                                  " fail to convert observated `%s'\n",
+                                  line_number,
+                                  columns.back().c_str());
             continue;
         }
 
@@ -220,9 +222,9 @@ void Options::read(std::istream& is, const efyj::Model& model)
             year = std::stoi(columns[id - 1]);
             department = std::stoi(columns[id - 2]);
         } catch (const std::exception &e) {
-            err().printf("Options: error in csv file line %d."
-                         " Malformed year or department\n",
-                         line_number);
+            context->err().printf("Options: error in csv file line %d."
+                                  " Malformed year or department\n",
+                                  line_number);
             continue;
         }
 
@@ -239,11 +241,11 @@ void Options::read(std::istream& is, const efyj::Model& model)
             int option = atts[attid]->scale.find_scale_value(columns[i]);
 
             if (option < 0) {
-                err().printf("Options: error in csv file line %d: "
-                             "unknown scale value `%s' for attribute `%s'",
-                             line_number,
-                             columns[i].c_str(),
-                             atts[attid]->name.c_str());
+                context->err().printf("Options: error in csv file line %d: "
+                                      "unknown scale value `%s' for attribute `%s'",
+                                      line_number,
+                                      columns[i].c_str(),
+                                      atts[attid]->name.c_str());
 
                 simulations.pop_back();
                 if (id == 4)

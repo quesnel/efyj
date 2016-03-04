@@ -55,12 +55,15 @@ struct EFYJ_API Options
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.
      *
+     * @param context use to log message if necessary.
      * @param [in] is input stream where read the CSV data.
      * @param [in] model to ensure correspondence.
      *
      * @throw std::bad_alloc or csv_parser_error.
      */
-    void read(std::istream& is, const Model& model);
+    void read(std::shared_ptr<Context> context,
+              std::istream& is,
+              const Model& model);
 
     /** Release all dynamically allocated memory. */
     void clear() noexcept;

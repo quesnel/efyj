@@ -35,8 +35,8 @@ class EFYJ_API Problem
     std::unique_ptr<problem_impl> m_impl;
 
 public:
-    Problem();
-    Problem(unsigned int thread_number);
+    Problem(std::shared_ptr<Context> context);
+    Problem(std::shared_ptr<Context> context, unsigned int thread_number);
 
     ~Problem();
 
