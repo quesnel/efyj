@@ -37,20 +37,20 @@ LIBEFYJ_REVISION=0
 LIBEFYJ_AGE=2
 
 pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver.hpp	\
-		     src/efyj/problem.hpp src/efyj/post.hpp	\
-		     src/efyj/options.hpp src/efyj/model.hpp	\
-		     src/efyj/exception.hpp src/efyj/efyj.hpp	\
-		     src/efyj/cstream.hpp src/efyj/context.hpp
+		     src/efyj/problem.hpp src/efyj/options.hpp	\
+		     src/efyj/model.hpp src/efyj/exception.hpp	\
+		     src/efyj/efyj.hpp src/efyj/cstream.hpp	\
+		     src/efyj/context.hpp
 
 lib_LTLIBRARIES = src/libefyj.la
 
 src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp		\
 			 src/exception.cpp src/model.cpp		\
-			 src/options.cpp src/prediction.hpp		\
-			 src/prediction.cpp src/prediction-thread.cpp	\
-			 src/problem.cpp src/solver.cpp			\
-			 src/solver-stack.hpp src/utils.cpp		\
-			 src/utils.hpp
+			 src/options.cpp src/post.hpp			\
+			 src/prediction.hpp src/prediction.cpp		\
+			 src/prediction-thread.cpp src/problem.cpp	\
+			 src/solver.cpp src/solver-stack.hpp		\
+			 src/utils.cpp src/utils.hpp
 
 if VISIBILITY
 src_libefyj_la_CPPFLAGS = $(AM_CPPFLAGS) -DEFYJ_DLL -Dlibefyj_EXPORTS \
