@@ -1,7 +1,8 @@
 efyj's todo list
 ----------------
 
-- Problem updates for prediction mode:
+- Problem updates for prediction mode
+
   - Add a time limit (4 days, 4096 hours?)
   - Add a kappa limit (==1 or when kappa decrease)
   - Add the feature to keep all paths to the best kappa found (in
@@ -10,13 +11,11 @@ efyj's todo list
     solver-stack.hpp but change the API.
 
 - Log system:
-  - Chooses best logging system (threads efyj::out() calls are too
-    importants). Perharps we can give a cstream object for each
-    classes and specific constructor?
-  - The context and messages classes are not use. Keep or remove it
-    but do something.
+
+  - add an optional buffer system for the Cstream class.
 
 - ABI: Provides a stable API...
+
   - move all classes, structures and public typedef into a unique
     efyj/efyj.hpp file
   - pimpl for complex class (context?)
