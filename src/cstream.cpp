@@ -450,16 +450,16 @@ cstream::indent(unsigned space_number) noexcept
     return *this;
 }
 
-// cstream& out()
-// {
-//     static cstream cs(STDOUT_FILENO, true, false);
-//     return cs;
-// }
+cstream& out()
+{
+    static cstream cs(STDOUT_FILENO, true, false);
+    return cs;
+}
 
-// cstream& err()
-// {
-//     static cstream cs(STDERR_FILENO, true, false);
-//     return cs;
-// }
+cstream& err()
+{
+    static cstream cs(STDERR_FILENO, true, false);
+    return cs;
+}
 
 }
