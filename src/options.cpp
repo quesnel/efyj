@@ -23,7 +23,7 @@
 #include "exception.hpp"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
-#include <iostream>
+#include <iterator>
 #include <fstream>
 #include <string>
 #include <istream>
@@ -74,11 +74,17 @@ build_ordered_options(efyj::Options &options) noexcept
 
     const std::size_t size = options.simulations.size();
 
+    if (not options.ordered.empty())
+        std::vector<std::vector<int>>().swap(options.ordered);
+
+    options.ordered.resize(size);
+
     for (std::size_t i = 0; i != size; ++i)
         for (std::size_t j = 0; j != size; ++j)
-            if (i != j and options.departments[i] != options.departments[j]
+            if (i != j
+                and options.departments[i] != options.departments[j]
                 and options.years[i] != options.years[j])
-                options.ordered.emplace(i, j);
+                options.ordered[i].emplace_back(j);
 }
 
 } // anonymous namespace
@@ -87,25 +93,15 @@ namespace efyj {
 
 cstream&
 operator<<(cstream &os,
-           const boost::container::flat_multimap <int, int> &map) noexcept
+           const std::vector<std::vector<int>> &ordered) noexcept
 {
-    if (not map.empty()) {
-        auto previous = map.cbegin();
-        os << previous->first << ' ' << previous->second;
+    for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
+        os << i << ' ';
 
-        if (map.size() > 2) {
-            auto it = previous + 1;
+        for (auto j : ordered[i])
+            os << j << ' ';
 
-            while (it != map.cend()) {
-                if (it->first != previous->first) {
-                    os << '\n' << it->first << ' ' << it->second;
-                } else {
-                    os << ' ' << it->second;
-                }
-
-                previous = it++;
-            }
-        }
+        os << '\n';
     }
 
     return os;
@@ -283,7 +279,7 @@ void Options::clear() noexcept
     std::vector <int>().swap(observated);
 
     Array().swap(options);
-    boost::container::flat_multimap <int, int>().swap(ordered);
+    std::vector<std::vector<int>>().swap(ordered);
 }
 
 } // namespace efyj

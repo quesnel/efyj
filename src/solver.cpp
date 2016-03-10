@@ -30,7 +30,7 @@ struct Solver::solver_impl
         : solver(model)
     {}
 
-    solver_details::solver_stack solver;
+    solver_stack solver;
 };
 
 Solver::Solver(const Model& model)

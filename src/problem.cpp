@@ -47,7 +47,7 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
     std::vector <int> simulated(options.options.rows());
 
     {
-        efyj::solver_details::for_each_model_solver solver(context, model, walker_number);
+        efyj::for_each_model_solver solver(context, model, walker_number);
 
         do {
             for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
@@ -61,7 +61,7 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
 
             std::get <1>(best) = std::max(ret, std::get<1>(best));
             std::get <0>(best)++;
-        } while (solver.next() == true);
+        } while (solver.next_value() == true);
     }
 
     return best;
@@ -70,7 +70,7 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
 double
 compute_kappa(const efyj::Model& model, const efyj::Options& options)
 {
-    efyj::solver_details::solver_stack slv(model);
+    efyj::solver_stack slv(model);
 
     std::vector <int> simulated(options.options.rows());
 
@@ -160,7 +160,7 @@ Problem::computen(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    auto ret = compute_best_kappa<solver_details::solver_stack>(
+    auto ret = compute_best_kappa<solver_stack>(
         m_impl->context, model, options, walker_number);
 
     end = std::chrono::system_clock::now();
@@ -186,14 +186,14 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    solver_details::for_each_model_solver solver(m_impl->context, model);
+    for_each_model_solver solver(m_impl->context, model);
     if (with_reduce)
         solver.reduce(options);
 
     std::vector <int> simulated(options.options.rows());
-    std::vector <solver_details::line_updater> bestupdaters;
+    std::vector <std::tuple<int, int, int>> bestupdaters;
     double bestkappa = 0;
-    int walker_number = solver.get_max_updaters();
+    int walker_number = INT_MAX;
 
     m_impl->context->info().printf("Needs to compute from 0 to %d updaters\n"
                        "- 0 kappa: %f\n",
@@ -219,7 +219,7 @@ Problem::compute_for_ever(const Model& model, const Options& options,
             }
 
             ++std::get<0>(best);
-        } while (solver.next() == true);
+        } while (solver.next_value() == true);
 
         end = std::chrono::system_clock::now();
 
@@ -240,7 +240,7 @@ Problem::compute_for_ever(const Model& model, const Options& options,
         // computation is reached.
         //
 
-        solver.init(step + 1);
+        solver.init_walkers(step + 1);
     }
 
     return bestkappa;
@@ -255,9 +255,9 @@ Problem::generate_all_models(const Model& model,
     start = std::chrono::system_clock::now();
 
     std::set<std::string> limit;
-    solver_details::for_each_model_solver solver(m_impl->context, model);
+    for_each_model_solver solver(m_impl->context, model);
     solver.reduce(options);
-    int walker_number = solver.get_max_updaters();
+    int walker_number = INT_MAX;
     std::string current(256, '\0');
     long long int count = 0;
 
@@ -272,9 +272,9 @@ Problem::generate_all_models(const Model& model,
                 os << solver.m_solver << "\n";
             else
                 count++;
-        } while (solver.next() == true);
+        } while (solver.next_value() == true);
 
-        solver.init(step + 1);
+        solver.init_walkers(step + 1);
     }
 }
 

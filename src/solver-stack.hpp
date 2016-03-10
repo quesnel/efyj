@@ -30,13 +30,13 @@
 #include <numeric>
 
 namespace efyj {
-namespace solver_details {
 
 struct aggregate_attribute
 {
     inline
-    aggregate_attribute(const Model& model, std::size_t att, int id_)
+    aggregate_attribute(const Model& model, std::size_t att_, int id_)
         : stack_size(0)
+        , att(att_)
         , id(id_)
     {
         std::transform(model.attributes[att].children.cbegin(),
@@ -202,6 +202,7 @@ struct aggregate_attribute
     Vector stack;
     scale_id scale;
     int stack_size;
+    int att;
     int id; /* Reference in the solver_stack atts attribute. */
 };
 
@@ -259,7 +260,7 @@ struct line_updater
     constexpr line_updater() noexcept
         : attribute(0)
         , line(0)
-    {}
+     {}
 
     constexpr line_updater(int attribute_, int line_) noexcept
         : attribute(attribute_)
@@ -269,18 +270,14 @@ struct line_updater
     friend cstream&
     operator<<(cstream& os, const line_updater& updater) noexcept
     {
-        return os << "[" << updater.attribute << "," << updater.line << "]";
+        return os << '[' << updater.attribute
+                  << ',' << updater.line
+                  << ']';
     }
 
     int attribute;
     int line;
 };
-
-inline bool
-operator==(const line_updater& lhs, const line_updater& rhs) noexcept
-{
-    return lhs.attribute == rhs.attribute and lhs.line == rhs.line;
-}
 
 struct solver_stack
 {
@@ -417,6 +414,18 @@ struct solver_stack
     }
 
     inline void
+    value_set(int attribute, int line, int scale_value) noexcept
+    {
+        assert(atts.size() > 0 && atts.size() < INT_MAX);
+        assert(attribute >= 0 and attribute < static_cast <int>(atts.size()));
+        assert(atts[attribute].functions.size() < INT_MAX);
+        assert(line >= 0 and
+               line < static_cast <int>(atts[attribute].functions.size()));
+
+        atts[attribute].functions[line] = scale_value;
+    }
+
+    inline void
     value_increase(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
@@ -456,6 +465,24 @@ struct solver_stack
         }
     }
 
+    void set_functions(const std::vector<std::vector<scale_id>>& functions)
+    {
+        assert(functions.size() == atts.size());
+
+        for (std::size_t i = 0, e = atts.size(); i != e; ++i)
+            atts[i].functions = functions[i];
+    }
+
+    void get_functions(std::vector<std::vector<scale_id>>& functions)
+    {
+        functions.resize(atts.size());
+
+        std::transform(atts.cbegin(), atts.cend(), functions.begin(),
+                       [](const auto& att) {
+                           return att.functions;
+                       });
+    }
+
     void string_functions(std::string& function)
     {
         function.clear();
@@ -474,7 +501,6 @@ struct solver_stack
         return os;
     }
 
-private:
     std::vector <aggregate_attribute> atts;
 
     // @e function is a Reverse Polish notation.
@@ -507,7 +533,10 @@ public:
      */
     void full()
     {
-        m_context->info() << "Full problem size\n";
+        m_context->info() << m_context->info().cyanb()
+                          << "[Full problem size]"
+                          << m_context->info().def()
+                          << '\n';
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -519,11 +548,15 @@ public:
 
     void detect_missing_scale_value()
     {
-        m_context->info() << "Number of models available\n";
+        m_context->info() << m_context->info().cyanb()
+                          << "[Number of models available]"
+                          << m_context->info().def()
+                          << '\n';
 
         long double model_number {1};
         for (auto i = 0ul, e = m_whitelist.size(); i != e; ++i) {
-            m_context->info() << m_solver.scale_size(i) << '^' << m_whitelist[i].size();
+            m_context->info() << m_solver.scale_size(i) << '^'
+                              << m_whitelist[i].size();
             if (i + 1 != e)
                 m_context->info() << " * ";
 
@@ -533,7 +566,10 @@ public:
 
         m_context->info() << " = " << model_number << '\n';
 
-        m_context->info() << "Detect unused scale value\n";
+        m_context->info() << m_context->info().cyanb()
+                          << "[Detect unused scale value]"
+                          << m_context->info().def()
+                          << '\n';
 
         for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
             int sv = m_solver.scale_size(i);
@@ -571,9 +607,21 @@ public:
         , m_solver(model)
     {
         full();
-        init(1);
+        init_walkers(1);
 
         detect_missing_scale_value();
+
+        context->info() << context->info().cyanb()
+                        << "[internal attribute id -> real attribute]"
+                        << context->info().def()
+                        << '\n';
+
+        for (std::size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
+            context->info().indent(2)
+                << i
+                << ' '
+                << model.attributes[m_solver.atts[i].att].name
+                << '\n';
     }
 
     for_each_model_solver(std::shared_ptr<Context> context, const Model& model,
@@ -582,33 +630,16 @@ public:
         , m_solver(model)
     {
         full();
-        init(walker_number);
+        init_walkers(walker_number);
 
         detect_missing_scale_value();
-    }
 
-    void init(int walker_number)
-    {
-        m_updaters.resize(walker_number);
-        m_walker_number = walker_number;
-
-        {
-            std::size_t sz = 1ul;
-
-            for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
-                sz *= m_solver.function_size(i);
-
-            if (walker_number <= 0 or
-                static_cast <std::size_t>(walker_number) >= sz)
-                throw solver_error(
-                    "solver: param greater than sum of lines in all functions");
-        }
-
-        assert(not m_whitelist[0].empty());
-
-        m_updaters.back().attribute = 0;
-        m_updaters.back().line = 0;
-        init_walker_from(m_updaters.size() - 1);
+        for (std::size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
+            context->info().indent(2)
+                << i
+                << ' '
+                << model.attributes[m_solver.atts[i].att].name
+                << '\n';
     }
 
     /** @e reduce is used to reduce the size of the problem. It removes
@@ -616,7 +647,10 @@ public:
      */
     void reduce(const Options& options)
     {
-        m_context->info() << "Reducing problem size\n";
+        m_context->info() << m_context->info().cyanb()
+                          << "[Reducing problem size]"
+                          << m_context->info().def()
+                          << '\n';
 
         m_whitelist.clear();
         m_whitelist.resize(m_solver.attribute_size());
@@ -628,7 +662,7 @@ public:
             m_solver.reduce(options.options.row(i), whitelist);
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
-            m_context->info() << " whitelist ";
+            m_context->info() << "  Whitelist ";
             for (const auto v : whitelist[i])
                 m_context->info() << v << ' ';
 
@@ -658,11 +692,9 @@ public:
         std::vector<std::set<int>> whitelist;
         whitelist.resize(m_solver.attribute_size());
 
-        for (std::size_t i = 0, e = ids.size(); i != e; ++i) {
-            auto bounds = options.ordered.equal_range(ids[i]);
-            for (auto it = bounds.first; it != bounds.second; ++it)
-                m_solver.reduce(options.options.row(it->second), whitelist);
-        }
+        for (std::size_t i = 0, e = ids.size(); i != e; ++i)
+            for (auto x : options.ordered[ids[i]])
+                m_solver.reduce(options.options.row(x), whitelist);
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
             m_context->info() << " whitelist ";
@@ -681,32 +713,64 @@ public:
         }
     }
 
-    /** Initialize walkers from walker @id - 1 to 0.
-     *
-     * For example, if i = 0 and attribute,line = 0, 0: move 0..n walkers
-     * to the attribute 0, line 0...n.  move n+1..m walkers to the
-     * attribute 1, line 0...m. If the attribute,line of walker is too
-     * big, return false.
-     */
-    bool
-    init_walker_from(int id)
+    void init_next_value()
     {
-        assert(m_updaters.size() < INT_MAX
-               and id < (int)m_updaters.size()
-               and id >= 0);
+        m_solver.reinit();
 
-        int attribute = m_updaters[id].attribute;
-        int line = m_updaters[id].line;
+        for (std::size_t i = 0, e = m_updaters.size(); i != e; ++i) {
+            const int attribute = m_updaters[i].attribute;
+            const int line = m_whitelist[attribute][m_updaters[i].line];
 
-        for (int i = id - 1; i >= 0; --i) {
-            m_updaters[i].attribute = attribute;
-            m_updaters[i].line = ++line;
+            m_solver.value_clear(attribute, line);
+        }
+    }
 
-            if (static_cast<std::size_t>(line) >=
-                m_whitelist[attribute].size()) {
-                m_updaters[i].line = 0;
-                m_updaters[i].attribute = ++attribute;
-                line = -1;
+    bool next_value()
+    {
+        assert(not m_updaters.empty() and m_updaters.size() < INT_MAX);
+
+        std::size_t i = m_updaters.size() - 1;
+
+        for (;;) {
+            int attribute = m_updaters[i].attribute;
+            int line = m_whitelist[attribute][m_updaters[i].line];
+
+            if (m_solver.value(attribute, line) + 1 <
+                m_solver.scale_size(attribute)) {
+
+                m_solver.value_increase(attribute, line);
+                return true;
+            } else {
+                if (i == 0)
+                    return false;
+
+                m_solver.value_clear(attribute, line);
+                --i;
+            }
+        }
+    }
+
+    bool init_walkers(std::size_t walker_numbers)
+    {
+        assert(walker_numbers > 0);
+
+        m_updaters.resize(walker_numbers);
+
+        std::size_t i = 0;
+        int attribute = m_updaters[i].attribute = 0;
+        int line = m_updaters[i].line = 0;
+
+        for (auto j = i + 1; j < m_updaters.size(); ++j) {
+            m_updaters[j].attribute = attribute;
+            m_updaters[j].line = ++line;
+
+            if (static_cast<std::size_t>(m_updaters[j].line) >=
+                m_whitelist[m_updaters[j].attribute].size()) {
+                line = 0;
+                ++attribute;
+
+                m_updaters[j].attribute = attribute;
+                m_updaters[j].line = line;
 
                 if (attribute >= m_solver.attribute_size())
                     return false;
@@ -716,49 +780,72 @@ public:
         return true;
     }
 
-    /** Advance walkers to the next value, line or attribute.
-     *
-     * If the first walker reaches the last attribute, then, second walker
-     * walks to the next value, line or attribute. If the nth walker
-     * reaches the last attribute the the function returns false.
-     */
-    bool next()
+    bool next_line()
     {
-        int i = 0;
+        assert(not m_updaters.empty() and m_updaters.size() < INT_MAX);
 
-        /* A strange behaviour because we need to advance walker and if it
-         * reaches the last item, we advance second walker and
-         * reinitialize previous first walker and ... and advance 3rd
-         * walker and perhaps the advance of the first and second walker
-         * may be impossible with second override first etc.
-         */
+        for (;;) {
+            std::size_t i = m_updaters.size() - 1;
 
-        // TODO: Really need a best algorithm. Perhaps be rewriting the
-        // init_walker_from function.
+            for (;;) {
+                if (static_cast<std::size_t>(m_updaters[i].line + 1) <
+                    m_whitelist[m_updaters[i].attribute].size()) {
+                    ++m_updaters[i].line;
 
-        while (next(i) == false) {
-            ++i;
-            if (i >= m_walker_number)
-                return false;
-        }
+                    int attribute = m_updaters[i].attribute;
+                    int line = m_updaters[i].line;
+                    for (auto j = i + 1; j < m_updaters.size(); ++j) {
+                        m_updaters[j].attribute = attribute;
+                        m_updaters[j].line = ++line;
 
-        if  (i > 0) {
-            while (init_walker_from(i) == false) {
-                ++i;
+                        if (static_cast<std::size_t>(m_updaters[j].line) >=
+                            m_whitelist[m_updaters[j].attribute].size()) {
+                            line = 0;
+                            ++attribute;
 
-                if (i >= m_walker_number)
-                    return false;
+                            m_updaters[j].attribute = attribute;
+                            m_updaters[j].line = line;
 
-                while (next(i) == false) {
-                    ++i;
+                            if (attribute >= m_solver.attribute_size())
+                                return false;
+                        }
+                    }
 
-                    if (i >= m_walker_number)
-                        return false;
+                    return true;
+                } else {
+                    if (m_updaters[i].attribute + 1 < m_solver.attribute_size()) {
+                        ++m_updaters[i].attribute;
+                        m_updaters[i].line = 0;
+
+                        int attribute = m_updaters[i].attribute;
+                        int line = m_updaters[i].line;
+                        for (auto j = i + 1; j < m_updaters.size(); ++j) {
+                            m_updaters[j].attribute = attribute;
+                            m_updaters[j].line = ++line;
+
+                            if (static_cast<std::size_t>(m_updaters[j].line) >=
+                                m_whitelist[m_updaters[j].attribute].size()) {
+                                line = 0;
+                                ++attribute;
+
+                                m_updaters[j].attribute = attribute;
+                                m_updaters[j].line = line;
+
+                                if (attribute >= m_solver.attribute_size())
+                                    return false;
+                            }
+                        }
+
+                        return true;
+                    } else {
+                        if (i == 0)
+                            return false;
+
+                        --i;
+                    }
                 }
             }
         }
-
-        return i >= 0;
     }
 
     template <typename V>
@@ -767,108 +854,75 @@ public:
         return m_solver.solve(options);
     }
 
-    inline int
-    walker_number() const noexcept
+    inline
+    void
+    set_functions(const std::vector<std::vector<scale_id>>& functions)
     {
-        return m_walker_number;
+        return m_solver.set_functions(functions);
     }
 
     inline
-    std::vector <line_updater>
-    updaters() const noexcept
+    void
+    get_functions(std::vector<std::vector<scale_id>>& functions)
+    {
+        return m_solver.get_functions(functions);
+    }
+
+    inline
+    std::vector <std::tuple<int, int, int>>
+        updaters() const
     {
         /* if mode with reduce, we recompute attributes/lines otherwise,
          * we can return m_updaters directly.
          */
 
-        std::vector<line_updater> ret;
+        std::vector<std::tuple<int, int, int>> ret;
+        ret.reserve(m_updaters.size());
 
-        for (const auto& lu : m_updaters)
-            ret.emplace_back(lu.attribute, m_whitelist[lu.attribute][lu.line]);
+        for (std::size_t i = 0, e = m_updaters.size(); i != e; ++i) {
+            const int attribute = m_updaters[i].attribute;
+            const int line = m_whitelist[attribute][m_updaters[i].line];
 
-        return ret;
-    }
-
-    inline
-    int get_max_updaters() const noexcept
-    {
-        std::size_t sz = 1ul;
-
-        for (int i = 0, e = m_solver.attribute_size(); i != e; ++i)
-            sz *= m_solver.function_size(i);
-
-        assert(sz < INT_MAX);
-
-        return static_cast<int>(sz);
-    }
-
-    /** Advance the @e nth walker.
-     *
-     * If we reach the max of the value for (attribute,line), we restore
-     * the default value for (attribute, line) and try to jump to the next
-     * (attribute,line++) or (attribute++,line).
-     */
-    bool next(int i)
-    {
-        int& attribute = m_updaters[i].attribute;
-        int& line = m_updaters[i].line;
-
-        if (attribute == -1 or line == -1)
-            return false;
-
-        for (;;) {
-            if (m_solver.value(attribute, m_whitelist[attribute][line]) + 1 >=
-                m_solver.scale_size(attribute)) {
-                m_solver.value_restore(attribute, m_whitelist[attribute][line]);
-
-                ++line;
-
-                if (static_cast<std::size_t>(line) >=
-                    m_whitelist[attribute].size()) {
-                    line = 0;
-                    ++attribute;
-
-                    if (attribute >= m_solver.attribute_size()) {
-                        attribute = -1;
-                        line = -1;
-                        return false;
-                    }
-                }
-
-                m_solver.value_clear(attribute, m_whitelist[attribute][line]);
-            } else {
-                m_solver.value_increase(attribute, m_whitelist[attribute][line]);
-            }
-
-            /* Checks is the assigned value is different from the default
-               value of the function in aggreage attribute. */
-            if (m_solver.value(attribute, m_whitelist[attribute][line]) !=
-                m_solver.default_value(attribute, m_whitelist[attribute][line]))
-                break;
+            ret.emplace_back(attribute,
+                             line,
+                             m_solver.value(attribute, line));
         }
 
-        return true;
+        return ret;
     }
 };
 
 inline cstream&
-operator<<(cstream& os,
-           const std::vector<line_updater>& updaters)
+operator<<(cstream& os, const std::vector<line_updater>& updaters)
 {
     for (const auto& x : updaters)
-        os << x << " ";
+        os << x << ' ';
 
     return os;
 }
 
-inline cstream&
-operator<<(cstream& os, const for_each_model_solver& solver)
+inline
+cstream& operator<<(cstream& cs, const std::tuple<int, int, int>& att)
 {
-    return os << "walker(s): " << solver.walker_number()
-              << " states: " << solver.updaters()
-              << '\n';
+    return cs << '[' << std::get<0>(att)
+              << ',' << std::get<1>(att)
+              << ',' << std::get<2>(att)
+              << ']';
 }
 
-}} // namespace efyj
+inline
+cstream& operator<<(cstream& cs, const std::vector<
+                    std::tuple<int, int, int>>& atts)
+{
+    for (std::size_t i = 0, e = atts.size(); i != e; ++i) {
+        cs << atts[i];
+        if (i + 1 != e)
+            cs << ' ';
+    }
+
+    return cs;
+}
+
+} // namespace efyj
 
 #endif

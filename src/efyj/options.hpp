@@ -28,7 +28,6 @@
 #include <efyj/options.hpp>
 #include <efyj/model.hpp>
 #include <efyj/types.hpp>
-#include <boost/container/flat_map.hpp>
 
 namespace efyj {
 
@@ -50,7 +49,7 @@ struct EFYJ_API Options
      * departement and year) and a list of another OptionId where
      * simulation, place, departement and year are different.
      */
-    boost::container::flat_multimap <int, int> ordered;
+    std::vector<std::vector<int>> ordered;
 
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.

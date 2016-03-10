@@ -81,7 +81,7 @@ class Results
     struct Result {
         double kappa;
         unsigned long loop;
-        std::vector <std::pair<int, int>> updaters;
+        std::vector <std::tuple<int, int, int>> updaters;
     };
 
     std::vector<Result> m_results;
@@ -105,22 +105,18 @@ public:
 
     void emplace_result(int i, double kappa,
                         unsigned long loop,
-                        const std::vector <solver_details::line_updater>& updaters)
+                        const std::vector <std::tuple<int, int, int>>& updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
                static_cast<std::size_t>(i) < m_results.size());
 
         m_results[i].kappa = kappa;
         m_results[i].loop += loop;
-        m_results[i].updaters.resize(updaters.size());
-        m_results[i].updaters.clear();
-
-        for (const auto& x : updaters)
-            m_results[i].updaters.emplace_back(x.attribute, x.line);
+        m_results[i].updaters = updaters;
     }
 
     void push(int step, double kappa, unsigned long loop,
-              const std::vector <solver_details::line_updater>& updaters)
+              const std::vector <std::tuple<int, int, int>>& updaters)
     {
         std::lock_guard <std::mutex> locker(m_container_mutex);
 
@@ -133,100 +129,131 @@ public:
             m_results.emplace_back();
 
             emplace_result(m_results.size() - 1, kappa, loop, updaters);
-            m_level[m_results.size()]--;
+            // m_level[m_results.size()]--;
         } else {
             if (m_results[step - 1].kappa < kappa)
                 emplace_result(step - 1, kappa, loop, updaters);
             else
                 m_results[step - 1].loop += loop;
 
-            m_level[step - 1]--;
+            // m_level[step - 1]--;
         }
 
-        if (m_level[step - 1] <= 0) {
+//        if (m_level[step - 1] <= 0) {
             m_end = std::chrono::system_clock::now();
             auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-            m_context->info().printf("- %d kappa: %f / loop: %" PRIuMAX
-                                     " / time: %fs / updaters: ",
+            m_context->info().printf("| %d | %13.10f | %" PRIuMAX
+                                     " | %f | ",
                                      step,
                                      m_results[step - 1].kappa,
                                      m_results[step - 1].loop,
                                      duration);
 
-            for (const auto& x : m_results[step - 1].updaters)
-                m_context->info() << '[' << x.first << ',' << x.second << ']';
-
-            m_context->info()  << '\n';
-        }
+            m_context->info() << m_results[step - 1].updaters << '\n';
+//        }
     }
 };
 
 void parallel_prediction_worker(std::shared_ptr<Context> context,
                                 const Model& model,
                                 const Options& options,
-                                const std::vector<int>& ids,
+                                const unsigned int thread_id,
+                                const unsigned int thread_number,
                                 const bool& stop,
                                 Results& results)
 {
-    context->info() << "Parallel prediction worker starts\n";
+    std::vector <int> m_globalsimulated(options.observated.size());
+    std::vector <int> m_simulated(options.observated.size());
+    std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
+    std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+    for_each_model_solver solver(context, model);
+    std::size_t step = 1;
+    unsigned long m_loop = 0;
 
-    std::vector <int> simulated(options.observated.size(), 0);
-    std::vector <solver_details::line_updater> bestupdaters;
+    double m_kappa = 0.0;
 
-    solver_details::for_each_model_solver solver(context, model);
-    solver.reduce(options, ids);
-    int walker_number = solver.get_max_updaters();
+    solver.reduce(options);
 
-    for (int step = 1; step < walker_number; ++step) {
-        unsigned long loop = 0;
-        double kappa = 0;
-        unsigned long long int number_bestkappa = 0;
+    while (step < std::numeric_limits<std::size_t>::max()) {
+        m_kappa = 0;
+        m_globalupdaters.clear();
 
-        do {
-            for (auto it = ids.cbegin(); it != ids.cend(); ++it) {
-                std::fill(simulated.begin(), simulated.end(), 0);
+        solver.init_walkers(step);
 
-                auto bounds = options.ordered.equal_range(*it);
-
-                for (auto jt = bounds.first; jt != bounds.second; ++jt)
-                    simulated[jt->second] = solver.solve(
-                        options.options.row(jt->second));
-
-                auto ret = squared_weighted_kappa(
-                    options.observated,
-                    simulated,
-                    options.options.rows(),
-                    model.attributes[0].scale.size());
-
-                if (ret > kappa) {
-                    number_bestkappa = 0;
-                    kappa = ret;
-                    bestupdaters = solver.updaters();
-                } else if (ret == kappa) {
-                    number_bestkappa++;
-                }
-
-                loop++;
+        for (unsigned int i = 0; i < thread_id; ++i) {
+            if (solver.next_line() == false) {
+                step++;
+                continue;
             }
+        }
 
+        bool isend = false;
+        while (not isend) {
             if (stop)
                 return;
 
-        } while (solver.next() == true);
+            std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
-        context->err() << "Send kappa: " << kappa << " " << loop << '\n';
+            for (std::size_t opt = 0, endopt = options.ordered.size();
+                 opt != endopt; ++opt) {
+                double kappa = 0.;
 
-        results.push(step, kappa, loop, bestupdaters);
+                solver.init_next_value();
 
-        bestupdaters.clear();
+                do {
+                    std::fill(m_simulated.begin(), m_simulated.end(), 0.);
 
-        //
-        // TODO: be carefull, solver.init can throw when end of
-        // computation is reached.
-        //
+                    for (auto x : options.ordered[opt])
+                        m_simulated[x] = solver.solve(
+                            options.options.row(x));
 
-        solver.init(step + 1);
+                    auto ret = squared_weighted_kappa(
+                        options.observated,
+                        m_simulated,
+                        options.options.rows(),
+                        model.attributes[0].scale.size());
+
+                    m_loop++;
+
+                    if (ret > kappa) {
+                        solver.get_functions(m_functions);
+                        m_updaters = solver.updaters();
+                        kappa = ret;
+                    }
+                } while (solver.next_value() == true);
+
+                solver.set_functions(m_functions);
+                m_globalsimulated[opt] = solver.solve(
+                    options.options.row(opt));
+            }
+
+            // We need to send results here.
+
+            auto ret = squared_weighted_kappa(
+                options.observated,
+                m_globalsimulated,
+                options.options.rows(),
+                model.attributes[0].scale.size());
+
+            m_loop++;
+
+            if (ret > m_kappa) {
+                m_kappa = ret;
+                m_globalupdaters = solver.updaters();
+                m_globalfunctions = m_functions;
+            }
+
+            for (unsigned int i = 0; i < thread_number; ++i) {
+                if (solver.next_line() == false) {
+                    results.push(step, m_kappa, m_loop, m_globalupdaters);
+                    isend = true;
+                    break;
+                }
+            }
+        }
+
+        step++;
     }
 }
 
@@ -235,27 +262,12 @@ void prediction_n(std::shared_ptr<Context> context,
                   const Options& options,
                   unsigned int threads)
 {
-    context->info() << "Parallelized Prediction started\n"
-                    << "- Threads: "
-                    << threads
+    context->info() << context->info().cyanb()
+                    << "[Computation starts with " << threads << " threads]"
+                    << context->info().def()
                     << '\n';
 
     assert(threads > 1);
-
-    std::vector<std::vector<int>> jobs(threads);
-    auto sz = options.observated.size();
-    auto sz_div_threads = sz / threads;
-    auto sz_mod_threads = sz % threads;
-
-    auto id = 0u;
-    for (auto& x : jobs)
-        for (auto y = 0u; y != sz_div_threads; ++y)
-            x.push_back(id++);
-
-    for (auto y = 0u; y != sz_mod_threads; ++y)
-        jobs[y].push_back(id++);
-
-    assert(id == sz);
 
     Results results(context, threads);
     bool stop = false;
@@ -271,12 +283,12 @@ void prediction_n(std::shared_ptr<Context> context,
             context->err().printf("Failed to assign '%s' to thread %d. Switch "
                                   "to console.\n", filepath.c_str(), i);
 
-
         workers[i] = std::thread(parallel_prediction_worker,
                                  new_ctx,
                                  std::cref(model),
                                  std::cref(options),
-                                 std::cref(jobs[i]),
+                                 i,
+                                 threads,
                                  std::cref(stop),
                                  std::ref(results));
     }
