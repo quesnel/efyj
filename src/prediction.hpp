@@ -33,6 +33,55 @@ void prediction_n(std::shared_ptr<Context> context,
                   const Options& options,
                   unsigned int threads);
 
+/** \e make_new_name is used to create new file path with a suffix composed with
+ * an identifier.
+ * \param filepath Original filepath to be updated.  \e filepath can be empty or
+ * have and extension.
+ * \param id Identifier to be attached to the origin filepath.
+ * \return A new string represents modified \e filepath with the \e identifier.
+ *
+ * \example
+ * \code
+ * assert(make_new_name("example.dat", 0) == "example-0.dat");
+ * assert(make_new_name("", 0) == "worker-0.dat");
+ * assert(make_new_name("x.y.example.dat", 0) == "x.y.example-0.dat");
+ * assert(make_new_name(".zozo", 0) == "worker-0.dat");
+ * \endcode
+ * \endexample
+inline
+std::string
+make_new_name(const std::string& filepath, unsigned int id) noexcept
+{
+    if (filepath.empty()) {
+        std::ostringstream os;
+        os << "worker-" << id << ".log";
+        return os.str();
+    }
+
+    auto dotposition = filepath.find_last_of('.');
+
+    if (dotposition == 0u) {
+        std::ostringstream os;
+        os << "worker-" << id << ".log";
+        return os.str();
+    }
+
+    if (dotposition == filepath.size() - 1) {
+        std::ostringstream os;
+        os << filepath.substr(0, dotposition)
+           << '-' << id;
+
+        return os.str();
+    }
+
+    std::ostringstream os;
+    os << filepath.substr(0, dotposition)
+       << '-' << id
+       << filepath.substr(dotposition + 1);
+
+    return os.str();
+}
+
 } // namespace efyj
 
 #endif

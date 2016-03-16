@@ -33,44 +33,6 @@
 #include <thread>
 #include <mutex>
 
-namespace {
-
-std::string
-make_new_name(const std::string& filepath, unsigned int thread_id) noexcept
-{
-    if (filepath.empty()) {
-        std::ostringstream os;
-        os << "worker-" << thread_id << ".log";
-        return os.str();
-    }
-
-    auto dotposition = filepath.find_last_of('.');
-
-    if (dotposition == 0u) {
-        std::ostringstream os;
-        os << "worker-" << thread_id << ".log";
-        return os.str();
-    }
-
-    if (dotposition == filepath.size() - 1) {
-        std::ostringstream os;
-        os << filepath.substr(0, dotposition)
-           << '-' << thread_id;
-
-        return os.str();
-    }
-
-    std::ostringstream os;
-    os << filepath.substr(0, dotposition)
-       << '-' << thread_id
-       << filepath.substr(dotposition + 1);
-
-    return os.str();
-
-}
-
-}
-
 namespace efyj {
 
 class Results
@@ -275,7 +237,7 @@ void prediction_n(std::shared_ptr<Context> context,
     std::vector<std::thread> workers { threads };
 
     for (auto i = 0u; i != threads; ++i) {
-        auto filepath = ::make_new_name(context->get_log_filename(), i);
+        auto filepath = make_new_name(context->get_log_filename(), i);
         auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
         auto ret = new_ctx->set_log_file_stream(filepath);
 
