@@ -33,6 +33,9 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 
 namespace {
 
@@ -98,7 +101,11 @@ struct Problem::problem_impl
     problem_impl(std::shared_ptr<Context> context_)
         : context(context_)
         , problem_type(PROBLEM_MONO_SOLVER)
-    {}
+    {
+#ifdef HAVE_MPI
+        problem_type = PROBLEM_MPI_SOLVER;
+#endif
+    }
 
     problem_impl(std::shared_ptr<Context> context_, unsigned int thread)
         : context(context_)
@@ -290,6 +297,15 @@ Problem::prediction(const Model& model, const Options& options)
                      m_impl->get_thread_number());
         break;
     case Problem::problem_impl::PROBLEM_MPI_SOLVER:
+#ifdef HAVE_MPI
+        {
+            int rank, world;
+            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+            MPI_Comm_size(MPI_COMM_WORLD, &world);
+            prediction_mpi(m_impl->context, model, options, rank, world);
+            break;
+        }
+#endif
     default:
         m_impl->context->err() << "unknown prediction solver.\n";
     };

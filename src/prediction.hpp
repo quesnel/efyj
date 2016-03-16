@@ -22,7 +22,15 @@
 #ifndef INRA_EFYj_INTERNAL_PREDICTION_HPP
 #define INRA_EFYj_INTERNAL_PREDICTION_HPP
 
+#include <memory>
+#include <string>
+#include <sstream>
+
 namespace efyj {
+
+class Context;
+struct Model;
+struct Options;
 
 void prediction_0(std::shared_ptr<Context> context,
                   const Model& model,
@@ -32,6 +40,14 @@ void prediction_n(std::shared_ptr<Context> context,
                   const Model& model,
                   const Options& options,
                   unsigned int threads);
+
+#ifdef HAVE_MPI
+void prediction_mpi(std::shared_ptr<Context> context,
+                    const Model& model,
+                    const Options& options,
+                    int rank,
+                    int world);
+#endif
 
 /** \e make_new_name is used to create new file path with a suffix composed with
  * an identifier.
@@ -48,6 +64,7 @@ void prediction_n(std::shared_ptr<Context> context,
  * assert(make_new_name(".zozo", 0) == "worker-0.dat");
  * \endcode
  * \endexample
+ */
 inline
 std::string
 make_new_name(const std::string& filepath, unsigned int id) noexcept
