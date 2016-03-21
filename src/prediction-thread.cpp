@@ -113,6 +113,16 @@ public:
     }
 };
 
+template <typename Solver>
+bool init_worker(Solver& solver, const int thread_id)
+{
+    for (auto i = 0; i < thread_id; ++i)
+        if (solver.next_line() == false)
+            return false;
+
+    return true;
+}
+
 void parallel_prediction_worker(std::shared_ptr<Context> context,
                                 const Model& model,
                                 const Options& options,
@@ -139,11 +149,9 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
         solver.init_walkers(step);
 
-        for (unsigned int i = 0; i < thread_id; ++i) {
-            if (solver.next_line() == false) {
-                step++;
-                continue;
-            }
+        if (init_worker(solver, thread_id) == false) {
+            ++step;
+            continue;
         }
 
         bool isend = false;
