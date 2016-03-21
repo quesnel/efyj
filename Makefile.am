@@ -71,12 +71,11 @@ endif
 
 src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) -version-info	\
 	$(LIBEFYJ_CURRENT):$(LIBEFYJ_REVISION):$(LIBEFYJ_AGE)
+src_libefyj_la_LIBADD = $(EXPAT_LIBS)
 
 if EFYJ_HAVE_MPI
-src_libefyj_la_LDFLAGS += $(MPILIBS)
+src_libefyj_la_LIBADD += $(MPILIBS)
 endif
-
-src_libefyj_la_LIBADD = $(EXPAT_LIBS)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = src/libefyj.pc
@@ -97,4 +96,7 @@ check_PROGRAMS = tests/test_basic
 tests_test_basic_SOURCES = tests/test_basic.cpp
 tests_test_basic_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) $(PTHREAD_CFLAGS)
 tests_test_basic_LDADD = src/libefyj.la $(EXPAT_LIBS) $(PTHREAD_LIBS)
+if EFYJ_HAVE_MPI
+tests_test_basic_LDADD += $(MPILIBS)
+endif
 endif
