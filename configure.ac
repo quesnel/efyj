@@ -29,28 +29,23 @@ LT_INIT([
 	pic-only
 ])
 
-AC_LANG(C++)
-AX_CHECK_COMPILE_FLAG([-std=c++14], [CXX="$CXX -std=c++14"],
-AX_CHECK_COMPILE_FLAG([-std=c++1y], [CXX="$CXX -std=c++1y"],
-AX_CHECK_COMPILE_FLAG([-std=c++11], [CXX="$CXX -std=c++1y"],
-AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXX="$CXX -std=c++1y"],
-AC_MSG_ERROR([Compiler does not support C++11])))))
+AC_LANG_PUSH(C++)
 
-AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
-AX_CHECK_COMPILE_FLAG([-Wextra], [CXXFLAGS="$CXXFLAGS -Wextra"])
-AX_CHECK_COMPILE_FLAG([-pedantic], [CXXFLAGS="$CXXFLAGS -pedantic"])
-AX_CHECK_COMPILE_FLAG([-Wbool-conversion], [CXXFLAGS="$CXXFLAGS -Wbool-conversion"])
-AX_CHECK_COMPILE_FLAG([-Wheader-guard], [CXXFLAGS="$CXXFLAGS -Wheader-guard"])
-AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough], [CXXFLAGS="$CXXFLAGS -Wimplicit-fallthrough"])
-AX_CHECK_COMPILE_FLAG([-Wlogical-not-parentheses], [CXXFLAGS="$CXXFLAGS -Wlogical-not-parentheses"])
-AX_CHECK_COMPILE_FLAG([-Wloop-analysis], [CXXFLAGS="$CXXFLAGS -Wloop-analysis"])
-AX_CHECK_COMPILE_FLAG([-Woverloaded-shift-op-parentheses], [CXXFLAGS="$CXXFLAGS -Woverloaded-shift-op-parentheses"])
-AX_CHECK_COMPILE_FLAG([-Wsizeof-array-argument], [CXXFLAGS="$CXXFLAGS -Wsizeof-array-argument"])
-AX_CHECK_COMPILE_FLAG([-Wstring-conversion], [CXXFLAGS="$CXXFLAGS -Wstring-conversion"])
-AX_CHECK_COMPILE_FLAG([-Wformat-security], [CXXFLAGS="$CXXFLAGS -Wformat-security"])
+## Check wheter to build efyj with MPICXX compiler
+AC_ARG_ENABLE(mpi,
+        [AC_HELP_STRING([--enable-mpi],[compile Efyj with MPI library])],
+        enable_mpi=$enableval, enable_mpi=no)
 
-# check whether to build tesseract with -fvisibility=hidden
-# -fvisibility-inlines-hidden http://gcc.gnu.org/wiki/Visibility
+if test "$enable_mpi" = "yes"; then
+  AX_MPI([],[AC_MSG_ERROR([could not find mpi library for --enable-mpi])])
+  AC_CHECK_PROG(MPIRUN, mpirun, mpirun)
+  AC_SUBST(MPIRUN)
+  CXX=$MPICXX
+fi
+AM_CONDITIONAL(EFYJ_HAVE_MPI, test "$enable_mpi" = "yes")
+
+## Check whether to build tesseract with -fvisibility=hidden
+## -fvisibility-inlines-hidden http://gcc.gnu.org/wiki/Visibility
 AC_MSG_CHECKING(--enable-visibility argument)
 AC_ARG_ENABLE([visibility],
   [AC_HELP_STRING([--enable-visibility],
@@ -98,3 +93,11 @@ AC_MSG_RESULT([
         cxxflags:               ${CXXFLAGS}
         ldflags:                ${LDFLAGS}
 ])
+
+AC_LANG_PUSH([C++])
+AX_COMPILER_VENDOR()
+AC_LANG_POP([C++])
+AC_MSG_NOTICE([CXX    : $CXX])
+AC_MSG_NOTICE([MPICXX : $MPICXX])
+AC_MSG_NOTICE([FC     : $FC])
+AC_MSG_NOTICE([Vendor : $ax_cv_cxx_compiler_vendor])
