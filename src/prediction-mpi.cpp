@@ -33,8 +33,74 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <mpi.h>
 
 namespace efyj {
+
+void pack_data(long long int loop, double kappa, int step,
+               const std::vector<std::tuple<int, int, int>>& updaters)
+{
+    std::vector<int> linearupdaters;
+    linearupdaters.reserve(updaters.size() * 3);
+
+    std::vector<char> buffer(2 * (sizeof(loop) +
+                                  sizeof(kappa) +
+                                  sizeof(step) +
+                                  sizeof(int) * 3 * updaters.size()));
+    int pos = 0;
+
+    MPI_Pack(&loop, 1, MPI_LONG_LONG_INT, buffer.data(), buffer.size(),
+             &pos, MPI_COMM_WORLD);
+
+    MPI_Pack(&kappa, 1, MPI_DOUBLE, buffer.data(), buffer.size(),
+             &pos, MPI_COMM_WORLD);
+
+    MPI_Pack(&step, 1, MPI_INT, buffer.data(), buffer.size(),
+             &pos, MPI_COMM_WORLD);
+
+    for (const auto& updater : updaters) {
+        linearupdaters.push_back(std::get<0>(updater));
+        linearupdaters.push_back(std::get<1>(updater));
+        linearupdaters.push_back(std::get<2>(updater));
+    }
+
+    MPI_Pack(linearupdaters.data(), linearupdaters.size(), MPI_INT,
+             buffer.data(), buffer.size(), &pos, MPI_COMM_WORLD);
+
+    MPI_Send(buffer.data(), buffer.size(), MPI_PACKED, 0, 0, MPI_COMM_WORLD);
+}
+
+void unpack_data(long long int *loop, double *kappa, int *step,
+                 std::vector<std::tuple<int, int, int>> *updaters,
+                 int source, int tag)
+{
+    MPI_Status status;
+    std::vector <char> buffer(8192);
+
+    MPI_Recv(buffer.data(), buffer.size(), MPI_PACKED,
+             source, tag, MPI_COMM_WORLD, &status);
+
+    int pos = 0;
+
+    MPI_Unpack(buffer.data(), buffer.size(), &pos, loop, 1,
+               MPI_LONG_LONG_INT, MPI_COMM_WORLD);
+    MPI_Unpack(buffer.data(), buffer.size(), &pos, kappa, 1,
+               MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Unpack(buffer.data(), buffer.size(), &pos, step, 1,
+               MPI_INT, MPI_COMM_WORLD);
+
+    std::vector<int> linearupdaters(*step * 3);
+
+    MPI_Unpack(buffer.data(), buffer.size(), &pos, linearupdaters.data(),
+               linearupdaters.size(), MPI_INT, MPI_COMM_WORLD);
+
+    updaters->resize(*step);
+    for (std::size_t i = 0, e = linearupdaters.size(); i != e; i += 3) {
+        std::get<0>((*updaters)[i / 3]) = linearupdaters[i];
+        std::get<1>((*updaters)[i / 3]) = linearupdaters[i + 1];
+        std::get<2>((*updaters)[i / 3]) = linearupdaters[i + 2];
+    }
+}
 
 class Results
 {
@@ -109,17 +175,15 @@ public:
                                  m_results[step - 1].loop,
                                  duration);
 
-        m_context->info() << m_results[step - 1].updaters << '\n';
     }
 };
 
-void parallel_prediction_worker(std::shared_ptr<Context> context,
-                                const Model& model,
-                                const Options& options,
-                                const unsigned int thread_id,
-                                const unsigned int thread_number,
-                                const bool& stop,
-                                Results& results)
+void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
+                                    const Model& model,
+                                    const Options& options,
+                                    const int thread_id,
+                                    const int thread_number,
+                                    bool& stop)
 {
     std::vector <int> m_globalsimulated(options.observated.size());
     std::vector <int> m_simulated(options.observated.size());
@@ -139,7 +203,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
         solver.init_walkers(step);
 
-        for (unsigned int i = 0; i < thread_id; ++i) {
+        for (int i = 0; i < thread_id; ++i) {
             if (solver.next_line() == false) {
                 step++;
                 continue;
@@ -148,9 +212,6 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
         bool isend = false;
         while (not isend) {
-            if (stop)
-                return;
-
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
             for (std::size_t opt = 0, endopt = options.ordered.size();
@@ -186,8 +247,6 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                     options.options.row(opt));
             }
 
-            // We need to send results here.
-
             auto ret = squared_weighted_kappa(
                 options.observated,
                 m_globalsimulated,
@@ -202,63 +261,87 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                 m_globalfunctions = m_functions;
             }
 
-            for (unsigned int i = 0; i < thread_number; ++i) {
+            for (int i = 0; i < thread_number; ++i) {
                 if (solver.next_line() == false) {
-                    results.push(step, m_kappa, m_loop, m_globalupdaters);
+                    pack_data(m_loop, m_kappa, step, m_globalupdaters);
                     isend = true;
                     break;
                 }
             }
         }
-
         step++;
+    }
+
+    stop = true;
+}
+
+void synchronize_result(std::shared_ptr<Context> context,
+                        int /*rank*/, int world, bool& stop)
+{
+    Results results(context, world);
+
+    for (;;) {
+        MPI_Status status;
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+        long long int loop;
+        double kappa;
+        int step;
+        std::vector<std::tuple<int, int, int>> updaters;
+
+        unpack_data(&loop, &kappa, &step, &updaters,
+                    status.MPI_SOURCE, status.MPI_TAG);
+
+        context->info().printf("Receives results from %d\n", status.MPI_SOURCE);
+
+        results.push(step, kappa, loop, updaters);
+
+        if (stop)
+            break;
+
+        // is end of the simulation, stop all
+        // if (stop == true) {
+        //     bm::broadcast(world, 0, 0);
+
+        //     // wait for all process and break
+        //     return;
+        // }
     }
 }
 
-void prediction_n(std::shared_ptr<Context> context,
-                  const Model& model,
-                  const Options& options,
-                  unsigned int threads)
+void prediction_mpi(std::shared_ptr<Context> context,
+                    const Model& model,
+                    const Options& options,
+                    int rank,
+                    int world)
 {
-    context->info() << context->info().cyanb()
-                    << "[Computation starts with " << threads << " threads]"
-                    << context->info().def()
-                    << '\n';
-
-    assert(threads > 1);
-
-    Results results(context, threads);
     bool stop = false;
 
-    std::vector<std::thread> workers { threads };
+    /* The first rank processor is use to synchronize results from other
+     * processor. At first, it is an expensive operation but insignifiant
+     * with large number of updaters.
+     */
+    if (rank == 0) {
+        context->info() << context->info().cyanb()
+                        << "[Computation starts with " << world << " processors]"
+                        << context->info().def()
+                        << '\n';
 
-    for (auto i = 0u; i != threads; ++i) {
-        auto filepath = make_new_name(context->get_log_filename(), i);
-        auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
-        auto ret = new_ctx->set_log_file_stream(filepath);
-
-        if (not ret)
-            context->err().printf("Failed to assign '%s' to thread %d. Switch "
-                                  "to console.\n", filepath.c_str(), i);
-
-        workers[i] = std::thread(parallel_prediction_worker,
-                                 new_ctx,
-                                 std::cref(model),
-                                 std::cref(options),
-                                 i,
-                                 threads,
-                                 std::cref(stop),
-                                 std::ref(results));
+        std::thread sync(synchronize_result, context, rank, world,
+                         std::ref(stop));
+        sync.detach();
     }
 
-    /* Here try to read outputs of compuation from prediction workers. */
-    /* TODO what use? */
+    // TODO: default, we use standard output for MPI processes ?
+    //
+    // auto filepath = make_new_name(context->get_log_filename(), rank);
+    // auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
+    // auto ret = new_ctx->set_log_file_stream(filepath);
+    // if (not ret)
+    //     context->err().printf("Failed to assign '%s' to thread %d. Switch "
+    //                           "to console.\n", filepath.c_str(), rank);
 
-    /* Stop work and wait for all prediction workers. */
-    /* TODO stop = true; */
-
-    for (auto& w : workers)
-        w.join();
+    parallel_mpi_prediction_worker(context, model, options, rank, world, stop);
 }
 
 } // namespace efyj

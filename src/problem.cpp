@@ -33,6 +33,9 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 
 namespace {
 
@@ -98,7 +101,11 @@ struct Problem::problem_impl
     problem_impl(std::shared_ptr<Context> context_)
         : context(context_)
         , problem_type(PROBLEM_MONO_SOLVER)
-    {}
+    {
+#ifdef HAVE_MPI
+        problem_type = PROBLEM_MPI_SOLVER;
+#endif
+    }
 
     problem_impl(std::shared_ptr<Context> context_, unsigned int thread)
         : context(context_)
@@ -229,17 +236,12 @@ Problem::compute_for_ever(const Model& model, const Options& options,
                            std::get<1>(best),
                            std::get<0>(best));
 
+        auto duration = std::chrono::duration<double>(end - start).count();
         m_impl->context->info() << bestupdaters << " "
-                                << std::chrono::duration<double>(end - start).count()
+                                << duration
                                 << "s\n";
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
-
-        //
-        // TODO: be carefull, solver.init can throw when end of
-        // computation is reached.
-        //
-
         solver.init_walkers(step + 1);
     }
 
@@ -263,8 +265,9 @@ Problem::generate_all_models(const Model& model,
 
     for (int step = 1; step <= walker_number; ++step) {
         end = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration<double>(end - start).count();
         m_impl->context->info() << "walker " << step << " " << "("
-                                << std::chrono::duration<double>(end - start).count()
+                                << duration
                                 << "s) and " << count << " duplicates\n";
         do {
             solver.m_solver.string_functions(current);
@@ -290,6 +293,15 @@ Problem::prediction(const Model& model, const Options& options)
                      m_impl->get_thread_number());
         break;
     case Problem::problem_impl::PROBLEM_MPI_SOLVER:
+#ifdef HAVE_MPI
+        {
+            int rank, world;
+            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+            MPI_Comm_size(MPI_COMM_WORLD, &world);
+            prediction_mpi(m_impl->context, model, options, rank, world);
+            break;
+        }
+#endif
     default:
         m_impl->context->err() << "unknown prediction solver.\n";
     };

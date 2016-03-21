@@ -44,6 +44,17 @@ pkginclude_HEADERS = src/efyj/types.hpp src/efyj/solver.hpp	\
 
 lib_LTLIBRARIES = src/libefyj.la
 
+if EFYJ_HAVE_MPI
+src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp	\
+			 src/exception.cpp src/model.cpp	\
+			 src/options.cpp src/post.hpp		\
+			 src/prediction.hpp src/prediction.cpp	\
+			 src/prediction-thread.cpp		\
+			 src/prediction-mpi.cpp src/problem.cpp	\
+			 src/solver.cpp src/solver-stack.hpp	\
+			 src/utils.cpp src/utils.hpp
+
+else
 src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp		\
 			 src/exception.cpp src/model.cpp		\
 			 src/options.cpp src/post.hpp			\
@@ -51,14 +62,19 @@ src_libefyj_la_SOURCES = src/context.cpp src/cstream.cpp		\
 			 src/prediction-thread.cpp src/problem.cpp	\
 			 src/solver.cpp src/solver-stack.hpp		\
 			 src/utils.cpp src/utils.hpp
+endif
 
 if VISIBILITY
 src_libefyj_la_CPPFLAGS = $(AM_CPPFLAGS) -DEFYJ_DLL -Dlibefyj_EXPORTS \
     -fvisibility=hidden -fvisibility-inlines-hidden
 endif
 
-src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) \
-			 -version-info $(LIBEFYJ_CURRENT):$(LIBEFYJ_REVISION):$(LIBEFYJ_AGE)
+src_libefyj_la_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) -version-info	\
+	$(LIBEFYJ_CURRENT):$(LIBEFYJ_REVISION):$(LIBEFYJ_AGE)
+
+if EFYJ_HAVE_MPI
+src_libefyj_la_LDFLAGS += $(MPILIBS)
+endif
 
 src_libefyj_la_LIBADD = $(EXPAT_LIBS)
 
@@ -71,6 +87,9 @@ bin_PROGRAMS = efyj
 efyj_SOURCES = src/main.cpp
 efyj_LDFLAGS = $(AM_LDFLAGS) $(EXPAT_LDFLAGS) $(PTHREAD_CFLAGS)
 efyj_LDADD = src/libefyj.la $(EXPAT_LIBS) $(PTHREAD_LIBS)
+if EFYJ_HAVE_MPI
+efyj_LDADD += $(MPILIBS)
+endif
 
 if HAVE_CATCH
 TESTS = tests/test_basic

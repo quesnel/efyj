@@ -25,6 +25,10 @@
 #include <fstream>
 #include <getopt.h>
 
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
+
 namespace {
 
 void usage(std::shared_ptr<efyj::Context> context) noexcept
@@ -165,6 +169,10 @@ models_generate(std::shared_ptr<efyj::Context> context,
 
 int main(int argc, char *argv[])
 {
+#ifdef HAVE_MPI
+    MPI_Init(&argc, &argv);
+#endif
+
     int ret = EXIT_SUCCESS;
     int opt;
     std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
@@ -276,6 +284,10 @@ int main(int argc, char *argv[])
         context->err() << "failure: " << e.what() << '\n';
         ret = EXIT_FAILURE;
     }
+
+#ifdef HAVE_MPI
+    MPI_Finalize();
+#endif
 
     return ret;
 }
