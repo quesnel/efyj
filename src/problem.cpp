@@ -236,17 +236,12 @@ Problem::compute_for_ever(const Model& model, const Options& options,
                            std::get<1>(best),
                            std::get<0>(best));
 
+        auto duration = std::chrono::duration<double>(end - start).count();
         m_impl->context->info() << bestupdaters << " "
-                                << std::chrono::duration<double>(end - start).count()
+                                << duration
                                 << "s\n";
 
         bestkappa = std::max(bestkappa, std::get <1>(best));
-
-        //
-        // TODO: be carefull, solver.init can throw when end of
-        // computation is reached.
-        //
-
         solver.init_walkers(step + 1);
     }
 
@@ -270,8 +265,9 @@ Problem::generate_all_models(const Model& model,
 
     for (int step = 1; step <= walker_number; ++step) {
         end = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration<double>(end - start).count();
         m_impl->context->info() << "walker " << step << " " << "("
-                                << std::chrono::duration<double>(end - start).count()
+                                << duration
                                 << "s) and " << count << " duplicates\n";
         do {
             solver.m_solver.string_functions(current);

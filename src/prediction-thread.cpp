@@ -19,6 +19,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "prediction.hpp"
 #include "problem.hpp"
 #include "solver-stack.hpp"
 #include "model.hpp"
@@ -91,29 +92,24 @@ public:
             m_results.emplace_back();
 
             emplace_result(m_results.size() - 1, kappa, loop, updaters);
-            // m_level[m_results.size()]--;
         } else {
             if (m_results[step - 1].kappa < kappa)
                 emplace_result(step - 1, kappa, loop, updaters);
             else
                 m_results[step - 1].loop += loop;
-
-            // m_level[step - 1]--;
         }
 
-//        if (m_level[step - 1] <= 0) {
-            m_end = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration<double>(m_end - m_start).count();
+        m_end = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-            m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                     " | %f | ",
-                                     step,
-                                     m_results[step - 1].kappa,
-                                     m_results[step - 1].loop,
-                                     duration);
+        m_context->info().printf("| %d | %13.10f | %" PRIuMAX
+                                 " | %f | ",
+                                 step,
+                                 m_results[step - 1].kappa,
+                                 m_results[step - 1].loop,
+                                 duration);
 
-            m_context->info() << m_results[step - 1].updaters << '\n';
-//        }
+        m_context->info() << m_results[step - 1].updaters << '\n';
     }
 };
 
