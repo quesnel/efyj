@@ -890,6 +890,17 @@ public:
 
         return ret;
     }
+
+    inline
+    std::size_t get_attribute_line_tuple_limit() const
+    {
+        std::size_t ret = 0;
+
+        for (const auto& att : m_whitelist)
+            ret += att.size();
+
+        return ret;
+    }
 };
 
 inline cstream&

@@ -19,6 +19,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "prediction.hpp"
 #include "problem.hpp"
 #include "solver-stack.hpp"
 #include "model.hpp"
@@ -30,17 +31,21 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <cmath>
 
 namespace efyj {
 
+/** The \e squared_weighted_kappa structure is used to reduce
+ * allocation/deallocation.
+ */
 struct squared_weighted_kappa
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
     Eigen::ArrayXXd expected = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayXXd weighted = Eigen::ArrayXXd(NC, NC);
-    std::size_t N;
-    std::size_t NC;
+    const int N;
+    const int NC;
 
     inline
     squared_weighted_kappa(std::size_t N_, std::size_t NC_)
@@ -60,7 +65,7 @@ struct squared_weighted_kappa
         observed.setZero();
         distributions.setZero();
 
-        for (int i = 0; i != (int)N; ++i) {
+        for (int i = 0; i != N; ++i) {
             ++observed(observated[i], simulated[i]);
             ++distributions(observated[i], 0);
             ++distributions(simulated[i], 1);
@@ -69,12 +74,12 @@ struct squared_weighted_kappa
         observed /= (double)N;
         distributions /= (double)N;
 
-        for (int i = 0; i != (int)NC; ++i)
-            for (int j = 0; j != (int)NC; ++j)
+        for (int i = 0; i != NC; ++i)
+            for (int j = 0; j != NC; ++j)
                 expected(i, j) = distributions(i, 0) * distributions(j, 1);
 
-        for (int i = 0; i != (int)NC; ++i)
-            for (int j = 0; j != (int)NC; ++j)
+        for (int i = 0; i != NC; ++i)
+            for (int j = 0; j != NC; ++j)
                 weighted(i, j) = std::abs(i - j) * std::abs(i - j);
 
         return 1.0 - ((weighted * observed).sum() /
@@ -113,19 +118,21 @@ struct compute_prediction_0
     {
         m_context->info() << m_context->info().cyanb()
                           << "[Computation start]"
-                                  << m_context->info().def()
-                                  << '\n';
+                          << m_context->info().def()
+                          << '\n';
 
         for_each_model_solver solver(m_context, m_model);
         squared_weighted_kappa kappa_compute(m_options.options.rows(),
                                              m_model.attributes[0].scale.size());
+        solver.reduce(m_options);
+
+        std::size_t max_step = solver.get_attribute_line_tuple_limit();
         std::size_t step = 1;
         m_loop = 0;
 
-        solver.reduce(m_options);
-
         m_context->info() << m_context->info().cyanb()
-                          << "[Computation starts]"
+                          << "[Computation starts 1/"
+                          << max_step << "]"
                           << m_context->info().def()
                           << '\n';
 
@@ -134,7 +141,8 @@ struct compute_prediction_0
             for (std::size_t i = 0, e = m_options.options.rows(); i != e; ++i)
                 m_globalsimulated[i] = solver.solve(m_options.options.row(i));
 
-            auto ret = kappa_compute.run(m_options.observated, m_globalsimulated);
+            auto ret = kappa_compute.run(m_options.observated,
+                                         m_globalsimulated);
 
             m_end = std::chrono::system_clock::now();
 
@@ -150,7 +158,7 @@ struct compute_prediction_0
                                          m_end - m_start).count());
         }
 
-        while (step < std::numeric_limits<std::size_t>::max()) {
+        while (step < max_step) {
             m_start = std::chrono::system_clock::now();
             m_kappa = 0;
             m_globalupdaters.clear();
@@ -158,7 +166,8 @@ struct compute_prediction_0
             solver.init_walkers(step);
 
             do {
-                std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
+                std::fill(m_globalsimulated.begin(),
+                          m_globalsimulated.end(), 0.);
 
                 for (std::size_t opt = 0, endopt = m_options.ordered.size();
                      opt != endopt; ++opt) {

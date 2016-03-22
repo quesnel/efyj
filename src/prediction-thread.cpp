@@ -135,15 +135,16 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
     std::vector <int> m_simulated(options.observated.size());
     std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
     std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+
     for_each_model_solver solver(context, model);
-    std::size_t step = 1;
-    unsigned long m_loop = 0;
-
-    double m_kappa = 0.0;
-
     solver.reduce(options);
 
-    while (step < std::numeric_limits<std::size_t>::max()) {
+    std::size_t step = 1;
+    std::size_t max_step = solver.get_attribute_line_tuple_limit();
+    unsigned long m_loop = 0;
+    double m_kappa = 0.0;
+
+    while (step != max_step) {
         m_kappa = 0;
         m_globalupdaters.clear();
 
