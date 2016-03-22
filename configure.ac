@@ -56,24 +56,12 @@ AC_ARG_ENABLE([visibility],
 AC_MSG_RESULT($enable_visibility)
 AM_CONDITIONAL([VISIBILITY], [test "$enable_visibility" = "yes"])
 
-dnl AX_CHECK_COMPILE_FLAG([-std=c++14], [CXX="$CXX -std=c++14"],
-dnl AX_CHECK_COMPILE_FLAG([-std=c++1y], [CXX="$CXX -std=c++1y"],
-dnl AX_CHECK_COMPILE_FLAG([-std=c++11], [CXX="$CXX -std=c++1y"],
-dnl AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXX="$CXX -std=c++1y"],
-dnl AC_MSG_ERROR([Compiler does not support C++11])))))     `
-
-dnl AX_CHECK_COMPILE_FLAG([-Wall], [CXXFLAGS="$CXXFLAGS -Wall"])
-dnl AX_CHECK_COMPILE_FLAG([-Wextra], [CXXFLAGS="$CXXFLAGS -Wextra"])
-dnl AX_CHECK_COMPILE_FLAG([-pedantic], [CXXFLAGS="$CXXFLAGS -pedantic"])
-dnl AX_CHECK_COMPILE_FLAG([-Wbool-conversion], [CXXFLAGS="$CXXFLAGS -Wbool-conversion"])
-dnl AX_CHECK_COMPILE_FLAG([-Wheader-guard], [CXXFLAGS="$CXXFLAGS -Wheader-guard"])
-dnl AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough], [CXXFLAGS="$CXXFLAGS -Wimplicit-fallthrough"])
-dnl AX_CHECK_COMPILE_FLAG([-Wlogical-not-parentheses], [CXXFLAGS="$CXXFLAGS -Wlogical-not-parentheses"])
-dnl AX_CHECK_COMPILE_FLAG([-Wloop-analysis], [CXXFLAGS="$CXXFLAGS -Wloop-analysis"])
-dnl AX_CHECK_COMPILE_FLAG([-Woverloaded-shift-op-parentheses], [CXXFLAGS="$CXXFLAGS -Woverloaded-shift-op-parentheses"])
-dnl AX_CHECK_COMPILE_FLAG([-Wsizeof-array-argument], [CXXFLAGS="$CXXFLAGS -Wsizeof-array-argument"])
-dnl AX_CHECK_COMPILE_FLAG([-Wstring-conversion], [CXXFLAGS="$CXXFLAGS -Wstring-conversion"])
-dnl AX_CHECK_COMPILE_FLAG([-Wformat-security], [CXXFLAGS="$CXXFLAGS -Wformat-security"])
+## Try to append the C++14 flag
+AX_CHECK_COMPILE_FLAG([-std=c++14], [CXX="$CXX -std=c++14"],
+  AX_CHECK_COMPILE_FLAG([-std=c++1y], [CXX="$CXX -std=c++1y"],
+    AX_CHECK_COMPILE_FLAG([-std=c++11], [CXX="$CXX -std=c++1y"],
+      AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXX="$CXX -std=c++1y"],
+        AC_MSG_ERROR([Compiler does not support C++14])))))
 
 AC_PREFIX_DEFAULT([/usr])
 
@@ -110,12 +98,6 @@ AC_MSG_RESULT([
         cflags:                 ${CFLAGS}
         cxxflags:               ${CXXFLAGS}
         ldflags:                ${LDFLAGS}
-])
 
-AC_LANG_PUSH([C++])
-AX_COMPILER_VENDOR()
-AC_LANG_POP([C++])
-AC_MSG_NOTICE([CXX    : $CXX])
-AC_MSG_NOTICE([MPICXX : $MPICXX])
-AC_MSG_NOTICE([FC     : $FC])
-AC_MSG_NOTICE([Vendor : $ax_cv_cxx_compiler_vendor])
+        mpilibs:                ${MPILIBS}
+])
