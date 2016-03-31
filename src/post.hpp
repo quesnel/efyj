@@ -22,6 +22,7 @@
 #ifndef INRA_EFYj_POST_HPP
 #define INRA_EFYj_POST_HPP
 
+#include "utils.hpp"
 #include <Eigen/Core>
 #include <vector>
 #include <cmath>
