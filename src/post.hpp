@@ -115,6 +115,87 @@ squared_weighted_kappa(const std::vector <int>& observated,
                   (weighted * expected).sum());
 }
 
+/** The \e weighted_kappa_calculator structure is used to reduce
+ * allocation/reallocation/release in comparison with the global functions
+ * \e squared_weighted_kappa and \e linear_weighted_kappa when no vector
+ * or matrix resizing is necessary.
+ */
+class weighted_kappa_calculator
+{
+public:
+    weighted_kappa_calculator(std::size_t N_, std::size_t NC_)
+        : observed(Eigen::ArrayXXd::Zero(NC_, NC_))
+        , distributions(Eigen::ArrayXXd::Zero(NC_, 2))
+        , expected(Eigen::ArrayXXd::Zero(NC_, NC_))
+        , weighted(Eigen::ArrayXXd(NC_, NC_))
+        , N(N_)
+        , NC(NC_)
+    {
+        Expects(N_ > 0 and NC_ > 0,
+                "weighted_kappa_calculator bad parameter");
+    }
+
+    double
+    linear(const std::vector <int>& observated,
+           const std::vector <int>& simulated) noexcept
+    {
+        pre(observated, simulated);
+
+        for (int i = 0; i != (int)NC; ++i)
+            for (int j = 0; j != (int)NC; ++j)
+                weighted(i, j) = std::abs(i - j);
+
+        return post();
+    }
+
+    double
+    squared(const std::vector <int>& observated,
+            const std::vector <int>& simulated) noexcept
+    {
+        pre(observated, simulated);
+
+        for (int i = 0; i != NC; ++i)
+            for (int j = 0; j != NC; ++j)
+                weighted(i, j) = std::abs(i - j) * std::abs(i - j);
+
+        return post();
+    }
+
+
+private:
+    Eigen::ArrayXXd observed;
+    Eigen::ArrayX2d distributions;
+    Eigen::ArrayXXd expected;
+    Eigen::ArrayXXd weighted;
+    const int N;
+    const int NC;
+
+    void pre(const std::vector <int>& observated,
+             const std::vector <int>& simulated) noexcept
+    {
+        observed.setZero();
+        distributions.setZero();
+
+        for (int i = 0; i != (int)N; ++i) {
+            ++observed(observated[i], simulated[i]);
+            ++distributions(observated[i], 0);
+            ++distributions(simulated[i], 1);
+        }
+
+        observed /= (double)N;
+        distributions /= (double)N;
+
+        for (int i = 0; i != (int)NC; ++i)
+            for (int j = 0; j != (int)NC; ++j)
+                expected(i, j) = distributions(i, 0) * distributions(j, 1);
+    }
+
+    double post() noexcept
+    {
+        return 1. - ((weighted * observed).sum() / (weighted * expected).sum());
+    }
+};
+
 }
 
 #endif

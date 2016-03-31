@@ -21,6 +21,7 @@
 
 #include "prediction.hpp"
 #include "problem.hpp"
+#include "post.hpp"
 #include "solver-stack.hpp"
 #include "model.hpp"
 #include "context.hpp"
@@ -34,58 +35,6 @@
 #include <cmath>
 
 namespace efyj {
-
-/** The \e squared_weighted_kappa structure is used to reduce
- * allocation/deallocation.
- */
-struct squared_weighted_kappa
-{
-    Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
-    Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
-    Eigen::ArrayXXd expected = Eigen::ArrayXXd::Zero(NC, NC);
-    Eigen::ArrayXXd weighted = Eigen::ArrayXXd(NC, NC);
-    const int N;
-    const int NC;
-
-    inline
-    squared_weighted_kappa(std::size_t N_, std::size_t NC_)
-        : observed(Eigen::ArrayXXd::Zero(NC_, NC_))
-        , distributions(Eigen::ArrayXXd::Zero(NC_, 2))
-        , expected(Eigen::ArrayXXd::Zero(NC_, NC_))
-        , weighted(Eigen::ArrayXXd(NC_, NC_))
-        , N(N_)
-        , NC(NC_)
-    {}
-
-    inline
-    double
-    run(const std::vector <int>& observated,
-        const std::vector <int>& simulated)
-    {
-        observed.setZero();
-        distributions.setZero();
-
-        for (int i = 0; i != N; ++i) {
-            ++observed(observated[i], simulated[i]);
-            ++distributions(observated[i], 0);
-            ++distributions(simulated[i], 1);
-        }
-
-        observed /= (double)N;
-        distributions /= (double)N;
-
-        for (int i = 0; i != NC; ++i)
-            for (int j = 0; j != NC; ++j)
-                expected(i, j) = distributions(i, 0) * distributions(j, 1);
-
-        for (int i = 0; i != NC; ++i)
-            for (int j = 0; j != NC; ++j)
-                weighted(i, j) = std::abs(i - j) * std::abs(i - j);
-
-        return 1.0 - ((weighted * observed).sum() /
-                      (weighted * expected).sum());
-    }
-};
 
 struct compute_prediction_0
 {
@@ -122,8 +71,8 @@ struct compute_prediction_0
                           << '\n';
 
         for_each_model_solver solver(m_context, m_model);
-        squared_weighted_kappa kappa_compute(m_options.options.rows(),
-                                             m_model.attributes[0].scale.size());
+        weighted_kappa_calculator kappa_c(m_options.options.rows(),
+                                          m_model.attributes[0].scale.size());
         solver.reduce(m_options);
 
         std::size_t max_step = solver.get_attribute_line_tuple_limit();
@@ -141,8 +90,7 @@ struct compute_prediction_0
             for (std::size_t i = 0, e = m_options.options.rows(); i != e; ++i)
                 m_globalsimulated[i] = solver.solve(m_options.options.row(i));
 
-            auto ret = kappa_compute.run(m_options.observated,
-                                         m_globalsimulated);
+            auto ret = kappa_c.squared(m_options.observated, m_globalsimulated);
 
             m_end = std::chrono::system_clock::now();
 
@@ -184,8 +132,8 @@ struct compute_prediction_0
                             m_simulated[x] = solver.solve(
                                 m_options.options.row(x));
 
-                        auto ret = kappa_compute.run(m_options.observated,
-                                                     m_simulated);
+                        auto ret = kappa_c.squared(m_options.observated,
+                                                   m_simulated);
 
                         m_loop++;
 
@@ -203,8 +151,8 @@ struct compute_prediction_0
                         m_options.options.row(opt));
                 }
 
-                auto ret = kappa_compute.run(m_options.observated,
-                                             m_globalsimulated);
+                auto ret = kappa_c.squared(m_options.observated,
+                                           m_globalsimulated);
 
                 m_loop++;
 

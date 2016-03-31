@@ -137,6 +137,8 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
     std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
     for_each_model_solver solver(context, model);
+    weighted_kappa_calculator kappa_c(options.options.rows(),
+                                      model.attributes[0].scale.size());
     solver.reduce(options);
 
     std::size_t step = 1;
@@ -175,12 +177,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                         m_simulated[x] = solver.solve(
                             options.options.row(x));
 
-                    auto ret = squared_weighted_kappa(
-                        options.observated,
-                        m_simulated,
-                        options.options.rows(),
-                        model.attributes[0].scale.size());
-
+                    auto ret = kappa_c.squared(options.observated, m_simulated);
                     m_loop++;
 
                     if (ret > kappa) {
@@ -197,12 +194,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
             // We need to send results here.
 
-            auto ret = squared_weighted_kappa(
-                options.observated,
-                m_globalsimulated,
-                options.options.rows(),
-                model.attributes[0].scale.size());
-
+            auto ret = kappa_c.squared(options.observated, m_globalsimulated);
             m_loop++;
 
             if (ret > m_kappa) {
