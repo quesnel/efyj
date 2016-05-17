@@ -467,10 +467,16 @@ struct solver_stack
 
     void set_functions(const std::vector<std::vector<scale_id>>& functions)
     {
-        assert(functions.size() == atts.size());
+        assert(functions.size() == atts.size()
+               && "incoherent: internal error");
 
-        for (std::size_t i = 0, e = atts.size(); i != e; ++i)
+        for (std::size_t i = 0, e = atts.size(); i != e; ++i) {
+            assert(atts[i].functions.size() == functions[i].size()
+                   && "incoherent: internal error");
+
             atts[i].functions = functions[i];
+            atts[i].saved_functions = functions[i];
+        }
     }
 
     void get_functions(std::vector<std::vector<scale_id>>& functions)
@@ -483,13 +489,15 @@ struct solver_stack
                        });
     }
 
-    void string_functions(std::string& function)
+    std::string string_functions() const
     {
-        function.clear();
+        std::string ret;
 
         for (const auto& att : atts)
             for (auto id : att.functions)
-                function += id + '0';
+                ret += id + '0';
+
+        return ret;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const solver_stack& s)
@@ -900,6 +908,11 @@ public:
             ret += att.size();
 
         return ret;
+    }
+
+    std::string string_functions() const
+    {
+        return m_solver.string_functions();
     }
 };
 

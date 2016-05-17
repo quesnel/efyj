@@ -67,28 +67,27 @@ struct compute_prediction_0
     {
         m_context->info() << m_context->info().cyanb()
                           << "[Computation start]"
-                          << m_context->info().def()
-                          << '\n';
+                          << m_context->info().def() << '\n';
 
         for_each_model_solver solver(m_context, m_model);
         weighted_kappa_calculator kappa_c(m_options.options.rows(),
                                           m_model.attributes[0].scale.size());
-        solver.reduce(m_options);
+        // solver.reduce(m_options);
 
         std::size_t max_step = solver.get_attribute_line_tuple_limit();
         std::size_t step = 1;
-        m_loop = 0;
 
         m_context->info() << m_context->info().cyanb()
                           << "[Computation starts 1/"
                           << max_step << "]"
-                          << m_context->info().def()
-                          << '\n';
+                          << m_context->info().def() << '\n';
+
+        const std::size_t optmax = m_options.ordered.size();
 
         {
             m_start = std::chrono::system_clock::now();
-            for (std::size_t i = 0, e = m_options.options.rows(); i != e; ++i)
-                m_globalsimulated[i] = solver.solve(m_options.options.row(i));
+            for (std::size_t opt = 0; opt != optmax; ++opt)
+                m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
 
             auto ret = kappa_c.squared(m_options.observated, m_globalsimulated);
 
@@ -98,81 +97,76 @@ struct compute_prediction_0
                 "| time (s) | tuple (attribute, line, value) updated |\n";
 
             m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                     " | %f | [] |\n",
-                                     0,
-                                     ret,
-                                     1,
+                                     " | %f | [] |\n", 0, ret, 1,
                                      std::chrono::duration<double>(
                                          m_end - m_start).count());
         }
 
         while (step < max_step) {
             m_start = std::chrono::system_clock::now();
-            m_kappa = 0;
-            m_globalupdaters.clear();
+            m_loop = 0;
 
-            solver.init_walkers(step);
+            // std::vector<std::vector <std::tuple<int, int, int>>> to_explore;
+            std::fill(std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
 
-            do {
-                std::fill(m_globalsimulated.begin(),
-                          m_globalsimulated.end(), 0.);
+            for (std::size_t opt = 0; opt != optmax; ++opt) {
+                solver.init_walkers(step);
+                m_kappa = 0;
 
-                for (std::size_t opt = 0, endopt = m_options.ordered.size();
-                     opt != endopt; ++opt) {
-                    // Attribute and line of walker(s) are fixed here. Now we
-                    // compute the best kappa for value of walkers.
-                    double kappa = 0.;
-
+                do {
                     solver.init_next_value();
 
                     do {
-                        std::fill(m_simulated.begin(), m_simulated.end(), 0.);
+                        std::fill(std::begin(m_simulated), std::end(m_simulated), 0);
 
                         for (auto x : m_options.ordered[opt])
-                            m_simulated[x] = solver.solve(
-                                m_options.options.row(x));
+                            m_simulated[x] = solver.solve(m_options.options.row(x));
 
-                        auto ret = kappa_c.squared(m_options.observated,
-                                                   m_simulated);
+                        auto ret = kappa_c.squared(m_options.observated, m_simulated);
 
                         m_loop++;
 
-                        if (ret > kappa) {
+                        if (opt == 0 && step == 1) {
+                            auto updater = solver.updaters();
+
+                            m_context->info() << "   " << updater << ' ' << ret << ' ' << solver.string_functions() << '\n';
+                        }
+
+                        // if (ret >= m_kappa) {
+                        // if (ret == m_kappa) {
+                        //     if (to_explore.end() == std::find(std::begin(to_explore),
+                        //                                       std::end(to_explore),
+                        //                                       solver.updaters()))
+                        //         to_explore.emplace_back(solver.updaters());
+                        // } else {
+                        // to_explore.clear();
+                        if (ret > m_kappa) {
                             solver.get_functions(m_functions);
                             m_updaters = solver.updaters();
-                            kappa = ret;
+                            m_kappa = ret;
                         }
                     } while (solver.next_value() == true);
+                } while (solver.next_line() == true);
 
-                    // We assign the best updaters an get simulated value of
-                    // the current line option.
-                    solver.set_functions(m_functions);
-                    m_globalsimulated[opt] = solver.solve(
-                        m_options.options.row(opt));
-                }
+                solver.set_functions(m_functions);
+                m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
 
-                auto ret = kappa_c.squared(m_options.observated,
-                                           m_globalsimulated);
+                if (step == 1)
+                    m_context->info() << opt << ' ' << m_globalsimulated[opt] <<
+                        ' ' << m_updaters << ' ' << m_kappa << '\n';
+            }
 
-                m_loop++;
-
-                if (ret > m_kappa) {
-                    m_kappa = ret;
-                    m_globalupdaters = m_updaters;
-                    m_globalfunctions = m_functions;
-                }
-            } while (solver.next_line() == true);
-
+            m_kappa = kappa_c.squared(m_options.observated, m_globalsimulated);
+            m_loop++;
             m_end = std::chrono::system_clock::now();
 
             m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                     " | %f | ",
-                                     step, m_kappa, m_loop,
-                                     std::chrono::duration<double>(
-                                         m_end - m_start).count());
+                            " | %f | %ld | ",
+                            step, m_kappa, m_loop,
+                            std::chrono::duration<double>(
+                                m_end - m_start).count());//, to_explore.size());
 
-            m_context->info() << m_globalupdaters << " |\n";
-
+            m_context->info() << m_updaters << " |\n";
             step++;
         }
     };

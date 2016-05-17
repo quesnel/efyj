@@ -42,7 +42,7 @@ if test "$enable_mpi" = "yes"; then
   AC_SUBST(MPIRUN)
   CXX=$MPICXX
 fi
-AM_CONDITIONAL(EFYJ_HAVE_MPI, test "$enable_mpi" = "yes")
+AM_CONDITIONAL([EFYJ_HAVE_MPI], test "$enable_mpi" = "yes")
 
 ## Check whether to build tesseract with -fvisibility=hidden
 ## -fvisibility-inlines-hidden http://gcc.gnu.org/wiki/Visibility

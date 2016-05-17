@@ -39,7 +39,6 @@
 
 namespace {
 
-template <typename Solver>
 std::tuple <unsigned long, double>
 compute_best_kappa(std::shared_ptr<efyj::Context> context,
                    const efyj::Model& model,
@@ -48,24 +47,26 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
 {
     std::tuple <unsigned long, double> best {0, 0};
     std::vector <int> simulated(options.options.rows());
+    efyj::for_each_model_solver solver(context, model, walker_number);
+    efyj::weighted_kappa_calculator kappa_c(
+        options.options.rows(),
+        model.attributes[0].scale.size());
 
-    {
-        efyj::for_each_model_solver solver(context, model, walker_number);
+    const std::size_t optmax = options.options.rows();
 
+    solver.init_walkers(walker_number);
+    do {
+        solver.init_next_value();
         do {
-            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+            for (std::size_t i = 0; i != optmax; ++i)
                 simulated[i] = solver.solve(options.options.row(i));
 
-            double ret = efyj::squared_weighted_kappa(
-                options.observated,
-                simulated,
-                options.options.rows(),
-                model.attributes[0].scale.size());
+            auto ret = kappa_c.squared(options.observated, simulated);
 
             std::get <1>(best) = std::max(ret, std::get<1>(best));
             std::get <0>(best)++;
         } while (solver.next_value() == true);
-    }
+    } while (solver.next_line() == true);
 
     return best;
 }
@@ -74,16 +75,15 @@ double
 compute_kappa(const efyj::Model& model, const efyj::Options& options)
 {
     efyj::solver_stack slv(model);
-
     std::vector <int> simulated(options.options.rows());
+    efyj::weighted_kappa_calculator kappa_c(
+        options.options.rows(),
+        model.attributes[0].scale.size());
 
     for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
         simulated[i] = slv.solve(options.options.row(i));
 
-    return efyj::linear_weighted_kappa(options.observated,
-                                       simulated,
-                                       options.options.rows(),
-                                       model.attributes[0].scale.size());
+    return kappa_c.squared(options.observated, simulated);
 }
 
 } // anonymous namespace
@@ -142,20 +142,9 @@ Problem::~Problem()
 double
 Problem::compute0(const Model& model, const Options& options)
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
+    auto ret = compute_kappa(model, options);
 
-    double ret = compute_kappa(model, options);
-
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-    m_impl->context->info().printf("finished computation at %f elapsed time: %f s.\n"
-                       "kappa founded: %f\n",
-                       std::ctime(&end_time),
-                       elapsed_seconds.count(),
-                       ret);
+    m_impl->context->info().printf("Kappa computed: %f", ret);
 
     return ret;
 }
@@ -164,26 +153,15 @@ double
 Problem::computen(const Model& model, const Options& options,
                   int walker_number)
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-
-    auto ret = compute_best_kappa<solver_stack>(
-        m_impl->context, model, options, walker_number);
-
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    auto ret = compute_best_kappa(m_impl->context, model,
+                                  options, walker_number);
 
     m_impl->context->info().printf("Lines changed: %" PRIuMAX "\n"
-                       "Best kappa: %f\n"
-                       "Computation ends at: %s\n"
-                       "Elapsed time: %f\n",
-                       std::get<0>(ret),
-                       std::get<1>(ret),
-                       std::ctime(&end_time),
-                       elapsed_seconds.count());
+                                   "Best kappa: %f\n",
+                                   std::get<0>(ret),
+                                   std::get<1>(ret));
 
-    return std::get <1>(ret);
+    return std::get<1>(ret);
 }
 
 double
@@ -193,59 +171,69 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
+    std::vector <int> m_globalsimulated(options.observated.size());
+    std::vector <int> m_simulated(options.observated.size());
+    std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
+    std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+
     for_each_model_solver solver(m_impl->context, model);
+    weighted_kappa_calculator kappa_c(options.options.rows(),
+                                      model.attributes[0].scale_size());
     if (with_reduce)
         solver.reduce(options);
 
-    std::vector <int> simulated(options.options.rows());
-    std::vector <std::tuple<int, int, int>> bestupdaters;
-    double bestkappa = 0;
-    int walker_number = INT_MAX;
+    std::size_t step = 1;
+    std::size_t max_step = solver.get_attribute_line_tuple_limit();
+    unsigned long m_loop = 0;
+    double m_kappa = 0;
 
     m_impl->context->info().printf("Needs to compute from 0 to %d updaters\n"
-                       "- 0 kappa: %f\n",
-                       walker_number,
-                       compute_kappa(model, options));
+                                   "- 0 kappa: %f\n",
+                                   max_step,
+                                   compute_kappa(model, options));
 
-    for (int step = 1; step <= walker_number; ++step) {
-        std::tuple <unsigned long, double> best {0, 0};
+    while (step < max_step) {
+        m_kappa = 0;
+        m_loop = 0;
+        m_globalupdaters.clear();
+        solver.init_walkers(step);
 
         start = std::chrono::system_clock::now();
         do {
-            for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
-                simulated[i] = solver.solve(options.options.row(i));
+            solver.init_next_value();
 
-            auto ret = squared_weighted_kappa(options.observated,
-                                              simulated,
-                                              options.options.rows(),
-                                              model.attributes[0].scale.size());
+            do {
+                m_loop++;
 
-            if (ret > std::get<1>(best)) {
-                std::get<1>(best) = ret;
-                bestupdaters = solver.updaters();
-            }
+                std::fill(m_simulated.begin(), m_simulated.end(), 0);
+                for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
+                    m_simulated[i] = solver.solve(options.options.row(i));
 
-            ++std::get<0>(best);
-        } while (solver.next_value() == true);
+                auto ret = kappa_c.squared(options.observated, m_simulated);
+
+                if (ret > m_kappa) {
+                    solver.get_functions(m_functions);
+                    m_kappa = ret;
+                    m_updaters = solver.updaters();
+                }
+            } while (solver.next_value() == true);
+        } while (solver.next_line() == true);
 
         end = std::chrono::system_clock::now();
 
         m_impl->context->info().printf("- %d kappa: %f / loop: %" PRIuMAX
-                           " / updaters: ",
-                           step,
-                           std::get<1>(best),
-                           std::get<0>(best));
+                                       " / updaters: ",
+                                       step, m_kappa, m_loop);
 
         auto duration = std::chrono::duration<double>(end - start).count();
-        m_impl->context->info() << bestupdaters << " "
+        m_impl->context->info() << m_updaters << " "
                                 << duration
                                 << "s\n";
 
-        bestkappa = std::max(bestkappa, std::get <1>(best));
-        solver.init_walkers(step + 1);
+        step++;
     }
 
-    return bestkappa;
+    return m_kappa;
 }
 
 void
@@ -270,7 +258,7 @@ Problem::generate_all_models(const Model& model,
                                 << duration
                                 << "s) and " << count << " duplicates\n";
         do {
-            solver.m_solver.string_functions(current);
+            current = solver.string_functions();
             if (limit.emplace(current).second == true)
                 os << solver.m_solver << "\n";
             else

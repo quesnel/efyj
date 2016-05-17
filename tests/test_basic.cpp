@@ -63,13 +63,23 @@ TEST_CASE("test empty object read/write", "[model]")
     REQUIRE(is_equal == true);
 }
 
-#if defined EXAMPLES_DIR && defined __unix__
 #include <unistd.h>
+
+static inline void change_pwd()
+{
+#ifdef EXAMPLES_DIR
+    int ret = ::chdir(EXAMPLES_DIR);
+    REQUIRE(ret == 0);
+#else
+    int ret = ::chdir("/home/goth/devel/efyj/efyj/tests");
+    REQUIRE(ret == 0);
+#endif
+}
 
 TEST_CASE("test classic Model file", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
                                             "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi", "Nursery.dxi",
                                             "Shuttle.dxi"
@@ -82,14 +92,14 @@ TEST_CASE("test classic Model file", "[model]")
         {
             std::ifstream is(filepath);
             REQUIRE(is.is_open());
-            REQUIRE_NOTHROW(is >> dex1);
+            REQUIRE_NOTHROW(dex1.read(is));
             std::ofstream os(output);
-            os << dex1;
+            dex1.write(os);
         }
         {
             std::ifstream is(filepath);
             REQUIRE(is.is_open());
-            REQUIRE_NOTHROW(is >> dex2);
+            REQUIRE_NOTHROW(dex2.read(is));
         }
         REQUIRE(dex1 == dex2);
     }
@@ -97,18 +107,18 @@ TEST_CASE("test classic Model file", "[model]")
 
 TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model car;
     std::stringstream ss;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> car);
-        REQUIRE_NOTHROW(ss << car);
+        REQUIRE_NOTHROW(car.read(is));
+        REQUIRE_NOTHROW(car.write(ss));
     }
     efyj::Model car2;
-    REQUIRE_NOTHROW(ss >> car2);
+    REQUIRE_NOTHROW(car2.read(ss));
     REQUIRE(car == car2);
 }
 
@@ -170,13 +180,13 @@ TEST_CASE("test car.dxi load/save/load via file", "[model]")
 
 TEST_CASE("test Car.dxi", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model car;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> car);
+        REQUIRE_NOTHROW(car.read(is));
     }
     REQUIRE(car.attributes.size() == 10u);
     REQUIRE(car.attributes[0].name == "CAR");
@@ -207,25 +217,25 @@ TEST_CASE("test Car.dxi", "[model]")
 
 TEST_CASE("test multiple Car.Model", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model src, dst;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> src);
+        REQUIRE_NOTHROW(src.read(is));
     }
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> dst);
+        REQUIRE_NOTHROW(dst.read(is));
     }
     REQUIRE(src == dst);
     efyj::Model dst2;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> dst2);
+        REQUIRE_NOTHROW(dst2.read(is));
     }
     REQUIRE(dst2 == dst);
     dst2.attributes[0].name = "change";
@@ -234,13 +244,13 @@ TEST_CASE("test multiple Car.Model", "[model]")
 
 TEST_CASE("test solver Car", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model model;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> model);
+        REQUIRE_NOTHROW(model.read(is));
     }
     std::size_t problem_size = 1;
     std::size_t basic_scale_number = 0;
@@ -265,13 +275,13 @@ TEST_CASE("test solver Car", "[model]")
 
 TEST_CASE("test basic solver for Car", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model model;
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> model);
+        REQUIRE_NOTHROW(model.read(is));
     }
     efyj::Vector opt_v3(6); opt_v3 << 1, 2, 2, 2, 2, 2;
     efyj::Vector opt_v2(6); opt_v2 << 1, 1, 2, 2, 2, 1;
@@ -288,13 +298,13 @@ TEST_CASE("test basic solver for Car", "[model]")
 
 TEST_CASE("test basic solver for Enterprise", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model model;
     {
         std::ifstream is("Enterprise.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> model);
+        REQUIRE_NOTHROW(model.read(is));
     }
     efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
     efyj::Solver ss(model);
@@ -303,13 +313,13 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
 
 TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model *model = new efyj::Model;
     {
         std::ifstream is("IPSIM_PV_simulation1-1.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> *model);
+        REQUIRE_NOTHROW(model->read(is));
     }
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
@@ -327,46 +337,89 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
 
 TEST_CASE("test problem Model file", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     std::vector <std::string> filepaths = {
         "Car.dxi", "Employ.dxi", "Enterprise.dxi",
         "IPSIM_PV_simulation1-1.dxi" };
 
-    efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
+    auto ctx = std::make_shared <efyj::Context>(efyj::LOG_OPTION_DEBUG);
 
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
 
-        efyj::Model model = efyj::model_read(ctx, filepath);
-        efyj::option_extract(ctx, model, "/tmp/toto.csv");
-        efyj::Options options = efyj::option_read(ctx, model, "/tmp/toto.csv");
-        double kappa = efyj::compute0(ctx, model, options, 0, 1);
+        efyj::Model model;
+
+        {
+            std::ifstream ifs(filepath);
+            model.read(ifs);
+        }
+
+        {
+            std::ofstream ofs("/tmp/toto.csv");
+            model.write_options(ofs);
+        }
+
+        efyj::Options options;
+
+        {
+            std::ifstream ifs("/tmp/toto.csv");
+            options.read(ctx, ifs, model);
+        }
+
+        efyj::Problem problem(ctx);
+        double kappa = problem.compute0(model, options);
         REQUIRE(kappa == 1.0);
     }
 }
 
 TEST_CASE("test multiple solver for Car", "[model]")
 {
-    efyj::Context ctx = std::make_shared <efyj::ContextImpl>();
+    auto ctx = std::make_shared <efyj::Context>();
 
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
-    efyj::Model model = efyj::model_read(ctx, "Car.dxi");
-    efyj::option_extract(ctx, model, "/tmp/Car.csv");
-    efyj::Options options = efyj::option_read(ctx, model, "/tmp/Car.csv");
+    change_pwd();
 
-    // We change the simulation result.
-    options.options(options.options.cols() - 1, 0) = 0;
-
-    double kappa = efyj::compute0(ctx, model, options, 0, 1);
-    REQUIRE(kappa == Approx(0.6667).epsilon(0.01));
+    efyj::Model model;
 
     {
-        auto kappa_11 = efyj::compute_best_kappa
-            <efyj::Solver>(model, options, 1);
-        REQUIRE(std::get<1>(kappa_11) == 1);
+        std::ifstream ifs("Car.dxi");
+        model.read(ifs);
     }
-}
 
-#endif
+    {
+        std::ofstream ofs("/tmp/Car.csv");
+        model.write_options(ofs);
+    }
+
+    efyj::Options options;
+
+    {
+        std::ifstream ifs("/tmp/Car.csv");
+        options.read(ctx, ifs, model);
+
+    }
+
+     efyj::Problem problem(ctx);
+
+     double kappa;
+     kappa = problem.compute0(model, options);
+     REQUIRE(kappa == 1);
+
+     // We change the simulation result.
+
+     std::cerr << "Options to change: " << options.options.cols() - 1 << '\n';
+     options.options(options.options.cols() - 1, 0) = 0;
+
+     kappa = problem.compute0(model, options);
+     REQUIRE(kappa == Approx(0.6667).epsilon(0.1));
+
+     {
+         auto kappa_11 = problem.compute0(model, options);
+         REQUIRE(kappa_11 == Approx(0.6667).epsilon(0.1));
+     }
+
+     {
+         auto kappa_11 = problem.computen(model, options, 1);
+         REQUIRE(kappa_11 == 1);
+     }
+}

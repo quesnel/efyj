@@ -41,25 +41,29 @@ struct scope_exit {
 };
 
 #ifndef NDEBUG
-constexpr void Expects(bool expression, const char *msg = nullptr)
+inline
+void Expects(bool expression, const char *msg = nullptr)
 {
-    if (!expression)
+    if (not expression)
         throw std::logic_error(msg ? msg : std::string());
 }
 
-constexpr void Ensures(bool expression, const char *msg = nullptr)
+inline
+void Ensures(bool expression, const char *msg = nullptr)
 {
     if (!expression)
         throw std::logic_error(msg ? msg : std::string());
 }
 #else
-constexpr void Expects(bool expression, const char *msg = nullptr) noexcept
+inline
+void Expects(bool expression, const char *msg = nullptr) noexcept
 {
     (void)expression;
     (void)msg;
 }
 
-constexpr void Ensures(bool expression, const char *msg = nullptr) noexcept
+inline void
+Ensures(bool expression, const char *msg = nullptr) noexcept
 {
     (void)expression;
     (void)msg;

@@ -193,6 +193,8 @@ EFYJ_API
 bool operator<(const Model& lhs, const Model& rhs);
 EFYJ_API
 bool operator==(const Model& lhs, const Model& rhs);
+EFYJ_API
+bool operator!=(const Model& lhs, const Model& rhs);
 
 EFYJ_API
 cstream& operator<<(cstream& os, const Model& Model_data) noexcept;

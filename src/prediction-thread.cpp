@@ -109,7 +109,7 @@ public:
                                  m_results[step - 1].loop,
                                  duration);
 
-        m_context->info() << m_results[step - 1].updaters << "|\n";
+        m_context->info() << m_results[step - 1].updaters << " |\n";
     }
 };
 
