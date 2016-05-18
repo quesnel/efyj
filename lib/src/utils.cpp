@@ -20,6 +20,8 @@
  */
 
 #include <thread>
+#include <cstdio>
+#include <cstdarg>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -35,9 +37,38 @@ hardware_concurrency_from_std() noexcept
     return ret == 0 ? 1 : ret;
 }
 
+inline std::string vstringf(const char* format, va_list ap)
+{
+    std::string buffer(256, '\0');
+    int sz;
+
+    for (;;) {
+        sz = std::vsnprintf(&buffer[0], buffer.size(), format, ap);
+
+        if (sz < 0)
+            return {};
+
+        if (static_cast <std::size_t>(sz) < buffer.size())
+            return buffer;
+
+        buffer.resize(sz + 1);
+    }
+}
+
 } // anonymous namespace
 
 namespace efyj {
+
+std::string stringf(const char* format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+    std::string ret = ::vstringf(format, ap);
+    va_end(ap);
+
+    return ret;
+}
 
 unsigned get_hardware_concurrency() noexcept
 {

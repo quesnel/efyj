@@ -164,7 +164,7 @@ struct compute_prediction_0
                             " | %f | %ld | ",
                             step, m_kappa, m_loop,
                             std::chrono::duration<double>(
-                                m_end - m_start).count());//, to_explore.size());
+                                m_end - m_start).count());
 
             m_context->info() << m_updaters << " |\n";
             step++;

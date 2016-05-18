@@ -24,8 +24,17 @@
 
 #include <functional>
 #include <sstream>
+#include <cstdint>
+#include <cinttypes>
+
+#if defined __GNUC__
+#define EFYJ_GCC_PRINTF(format__, args__) \
+    __attribute__ ((format (printf, format__, args__)))
+#endif
 
 namespace efyj {
+
+std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 
 struct scope_exit {
     scope_exit(std::function <void (void)> fct)

@@ -21,7 +21,7 @@
 
 #include "options.hpp"
 #include "exception.hpp"
-#include <boost/format.hpp>
+#include "utils.hpp"
 #include <boost/algorithm/string.hpp>
 #include <iterator>
 #include <fstream>
@@ -56,7 +56,7 @@ get_basic_attribute_id(
 
     if (it == att.end())
         throw efyj::csv_parser_error(
-            (boost::format("unknown attribute `%1%' in model") % name).str());
+            efyj::stringf("unknown attribute `%s' in model", name.c_str()));
 
     return it - att.begin();
 }
@@ -158,10 +158,10 @@ void Options::read(std::shared_ptr<Context> context,
         else
             throw efyj::csv_parser_error(
                 0, 0, std::string(),
-                (boost::format(
-                    "csv have not correct number of column %1% "
-                    "(expected: %2%)") % columns.size() %
-                 (atts.size() + 5u)).str());
+                efyj::stringf("csv have not correct number of column %ld "
+                              "(expected: %ld)",
+                              columns.size(),
+                              (atts.size() + 5u)));
     }
 
     for (std::size_t i = 0, e = atts.size(); i != e; ++i)
