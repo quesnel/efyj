@@ -38,7 +38,6 @@
 #endif
 #endif
 
-#ifdef EFYJ_DLL
 #ifdef libefyj_EXPORTS
 #define EFYJ_API EFYJ_HELPER_DLL_EXPORT
 #else
@@ -46,11 +45,6 @@
 #endif
 #define EFYJ_LOCAL EFYJ_HELPER_DLL_LOCAL
 #define EFYJ_MODULE EFYJ_HELPER_DLL_EXPORT
-#else
-#define EFYJ_API
-#define EFYJ_LOCAL
-#define EFYJ_MODULE EFYJ_HELPER_DLL_EXPORT
-#endif
 
 /** Comments about efyj's API.
  */

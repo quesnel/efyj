@@ -22,10 +22,10 @@
 #ifndef INRA_EFYj_PROBLEM_HPP
 #define INRA_EFYj_PROBLEM_HPP
 
-#include <efyj/efyj.hpp>
-#include <efyj/model.hpp>
-#include <efyj/options.hpp>
-#include <efyj/context.hpp>
+#include "efyj.hpp"
+#include "model.hpp"
+#include "options.hpp"
+#include "context.hpp"
 
 namespace efyj {
 

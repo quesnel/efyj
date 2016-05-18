@@ -22,7 +22,7 @@
 #ifndef FR_INRA_EFYJ_CSTREAM_HPP
 #define FR_INRA_EFYJ_CSTREAM_HPP
 
-#include <efyj/efyj.hpp>
+#include "efyj.hpp"
 #include <string>
 #include <cstdio>
 #include <cstdarg>

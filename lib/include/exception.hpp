@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_EXCEPTION_HPP
 #define INRA_EFYj_EXCEPTION_HPP
 
-#include <efyj/efyj.hpp>
+#include "efyj.hpp"
 #include <stdexcept>
 #include <string>
 

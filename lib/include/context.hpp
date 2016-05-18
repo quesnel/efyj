@@ -22,8 +22,8 @@
 #ifndef INRA_EFYj_CONTEXT_HPP
 #define INRA_EFYj_CONTEXT_HPP
 
-#include <efyj/efyj.hpp>
-#include <efyj/cstream.hpp>
+#include "efyj.hpp"
+#include "cstream.hpp"
 #include <memory>
 
 namespace efyj {

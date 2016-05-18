@@ -22,12 +22,12 @@
 #ifndef INRA_EFYj_OPTIONS_HPP
 #define INRA_EFYj_OPTIONS_HPP
 
-#include <efyj/efyj.hpp>
-#include <efyj/context.hpp>
-#include <efyj/cstream.hpp>
-#include <efyj/options.hpp>
-#include <efyj/model.hpp>
-#include <efyj/types.hpp>
+#include "efyj.hpp"
+#include "context.hpp"
+#include "cstream.hpp"
+#include "options.hpp"
+#include "model.hpp"
+#include "types.hpp"
 
 namespace efyj {
 

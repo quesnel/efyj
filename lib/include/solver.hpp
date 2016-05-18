@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 INRA
+/* Copyright (C) 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,32 +19,33 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/solver.hpp>
-#include "solver-stack.hpp"
+#ifndef INRA_EFYj_SOLVER_HPP
+#define INRA_EFYj_SOLVER_HPP
+
+#include "efyj.hpp"
+#include "model.hpp"
+#include "options.hpp"
+#include <memory>
 
 namespace efyj {
 
-struct Solver::solver_impl
+class EFYJ_API Solver
 {
-    solver_impl(const Model& model)
-        : solver(model)
-    {}
+    struct solver_impl;
+    std::unique_ptr<solver_impl> m_impl;
 
-    solver_stack solver;
+public:
+    Solver(const Model& model);
+    ~Solver();
+
+    Solver(const Solver&) = delete;
+    Solver(Solver&&) = delete;
+    Solver& operator=(const Solver&) = delete;
+    Solver& operator=(Solver&&) = delete;
+
+    scale_id solve(const Vector& opt);
 };
 
-Solver::Solver(const Model& model)
-    : m_impl(std::make_unique<Solver::solver_impl>(model))
-{
-}
-
-Solver::~Solver()
-{
-}
-
-scale_id Solver::solve(const Vector& opt)
-{
-    return m_impl->solver.solve(opt);
-}
-
 } // namespace efyj
+
+#endif

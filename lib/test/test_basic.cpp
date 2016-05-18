@@ -19,10 +19,10 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/context.hpp>
-#include <efyj/problem.hpp>
-#include <efyj/model.hpp>
-#include <efyj/solver.hpp>
+#include "context.hpp"
+#include "problem.hpp"
+#include "model.hpp"
+#include "solver.hpp"
 
 #include <sstream>
 #include <cstdlib>

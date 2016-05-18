@@ -19,7 +19,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/cstream.hpp>
+#include "cstream.hpp"
 #include <vector>
 #include <cerrno>
 #include <cassert>

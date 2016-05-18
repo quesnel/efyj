@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2015 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,22 +19,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef INRA_EFYj_TYPES_HPP
-#define INRA_EFYj_TYPES_HPP
-
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
-#endif
-
-#include <Eigen/src/Core/util/DisableStupidWarnings.h>
-#include <Eigen/Core>
+#include "solver.hpp"
+#include "solver-stack.hpp"
 
 namespace efyj {
 
-typedef Eigen::ArrayXXi Array;
-typedef Array::RowXpr VectorRef;
-typedef Eigen::VectorXi Vector;
+struct Solver::solver_impl
+{
+    solver_impl(const Model& model)
+        : solver(model)
+    {}
 
+    solver_stack solver;
+};
+
+Solver::Solver(const Model& model)
+    : m_impl(std::make_unique<Solver::solver_impl>(model))
+{
 }
 
-#endif
+Solver::~Solver()
+{
+}
+
+scale_id Solver::solve(const Vector& opt)
+{
+    return m_impl->solver.solve(opt);
+}
+
+} // namespace efyj

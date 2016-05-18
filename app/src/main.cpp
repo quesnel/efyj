@@ -19,8 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/problem.hpp>
-#include <efyj/cstream.hpp>
+#include "problem.hpp"
+#include "cstream.hpp"
 #include <chrono>
 #include <fstream>
 #include <getopt.h>

@@ -22,9 +22,9 @@
 #ifndef INRA_EFYj_MODEL_HPP
 #define INRA_EFYj_MODEL_HPP
 
-#include <efyj/efyj.hpp>
-#include <efyj/exception.hpp>
-#include <efyj/cstream.hpp>
+#include "efyj.hpp"
+#include "exception.hpp"
+#include "cstream.hpp"
 #include <algorithm>
 #include <deque>
 #include <limits>
