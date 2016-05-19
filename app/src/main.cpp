@@ -254,10 +254,11 @@ int main(int argc, char *argv[])
     std::unique_ptr<efyj::Problem> problem;
 
     if (threads == 0)
-        problem = std::make_unique<efyj::Problem>(context);
+        problem = std::unique_ptr<efyj::Problem>(
+            new efyj::Problem(context));
     else
-        problem = std::make_unique<efyj::Problem>(context,
-                                                  threads == 1 ? 0 : threads);
+        problem = std::unique_ptr<efyj::Problem>(
+            new efyj::Problem(context, threads == 1 ? 0 : threads));
 
     if (not generatedfilepath.empty()) {
         context->info() << "Generates all models.\n";

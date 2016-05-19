@@ -128,12 +128,14 @@ struct Problem::problem_impl
 };
 
 Problem::Problem(std::shared_ptr<Context> context)
-    : m_impl(std::make_unique<Problem::problem_impl>(context))
+    : m_impl(std::unique_ptr<Problem::problem_impl>(
+                 new Problem::problem_impl(context)))
 {}
 
 Problem::Problem(std::shared_ptr<Context> context,
                  unsigned int thread_number)
-    : m_impl(std::make_unique<Problem::problem_impl>(context, thread_number))
+    : m_impl(std::unique_ptr<Problem::problem_impl>(
+                 new Problem::problem_impl(context, thread_number)))
 {}
 
 Problem::~Problem()

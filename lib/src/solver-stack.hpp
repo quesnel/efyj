@@ -484,7 +484,8 @@ struct solver_stack
         functions.resize(atts.size());
 
         std::transform(atts.cbegin(), atts.cend(), functions.begin(),
-                       [](const auto& att) {
+                       [](const aggregate_attribute& att)
+                       {
                            return att.functions;
                        });
     }
