@@ -44,7 +44,7 @@ struct compute_prediction_0
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
     std::vector <int> m_globalsimulated;
-    std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+    std::vector <std::tuple<int, int, int>> m_updaters;
     std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
 
     unsigned long long int m_loop = 0;
@@ -60,6 +60,7 @@ struct compute_prediction_0
         , m_loop(0)
         , m_kappa(0)
     {
+        assert(m_options.options.rows() > 0 and "prediction: empty option");
     }
 
     void run()
@@ -72,10 +73,15 @@ struct compute_prediction_0
         std::vector<int> observed(m_options.options.rows());
         for_each_model_solver solver(m_context, m_model);
         weighted_kappa_calculator kappa_c(m_model.attributes[0].scale.size());
-        // solver.reduce(m_options);
+        solver.reduce(m_options);
 
-        std::size_t max_step = solver.get_attribute_line_tuple_limit();
-        std::size_t step = 1;
+        solver.get_functions(m_globalfunctions);
+        assert(not m_globalfunctions.empty()
+               and "prediction can not determine function");
+
+        const std::size_t max_step = solver.get_attribute_line_tuple_limit();
+        assert(max_step > 0 and "prediction: can not determine limit");
+
 
         m_context->info() << m_context->info().cyanb()
                           << "[Computation starts 1/"
@@ -102,14 +108,14 @@ struct compute_prediction_0
                                          m_end - m_start).count());
         }
 
-        while (step < max_step) {
+        for (std::size_t step = 1; step < max_step; ++step) {
             m_start = std::chrono::system_clock::now();
             m_loop = 0;
 
-            // std::vector<std::vector <std::tuple<int, int, int>>> to_explore;
             std::fill(std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
 
             for (std::size_t opt = 0; opt != optmax; ++opt) {
+                solver.set_functions(m_globalfunctions);
                 solver.init_walkers(step);
                 m_kappa = 0;
 
@@ -117,71 +123,18 @@ struct compute_prediction_0
                     solver.init_next_value();
 
                     do {
-                        simulated.resize(m_options.ordered[opt].size(), 0);
-                        observed.resize(m_options.ordered[opt].size(), 0);
+                        const std::size_t size = m_options.ordered[opt].size();
+                        simulated.resize(size, 0);
+                        observed.resize(size, 0);
 
-                        // { // DEBUGMODE
-                        //     if (opt == 0 and step == 1) {
-                        //         std::printf("numero lignes: ");
-                        //         for (auto x : m_options.ordered[opt])
-                        //             std::printf("%d ", x);
-                        //         std::printf("\n");
-
-                        //         std::printf("valeur observée: ");
-                        //         for (auto x : m_options.ordered[opt])
-                        //             std::printf("%c ", 'A' + m_options.observed[x]);
-                        //         std::printf("\n");
-
-                        //         for (long int att = 0, atte = m_options.options.cols();
-                        //              att != atte; ++att) {
-                        //             std::printf("column %ld: ", att);
-                        //             for (auto x : m_options.ordered[opt])
-                        //                 std::printf("%d ", m_options.options(x, att));
-                        //             std::printf("\n");
-                        //         }
-
-                        //         std::printf("valeur simulée: ");
-                        //         for (auto x : m_options.ordered[opt])
-                        //             std::printf("%c ", 'A' + solver.solve(m_options.options.row(x)));
-                        //         std::printf("\n");
-
-                        //     }
-                        // } // DEBUGMODE
-
-                        {
-                            int i = 0;
-                            for (auto x : m_options.ordered[opt]) {
-                                observed[i] = m_options.observed[x];
-                                simulated[i] = solver.solve(m_options.options.row(x));
-                                ++i;
-                            }
+                        for (std::size_t i = 0; i != size; ++i) {
+                            auto id = m_options.ordered[opt][i];
+                            observed[i] = m_options.observed[id];
+                            simulated[i] = solver.solve(m_options.options.row(id));
                         }
 
                         auto ret = kappa_c.squared(observed, simulated);
-
-                        std::printf("kappa: %f\n", ret);
-                        return;
-
                         m_loop++;
-
-                        // { // DEBUGMODE
-                        //     if (opt == 0 && step == 1) {
-                        //         auto updater = solver.updaters();
-
-                        //         m_context->info() << "   " << updater << ' '
-                        //                           << ret << ' ' << solver.string_functions()
-                        //                           << '\n';
-                        //     }
-                        // } // DEBUGMODE
-
-                        // if (ret >= m_kappa) {
-                        // if (ret == m_kappa) {
-                        //     if (to_explore.end() == std::find(std::begin(to_explore),
-                        //                                       std::end(to_explore),
-                        //                                       solver.updaters()))
-                        //         to_explore.emplace_back(solver.updaters());
-                        // } else {
-                        // to_explore.clear();
 
                         if (ret > m_kappa) {
                             solver.get_functions(m_functions);
@@ -200,13 +153,12 @@ struct compute_prediction_0
             m_end = std::chrono::system_clock::now();
 
             m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                            " | %f | %ld | ",
+                            " | %f | ",
                             step, m_kappa, m_loop,
                             std::chrono::duration<double>(
                                 m_end - m_start).count());
 
             m_context->info() << m_updaters << " |\n";
-            step++;
         }
     };
 };
