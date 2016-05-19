@@ -6,7 +6,7 @@ add_library(boost INTERFACE IMPORTED)
 set_property(TARGET boost PROPERTY
   INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR})
 
-find_package(Eigen3 3.2 REQUIRED)
+find_package(Eigen3 REQUIRED)
 add_library(eigen3 INTERFACE IMPORTED)
 set_property(TARGET eigen3 PROPERTY
   INTERFACE_INCLUDE_DIRECTORIES ${EIGEN3_INCLUDE_DIR})
