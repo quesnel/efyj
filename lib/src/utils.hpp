@@ -49,36 +49,6 @@ struct scope_exit {
     std::function <void (void)> fct;
 };
 
-#ifndef NDEBUG
-inline
-void Expects(bool expression, const char *msg = nullptr)
-{
-    if (not expression)
-        throw std::logic_error(msg ? msg : std::string());
-}
-
-inline
-void Ensures(bool expression, const char *msg = nullptr)
-{
-    if (!expression)
-        throw std::logic_error(msg ? msg : std::string());
-}
-#else
-inline
-void Expects(bool expression, const char *msg = nullptr) noexcept
-{
-    (void)expression;
-    (void)msg;
-}
-
-inline void
-Ensures(bool expression, const char *msg = nullptr) noexcept
-{
-    (void)expression;
-    (void)msg;
-}
-#endif
-
 /** \e make_new_name is used to create new file path with a suffix composed with
  * an identifier.
  * \param filepath Original filepath to be updated.  \e filepath can be empty or

@@ -130,8 +130,7 @@ public:
         , weighted(Eigen::ArrayXXd(NC_, NC_))
         , NC(NC_)
     {
-        Expects(NC_ > 0,
-                "weighted_kappa_calculator bad parameter");
+        assert(NC_ > 0 and "weighted_kappa_calculator bad parameter");
     }
 
     double
@@ -171,9 +170,9 @@ private:
     void pre(const std::vector <int>& observated,
              const std::vector <int>& simulated) noexcept
     {
-        Expects(observated.size() == simulated.size(),
-                "weighted_kappa_calculator observated and simulated sizes "
-                "are different");
+        assert(observated.size() == simulated.size() and
+               "weighted_kappa_calculator observated and simulated sizes "
+               "are different");
 
         observed.setZero();
         distributions.setZero();
