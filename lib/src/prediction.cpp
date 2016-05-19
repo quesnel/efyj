@@ -43,7 +43,7 @@ struct compute_prediction_0
     const Options& m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
-    std::vector <int> m_globalsimulated, m_simulated;
+    std::vector <int> m_globalsimulated;
     std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
     std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
 
@@ -56,8 +56,7 @@ struct compute_prediction_0
         : m_context(context)
         , m_model(model)
         , m_options(options)
-        , m_globalsimulated(options.observated.size(), 0)
-        , m_simulated(options.observated.size(), 0)
+        , m_globalsimulated(options.observed.size(), 0)
         , m_loop(0)
         , m_kappa(0)
     {
@@ -69,9 +68,10 @@ struct compute_prediction_0
                           << "[Computation start]"
                           << m_context->info().def() << '\n';
 
+        std::vector<int> simulated(m_options.options.rows());
+        std::vector<int> observed(m_options.options.rows());
         for_each_model_solver solver(m_context, m_model);
-        weighted_kappa_calculator kappa_c(m_options.options.rows(),
-                                          m_model.attributes[0].scale.size());
+        weighted_kappa_calculator kappa_c(m_model.attributes[0].scale.size());
         // solver.reduce(m_options);
 
         std::size_t max_step = solver.get_attribute_line_tuple_limit();
@@ -89,7 +89,7 @@ struct compute_prediction_0
             for (std::size_t opt = 0; opt != optmax; ++opt)
                 m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
 
-            auto ret = kappa_c.squared(m_options.observated, m_globalsimulated);
+            auto ret = kappa_c.squared(m_options.observed, m_globalsimulated);
 
             m_end = std::chrono::system_clock::now();
 
@@ -117,20 +117,62 @@ struct compute_prediction_0
                     solver.init_next_value();
 
                     do {
-                        std::fill(std::begin(m_simulated), std::end(m_simulated), 0);
+                        simulated.resize(m_options.ordered[opt].size(), 0);
+                        observed.resize(m_options.ordered[opt].size(), 0);
 
-                        for (auto x : m_options.ordered[opt])
-                            m_simulated[x] = solver.solve(m_options.options.row(x));
+                        // { // DEBUGMODE
+                        //     if (opt == 0 and step == 1) {
+                        //         std::printf("numero lignes: ");
+                        //         for (auto x : m_options.ordered[opt])
+                        //             std::printf("%d ", x);
+                        //         std::printf("\n");
 
-                        auto ret = kappa_c.squared(m_options.observated, m_simulated);
+                        //         std::printf("valeur observée: ");
+                        //         for (auto x : m_options.ordered[opt])
+                        //             std::printf("%c ", 'A' + m_options.observed[x]);
+                        //         std::printf("\n");
+
+                        //         for (long int att = 0, atte = m_options.options.cols();
+                        //              att != atte; ++att) {
+                        //             std::printf("column %ld: ", att);
+                        //             for (auto x : m_options.ordered[opt])
+                        //                 std::printf("%d ", m_options.options(x, att));
+                        //             std::printf("\n");
+                        //         }
+
+                        //         std::printf("valeur simulée: ");
+                        //         for (auto x : m_options.ordered[opt])
+                        //             std::printf("%c ", 'A' + solver.solve(m_options.options.row(x)));
+                        //         std::printf("\n");
+
+                        //     }
+                        // } // DEBUGMODE
+
+                        {
+                            int i = 0;
+                            for (auto x : m_options.ordered[opt]) {
+                                observed[i] = m_options.observed[x];
+                                simulated[i] = solver.solve(m_options.options.row(x));
+                                ++i;
+                            }
+                        }
+
+                        auto ret = kappa_c.squared(observed, simulated);
+
+                        std::printf("kappa: %f\n", ret);
+                        return;
 
                         m_loop++;
 
-                        if (opt == 0 && step == 1) {
-                            auto updater = solver.updaters();
+                        // { // DEBUGMODE
+                        //     if (opt == 0 && step == 1) {
+                        //         auto updater = solver.updaters();
 
-                            m_context->info() << "   " << updater << ' ' << ret << ' ' << solver.string_functions() << '\n';
-                        }
+                        //         m_context->info() << "   " << updater << ' '
+                        //                           << ret << ' ' << solver.string_functions()
+                        //                           << '\n';
+                        //     }
+                        // } // DEBUGMODE
 
                         // if (ret >= m_kappa) {
                         // if (ret == m_kappa) {
@@ -140,6 +182,7 @@ struct compute_prediction_0
                         //         to_explore.emplace_back(solver.updaters());
                         // } else {
                         // to_explore.clear();
+
                         if (ret > m_kappa) {
                             solver.get_functions(m_functions);
                             m_updaters = solver.updaters();
@@ -150,13 +193,9 @@ struct compute_prediction_0
 
                 solver.set_functions(m_functions);
                 m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
-
-                if (step == 1)
-                    m_context->info() << opt << ' ' << m_globalsimulated[opt] <<
-                        ' ' << m_updaters << ' ' << m_kappa << '\n';
             }
 
-            m_kappa = kappa_c.squared(m_options.observated, m_globalsimulated);
+            m_kappa = kappa_c.squared(m_options.observed, m_globalsimulated);
             m_loop++;
             m_end = std::chrono::system_clock::now();
 

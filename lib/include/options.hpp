@@ -42,7 +42,7 @@ struct EFYJ_API Options
     std::vector <std::string> places;
     std::vector <int> departments;
     std::vector <int> years;
-    std::vector <int> observated;
+    std::vector <int> observed;
     Array options;
 
     /** @e ordered stores the link between and OptionId (id is place,

@@ -66,7 +66,7 @@ build_ordered_options(efyj::Options &options) noexcept
 {
     assert(options.simulations.size() == options.departments.size() &&
            options.simulations.size() == options.years.size() &&
-           options.simulations.size() == options.observated.size() &&
+           options.simulations.size() == options.observed.size() &&
            (options.simulations.size() == options.places.size() ||
             options.places.empty()) &&
            options.simulations.size() ==
@@ -118,14 +118,14 @@ operator<<(cstream &os, const Options &options) noexcept
                << options.places[i] << '.'
                << options.departments[i] << '.'
                << options.years[i] << '.'
-               << options.observated[i] << "\n";
+               << options.observed[i] << "\n";
         }
     } else {
         for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
             os << i << options.simulations[i]
                << options.departments[i] << '.'
                << options.years[i] << '.'
-               << options.observated[i] << "\n";
+               << options.observed[i] << "\n";
         }
     }
 
@@ -207,7 +207,7 @@ void Options::read(std::shared_ptr<Context> context,
 
         if (obs < 0) {
             context->err().printf("Options: error in csv file line %d:"
-                                  " fail to convert observated `%s'\n",
+                                  " fail to convert observed `%s'\n",
                                   line_number,
                                   columns.back().c_str());
             continue;
@@ -230,7 +230,7 @@ void Options::read(std::shared_ptr<Context> context,
 
         departments.push_back(department);
         years.push_back(year);
-        observated.push_back(obs);
+        observed.push_back(obs);
 
         for (std::size_t i = id, e = id + atts.size(); i != e; ++i) {
             std::size_t attid = convertheader[i - id];
@@ -248,7 +248,7 @@ void Options::read(std::shared_ptr<Context> context,
                     places.pop_back();
                 departments.pop_back();
                 years.pop_back();
-                observated.pop_back();
+                observed.pop_back();
 
                 options.conservativeResize(options.rows() - 1,
                                            Eigen::NoChange_t());
@@ -276,7 +276,7 @@ void Options::clear() noexcept
     std::vector <std::string>().swap(places);
     std::vector <int>().swap(departments);
     std::vector <int>().swap(years);
-    std::vector <int>().swap(observated);
+    std::vector <int>().swap(observed);
 
     Array().swap(options);
     std::vector<std::vector<int>>().swap(ordered);

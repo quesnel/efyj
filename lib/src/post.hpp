@@ -123,15 +123,14 @@ squared_weighted_kappa(const std::vector <int>& observated,
 class weighted_kappa_calculator
 {
 public:
-    weighted_kappa_calculator(std::size_t N_, std::size_t NC_)
+    weighted_kappa_calculator(std::size_t NC_)
         : observed(Eigen::ArrayXXd::Zero(NC_, NC_))
         , distributions(Eigen::ArrayXXd::Zero(NC_, 2))
         , expected(Eigen::ArrayXXd::Zero(NC_, NC_))
         , weighted(Eigen::ArrayXXd(NC_, NC_))
-        , N(N_)
         , NC(NC_)
     {
-        Expects(N_ > 0 and NC_ > 0,
+        Expects(NC_ > 0,
                 "weighted_kappa_calculator bad parameter");
     }
 
@@ -167,23 +166,26 @@ private:
     Eigen::ArrayX2d distributions;
     Eigen::ArrayXXd expected;
     Eigen::ArrayXXd weighted;
-    const int N;
     const int NC;
 
     void pre(const std::vector <int>& observated,
              const std::vector <int>& simulated) noexcept
     {
+        Expects(observated.size() == simulated.size(),
+                "weighted_kappa_calculator observated and simulated sizes "
+                "are different");
+
         observed.setZero();
         distributions.setZero();
 
-        for (int i = 0; i != (int)N; ++i) {
+        for (int i = 0; i != (int)simulated.size(); ++i) {
             ++observed(observated[i], simulated[i]);
             ++distributions(observated[i], 0);
             ++distributions(simulated[i], 1);
         }
 
-        observed /= (double)N;
-        distributions /= (double)N;
+        observed /= (double)simulated.size();
+        distributions /= (double)simulated.size();
 
         for (int i = 0; i != (int)NC; ++i)
             for (int j = 0; j != (int)NC; ++j)

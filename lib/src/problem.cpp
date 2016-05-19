@@ -48,9 +48,7 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
     std::tuple <unsigned long, double> best {0, 0};
     std::vector <int> simulated(options.options.rows());
     efyj::for_each_model_solver solver(context, model, walker_number);
-    efyj::weighted_kappa_calculator kappa_c(
-        options.options.rows(),
-        model.attributes[0].scale.size());
+    efyj::weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
 
     const std::size_t optmax = options.options.rows();
 
@@ -61,7 +59,7 @@ compute_best_kappa(std::shared_ptr<efyj::Context> context,
             for (std::size_t i = 0; i != optmax; ++i)
                 simulated[i] = solver.solve(options.options.row(i));
 
-            auto ret = kappa_c.squared(options.observated, simulated);
+            auto ret = kappa_c.squared(options.observed, simulated);
 
             std::get <1>(best) = std::max(ret, std::get<1>(best));
             std::get <0>(best)++;
@@ -76,14 +74,12 @@ compute_kappa(const efyj::Model& model, const efyj::Options& options)
 {
     efyj::solver_stack slv(model);
     std::vector <int> simulated(options.options.rows());
-    efyj::weighted_kappa_calculator kappa_c(
-        options.options.rows(),
-        model.attributes[0].scale.size());
+    efyj::weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
 
     for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
         simulated[i] = slv.solve(options.options.row(i));
 
-    return kappa_c.squared(options.observated, simulated);
+    return kappa_c.squared(options.observed, simulated);
 }
 
 } // anonymous namespace
@@ -173,14 +169,13 @@ Problem::compute_for_ever(const Model& model, const Options& options,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    std::vector <int> m_globalsimulated(options.observated.size());
-    std::vector <int> m_simulated(options.observated.size());
+    std::vector <int> m_globalsimulated(options.observed.size());
+    std::vector <int> m_simulated(options.observed.size());
     std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
     std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
     for_each_model_solver solver(m_impl->context, model);
-    weighted_kappa_calculator kappa_c(options.options.rows(),
-                                      model.attributes[0].scale_size());
+    weighted_kappa_calculator kappa_c(model.attributes[0].scale_size());
     if (with_reduce)
         solver.reduce(options);
 
@@ -211,7 +206,7 @@ Problem::compute_for_ever(const Model& model, const Options& options,
                 for (std::size_t i = 0, e = options.options.rows(); i != e; ++i)
                     m_simulated[i] = solver.solve(options.options.row(i));
 
-                auto ret = kappa_c.squared(options.observated, m_simulated);
+                auto ret = kappa_c.squared(options.observed, m_simulated);
 
                 if (ret > m_kappa) {
                     solver.get_functions(m_functions);
