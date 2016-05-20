@@ -163,7 +163,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
-            for (std::size_t opt = 0, endopt = options.ordered.size();
+            for (std::size_t opt = 0, endopt = options.size();
                  opt != endopt; ++opt) {
                 double kappa = 0.;
 
@@ -172,7 +172,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                 do {
                     std::fill(m_simulated.begin(), m_simulated.end(), 0.);
 
-                    for (auto x : options.ordered[opt])
+                    for (auto x : options.get_subdataset(opt))
                         m_simulated[x] = solver.solve(
                             options.options.row(x));
 

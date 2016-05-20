@@ -73,6 +73,7 @@ struct compute_prediction_0
         std::vector<int> observed(m_options.options.rows());
         for_each_model_solver solver(m_context, m_model);
         weighted_kappa_calculator kappa_c(m_model.attributes[0].scale.size());
+        // options.reduce();
         solver.reduce(m_options);
 
         solver.get_functions(m_globalfunctions);
@@ -88,12 +89,13 @@ struct compute_prediction_0
                           << max_step << "]"
                           << m_context->info().def() << '\n';
 
-        const std::size_t optmax = m_options.ordered.size();
+        const std::size_t optmax = m_options.size();
 
         {
             m_start = std::chrono::system_clock::now();
             for (std::size_t opt = 0; opt != optmax; ++opt)
-                m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
+                m_globalsimulated[opt] = solver.solve(
+                    m_options.options.row(opt));
 
             auto ret = kappa_c.squared(m_options.observed, m_globalsimulated);
 
@@ -108,13 +110,27 @@ struct compute_prediction_0
                                          m_end - m_start).count());
         }
 
+
         for (std::size_t step = 1; step < max_step; ++step) {
             m_start = std::chrono::system_clock::now();
             m_loop = 0;
 
-            std::fill(std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
+            std::fill(std::begin(m_globalsimulated),
+                      std::end(m_globalsimulated), 0);
 
+            std::map<std::size_t, std::vector <std::vector<scale_id>>> cache;
             for (std::size_t opt = 0; opt != optmax; ++opt) {
+
+                {
+                    auto it = cache.find(m_options.identifier(opt));
+                    if (it != cache.end()) {
+                        solver.set_functions(it->second);
+                        m_globalsimulated[opt] = solver.solve(
+                            m_options.options.row(opt));
+                        continue;
+                    }
+                }
+
                 solver.set_functions(m_globalfunctions);
                 solver.init_walkers(step);
                 m_kappa = 0;
@@ -123,14 +139,15 @@ struct compute_prediction_0
                     solver.init_next_value();
 
                     do {
-                        const std::size_t size = m_options.ordered[opt].size();
+                        const auto size = m_options.get_subdataset(opt).size();
                         simulated.resize(size, 0);
                         observed.resize(size, 0);
 
                         for (std::size_t i = 0; i != size; ++i) {
-                            auto id = m_options.ordered[opt][i];
+                            auto id = m_options.get_subdataset(opt)[i];
                             observed[i] = m_options.observed[id];
-                            simulated[i] = solver.solve(m_options.options.row(id));
+                            simulated[i] = solver.solve(
+                                m_options.options.row(id));
                         }
 
                         auto ret = kappa_c.squared(observed, simulated);
@@ -145,7 +162,10 @@ struct compute_prediction_0
                 } while (solver.next_line() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
+                m_globalsimulated[opt] = solver.solve(
+                    m_options.options.row(opt));
+
+                cache[m_options.identifier(opt)] = m_functions;
             }
 
             m_kappa = kappa_c.squared(m_options.observed, m_globalsimulated);

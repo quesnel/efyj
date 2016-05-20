@@ -45,11 +45,25 @@ struct EFYJ_API Options
     std::vector <int> observed;
     Array options;
 
-    /** @e ordered stores the link between and OptionId (id is place,
-     * departement and year) and a list of another OptionId where
-     * simulation, place, departement and year are different.
-     */
-    std::vector<std::vector<int>> ordered;
+    const std::vector<int>& get_subdataset(int id) const noexcept
+    {
+        return subdataset[id];
+    }
+
+    const std::vector<std::vector<int>>& get_subdataset() const noexcept
+    {
+        return subdataset;
+    }
+
+    std::size_t size() const noexcept
+    {
+        return simulations.size();
+    }
+
+    int identifier(int id) const noexcept
+    {
+        return id_subdataset_reduced[id];
+    }
 
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.
@@ -66,6 +80,16 @@ struct EFYJ_API Options
 
     /** Release all dynamically allocated memory. */
     void clear() noexcept;
+
+private:
+    /// \e subdataset stores a list of line that defines the learning
+    /// options for each options. \e subdataset.size() equals \e
+    /// simulations.size()
+    std::vector<std::vector<int>> subdataset;
+
+    /// \e id_subdataset_reduced stores indices for each options. Index
+    /// may appear several times if the learning options are equals.
+    std::vector<int> id_subdataset_reduced;
 };
 
 EFYJ_API

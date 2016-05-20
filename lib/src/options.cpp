@@ -31,7 +31,8 @@
 namespace {
 
 std::vector <const efyj::attribute *>
-get_basic_attribute(const efyj::Model &model)
+get_basic_attribute(
+    const efyj::Model &model)
 {
     std::vector <const efyj::attribute *> ret;
     ret.reserve(model.attributes.size());
@@ -40,13 +41,12 @@ get_basic_attribute(const efyj::Model &model)
         if (att.is_basic())
             ret.emplace_back(&att);
 
-    return std::move(ret);
+    return ret;
 }
 
 std::size_t
 get_basic_attribute_id(
-    const std::vector <const efyj::attribute *>
-    &att,
+    const std::vector<const efyj::attribute*> &att,
     const std::string &name)
 {
     auto it = std::find_if(att.begin(),
@@ -61,81 +61,9 @@ get_basic_attribute_id(
     return it - att.begin();
 }
 
-void
-build_ordered_options(efyj::Options &options) noexcept
-{
-    assert(options.simulations.size() == options.departments.size() &&
-           options.simulations.size() == options.years.size() &&
-           options.simulations.size() == options.observed.size() &&
-           (options.simulations.size() == options.places.size() ||
-            options.places.empty()) &&
-           options.simulations.size() ==
-           static_cast<std::size_t>(options.options.rows()));
-
-    const std::size_t size = options.simulations.size();
-
-    if (not options.ordered.empty())
-        std::vector<std::vector<int>>().swap(options.ordered);
-
-    options.ordered.resize(size);
-
-    for (std::size_t i = 0; i != size; ++i)
-        for (std::size_t j = 0; j != size; ++j)
-            if (i != j
-                and options.departments[i] != options.departments[j]
-                and options.years[i] != options.years[j])
-                options.ordered[i].emplace_back(j);
-}
-
 } // anonymous namespace
 
 namespace efyj {
-
-cstream&
-operator<<(cstream &os,
-           const std::vector<std::vector<int>> &ordered) noexcept
-{
-    for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
-        os << i << ' ';
-
-        for (auto j : ordered[i])
-            os << j << ' ';
-
-        os << '\n';
-    }
-
-    return os;
-}
-
-cstream&
-operator<<(cstream &os, const Options &options) noexcept
-{
-    os << "option identifiers\n------------------\n";
-
-    if (not options.places.empty()) {
-        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i]
-               << options.places[i] << '.'
-               << options.departments[i] << '.'
-               << options.years[i] << '.'
-               << options.observed[i] << "\n";
-        }
-    } else {
-        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i]
-               << options.departments[i] << '.'
-               << options.years[i] << '.'
-               << options.observed[i] << "\n";
-        }
-    }
-
-    std::ostringstream ss;
-    ss << options.options;
-
-    return os << "\noption matrix\n-------------\n" << ss.str()
-        << "\nordered option\n--------------\n" << options.ordered
-        << "\n";
-}
 
 void Options::read(std::shared_ptr<Context> context,
                    std::istream& is,
@@ -267,7 +195,62 @@ void Options::read(std::shared_ptr<Context> context,
 
     assert(static_cast<std::size_t>(options.rows()) == simulations.size());
 
-    ::build_ordered_options(*this);
+    assert(simulations.size() == departments.size() &&
+           simulations.size() == years.size() &&
+           simulations.size() == observed.size() &&
+           (simulations.size() == places.size() ||
+            places.empty()) &&
+           simulations.size() ==
+           static_cast<std::size_t>(options.rows()));
+
+
+    const std::size_t size = simulations.size();
+
+    if (not subdataset.empty())
+        std::vector<std::vector<int>>().swap(subdataset);
+
+    subdataset.resize(size);
+
+    if (places.empty()) {
+        for (std::size_t i = 0; i != size; ++i) {
+            for (std::size_t j = 0; j != size; ++j) {
+                if (i != j
+                    and departments[i] != departments[j]
+                    and years[i] != years[j]) {
+                    subdataset[i].emplace_back(j);
+                }
+            }
+        }
+    } else {
+        for (std::size_t i = 0; i != size; ++i) {
+            for (std::size_t j = 0; j != size; ++j) {
+                if (i != j
+                    and departments[i] != departments[j]
+                    and places[i] != places[j]
+                    and years[i] != years[j]) {
+                    subdataset[i].emplace_back(j);
+                }
+            }
+        }
+    }
+
+    // Compute the reduced id_subdataset_reduced
+
+    {
+        std::vector<std::vector<int>> reduced;
+        id_subdataset_reduced.resize(subdataset.size());
+
+        for (std::size_t i = 0, e = subdataset.size(); i != e; ++i) {
+            auto it = std::find(reduced.cbegin(), reduced.cend(), subdataset[i]);
+
+            if (it == reduced.cend()) {
+                id_subdataset_reduced[i] = (int)reduced.size();
+                reduced.push_back(subdataset[i]);
+            } else {
+                id_subdataset_reduced[i] = std::distance(reduced.cbegin(), it);
+            }
+        }
+    }
 }
 
 void Options::clear() noexcept
@@ -279,7 +262,65 @@ void Options::clear() noexcept
     std::vector <int>().swap(observed);
 
     Array().swap(options);
-    std::vector<std::vector<int>>().swap(ordered);
+    std::vector<std::vector<int>>().swap(subdataset);
+    std::vector<int>().swap(id_subdataset_reduced);
+}
+
+cstream&
+operator<<(cstream &os,
+           const std::vector<std::vector<int>> &ordered) noexcept
+{
+    for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
+        os << i << ' ';
+
+        for (auto j : ordered[i])
+            os << j << ' ';
+
+        os << '\n';
+    }
+
+    return os;
+}
+
+cstream&
+operator<<(cstream &os, const Options &options) noexcept
+{
+    os << "option identifiers\n------------------\n";
+
+    if (not options.places.empty()) {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i]
+               << options.places[i] << '.'
+               << options.departments[i] << '.'
+               << options.years[i] << '.'
+               << options.observed[i] << "\n";
+        }
+    } else {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i]
+               << options.departments[i] << '.'
+               << options.years[i] << '.'
+               << options.observed[i] << "\n";
+        }
+    }
+
+    std::ostringstream ss;
+    ss << options.options;
+
+    os << "\noption matrix\n-------------\n" << ss.str();
+
+    os << "\nordered option\n--------------\n";
+
+    for (std::size_t i = 0, e = options.size(); i != e; ++i) {
+        os << i << ' ';
+
+        for (auto v : options.get_subdataset(i))
+            os << v << ' ';
+
+        os << '\n';
+    }
+
+    return os;
 }
 
 } // namespace efyj

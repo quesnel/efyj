@@ -701,9 +701,9 @@ public:
         std::vector<std::set<int>> whitelist;
         whitelist.resize(m_solver.attribute_size());
 
-        for (std::size_t i = 0, e = ids.size(); i != e; ++i)
-            for (auto x : options.ordered[ids[i]])
-                m_solver.reduce(options.options.row(x), whitelist);
+        for (const auto& subdataset : options.get_subdataset())
+            for (const auto& option : subdataset)
+                m_solver.reduce(options.options.row(option), whitelist);
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
             m_context->info() << " whitelist ";
