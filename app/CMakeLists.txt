@@ -16,6 +16,8 @@ endif()
 
 target_link_libraries(app libefyj boost eigen3 expat threads)
 
+target_include_directories(app PRIVATE ${CMAKE_BINARY_DIR})
+
 set_target_properties(app PROPERTIES
   OUTPUT_NAME "efyj-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 

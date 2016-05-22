@@ -19,15 +19,41 @@
  * IN THE SOFTWARE.
  */
 
-#include "exception.hpp"
+#include "efyj.hpp"
 #include "utils.hpp"
 
 namespace {
 
-std::string csv_parser_error_format(std::size_t line,
-                                    std::size_t column,
-                                    const std::string &filepath,
-                                    const std::string &msg)
+std::string
+internal_error_format_message(const std::string& msg)
+{
+    return efyj::stringf("Internal error: %s", msg.c_str());
+}
+
+std::string
+internal_error_format_message(const std::string& file,
+                              const std::string& function,
+                              int line,
+                              const std::string& msg)
+{
+    return efyj::stringf("Internal error at %s:%s line: %d, %s",
+                         file.c_str(),
+                         function.c_str(),
+                         line,
+                         msg.c_str());
+}
+
+std::string
+file_error_format_message(const std::string& file)
+{
+    return efyj::stringf("Access error to file `%s'", file.c_str());
+}
+
+std::string
+csv_parser_error_format(std::size_t line,
+                        std::size_t column,
+                        const std::string &filepath,
+                        const std::string &msg)
 {
     if (filepath.empty())
         return efyj::stringf("CSV Error: %s", msg.c_str());
@@ -49,18 +75,18 @@ std::string csv_parser_error_format(std::size_t line,
                          msg.c_str());
 }
 
-std::string xml_parser_error_format(const std::string &msg)
+std::string dexi_parser_error_format(const std::string &msg)
 {
     return efyj::stringf("DEXI error: %s", msg.c_str());
 }
 
-std::string xml_parser_error_format(const std::string &msg,
+std::string dexi_parser_error_format(const std::string &msg,
                                     const std::string &filepath)
 {
     return efyj::stringf("DEXI error: '%s' %s", filepath.c_str(), msg.c_str());
 }
 
-std::string xml_parser_error_format(const std::string &msg, int line,
+std::string dexi_parser_error_format(const std::string &msg, int line,
                                     int column, int error)
 {
     return efyj::stringf("DEXI error: error %s at %d:%d, error code: %d",
@@ -72,35 +98,60 @@ std::string solver_error_format(const std::string &msg)
     return efyj::stringf("Solver error: %s", msg.c_str());
 }
 
-std::string solver_option_error_format(const std::string &opt)
-{
-    return efyj::stringf("Solver error: option `%s' is unknown", opt.c_str());
-}
-
 } // anonymous namespace
 
 namespace efyj {
 
+internal_error::internal_error(const std::string& msg)
+    : std::logic_error(::internal_error_format_message(msg))
+{
+}
+
+internal_error::internal_error(const std::string& file,
+                               const std::string& function,
+                               int line,
+                               const std::string& msg)
+    : std::logic_error(
+        ::internal_error_format_message(file, function, line, msg))
+    , pp_file(file)
+    , pp_function(function)
+    , pp_line(line)
+{
+}
+
+std::string internal_error::file() const
+{
+    return pp_file;
+}
+
+std::string internal_error::function() const
+{
+    return pp_function;
+}
+
+int internal_error::line() const
+{
+    return pp_line;
+}
+
+file_error::file_error(const std::string& file)
+    : std::runtime_error(::file_error_format_message(file))
+    , pp_file(file)
+{
+}
+
+std::string file_error::file() const
+{
+    return pp_file;
+}
+
 solver_error::solver_error(const std::string &msg)
-    : efyj_error(::solver_error_format(msg))
+    : std::runtime_error(::solver_error_format(msg))
 {
 }
 
-solver_error::~solver_error()
-{
-}
-
-solver_option_error::solver_option_error(const std::string &option)
-    : solver_error(::solver_option_error_format(option))
-{
-}
-
-solver_option_error::~solver_option_error()
-{
-}
-
-xml_parser_error::xml_parser_error(const std::string &msg)
-    : efyj_error(::xml_parser_error_format(msg))
+dexi_parser_error::dexi_parser_error(const std::string &msg)
+    : std::runtime_error(::dexi_parser_error_format(msg))
     , m_line(0)
     , m_column(0)
     , m_internal_error_code(0)
@@ -108,9 +159,9 @@ xml_parser_error::xml_parser_error(const std::string &msg)
 {
 }
 
-xml_parser_error::xml_parser_error(const std::string &msg,
+dexi_parser_error::dexi_parser_error(const std::string &msg,
                                    const std::string &filepath)
-    : efyj_error(::xml_parser_error_format(filepath, msg))
+    : std::runtime_error(::dexi_parser_error_format(filepath, msg))
     , m_line(0)
     , m_column(0)
     , m_internal_error_code(0)
@@ -119,9 +170,9 @@ xml_parser_error::xml_parser_error(const std::string &msg,
 {
 }
 
-xml_parser_error::xml_parser_error(const std::string &msg, int line, int column,
+dexi_parser_error::dexi_parser_error(const std::string &msg, int line, int column,
                                    int error)
-    : efyj_error(::xml_parser_error_format(msg, line, column, error))
+    : std::runtime_error(::dexi_parser_error_format(msg, line, column, error))
     , m_line(line)
     , m_column(column)
     , m_internal_error_code(error)
@@ -129,21 +180,8 @@ xml_parser_error::xml_parser_error(const std::string &msg, int line, int column,
 {
 }
 
-xml_parser_error::~xml_parser_error()
-{
-}
-
-efyj_error::efyj_error(const std::string &msg)
-    : std::runtime_error(msg)
-{
-}
-
-efyj_error::~efyj_error()
-{
-}
-
 csv_parser_error::csv_parser_error(const std::string &msg)
-    : efyj_error(::csv_parser_error_format(0, 0, std::string(), msg))
+    : std::runtime_error(::csv_parser_error_format(0, 0, std::string(), msg))
     , m_line(0)
     , m_column(0)
     , m_msg(msg)
@@ -152,7 +190,7 @@ csv_parser_error::csv_parser_error(const std::string &msg)
 
 csv_parser_error::csv_parser_error(const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(::csv_parser_error_format(0, 0, filepath, msg))
+    : std::runtime_error(::csv_parser_error_format(0, 0, filepath, msg))
     , m_line(0)
     , m_column(0)
     , m_filepath(filepath)
@@ -163,7 +201,7 @@ csv_parser_error::csv_parser_error(const std::string &filepath,
 csv_parser_error::csv_parser_error(std::size_t line,
                                    const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(::csv_parser_error_format(line, 0, filepath, msg))
+    : std::runtime_error(::csv_parser_error_format(line, 0, filepath, msg))
     , m_line(line)
     , m_column(0)
     , m_filepath(filepath)
@@ -174,15 +212,11 @@ csv_parser_error::csv_parser_error(std::size_t line,
 csv_parser_error::csv_parser_error(std::size_t line, std::size_t column,
                                    const std::string &filepath,
                                    const std::string &msg)
-    : efyj_error(::csv_parser_error_format(line, column, filepath, msg))
+    : std::runtime_error(::csv_parser_error_format(line, column, filepath, msg))
     , m_line(line)
     , m_column(column)
     , m_filepath(filepath)
     , m_msg(msg)
-{
-}
-
-csv_parser_error::~csv_parser_error()
 {
 }
 

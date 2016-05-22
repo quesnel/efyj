@@ -23,6 +23,9 @@
 #define INRA_EFYj_INTERNAL_PREDICTION_HPP
 
 #include <memory>
+#include <chrono>
+#include "post.hpp"
+#include "solver-stack.hpp"
 
 namespace efyj {
 
@@ -30,22 +33,30 @@ class Context;
 struct Model;
 struct Options;
 
-void prediction_0(std::shared_ptr<Context> context,
-                  const Model& model,
-                  const Options& options);
+struct prediction_evaluator
+{
+    std::shared_ptr<Context> m_context;
+    const Model& m_model;
+    const Options& m_options;
 
-void prediction_n(std::shared_ptr<Context> context,
-                  const Model& model,
-                  const Options& options,
-                  unsigned int threads);
+    std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
+    std::vector <int> m_globalsimulated;
+    std::vector <std::tuple<int, int, int>> m_updaters;
+    std::vector <std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
+    for_each_model_solver solver;
+    weighted_kappa_calculator kappa_c;
+    unsigned long long int m_loop = 0;
 
-#ifdef HAVE_MPI
-void prediction_mpi(std::shared_ptr<Context> context,
-                    const Model& model,
-                    const Options& options,
-                    int rank,
-                    int world);
-#endif
+    prediction_evaluator(std::shared_ptr<Context> context,
+                         const Model& model,
+                         const Options& options);
+
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode);
+};
 
 } // namespace efyj
 

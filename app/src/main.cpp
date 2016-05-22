@@ -19,171 +19,123 @@
  * IN THE SOFTWARE.
  */
 
-#include "problem.hpp"
-#include "cstream.hpp"
-#include <chrono>
+#include "efyj.hpp"
 #include <fstream>
+#include <iostream>
 #include <getopt.h>
-
-#ifdef HAVE_MPI
-#include <mpi.h>
-#endif
+#include "config.hpp"
 
 namespace {
 
-void usage(std::shared_ptr<efyj::Context> context) noexcept
+void usage() noexcept
 {
-    context->info() << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-                   << "Options:\n"
-                   << "    -h                   This help message\n"
-                   << "    -m model.dexi        The model file\n"
-                   << "    -o options.csv       The options file\n"
-                   << "    -e output.csv        Extract the option from dexi files "
-                   << "into csv file\n"
-                   << "    -g generate.data     Extract all models from model and "
-                   << "options.\n"
-                   << "    -r                   Without the reduce models generator "
-                   << "algorithm\n"
-                   << "    -a [limit]           Compute the best model for kappa\n"
-                   << "                         0: compute kappa\n"
-                   << "                         1..n: number of walkers\n"
-                   << "                         -n: from 1 to n walkers\n"
-                   << "    -p                   Compute prediction\n"
-                   << "    -j [threads]         Use threads [int]\n"
-                   << "\n";
+    std::cout << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+              << "Options:\n"
+              << "    -h                   This help message\n"
+              << "    -m model.dexi        The model file\n"
+              << "    -o options.csv       The options file\n"
+              << "    -e output.csv        Extract the option from dexi files "
+        "into csv file\n"
+              << "    -r                   Without the reduce models generator "
+        "algorithm\n"
+              << "    -l [limit]           Modifier limit [int]\n"
+              << "                         0 means max available (default)\n"
+              << "                         > 1\n"
+              << "    -p                   Compute prediction\n"
+              << "    -a                   Compute adjustment\n"
+              << "    -j [threads]         Use threads [int]\n"
+              << "                         0 means max available\n"
+              << "                         1 means mono\n"
+              << "                         2..max\n"
+              << "\n";
 }
 
-int
-model_read(std::shared_ptr<efyj::Context> context,
-           const std::string& filename,
-           efyj::Model& model) noexcept
+void version() noexcept
 {
-    std::ifstream ifs(filename);
-    if (not ifs.is_open()) {
-        context->err() << "fail to open file: " << context->err().red()
-                      << filename << context->err().def() << "\n";
-        return -EINVAL;
-    }
-
-    try {
-        model.read(ifs);
-    } catch (const std::bad_alloc& e) {
-        model.clear();
-        context->err() << "not enough memory to read file: "
-                    << context->err().red() << filename
-                    << context->err().def() << "\n";
-        return -ENOMEM;
-    } catch (const efyj::xml_parser_error& e) {
-        context->err() << "fail to read file: " << context->err().red()
-                    << filename << context->err().def() << "at line "
-                    << e.line() << " column " << e.column() << ": "
-                    << e.message() << "\n";
-        return -EINVAL;
-    }
-
-    return 0;
+    std::cout << "efyj " << EFYJ_VERSION << '\n';
 }
 
-int
-model_extract_options(std::shared_ptr<efyj::Context> context,
-                      const std::string& filename,
-                      const efyj::Model& model) noexcept
+int extract(const std::string& model, const std::string& output) noexcept
 {
-    std::ofstream ofs(filename);
-    if (not ofs.is_open()) {
-        context->err() << "fail to open file: " << context->err().red()
-                    << filename << context->err().def() << "\n";
-        return -EINVAL;
-    }
-
     try {
-        model.write_options(ofs);
+        efyj::efyj e(model);
+        e.extract_options(output);
+    } catch (const std::logic_error& e) {
+        std::cerr << "internal error: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "failure: " << e.what() << '\n';
+        return EXIT_FAILURE;
     } catch (const std::bad_alloc& e) {
-        context->err() << "not enough memory to write file: "
-                    << context->err().red() << filename
-                    << context->err().def() << "\n";
-        return -ENOMEM;
+        std::cerr << "not enough memory\n";
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
-int
-options_read(std::shared_ptr<efyj::Context> context,
-             const std::string& filename,
-             const efyj::Model& model,
-             efyj::Options& options) noexcept
+int adjustment(const std::string& model, const std::string& option,
+               bool reduce, int limit, unsigned int thread) noexcept
 {
-    std::ifstream ifs(filename);
-    if (not ifs.is_open()) {
-        context->err() << "fail to open file: " << context->err().red()
-                    << filename << context->err().def() << "\n";
-        return -EINVAL;
-    }
+    (void)thread;
 
     try {
-        options.read(context, ifs, model);
+        efyj::efyj e(model, option);
+        e.compute_adjustment(limit, -1, reduce);
+    } catch (const std::logic_error& e) {
+        std::cerr << "internal failure: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "fail: " << e.what() << '\n';
+        return EXIT_FAILURE;
     } catch (const std::bad_alloc& e) {
-        options.clear();
-        context->err() << "not enough memory to read file: "
-                    << context->err().red() << filename
-                    << context->err().def() << "\n";
-        return -ENOMEM;
-    } catch (const efyj::csv_parser_error& e) {
-        context->err() << "fail to read file: " << context->err().red()
-                    << filename << context->err().def() << "at line "
-                    << e.line() << " column " << e.column() << ": "
-                    << e.message() << "\n";
+        std::cerr << "not enough memory\n";
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
-int
-models_generate(std::shared_ptr<efyj::Context> context,
-                const std::string& filename,
-                const efyj::Model& model,
-                const efyj::Options& options) noexcept
+int prediction(const std::string& model, const std::string& option,
+               bool reduce, int limit, unsigned int thread) noexcept
 {
-    std::ofstream ofs(filename);
-    if (not ofs.is_open()) {
-        context->err() << "fail to open file: " << context->err().red()
-                       << filename << context->err().def() << "\n";
-        return -EINVAL;
-    }
+    (void)thread;
 
     try {
-        efyj::Problem problem(context);
-        problem.generate_all_models(model, options, ofs);
+        efyj::efyj e(model, option);
+        e.compute_prediction(limit, -1, reduce);
+    } catch (const std::logic_error& e) {
+        std::cerr << "internal failure: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "fail: " << e.what() << '\n';
+        return EXIT_FAILURE;
     } catch (const std::bad_alloc& e) {
-        context->err() << "not enough memory to generate all models: "
-                    << context->err().red() << filename
-                    << context->err().def() << "\n";
-        return -ENOMEM;
+        std::cerr << "not enough memory\n";
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 } // anonymous namespace
 
 int main(int argc, char *argv[])
 {
-#ifdef HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
+    enum main_mode { NOTHING = 0,
+                     EXTRACT = 1 << 1,
+                     ADJUSTMENT = 1 << 2,
+                     PREDICTION = 1 << 3 };
 
-    int ret = EXIT_SUCCESS;
-    int opt;
-    std::string modelfilepath, optionfilepath, extractfile, generatedfilepath;
-    int limit = 0;
+    std::string modelfilepath, optionfilepath, extractfile;
+
+    unsigned int mode = 0;
     unsigned int threads = 0;
-    bool without_reduce = false;
-    bool with_prediction = false;
+    int limit = 0;
+    int opt;
+    bool reduce = true;
 
-    auto context = std::make_shared<efyj::Context>(efyj::LOG_OPTION_DEBUG);
-
-    while ((opt = ::getopt(argc, argv, "j::m:o:s:g:e:phra:")) != -1) {
+    while ((opt = ::getopt(argc, argv, "j::m:o:l:e:phvra")) != -1) {
         switch (opt) {
         case 'j':
             if (::optarg)
@@ -191,104 +143,63 @@ int main(int argc, char *argv[])
             else
                 threads = 1;
             break;
-
-        case 'g':
-            generatedfilepath.assign(::optarg);
-            break;
-
         case 'e':
             extractfile.assign(::optarg);
+            mode = mode | EXTRACT;
             break;
-
         case 'm':
             modelfilepath.assign(::optarg);
             break;
-
         case 'o':
             optionfilepath.assign(::optarg);
             break;
-
-        case 'a':
+        case 'l':
             if (::optarg)
                 limit = std::stoi(::optarg);
-
             break;
-
         case 'r':
-            without_reduce = true;
+            reduce = true;
             break;
-
         case 'p':
-            with_prediction = true;
+            mode = mode | PREDICTION;
             break;
-
+        case 'a':
+            mode = mode | ADJUSTMENT;
+            break;
         case 'h':
+            ::usage();
+            exit(EXIT_SUCCESS);
+	case 'v':
+	    ::version();
+	    exit(EXIT_SUCCESS);
         default:
-            ::usage(context);
+            ::version();
             exit(EXIT_SUCCESS);
         }
     }
 
     if (::optind > argc) {
-        context->err() << "Expected argument after -m, -o or -s options\n";
+        std::cerr << "Expected argument after -m, -o or -s options\n";
         exit(EXIT_FAILURE);
     }
 
-    efyj::Model model;
-    if (::model_read(context, modelfilepath, model))
-        return EXIT_FAILURE;
-
-    context->info() << model << "\n";
-
-    if (not extractfile.empty()) {
-        context->info() << "Extract options file from model.\n";
-        ::model_extract_options(context, extractfile, model);
+    int return_value  = EXIT_SUCCESS;
+    if ((mode & EXTRACT)) {
+        if (::extract(modelfilepath, extractfile) == EXIT_FAILURE)
+            return_value = EXIT_FAILURE;
     }
 
-    efyj::Options options;
-    if (::options_read(context, optionfilepath, model, options))
-        return EXIT_FAILURE;
-
-    context->dbg() << options << "\n";
-
-    std::unique_ptr<efyj::Problem> problem;
-
-    if (threads == 0)
-        problem = std::unique_ptr<efyj::Problem>(
-            new efyj::Problem(context));
-    else
-        problem = std::unique_ptr<efyj::Problem>(
-            new efyj::Problem(context, threads == 1 ? 0 : threads));
-
-    if (not generatedfilepath.empty()) {
-        context->info() << "Generates all models.\n";
-        ::models_generate(context, generatedfilepath, model, options);
+    if ((mode & ADJUSTMENT)) {
+        if (::adjustment(modelfilepath, optionfilepath,
+                         reduce, limit, threads) == EXIT_FAILURE)
+            return_value = EXIT_FAILURE;
     }
 
-    try {
-        if (with_prediction) {
-            context->info() << "compute prediction:\n";
-            problem->prediction(model, options);
-        } else {
-            if (limit == 0) {
-                context->info() << "compute Kappa:\n";
-                problem->compute0(model, options);
-            } else if (limit > 0) {
-                context->info() << "compute best Kappa with " << limit << ":\n";
-                problem->computen(model, options, limit);
-            } else {
-                context->info() << "compute best Kappa for all model\n";
-                problem->compute_for_ever(model, options, not without_reduce);
-            }
-        }
-    } catch (const std::exception &e) {
-        context->err() << "failure: " << e.what() << '\n';
-        ret = EXIT_FAILURE;
+    if ((mode & PREDICTION)) {
+        if (::prediction(modelfilepath, optionfilepath,
+                         reduce, limit, threads) == EXIT_FAILURE)
+            return_value = EXIT_FAILURE;
     }
 
-#ifdef HAVE_MPI
-    MPI_Finalize();
-#endif
-
-    return ret;
+    return return_value;
 }

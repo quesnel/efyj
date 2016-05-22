@@ -23,8 +23,8 @@
 #define INRA_EFYj_MODEL_HPP
 
 #include "efyj.hpp"
-#include "exception.hpp"
 #include "cstream.hpp"
+#include "utils.hpp"
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -100,19 +100,19 @@ struct EFYJ_API scales
         for (std::size_t i = 0, e = scale.size(); i != e; ++i) {
             if (scale[i].name == name) {
                 if (not is_valid_scale_id(i)) {
-                    throw efyj_error("bad scale definition");
+                    throw dexi_parser_error("bad scale definition");
                 }
                 return static_cast <int>(i);
             }
         }
 
-        throw efyj_error("scale not found");
+        throw dexi_parser_error(stringf("scale `%s' not found", name.c_str()));
     }
 
     scale_id size() const
     {
         if (not is_valid_scale_id(scale.size()))
-            throw efyj_error("bad scale definition");
+            throw dexi_parser_error("bad scale definition");
 
         return static_cast <int>(scale.size());
     }
@@ -175,6 +175,11 @@ struct EFYJ_API Model
 
     /** Release all dynamically allocated memory. */
     void clear();
+
+    bool empty() const noexcept
+    {
+        return attributes.empty();
+    }
 
     int group_id(const std::string& name) const
     {

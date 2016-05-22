@@ -22,10 +22,10 @@
 #ifndef INRA_EFYj_SOLVER_STACK_HPP
 #define INRA_EFYj_SOLVER_STACK_HPP
 
+#include "efyj.hpp"
 #include "context.hpp"
 #include "model.hpp"
-#include "exception.hpp"
-#include "types.hpp"
+#include "options.hpp"
 #include <algorithm>
 #include <numeric>
 
@@ -300,8 +300,8 @@ struct solver_stack
             att.function_restore();
     }
 
-    template <typename V>
-    scale_id solve(const V &options)
+    template <typename T>
+    scale_id solve(const T &options)
     {
         result.clear();
 
@@ -452,7 +452,7 @@ struct solver_stack
     }
 
     void
-    recursive_fill(const efyj::Model& model, std::size_t att, int &value_id)
+    recursive_fill(const Model& model, std::size_t att, int &value_id)
     {
         if (model.attributes[att].is_basic()) {
             function.emplace_back(value_id++);
@@ -672,41 +672,6 @@ public:
 
         for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
             m_context->info() << "  Whitelist ";
-            for (const auto v : whitelist[i])
-                m_context->info() << v << ' ';
-
-            m_context->info() << '(' << m_solver.function_size(i) << ")\n";
-        }
-
-        /* convert the set into vector of vector. */
-        for (int i = 0ul, e = whitelist.size(); i != e; ++i) {
-            m_whitelist[i].resize(whitelist[i].size());
-
-            std::copy(whitelist[i].begin(), whitelist[i].end(),
-                      m_whitelist[i].begin());
-        }
-    }
-
-    /** @e reduce is used to reduce the size of the problem. It removes
-     * from the solver, all lines from the solver based on part (@e ids)
-     * of the options.
-     */
-    void reduce(const Options& options, const std::vector<int>& ids)
-    {
-        m_context->info() << "Reducing problem size\n";
-
-        m_whitelist.clear();
-        m_whitelist.resize(m_solver.attribute_size());
-
-        std::vector<std::set<int>> whitelist;
-        whitelist.resize(m_solver.attribute_size());
-
-        for (const auto& subdataset : options.get_subdataset())
-            for (const auto& option : subdataset)
-                m_solver.reduce(options.options.row(option), whitelist);
-
-        for (auto i = 0ul, e = whitelist.size(); i != e; ++i) {
-            m_context->info() << " whitelist ";
             for (const auto v : whitelist[i])
                 m_context->info() << v << ' ';
 

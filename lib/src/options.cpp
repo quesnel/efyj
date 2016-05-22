@@ -20,7 +20,6 @@
  */
 
 #include "options.hpp"
-#include "exception.hpp"
 #include "utils.hpp"
 #include <boost/algorithm/string.hpp>
 #include <iterator>
@@ -67,9 +66,11 @@ namespace efyj {
 
 void Options::read(std::shared_ptr<Context> context,
                    std::istream& is,
-                   const efyj::Model& model)
+                   const Model& model)
 {
-    std::vector <const efyj::attribute *> atts = ::get_basic_attribute(model);
+    clear();
+
+    std::vector <const attribute *> atts = ::get_basic_attribute(model);
     std::vector <int> convertheader(atts.size(), 0);
     std::vector <std::string> columns;
     std::string line;
@@ -84,12 +85,12 @@ void Options::read(std::shared_ptr<Context> context,
         else if (columns.size() == atts.size() + 5)
             id = 4;
         else
-            throw efyj::csv_parser_error(
+            throw csv_parser_error(
                 0, 0, std::string(),
-                efyj::stringf("csv have not correct number of column %ld "
-                              "(expected: %ld)",
-                              columns.size(),
-                              (atts.size() + 5u)));
+                stringf("csv have not correct number of column %ld "
+                        "(expected: %ld)",
+                        columns.size(),
+                        (atts.size() + 5u)));
     }
 
     for (std::size_t i = 0, e = atts.size(); i != e; ++i)
@@ -125,7 +126,7 @@ void Options::read(std::shared_ptr<Context> context,
         int obs;
         try {
             obs = model.attributes[0].scale.find_scale_value(columns.back());
-        } catch (const efyj_error &e) {
+        } catch (const std::runtime_error &e) {
             context->err().printf("Options: error in csv file line %d:"
                                   " convertion failure of `%s'\n",
                                   line_number,
@@ -165,11 +166,12 @@ void Options::read(std::shared_ptr<Context> context,
             int option = atts[attid]->scale.find_scale_value(columns[i]);
 
             if (option < 0) {
-                context->err().printf("Options: error in csv file line %d: "
-                                      "unknown scale value `%s' for attribute `%s'",
-                                      line_number,
-                                      columns[i].c_str(),
-                                      atts[attid]->name.c_str());
+                context->err().printf(
+                    "Options: error in csv file line %d: "
+                    "unknown scale value `%s' for attribute `%s'",
+                    line_number,
+                    columns[i].c_str(),
+                    atts[attid]->name.c_str());
 
                 simulations.pop_back();
                 if (id == 4)
@@ -193,21 +195,15 @@ void Options::read(std::shared_ptr<Context> context,
     options.conservativeResize(options.rows() - 1,
                                Eigen::NoChange_t());
 
-    assert(static_cast<std::size_t>(options.rows()) == simulations.size());
+    init_dataset();
+    check();
+}
 
-    assert(simulations.size() == departments.size() &&
-           simulations.size() == years.size() &&
-           simulations.size() == observed.size() &&
-           (simulations.size() == places.size() ||
-            places.empty()) &&
-           simulations.size() ==
-           static_cast<std::size_t>(options.rows()));
-
-
+void Options::init_dataset()
+{
     const std::size_t size = simulations.size();
 
-    if (not subdataset.empty())
-        std::vector<std::vector<int>>().swap(subdataset);
+    assert(not simulations.empty());
 
     subdataset.resize(size);
 
@@ -234,14 +230,21 @@ void Options::read(std::shared_ptr<Context> context,
         }
     }
 
-    // Compute the reduced id_subdataset_reduced
+    // printf("init_dataset\n");
+    // for (std::size_t i = 0, e = subdataset.size(); i != e; ++i) {
+    //     printf("%ld [", i);
+    //     for (auto elem : subdataset[i])
+    //         printf("%d ", elem);
+    //     printf("]\n");
+    // }
 
     {
         std::vector<std::vector<int>> reduced;
         id_subdataset_reduced.resize(subdataset.size());
 
         for (std::size_t i = 0, e = subdataset.size(); i != e; ++i) {
-            auto it = std::find(reduced.cbegin(), reduced.cend(), subdataset[i]);
+            auto it = std::find(reduced.cbegin(), reduced.cend(),
+                                subdataset[i]);
 
             if (it == reduced.cend()) {
                 id_subdataset_reduced[i] = (int)reduced.size();
@@ -251,6 +254,53 @@ void Options::read(std::shared_ptr<Context> context,
             }
         }
     }
+
+    // printf("id_subdataset: [");
+    // for (std::size_t i = 0, e = subdataset.size(); i != e; ++i)
+    //     printf("%d ", id_subdataset_reduced[i]);
+    // printf("]\n");
+}
+
+void Options::check()
+{
+    if (static_cast<std::size_t>(options.rows()) != simulations.size() or
+        options.cols() == 0 or
+        simulations.size() != departments.size() or
+        simulations.size() != years.size() or
+        simulations.size() != observed.size() or
+        not (simulations.size() == places.size() or places.empty()) or
+        simulations.size() != id_subdataset_reduced.size() or
+        subdataset.size() != simulations.size())
+        throw internal_error("Options are inconsistent");
+}
+
+void Options::set(const std::vector <std::string>& simulations_,
+                  const std::vector <std::string>& places_,
+                  const std::vector <int>& departments_,
+                  const std::vector <int>& years_,
+                  const std::vector <int>& observed_,
+                  const std::vector <int>& options_)
+{
+    simulations = simulations_;
+    places = places_;
+    departments = departments_;
+    years = years_;
+    observed = observed_;
+
+    const auto rows = simulations.size();
+    const auto columns = options_.size() / rows;
+
+    if (columns == 0)
+        throw internal_error("Inconsistent array");
+
+    options.conservativeResize(rows, columns);
+
+    for (auto row = decltype(rows){0}; row != rows; ++row)
+        for (auto col = decltype(columns){0}; col != columns; ++col)
+            options(row, col) = options_[row * columns + col];
+
+    init_dataset();
+    check();
 }
 
 void Options::clear() noexcept

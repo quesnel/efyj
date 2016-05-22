@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 INRA
+/* Copyright (C) 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,33 +19,44 @@
  * IN THE SOFTWARE.
  */
 
-#include "solver.hpp"
+#ifndef INRA_EFYj_INTERNAL_ADJUSTMENT_HPP
+#define INRA_EFYj_INTERNAL_ADJUSTMENT_HPP
+
+#include <memory>
+#include <chrono>
+#include "post.hpp"
 #include "solver-stack.hpp"
 
 namespace efyj {
 
-struct Solver::solver_impl
-{
-    solver_impl(const Model& model)
-        : solver(model)
-    {}
+class Context;
+struct Model;
+struct Options;
 
-    solver_stack solver;
+struct adjustment_evaluator
+{
+    std::shared_ptr<Context> m_context;
+    const Model& m_model;
+    const Options& m_options;
+
+    std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
+    std::vector <std::tuple<int, int, int>> m_updaters;
+    std::vector <std::vector<int>> m_globalfunctions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
+    for_each_model_solver solver;
+    weighted_kappa_calculator kappa_c;
+    unsigned long long int m_loop = 0;
+
+    adjustment_evaluator(std::shared_ptr<Context> context,
+                         const Model& model,
+                         const Options& options);
+
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode);
 };
 
-Solver::Solver(const Model& model)
-    : m_impl(std::unique_ptr<Solver::solver_impl>(
-                 new Solver::solver_impl(model)))
-{
-}
-
-Solver::~Solver()
-{
-}
-
-scale_id Solver::solve(const Vector& opt)
-{
-    return m_impl->solver.solve(opt);
-}
-
 } // namespace efyj
+
+#endif

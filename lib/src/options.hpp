@@ -65,6 +65,19 @@ struct EFYJ_API Options
         return id_subdataset_reduced[id];
     }
 
+    bool empty() const noexcept
+    {
+        return simulations.empty() or departments.empty()
+            or years.empty() or observed.empty();
+    }
+
+    void set(const std::vector <std::string>& simulations,
+             const std::vector <std::string>& places,
+             const std::vector <int>& departments,
+             const std::vector <int>& years,
+             const std::vector <int>& observed,
+             const std::vector <int>& options);
+
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.
      *
@@ -78,10 +91,31 @@ struct EFYJ_API Options
               std::istream& is,
               const Model& model);
 
+    bool have_subdataset() const
+    {
+        for (const auto& elem : subdataset)
+            if (elem.empty())
+                return false;
+
+        return true;
+    }
+
     /** Release all dynamically allocated memory. */
     void clear() noexcept;
 
+    /// check consistency of all data into the object. This function is
+    /// automatically used after \e read(...) or \e set(...) functions. If
+    /// data are not consistency, \e clear() is called.
+    ///
+    /// \execption \e internal_error or \e options_error.
+    void check();
+
 private:
+    /// \e init_dataset is called after \e read(...) or \e set(...)
+    /// functions to initialize the \e subdataset and \e
+    /// id_subdataset_reduced variables.
+    void init_dataset();
+
     /// \e subdataset stores a list of line that defines the learning
     /// options for each options. \e subdataset.size() equals \e
     /// simulations.size()

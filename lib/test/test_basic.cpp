@@ -20,9 +20,8 @@
  */
 
 #include "context.hpp"
-#include "problem.hpp"
 #include "model.hpp"
-#include "solver.hpp"
+#include "solver-stack.hpp"
 #include <sstream>
 #include <cstdlib>
 
@@ -287,7 +286,7 @@ TEST_CASE("test basic solver for Car", "[model]")
     efyj::Vector opt_v4(6); opt_v4 << 2, 2, 2, 3, 2, 2;
     efyj::Vector opt_v5(6); opt_v5 << 0, 0, 0, 0, 0, 0;
     {
-        efyj::Solver s(model);
+        efyj::solver_stack s(model);
         REQUIRE(s.solve(opt_v3) == 3);
         REQUIRE(s.solve(opt_v2) == 2);
         REQUIRE(s.solve(opt_v4) == 3);
@@ -306,7 +305,7 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE_NOTHROW(model.read(is));
     }
     efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
-    efyj::Solver ss(model);
+    efyj::solver_stack ss(model);
     REQUIRE(ss.solve(opt_v) == 1);
 }
 
@@ -322,14 +321,14 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
     }
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::Solver ss(*model);
+        efyj::solver_stack ss(*model);
         REQUIRE(ss.solve(opt_v) == 6);
     }
     efyj::Model copy1(*model);
     delete model;
     {
         efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
-        efyj::Solver ss(copy1);
+        efyj::solver_stack ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
     }
 }
@@ -342,40 +341,125 @@ TEST_CASE("test problem Model file", "[model]")
         "Car.dxi", "Employ.dxi", "Enterprise.dxi",
         "IPSIM_PV_simulation1-1.dxi" };
 
-    auto ctx = std::make_shared <efyj::Context>(efyj::LOG_OPTION_DEBUG);
-
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
 
-        efyj::Model model;
-
         {
+            efyj::Model model;
+
             std::ifstream ifs(filepath);
             model.read(ifs);
-        }
 
-        {
             std::ofstream ofs("/tmp/toto.csv");
             model.write_options(ofs);
         }
 
-        efyj::Options options;
+        efyj::efyj e(filepath, "/tmp/toto.csv");
+        auto ret = e.compute_kappa();
 
-        {
-            std::ifstream ifs("/tmp/toto.csv");
-            options.read(ctx, ifs, model);
-        }
+        printf("===> %f\n", ret.kappa);
 
-        efyj::Problem problem(ctx);
-        double kappa = problem.compute0(model, options);
-        REQUIRE(kappa == 1.0);
+        REQUIRE(ret.kappa == 1.0);
+        REQUIRE(ret.kappa_computed == 1);
     }
 }
 
-TEST_CASE("test multiple solver for Car", "[model]")
+TEST_CASE("check the options set function", "[options]")
 {
-    auto ctx = std::make_shared <efyj::Context>();
+    change_pwd();
 
+    efyj::Model model;
+
+    {
+        std::ifstream ifs("Car.dxi");
+        model.read(ifs);
+
+        std::ofstream ofs("/tmp/Car.csv");
+        model.write_options(ofs);
+    }
+
+    std::vector <std::string> simulations_old;
+    std::vector <std::string> places_old;
+    std::vector <int> departments_old;
+    std::vector <int> years_old;
+    std::vector <int> observed_old;
+    std::vector <int> options_old;
+
+    {
+        efyj::efyj e("Car.dxi", "/tmp/Car.csv");
+
+        e.extract_options(simulations_old, places_old, departments_old,
+                          years_old, observed_old, options_old);
+    }
+
+    efyj::Options options;
+
+    {
+        std::ifstream ifs("/tmp/Car.csv");
+        options.read(std::make_shared<efyj::Context>(), ifs, model);
+    }
+
+    efyj::Array array_options_old = options.options;
+
+    options.set(simulations_old, places_old, departments_old,
+                years_old, observed_old, options_old);
+
+    REQUIRE(options.options.rows() == array_options_old.rows());
+    REQUIRE(options.options.cols() == array_options_old.cols());
+
+    for (long int row = 0; row != options.options.rows(); ++row)
+        for (long int col = 0; col != options.options.cols(); ++col)
+            REQUIRE(options.options(row, col) ==
+                    array_options_old(row, col));
+}
+
+TEST_CASE("check the efyj set function", "[options]")
+{
+    change_pwd();
+
+    {
+        efyj::Model model;
+        std::ifstream ifs("Car.dxi");
+        model.read(ifs);
+        std::ofstream ofs("/tmp/Car.csv");
+        model.write_options(ofs);
+    }
+
+    efyj::efyj e("Car.dxi", "/tmp/Car.csv");
+
+    std::vector <std::string> simulations_old;
+    std::vector <std::string> places_old;
+    std::vector <int> departments_old;
+    std::vector <int> years_old;
+    std::vector <int> observed_old;
+    std::vector <int> options_old;
+
+    e.extract_options(simulations_old, places_old, departments_old,
+                      years_old, observed_old, options_old);
+
+    e.set_options(simulations_old, places_old, departments_old,
+                  years_old, observed_old, options_old);
+
+    std::vector <std::string> simulations;
+    std::vector <std::string> places;
+    std::vector <int> departments;
+    std::vector <int> years;
+    std::vector <int> observed;
+    std::vector <int> options;
+
+    e.extract_options(simulations, places, departments,
+                      years, observed, options);
+
+    REQUIRE(simulations_old == simulations);
+    REQUIRE(places_old == places);
+    REQUIRE(departments_old == departments);
+    REQUIRE(years_old == years);
+    REQUIRE(observed_old == observed);
+    REQUIRE(options_old == options);
+}
+
+TEST_CASE("test adjustment solver for Car", "[model]")
+{
     change_pwd();
 
     efyj::Model model;
@@ -390,35 +474,139 @@ TEST_CASE("test multiple solver for Car", "[model]")
         model.write_options(ofs);
     }
 
-    efyj::Options options;
+    efyj::efyj e("Car.dxi", "/tmp/Car.csv");
 
     {
-        std::ifstream ifs("/tmp/Car.csv");
-        options.read(ctx, ifs, model);
-
+        auto ret = e.compute_kappa();
+        REQUIRE(ret.kappa == 1);
     }
 
-     efyj::Problem problem(ctx);
+    std::vector <std::string> simulations;
+    std::vector <std::string> places;
+    std::vector <int> departments;
+    std::vector <int> years;
+    std::vector <int> observed;
+    std::vector <int> options;
 
-     double kappa;
-     kappa = problem.compute0(model, options);
-     REQUIRE(kappa == 1);
+    e.extract_options(simulations, places, departments,
+                      years, observed, options);
 
-     // We change the simulation result.
+    REQUIRE(simulations.size() < options.size());
+    REQUIRE(simulations.size() > 0);
 
-     std::cerr << "Options to change: " << options.options.cols() - 1 << '\n';
-     options.options(options.options.cols() - 1, 0) = 0;
+    years[0] = 2000;
+    years[1] = 2000;
+    years[2] = 2001;
+    years[3] = 2001;
+    years[4] = 2002;
+    years[5] = 2002;
 
-     kappa = problem.compute0(model, options);
-     REQUIRE(kappa == Approx(0.6667).epsilon(0.1));
+    departments[0] = 59;
+    departments[1] = 62;
+    departments[2] = 59;
+    departments[3] = 62;
+    departments[4] = 59;
+    departments[5] = 62;
 
-     {
-         auto kappa_11 = problem.compute0(model, options);
-         REQUIRE(kappa_11 == Approx(0.6667).epsilon(0.1));
-     }
+    places[0] = "a";
+    places[1] = "b";
+    places[2] = "c";
+    places[3] = "d";
+    places[4] = "e";
+    places[5] = "f";
 
-     {
-         auto kappa_11 = problem.computen(model, options, 1);
-         REQUIRE(kappa_11 == 1);
-     }
+    REQUIRE(model.attributes[0].scale.size() == 4);
+    observed = { 2, 1, 0, 0, 2, 2 };
+    e.set_options(simulations, places, departments, years, observed, options);
+    {
+        auto ret = e.compute_adjustment(4, -1, 1);
+        REQUIRE(ret.size() == 5);
+
+        REQUIRE(ret[0].kappa == Approx(0.78).epsilon(0.1));
+        REQUIRE(ret[1].kappa == Approx(0.84).epsilon(0.1));
+        REQUIRE(ret[2].kappa == Approx(0.91).epsilon(0.1));
+        REQUIRE(ret[3].kappa == Approx(0.81).epsilon(0.1));
+        REQUIRE(ret[4].kappa == Approx(1).epsilon(0.1));
+  }
+}
+
+TEST_CASE("test prediction solver for Car", "[model]")
+{
+    change_pwd();
+
+    efyj::Model model;
+
+    {
+        std::ifstream ifs("Car.dxi");
+        model.read(ifs);
+    }
+
+    {
+        std::ofstream ofs("/tmp/Car.csv");
+        model.write_options(ofs);
+    }
+
+    efyj::efyj e("Car.dxi", "/tmp/Car.csv");
+
+    {
+        auto ret = e.compute_kappa();
+        REQUIRE(ret.kappa == 1);
+    }
+
+    std::vector <std::string> simulations;
+    std::vector <std::string> places;
+    std::vector <int> departments;
+    std::vector <int> years;
+    std::vector <int> observed;
+    std::vector <int> options;
+
+    e.extract_options(simulations, places, departments,
+                      years, observed, options);
+
+    REQUIRE(simulations.size() < options.size());
+    REQUIRE(simulations.size() > 0);
+
+    years[0] = 2000;
+    years[1] = 2000;
+    years[2] = 2001;
+    years[3] = 2001;
+    years[4] = 2002;
+    years[5] = 2002;
+
+    departments[0] = 59;
+    departments[1] = 62;
+    departments[2] = 59;
+    departments[3] = 62;
+    departments[4] = 59;
+    departments[5] = 62;
+
+    places[0] = "a";
+    places[1] = "b";
+    places[2] = "c";
+    places[3] = "d";
+    places[4] = "e";
+    places[5] = "f";
+
+    REQUIRE(model.attributes[0].scale.size() == 4);
+    observed = { 3, 2, 0, 0, 3, 3 };
+
+    e.set_options(simulations, places, departments, years, observed, options);
+
+    {
+        auto ret = e.compute_prediction(1, -1, 1);
+
+        REQUIRE(ret.size() == 2);
+        REQUIRE(ret.front().kappa == 1);
+        REQUIRE(ret.back().kappa == 1);
+    }
+
+    observed = { 3, 2, 0, 0, 3, 3 };
+    e.set_options(simulations, places, departments, years, observed, options);
+    {
+        auto ret = e.compute_prediction(1, -1, 1);
+        REQUIRE(ret.size() == 2);
+
+        REQUIRE(ret.front().kappa == Approx(0.95).epsilon(0.1));
+        REQUIRE(ret.back().kappa == Approx(0.89).epsilon(0.1));
+    }
 }

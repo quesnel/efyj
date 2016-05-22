@@ -1,17 +1,15 @@
 project(libefyj VERSION 0.1.0.0 LANGUAGES CXX C)
 
-## TODO src/prediction-mpi.cpp
+configure_file(src/config.hpp.in ${CMAKE_BINARY_DIR}/config.hpp)
 
-add_library(libefyj SHARED src/context.cpp src/cstream.cpp
-  src/exception.cpp src/main.cpp src/model.cpp src/options.cpp
-  src/post.hpp src/prediction.cpp src/prediction.hpp
-  src/prediction-thread.cpp src/problem.cpp src/solver.cpp
-  src/solver-stack.hpp src/utils.cpp src/utils.hpp)
+add_library(libefyj SHARED src/adjustment.cpp src/context.cpp
+  src/cstream.cpp src/efyj.cpp src/exception.cpp src/model.cpp
+  src/options.cpp src/prediction.cpp src/utils.cpp)
 
 target_include_directories(libefyj PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  PRIVATE src)
+  PRIVATE src ${CMAKE_BINARY_DIR})
 
 # If we have compiler requirements for this library, list them
 # here
@@ -51,10 +49,15 @@ install(DIRECTORY include/ DESTINATION include/efyj)
 # This makes the project importable from the build directory
 export(TARGETS libefyj FILE LibEFYjConfig.cmake)
 
-add_executable(testlib test/test_basic.cpp)
+add_executable(testlib test/test_basic.cpp src/exception.cpp)
 
 set_target_properties(testlib PROPERTIES
   COMPILE_DEFINITIONS EXAMPLES_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test\")
+
+target_include_directories(testlib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  PRIVATE src)
 
 target_link_libraries(testlib libefyj boost eigen3 expat threads)
 

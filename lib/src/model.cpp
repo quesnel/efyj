@@ -19,9 +19,10 @@
  * IN THE SOFTWARE.
  */
 
+#include "efyj.hpp"
 #include "model.hpp"
-#include "exception.hpp"
 #include "utils.hpp"
+#include "cstream.hpp"
 #include <algorithm>
 #include <istream>
 #include <ostream>
@@ -81,7 +82,7 @@ struct Model_reader {
             is.read(buffer, buffer_size);
 
             if (not ::XML_ParseBuffer(parser, is.gcount(), is.eof()))
-                throw efyj::xml_parser_error(
+                throw ::efyj::dexi_parser_error(
                     data.error_message,
                     XML_GetCurrentLineNumber(parser),
                     XML_GetCurrentColumnNumber(parser),
@@ -131,7 +132,7 @@ private:
         try {
             return stack_identifier_map.at(name);
         } catch (const std::exception & /*e*/) {
-            throw efyj::xml_parser_error(
+            throw efyj::dexi_parser_error(
                 std::string("unknown element: ") + name);
         }
     }
@@ -156,7 +157,7 @@ private:
                         return;
             }
 
-            throw efyj::xml_parser_error("Bad parent");
+            throw efyj::dexi_parser_error("Bad parent");
         }
     };
 
@@ -174,7 +175,7 @@ private:
             switch (id) {
             case stack_identifier::DEXi:
                 if (!pd->stack.empty())
-                    throw efyj::xml_parser_error("Bad parent");
+                    throw efyj::dexi_parser_error("Bad parent");
 
                 pd->stack.push(id);
                 break;
@@ -252,7 +253,7 @@ private:
                 pd->model.attributes.back().scale.scale.emplace_back("unaffected scalevalue");
 
                 if (not efyj::is_valid_scale_id(pd->model.attributes.size()))
-                    throw efyj::xml_parser_error(
+                    throw efyj::dexi_parser_error(
                         std::string("Too many scale value for attribute: ") +
                         pd->model.attributes.back().name);
 
@@ -315,14 +316,14 @@ private:
                     try {
                         att = std::stoi(pd->char_data);
                     } catch (...) {
-                        throw efyj::xml_parser_error(
+                        throw efyj::dexi_parser_error(
                             std::string("Can not convert option string ") +
                             pd->char_data + std::string(" in integer"));
                     }
 
                     pd->model.attributes.back().options.emplace_back(att);
                 } else
-                    throw efyj::xml_parser_error("bad stack");
+                    throw efyj::dexi_parser_error("bad stack");
 
                 break;
 
@@ -362,7 +363,7 @@ private:
 
             case stack_identifier::DESCRIPTION:
                 if (pd->stack.top() != stack_identifier::DESCRIPTION)
-                    throw efyj::xml_parser_error("DESCRIPTION");
+                    throw efyj::dexi_parser_error("DESCRIPTION");
 
                 pd->stack.pop();
 
@@ -622,19 +623,19 @@ void reorder_basic_attribute(const efyj::Model &model, std::size_t att,
 }
 
 efyj::cstream& model_show(efyj::cstream& cs, const efyj::Model &model,
-		std::size_t att, std::size_t space)
+                std::size_t att, std::size_t space)
 {
     cs.indent(space);
     cs << cs.red() << model.attributes[att].name
        << cs.def() << "\n";
 
     for (const auto &sc : model.attributes[att].scale.scale) {
-	cs.indent(space);
-	cs << "| " << sc.name << "\n";
+        cs.indent(space);
+        cs << "| " << sc.name << "\n";
     }
 
     if (model.attributes[att].is_aggregate()) {
-	cs.indent(space + 1);
+        cs.indent(space + 1);
         cs << "\\ -> (fct: "
            << model.attributes[att].functions.low
            << "), (scale size: "
@@ -760,7 +761,7 @@ bool operator<(const attribute &lhs, const attribute &rhs)
     return lhs.name < rhs.name;
 }
 
-efyj::cstream& operator<<(efyj::cstream& cs, const Model &model) noexcept
+cstream& operator<<(cstream& cs, const Model &model) noexcept
 {
     ::model_show(cs, model, 0, 0);
 
