@@ -109,7 +109,7 @@ struct EFYJ_API scales
         throw efyj_error("scale not found");
     }
 
-    scale_id size() const noexcept
+    scale_id size() const
     {
         if (not is_valid_scale_id(scale.size()))
             throw efyj_error("bad scale definition");
