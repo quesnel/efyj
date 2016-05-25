@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 INRA
+/* Copyright (C) 2015, 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,10 +26,10 @@
 #include <cstdlib>
 
 #if defined(__unix__)
-    #include <unistd.h>
+# include <unistd.h>
 #elif defined(__WIN32__)
-    #include <io.h>
-    #include <stdio.h>
+# include <io.h>
+# include <stdio.h>
 #endif
 
 #define CATCH_CONFIG_MAIN
@@ -61,17 +61,14 @@ TEST_CASE("test empty object read/write", "[model]")
     REQUIRE(is_equal == true);
 }
 
-#include <unistd.h>
-
 static inline void change_pwd()
 {
-#ifdef EXAMPLES_DIR
+#if defined(__unix__)
     int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
 #else
-    int ret = ::chdir("/home/goth/devel/efyj/efyj/tests");
-    REQUIRE(ret == 0);
+    int ret = ::_chdir(EXAMPLES_DIR);
 #endif
+    REQUIRE(ret == 0);
 }
 
 TEST_CASE("test classic Model file", "[model]")
