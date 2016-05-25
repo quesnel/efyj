@@ -535,12 +535,12 @@ private:
 
     std::string make_space() const
     {
-        return std::move(std::string(space, ' '));
+        return std::string(space, ' ');
     }
 
     std::string make_space(std::size_t adding) const
     {
-        return std::move(std::string(space + adding, ' '));
+        return std::string(space + adding, ' ');
     }
 
     template <typename T>
