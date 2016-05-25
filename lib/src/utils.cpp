@@ -20,6 +20,7 @@
  */
 
 #include <thread>
+#include <string>
 #include <cstdio>
 #include <cstdarg>
 

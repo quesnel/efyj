@@ -154,23 +154,23 @@ std::ofstream make_temporary(std::string &name, bool remove = true)
 
 TEST_CASE("test car.dxi load/save/load via file", "[model]")
 {
-    int ret = ::chdir(EXAMPLES_DIR);
-    REQUIRE(ret == 0);
+    change_pwd();
+
     efyj::Model car;
     std::string outputfile("CarXXXXXXXX.dxi");
     {
         std::ifstream is("Car.dxi");
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> car);
+        REQUIRE_NOTHROW(car.read(is));
         std::ofstream os(make_temporary(outputfile, false));
         REQUIRE(os.is_open());
-        REQUIRE_NOTHROW(os << car);
+        REQUIRE_NOTHROW(car.write(os));
     }
     efyj::Model car2;
     {
         std::ifstream is(outputfile);
         REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(is >> car2);
+        REQUIRE_NOTHROW(car2.read(is));
     }
     REQUIRE(car == car2);
 }

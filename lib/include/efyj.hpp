@@ -54,6 +54,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <stdexcept>
 
 /** Comments about efyj's API.
@@ -204,6 +205,13 @@ public:
                      const std::vector <int>& observed,
                      const std::vector <int>& options);
 
+    /**
+     * Use the DEXi model to compute the result of the firt attribute.
+     *
+     * \param [in] options A integer vector that represents the options
+     * for each leaf of the model.
+     * \return >= 0 otherwise.
+     */
     int solve(const std::vector<int>& options);
 
     result compute_kappa() const;

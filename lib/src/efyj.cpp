@@ -121,11 +121,8 @@ struct efyj::pimpl
 
     int solve(const std::vector<int>& options)
     {
-        if (pp_model.empty()) {
-            pp_context->dbg().printf(
-                "load model before trying compute functions.");
-            return {};
-        }
+        Expects(not pp_model.empty(),
+                "load model before trying solve function.");
 
         solver_stack solver(pp_model);
         Eigen::VectorXi v = Eigen::Map<Eigen::VectorXi>(
@@ -137,18 +134,16 @@ struct efyj::pimpl
 
     result compute_kappa() const
     {
-        if (pp_options.empty() or pp_model.empty()) {
-            pp_context->dbg().printf(
-                "load options and model before trying compute functions.");
-            return {};
-        }
+        Expects(not pp_options.empty() and not pp_model.empty(),
+                "load options and model before trying compute kappa");
 
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
         solver_stack solver(pp_model);
         std::vector <int> simulated(pp_options.options.rows());
-        weighted_kappa_calculator kappa_c(pp_model.attributes[0].scale.size());
+        weighted_kappa_calculator kappa_c(
+            pp_model.attributes[0].scale.size());
 
         for (std::size_t i = 0, e = pp_options.options.rows(); i != e; ++i)
             simulated[i] = solver.solve(pp_options.options.row(i));
@@ -171,11 +166,8 @@ struct efyj::pimpl
                                             double time_limit,
                                             int reduce_mode) const
     {
-        if (pp_options.empty() or pp_model.empty()) {
-            pp_context->dbg().printf(
-                "load options and model before trying compute functions.");
-            return {};
-        }
+        Expects(not pp_options.empty() and not pp_model.empty(),
+                "load options and model before trying prediction function.");
 
         prediction_evaluator computer(pp_context, pp_model, pp_options);
         return computer.run(line_limit, time_limit, reduce_mode);
@@ -186,11 +178,8 @@ struct efyj::pimpl
                                             double time_limit,
                                             int reduce_mode) const
     {
-        if (pp_options.empty() or pp_model.empty()) {
-            pp_context->dbg().printf(
-                "load options and model before trying compute functions.");
-            return {};
-        }
+        Expects(not pp_options.empty() and not pp_model.empty(),
+                "load options and model before trying adjustment function.");
 
         adjustment_evaluator computer(pp_context, pp_model, pp_options);
         return computer.run(line_limit, time_limit, reduce_mode);
@@ -222,8 +211,8 @@ efyj::efyj(const std::string& model_filepath,
     pp_impl->options_read(options_filepath);
 }
 
-efyj::efyj(efyj&& other) = default;
-efyj& efyj::operator=(efyj&& other) = default;
+efyj::efyj(efyj&& /* other */) = default;
+efyj& efyj::operator=(efyj&& /* other */) = default;
 efyj::~efyj() noexcept = default;
 
 void efyj::extract_options(const std::string& output) const
@@ -263,13 +252,15 @@ result efyj::compute_kappa() const
     return pp_impl->compute_kappa();
 }
 
-std::vector<result> efyj::compute_prediction(int line_limit, double time_limit,
+std::vector<result> efyj::compute_prediction(int line_limit,
+                                             double time_limit,
                                              int reduce_mode) const
 {
     return pp_impl->compute_prediction(line_limit, time_limit, reduce_mode);
 }
 
-std::vector<result> efyj::compute_adjustment(int line_limit, double time_limit,
+std::vector<result> efyj::compute_adjustment(int line_limit,
+                                             double time_limit,
                                              int reduce_mode) const
 {
     return pp_impl->compute_adjustment(line_limit, time_limit, reduce_mode);

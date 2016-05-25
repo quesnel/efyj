@@ -36,6 +36,20 @@ namespace efyj {
 
 std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
 
+inline
+void Expects(bool condition)
+{
+    if (not condition)
+        throw std::invalid_argument("");
+}
+
+inline
+void Expects(bool condition, const char *msg)
+{
+    if (not condition)
+        throw std::invalid_argument(msg);
+}
+
 struct scope_exit {
     scope_exit(std::function <void (void)> fct)
         : fct(fct)
