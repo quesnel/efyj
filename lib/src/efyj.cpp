@@ -266,6 +266,11 @@ std::vector<result> efyj::compute_adjustment(int line_limit,
     return pp_impl->compute_adjustment(line_limit, time_limit, reduce_mode);
 }
 
+bool efyj::is_empty() const noexcept
+{
+    return pp_impl->pp_model.empty();
+}
+
 void efyj::clear()
 {
     pp_impl->clear();

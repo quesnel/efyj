@@ -226,6 +226,15 @@ public:
                            double time_limit,
                            int reduce_mode) const;
 
+    /**
+     * The \e is_empty function checks if a model was load previously.
+     */
+    bool is_empty() const noexcept;
+
+    /**
+     * The \e clear function destroy model and option loaded or set
+     * previously. After the call, the \e is_empty() return true.
+     */
     void clear();
 };
 
