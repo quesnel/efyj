@@ -50,7 +50,7 @@ namespace efyj {
  * }
  * @endcode
  */
-class EFYJ_API cstream
+class cstream
 {
 public:
     enum colors { Default = 0, Black, Red, Green, Yellow, Blue, Magenta,
@@ -177,11 +177,11 @@ private:
 
 // /** Give an access to the standard output stream (stdout).
 //  */
-EFYJ_API cstream& out();
+cstream& out();
 
 // /** Give an access to the standard output error stream (stderr).
 //  */
-EFYJ_API cstream& err();
+cstream& err();
 
 //
 // implementation part.

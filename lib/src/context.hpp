@@ -47,7 +47,7 @@ enum LogOption
  * ctx->info() << "Context initialized.\n";
  * @endcode
  */
-class EFYJ_API Context
+class Context
 {
 public:
     Context(LogOption option = LOG_OPTION_DEBUG);

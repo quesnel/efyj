@@ -36,7 +36,7 @@ namespace efyj {
  * and observation, (ii) the complete matrix of option and a ordered
  * structure to build link between simulations.
  */
-struct EFYJ_API Options
+struct Options
 {
     std::vector <std::string> simulations;
     std::vector <std::string> places;
@@ -126,7 +126,6 @@ private:
     std::vector<int> id_subdataset_reduced;
 };
 
-EFYJ_API
 cstream& operator<<(cstream& os, const Options&) noexcept;
 
 }
