@@ -10,8 +10,8 @@ The software is released under the MIT license. See the COPYING file.
 * libexpat (≥ 2)
 * boost (≥ 1.50)
 * eigen3 (≥ 3)
-* autoconf, automake and make
-* c++ compiler (gcc ≥ 4.8, clang ≥ 3.3, intel icc (≥ 11.0).
+* cmake (≥ 3)
+* c++ compiler with c++14 support (gcc ≥ 4.8, clang ≥ 3.5)
 
 For recent Debian and Ubuntu derivatives (remove clang to only use
 gcc):
@@ -24,20 +24,26 @@ gcc):
 Compiling and installing:
 
     cd efyj
-    ./autogen.sh
-    ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
     make -j 4
     make install
 
 To use clang replace the previous `./configure ...` command with the following:
 
-    ./configure CC='clang-3.6' CXX='clang++-3.6' \
-        CXXFLAGS='-O0 -g -stdlib=libc++' LDFLAGS='-stdlib=libc++' \
-        --prefix=/pub/usr --sysconfdir=/pub/etc --libdir=/pub/usr/lib
+    cd efyj
+    mkdir build
+    cd build
+    export CC=clang
+    export CXX=clang++-libc++
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+    make -j 4
+    make install
 
 # Usage
 
-    $ efyj -m file.dxi -o file.csv
+    $ efyj -m file.dxi -o file.csv [-p] [-a]
 
 The `file.csv` contains the options of the model. Four first one
 columns contains fields: site, fields, department, year. Next columns
@@ -48,6 +54,9 @@ For example, if a DEXi file `test.dxi` have one aggregate attribute
 `root` and three basic attributes `a`, `b` and `c`, the CSV file is:
 
 	$ cat file.csv
-	site;fields;departement;year;a;b;c;result
+	site;fields;department;year;a;b;c;observed
 	xxxx;yyyy;1532;2010;ok;favourable;host;0-5
 	...
+
+The '-p' option starts a prediction algorithm, '-a' option starts am
+adjustment algorithm.
