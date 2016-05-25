@@ -63,7 +63,7 @@ constexpr scale_id scale_id_unknown() noexcept
     return std::numeric_limits <scale_id>::max();
 }
 
-struct EFYJ_API scalevalue
+struct scalevalue
 {
     scalevalue(const std::string& name)
         : name(name), group(-1)
@@ -74,7 +74,7 @@ struct EFYJ_API scalevalue
     int group;
 };
 
-struct EFYJ_API function
+struct function
 {
     std::string low;
     std::string entered;
@@ -86,7 +86,7 @@ struct EFYJ_API function
     }
 };
 
-struct EFYJ_API scales
+struct scales
 {
     scales()
         : order(true)
@@ -118,7 +118,7 @@ struct EFYJ_API scales
     }
 };
 
-struct EFYJ_API attribute
+struct attribute
 {
     attribute(const std::string& name)
         : name(name)
@@ -157,7 +157,7 @@ struct EFYJ_API attribute
     std::vector <std::size_t> children;
 };
 
-struct EFYJ_API Model
+struct Model
 {
     std::string name;
     std::string version;
@@ -194,14 +194,9 @@ struct EFYJ_API Model
     void write_options(std::ostream& os) const;
 };
 
-EFYJ_API
 bool operator<(const Model& lhs, const Model& rhs);
-EFYJ_API
 bool operator==(const Model& lhs, const Model& rhs);
-EFYJ_API
 bool operator!=(const Model& lhs, const Model& rhs);
-
-EFYJ_API
 cstream& operator<<(cstream& os, const Model& Model_data) noexcept;
 
 }
