@@ -65,7 +65,8 @@ constexpr scale_id scale_id_unknown() noexcept
 
 struct scalevalue
 {
-    scalevalue(const std::string& name)
+    template <typename T>
+    scalevalue(T&& name)
         : name(name), group(-1)
     {}
 
@@ -120,8 +121,9 @@ struct scales
 
 struct attribute
 {
-    attribute(const std::string& name)
-        : name(name)
+    template <typename T>
+    attribute(T&& name_)
+        : name(name_)
     {}
 
     std::size_t children_size() const noexcept

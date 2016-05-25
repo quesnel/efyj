@@ -255,7 +255,7 @@ TEST_CASE("test solver Car", "[model]")
     std::size_t scale_number = 0;
     std::size_t scalevalue_number = 0;
 
-    for (auto att : model.attributes) {
+    for (const auto& att : model.attributes) {
         if (att.is_basic()) {
             basic_scale_number++;
             scalevalue_number += att.scale.size();
