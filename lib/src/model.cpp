@@ -97,7 +97,7 @@ private:
     enum class stack_identifier {
         DEXi, TAG_VERSION, CREATED, LINE, OPTION, SETTINGS, FONTSIZE, REPORTS,
         ATTRIBUTE, NAME, DESCRIPTION, SCALE, ORDER, SCALEVALUE, GROUP,
-        FUNCTION, LOW, ENTERED, CONSIST, WEIGHTS, LOCWEIGHTS, NORMLOCWEIGHTS
+        FUNCTION, LOW, ENTERED, CONSIST, ROUNDING, WEIGHTS, LOCWEIGHTS, NORMLOCWEIGHTS
     };
 
     static stack_identifier str_to_stack_identifier(const char *name)
@@ -124,6 +124,7 @@ private:
             {"LOW", stack_identifier::LOW},
             {"ENTERED", stack_identifier::ENTERED},
             {"CONSIST", stack_identifier::CONSIST},
+            {"ROUNDING", stack_identifier::ROUNDING},
             {"WEIGHTS", stack_identifier::WEIGHTS},
             {"LOCWEIGHTS", stack_identifier::LOCWEIGHTS},
             {"NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS}
@@ -274,6 +275,7 @@ private:
             case stack_identifier::WEIGHTS:
             case stack_identifier::LOCWEIGHTS:
             case stack_identifier::NORMLOCWEIGHTS:
+            case stack_identifier::ROUNDING:
                 pd->is_parent({stack_identifier::FUNCTION});
                 break;
             }
@@ -427,6 +429,7 @@ private:
             case stack_identifier::WEIGHTS:
             case stack_identifier::LOCWEIGHTS:
             case stack_identifier::NORMLOCWEIGHTS:
+            case stack_identifier::ROUNDING:
                 break;
             }
         } catch (const std::exception &e) {
