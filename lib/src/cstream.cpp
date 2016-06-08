@@ -373,7 +373,12 @@ cstream::write(const char *buf, std::size_t count) noexcept
 #ifndef NDEBUG
             {
                 const char *buf = "cstream::write error. Turn off logging\n";
-                ::write(STDERR_FILENO, buf, strlen(buf));
+                auto ret = ::write(STDERR_FILENO, buf, strlen(buf));
+
+                if (ret == -1) {
+                    perror("cstream::write");
+                    puts(buf);
+                }
             }
 #endif
 
