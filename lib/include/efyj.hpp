@@ -55,6 +55,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <ostream>
 #include <stdexcept>
 
 /** Comments about efyj's API.
@@ -165,6 +166,9 @@ private:
     std::string m_msg;
 };
 
+class model;
+class options;
+
 class EFYJ_API efyj
 {
     struct pimpl;
@@ -206,13 +210,17 @@ public:
                      const std::vector <int>& options);
 
     /**
-     * Use the DEXi model to compute the result of the firt attribute.
+     * Use the DEXi model to compute the result of the first attribute.
      *
      * \param [in] options A integer vector that represents the options
      * for each leaf of the model.
      * \return >= 0 otherwise.
      */
     int solve(const std::vector<int>& options);
+
+    int solve(const std::string& modelname,
+              std::ostream& result,
+              std::ostream& kappa);
 
     result compute_kappa() const;
 

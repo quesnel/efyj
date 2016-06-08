@@ -1,4 +1,5 @@
 add_executable(app src/main.cpp)
+add_executable(charlotte src/main2.cpp)
 
 include(CheckCXXCompilerFlag)
 
@@ -22,6 +23,16 @@ set_target_properties(app PROPERTIES
   OUTPUT_NAME "efyj-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 
 install(TARGETS app
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+target_link_libraries(charlotte libefyj boost eigen3 expat threads)
+
+target_include_directories(charlotte PRIVATE ${CMAKE_BINARY_DIR})
+
+install(TARGETS charlotte
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

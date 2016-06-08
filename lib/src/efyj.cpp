@@ -132,6 +132,32 @@ struct efyj::pimpl
         return solver.solve(v);
     }
 
+    int solve(const std::string& modelname, std::ostream& result,
+              std::ostream& kappa)
+    {
+        const std::size_t max_opt = pp_options.simulations.size();
+
+        solver_stack solver(pp_model);
+        std::vector<int> simulated(max_opt);
+        std::vector<int> observed(max_opt);
+        weighted_kappa_calculator kappa_c(
+            pp_model.attributes[0].scale.size());;
+
+        for (std::size_t opt = 0; opt != max_opt; ++opt) {
+            observed[opt] = pp_options.observed[opt];
+            simulated[opt] = solver.solve(pp_options.options.row(opt));
+
+            result << modelname << ' ' << opt << ' ' << observed[opt]
+                   << ' ' << simulated[opt] << '\n';
+        }
+
+        auto localkappa = kappa_c.squared(observed, simulated);
+
+        kappa << modelname << ' ' << localkappa << '\n';
+
+        return 0;
+    }
+
     result compute_kappa() const
     {
         Expects(not pp_options.empty() and not pp_model.empty(),
@@ -245,6 +271,13 @@ void efyj::set_options(const std::vector <std::string>& simulations,
 int efyj::solve(const std::vector<int>& options)
 {
     return pp_impl->solve(options);
+}
+
+int efyj::solve(const std::string& modelname,
+                std::ostream& result,
+                std::ostream& kappa)
+{
+    return pp_impl->solve(modelname, result, kappa);
 }
 
 result efyj::compute_kappa() const
