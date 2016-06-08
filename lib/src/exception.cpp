@@ -22,19 +22,18 @@
 #include "efyj.hpp"
 #include "utils.hpp"
 
-namespace {
+namespace
+{
 
-std::string
-internal_error_format_message(const std::string& msg)
+std::string internal_error_format_message(const std::string &msg)
 {
     return efyj::stringf("Internal error: %s", msg.c_str());
 }
 
-std::string
-internal_error_format_message(const std::string& file,
-                              const std::string& function,
-                              int line,
-                              const std::string& msg)
+std::string internal_error_format_message(const std::string &file,
+                                          const std::string &function,
+                                          int line,
+                                          const std::string &msg)
 {
     return efyj::stringf("Internal error at %s:%s line: %d, %s",
                          file.c_str(),
@@ -43,25 +42,22 @@ internal_error_format_message(const std::string& file,
                          msg.c_str());
 }
 
-std::string
-file_error_format_message(const std::string& file)
+std::string file_error_format_message(const std::string &file)
 {
     return efyj::stringf("Access error to file `%s'", file.c_str());
 }
 
-std::string
-csv_parser_error_format(std::size_t line,
-                        std::size_t column,
-                        const std::string &filepath,
-                        const std::string &msg)
+std::string csv_parser_error_format(std::size_t line,
+                                    std::size_t column,
+                                    const std::string &filepath,
+                                    const std::string &msg)
 {
     if (filepath.empty())
         return efyj::stringf("CSV Error: %s", msg.c_str());
 
     if (line == 0u)
-        return efyj::stringf("CSV Error: file `%s': %s",
-                             filepath.c_str(),
-                             msg.c_str());
+        return efyj::stringf(
+            "CSV Error: file `%s': %s", filepath.c_str(), msg.c_str());
     if (column == 0u)
         return efyj::stringf("CSV Error: file `%s' line %ld: %s",
                              filepath.c_str(),
@@ -81,16 +77,21 @@ std::string dexi_parser_error_format(const std::string &msg)
 }
 
 std::string dexi_parser_error_format(const std::string &msg,
-                                    const std::string &filepath)
+                                     const std::string &filepath)
 {
     return efyj::stringf("DEXI error: '%s' %s", filepath.c_str(), msg.c_str());
 }
 
-std::string dexi_parser_error_format(const std::string &msg, int line,
-                                    int column, int error)
+std::string dexi_parser_error_format(const std::string &msg,
+                                     int line,
+                                     int column,
+                                     int error)
 {
     return efyj::stringf("DEXI error: error %s at %d:%d, error code: %d",
-                         msg.c_str(), line, column, error);
+                         msg.c_str(),
+                         line,
+                         column,
+                         error);
 }
 
 std::string solver_error_format(const std::string &msg)
@@ -100,50 +101,39 @@ std::string solver_error_format(const std::string &msg)
 
 } // anonymous namespace
 
-namespace efyj {
+namespace efyj
+{
 
-internal_error::internal_error(const std::string& msg)
+internal_error::internal_error(const std::string &msg)
     : std::logic_error(::internal_error_format_message(msg))
 {
 }
 
-internal_error::internal_error(const std::string& file,
-                               const std::string& function,
+internal_error::internal_error(const std::string &file,
+                               const std::string &function,
                                int line,
-                               const std::string& msg)
+                               const std::string &msg)
     : std::logic_error(
-        ::internal_error_format_message(file, function, line, msg))
+          ::internal_error_format_message(file, function, line, msg))
     , pp_file(file)
     , pp_function(function)
     , pp_line(line)
 {
 }
 
-std::string internal_error::file() const
-{
-    return pp_file;
-}
+std::string internal_error::file() const { return pp_file; }
 
-std::string internal_error::function() const
-{
-    return pp_function;
-}
+std::string internal_error::function() const { return pp_function; }
 
-int internal_error::line() const
-{
-    return pp_line;
-}
+int internal_error::line() const { return pp_line; }
 
-file_error::file_error(const std::string& file)
+file_error::file_error(const std::string &file)
     : std::runtime_error(::file_error_format_message(file))
     , pp_file(file)
 {
 }
 
-std::string file_error::file() const
-{
-    return pp_file;
-}
+std::string file_error::file() const { return pp_file; }
 
 solver_error::solver_error(const std::string &msg)
     : std::runtime_error(::solver_error_format(msg))
@@ -160,7 +150,7 @@ dexi_parser_error::dexi_parser_error(const std::string &msg)
 }
 
 dexi_parser_error::dexi_parser_error(const std::string &msg,
-                                   const std::string &filepath)
+                                     const std::string &filepath)
     : std::runtime_error(::dexi_parser_error_format(filepath, msg))
     , m_line(0)
     , m_column(0)
@@ -170,8 +160,10 @@ dexi_parser_error::dexi_parser_error(const std::string &msg,
 {
 }
 
-dexi_parser_error::dexi_parser_error(const std::string &msg, int line, int column,
-                                   int error)
+dexi_parser_error::dexi_parser_error(const std::string &msg,
+                                     int line,
+                                     int column,
+                                     int error)
     : std::runtime_error(::dexi_parser_error_format(msg, line, column, error))
     , m_line(line)
     , m_column(column)
@@ -209,10 +201,12 @@ csv_parser_error::csv_parser_error(std::size_t line,
 {
 }
 
-csv_parser_error::csv_parser_error(std::size_t line, std::size_t column,
+csv_parser_error::csv_parser_error(std::size_t line,
+                                   std::size_t column,
                                    const std::string &filepath,
                                    const std::string &msg)
-    : std::runtime_error(::csv_parser_error_format(line, column, filepath, msg))
+    : std::runtime_error(
+          ::csv_parser_error_format(line, column, filepath, msg))
     , m_line(line)
     , m_column(column)
     , m_filepath(filepath)

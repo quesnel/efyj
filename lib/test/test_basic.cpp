@@ -26,10 +26,10 @@
 #include <cstdlib>
 
 #if defined(__unix__)
-# include <unistd.h>
+#include <unistd.h>
 #elif defined(__WIN32__)
-# include <io.h>
-# include <stdio.h>
+#include <io.h>
+#include <stdio.h>
 #endif
 
 #define CATCH_CONFIG_MAIN
@@ -75,10 +75,12 @@ TEST_CASE("test classic Model file", "[model]")
 {
     change_pwd();
 
-    std::vector <std::string> filepaths = { "Car.dxi", "Employ.dxi",
-                                            "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi", "Nursery.dxi",
-                                            "Shuttle.dxi"
-                                          };
+    std::vector<std::string> filepaths = {"Car.dxi",
+                                          "Employ.dxi",
+                                          "Enterprise.dxi",
+                                          "IPSIM_PV_simulation1-1.dxi",
+                                          "Nursery.dxi",
+                                          "Shuttle.dxi"};
 
     for (const auto &filepath : filepaths) {
         efyj::Model dex1, dex2;
@@ -120,7 +122,7 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
 #if (GCC_VERSION >= 40900) or (defined __clang__)
 std::ofstream make_temporary(std::string &name, bool remove = true)
 {
-    static const char *names[] = { "TMPDIR", "TMP", "TEMP" };
+    static const char *names[] = {"TMPDIR", "TMP", "TEMP"};
     static const int names_size = sizeof(names) / sizeof(names[0]);
     std::string filename;
 
@@ -186,20 +188,20 @@ TEST_CASE("test Car.dxi", "[model]")
     REQUIRE(car.attributes.size() == 10u);
     REQUIRE(car.attributes[0].name == "CAR");
     REQUIRE(car.attributes[0].children.size() == 2u);
-    REQUIRE(car.attributes[0].children == std::vector <std::size_t>({1, 4}));
+    REQUIRE(car.attributes[0].children == std::vector<std::size_t>({1, 4}));
     REQUIRE(car.attributes[1].name == "PRICE");
     REQUIRE(car.attributes[1].children.size() == 2u);
-    REQUIRE(car.attributes[1].children == std::vector <std::size_t>({ 2, 3 }));
+    REQUIRE(car.attributes[1].children == std::vector<std::size_t>({2, 3}));
     REQUIRE(car.attributes[2].name == "BUY.PRICE");
     REQUIRE(car.attributes[2].children.empty() == true);
     REQUIRE(car.attributes[3].name == "MAINT.PRICE");
     REQUIRE(car.attributes[3].children.empty() == true);
     REQUIRE(car.attributes[4].name == "TECH.CHAR.");
     REQUIRE(car.attributes[4].children.size() == 2u);
-    REQUIRE(car.attributes[4].children == std::vector <std::size_t>({5, 9}));
+    REQUIRE(car.attributes[4].children == std::vector<std::size_t>({5, 9}));
     REQUIRE(car.attributes[5].name == "COMFORT");
     REQUIRE(car.attributes[5].children.size() == 3u);
-    REQUIRE(car.attributes[5].children == std::vector <std::size_t>({6, 7, 8}));
+    REQUIRE(car.attributes[5].children == std::vector<std::size_t>({6, 7, 8}));
     REQUIRE(car.attributes[6].name == "#PERS");
     REQUIRE(car.attributes[6].children.empty() == true);
     REQUIRE(car.attributes[7].name == "#DOORS");
@@ -252,7 +254,7 @@ TEST_CASE("test solver Car", "[model]")
     std::size_t scale_number = 0;
     std::size_t scalevalue_number = 0;
 
-    for (const auto& att : model.attributes) {
+    for (const auto &att : model.attributes) {
         if (att.is_basic()) {
             basic_scale_number++;
             scalevalue_number += att.scale.size();
@@ -278,10 +280,14 @@ TEST_CASE("test basic solver for Car", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(model.read(is));
     }
-    efyj::Vector opt_v3(6); opt_v3 << 1, 2, 2, 2, 2, 2;
-    efyj::Vector opt_v2(6); opt_v2 << 1, 1, 2, 2, 2, 1;
-    efyj::Vector opt_v4(6); opt_v4 << 2, 2, 2, 3, 2, 2;
-    efyj::Vector opt_v5(6); opt_v5 << 0, 0, 0, 0, 0, 0;
+    efyj::Vector opt_v3(6);
+    opt_v3 << 1, 2, 2, 2, 2, 2;
+    efyj::Vector opt_v2(6);
+    opt_v2 << 1, 1, 2, 2, 2, 1;
+    efyj::Vector opt_v4(6);
+    opt_v4 << 2, 2, 2, 3, 2, 2;
+    efyj::Vector opt_v5(6);
+    opt_v5 << 0, 0, 0, 0, 0, 0;
     {
         efyj::solver_stack s(model);
         REQUIRE(s.solve(opt_v3) == 3);
@@ -301,7 +307,8 @@ TEST_CASE("test basic solver for Enterprise", "[model]")
         REQUIRE(is.is_open());
         REQUIRE_NOTHROW(model.read(is));
     }
-    efyj::Vector opt_v(12); opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
+    efyj::Vector opt_v(12);
+    opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
     efyj::solver_stack ss(model);
     REQUIRE(ss.solve(opt_v) == 1);
 }
@@ -317,14 +324,16 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
         REQUIRE_NOTHROW(model->read(is));
     }
     {
-        efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
+        efyj::Vector opt_v(14);
+        opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
         efyj::solver_stack ss(*model);
         REQUIRE(ss.solve(opt_v) == 6);
     }
     efyj::Model copy1(*model);
     delete model;
     {
-        efyj::Vector opt_v(14); opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
+        efyj::Vector opt_v(14);
+        opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
         efyj::solver_stack ss(copy1);
         REQUIRE(ss.solve(opt_v) == 6);
     }
@@ -334,9 +343,10 @@ TEST_CASE("test problem Model file", "[model]")
 {
     change_pwd();
 
-    std::vector <std::string> filepaths = {
-        "Car.dxi", "Employ.dxi", "Enterprise.dxi",
-        "IPSIM_PV_simulation1-1.dxi" };
+    std::vector<std::string> filepaths = {"Car.dxi",
+                                          "Employ.dxi",
+                                          "Enterprise.dxi",
+                                          "IPSIM_PV_simulation1-1.dxi"};
 
     for (const auto &filepath : filepaths) {
         std::cout << "run " << filepath << "\n";
@@ -375,18 +385,22 @@ TEST_CASE("check the options set function", "[options]")
         model.write_options(ofs);
     }
 
-    std::vector <std::string> simulations_old;
-    std::vector <std::string> places_old;
-    std::vector <int> departments_old;
-    std::vector <int> years_old;
-    std::vector <int> observed_old;
-    std::vector <int> options_old;
+    std::vector<std::string> simulations_old;
+    std::vector<std::string> places_old;
+    std::vector<int> departments_old;
+    std::vector<int> years_old;
+    std::vector<int> observed_old;
+    std::vector<int> options_old;
 
     {
         efyj::efyj e("Car.dxi", "/tmp/Car.csv");
 
-        e.extract_options(simulations_old, places_old, departments_old,
-                          years_old, observed_old, options_old);
+        e.extract_options(simulations_old,
+                          places_old,
+                          departments_old,
+                          years_old,
+                          observed_old,
+                          options_old);
     }
 
     efyj::Options options;
@@ -398,16 +412,19 @@ TEST_CASE("check the options set function", "[options]")
 
     efyj::Array array_options_old = options.options;
 
-    options.set(simulations_old, places_old, departments_old,
-                years_old, observed_old, options_old);
+    options.set(simulations_old,
+                places_old,
+                departments_old,
+                years_old,
+                observed_old,
+                options_old);
 
     REQUIRE(options.options.rows() == array_options_old.rows());
     REQUIRE(options.options.cols() == array_options_old.cols());
 
     for (long int row = 0; row != options.options.rows(); ++row)
         for (long int col = 0; col != options.options.cols(); ++col)
-            REQUIRE(options.options(row, col) ==
-                    array_options_old(row, col));
+            REQUIRE(options.options(row, col) == array_options_old(row, col));
 }
 
 TEST_CASE("check the efyj set function", "[options]")
@@ -424,28 +441,36 @@ TEST_CASE("check the efyj set function", "[options]")
 
     efyj::efyj e("Car.dxi", "/tmp/Car.csv");
 
-    std::vector <std::string> simulations_old;
-    std::vector <std::string> places_old;
-    std::vector <int> departments_old;
-    std::vector <int> years_old;
-    std::vector <int> observed_old;
-    std::vector <int> options_old;
+    std::vector<std::string> simulations_old;
+    std::vector<std::string> places_old;
+    std::vector<int> departments_old;
+    std::vector<int> years_old;
+    std::vector<int> observed_old;
+    std::vector<int> options_old;
 
-    e.extract_options(simulations_old, places_old, departments_old,
-                      years_old, observed_old, options_old);
+    e.extract_options(simulations_old,
+                      places_old,
+                      departments_old,
+                      years_old,
+                      observed_old,
+                      options_old);
 
-    e.set_options(simulations_old, places_old, departments_old,
-                  years_old, observed_old, options_old);
+    e.set_options(simulations_old,
+                  places_old,
+                  departments_old,
+                  years_old,
+                  observed_old,
+                  options_old);
 
-    std::vector <std::string> simulations;
-    std::vector <std::string> places;
-    std::vector <int> departments;
-    std::vector <int> years;
-    std::vector <int> observed;
-    std::vector <int> options;
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    std::vector<int> options;
 
-    e.extract_options(simulations, places, departments,
-                      years, observed, options);
+    e.extract_options(
+        simulations, places, departments, years, observed, options);
 
     REQUIRE(simulations_old == simulations);
     REQUIRE(places_old == places);
@@ -478,15 +503,15 @@ TEST_CASE("test adjustment solver for Car", "[model]")
         REQUIRE(ret.kappa == 1);
     }
 
-    std::vector <std::string> simulations;
-    std::vector <std::string> places;
-    std::vector <int> departments;
-    std::vector <int> years;
-    std::vector <int> observed;
-    std::vector <int> options;
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    std::vector<int> options;
 
-    e.extract_options(simulations, places, departments,
-                      years, observed, options);
+    e.extract_options(
+        simulations, places, departments, years, observed, options);
 
     REQUIRE(simulations.size() < options.size());
     REQUIRE(simulations.size() > 0);
@@ -513,7 +538,7 @@ TEST_CASE("test adjustment solver for Car", "[model]")
     places[5] = "f";
 
     REQUIRE(model.attributes[0].scale.size() == 4);
-    observed = { 2, 1, 0, 0, 2, 2 };
+    observed = {2, 1, 0, 0, 2, 2};
     e.set_options(simulations, places, departments, years, observed, options);
     {
         auto ret = e.compute_adjustment(4, -1, 1);
@@ -524,7 +549,7 @@ TEST_CASE("test adjustment solver for Car", "[model]")
         REQUIRE(ret[2].kappa == Approx(0.91).epsilon(0.1));
         REQUIRE(ret[3].kappa == Approx(0.81).epsilon(0.1));
         REQUIRE(ret[4].kappa == Approx(1).epsilon(0.1));
-  }
+    }
 }
 
 TEST_CASE("test prediction solver for Car", "[model]")
@@ -550,15 +575,15 @@ TEST_CASE("test prediction solver for Car", "[model]")
         REQUIRE(ret.kappa == 1);
     }
 
-    std::vector <std::string> simulations;
-    std::vector <std::string> places;
-    std::vector <int> departments;
-    std::vector <int> years;
-    std::vector <int> observed;
-    std::vector <int> options;
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    std::vector<int> options;
 
-    e.extract_options(simulations, places, departments,
-                      years, observed, options);
+    e.extract_options(
+        simulations, places, departments, years, observed, options);
 
     REQUIRE(simulations.size() < options.size());
     REQUIRE(simulations.size() > 0);
@@ -585,7 +610,7 @@ TEST_CASE("test prediction solver for Car", "[model]")
     places[5] = "f";
 
     REQUIRE(model.attributes[0].scale.size() == 4);
-    observed = { 3, 2, 0, 0, 3, 3 };
+    observed = {3, 2, 0, 0, 3, 3};
 
     e.set_options(simulations, places, departments, years, observed, options);
 
@@ -597,7 +622,7 @@ TEST_CASE("test prediction solver for Car", "[model]")
         REQUIRE(ret.back().kappa == 1);
     }
 
-    observed = { 3, 2, 0, 0, 3, 3 };
+    observed = {3, 2, 0, 0, 3, 3};
     e.set_options(simulations, places, departments, years, observed, options);
     {
         auto ret = e.compute_prediction(1, -1, 1);

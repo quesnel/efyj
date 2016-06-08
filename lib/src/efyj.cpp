@@ -33,10 +33,10 @@
 #include <chrono>
 #include <iostream>
 
-namespace efyj {
-
-struct efyj::pimpl
+namespace efyj
 {
+
+struct efyj::pimpl {
     Model pp_model;
     Options pp_options;
     std::shared_ptr<Context> pp_context;
@@ -46,7 +46,7 @@ struct efyj::pimpl
     {
     }
 
-    void model_read(const std::string& filepath)
+    void model_read(const std::string &filepath)
     {
         std::ifstream ifs(filepath);
         if (not ifs) {
@@ -59,7 +59,7 @@ struct efyj::pimpl
         pp_model.read(ifs);
     }
 
-    void options_read(const std::string& filepath)
+    void options_read(const std::string &filepath)
     {
         std::ifstream ifs(filepath);
         if (not ifs) {
@@ -71,7 +71,7 @@ struct efyj::pimpl
         pp_options.read(pp_context, ifs, pp_model);
     }
 
-    void extract_options(const std::string& output) const
+    void extract_options(const std::string &output) const
     {
         std::ofstream ofs(output);
         if (not ofs) {
@@ -82,12 +82,12 @@ struct efyj::pimpl
         pp_model.write_options(ofs);
     }
 
-    void extract_options(std::vector <std::string>& simulations,
-                         std::vector <std::string>& places,
-                         std::vector <int>& departments,
-                         std::vector <int>& years,
-                         std::vector <int>& observed,
-                         std::vector <int>& options) const
+    void extract_options(std::vector<std::string> &simulations,
+                         std::vector<std::string> &places,
+                         std::vector<int> &departments,
+                         std::vector<int> &years,
+                         std::vector<int> &observed,
+                         std::vector<int> &options) const
     {
         simulations = pp_options.simulations;
         places = pp_options.places;
@@ -105,50 +105,50 @@ struct efyj::pimpl
                 options[row * columns + col] = pp_options.options(row, col);
     }
 
-    void set_options(const std::vector <std::string>& simulations,
-                     const std::vector <std::string>& places,
-                     const std::vector <int>& departments,
-                     const std::vector <int>& years,
-                     const std::vector <int>& observed,
-                     const std::vector <int>& options)
+    void set_options(const std::vector<std::string> &simulations,
+                     const std::vector<std::string> &places,
+                     const std::vector<int> &departments,
+                     const std::vector<int> &years,
+                     const std::vector<int> &observed,
+                     const std::vector<int> &options)
     {
         // TODO add test to ensure simulation.size() == departments.size()
         // and etc.
 
-        pp_options.set(simulations, places, departments,
-                       years, observed, options);
+        pp_options.set(
+            simulations, places, departments, years, observed, options);
     }
 
-    int solve(const std::vector<int>& options)
+    int solve(const std::vector<int> &options)
     {
         Expects(not pp_model.empty(),
                 "load model before trying solve function.");
 
         solver_stack solver(pp_model);
         Eigen::VectorXi v = Eigen::Map<Eigen::VectorXi>(
-            const_cast<int*>(options.data()),
-            options.size());
+            const_cast<int *>(options.data()), options.size());
 
         return solver.solve(v);
     }
 
-    int solve(const std::string& modelname, std::ostream& result,
-              std::ostream& kappa)
+    int solve(const std::string &modelname,
+              std::ostream &result,
+              std::ostream &kappa)
     {
         const std::size_t max_opt = pp_options.simulations.size();
 
         solver_stack solver(pp_model);
         std::vector<int> simulated(max_opt);
         std::vector<int> observed(max_opt);
-        weighted_kappa_calculator kappa_c(
-            pp_model.attributes[0].scale.size());;
+        weighted_kappa_calculator kappa_c(pp_model.attributes[0].scale.size());
+        ;
 
         for (std::size_t opt = 0; opt != max_opt; ++opt) {
             observed[opt] = pp_options.observed[opt];
             simulated[opt] = solver.solve(pp_options.options.row(opt));
 
-            result << modelname << ' ' << opt << ' ' << observed[opt]
-                   << ' ' << simulated[opt] << '\n';
+            result << modelname << ' ' << opt << ' ' << observed[opt] << ' '
+                   << simulated[opt] << '\n';
         }
 
         auto localkappa = kappa_c.squared(observed, simulated);
@@ -167,9 +167,8 @@ struct efyj::pimpl
         start = std::chrono::system_clock::now();
 
         solver_stack solver(pp_model);
-        std::vector <int> simulated(pp_options.options.rows());
-        weighted_kappa_calculator kappa_c(
-            pp_model.attributes[0].scale.size());
+        std::vector<int> simulated(pp_options.options.rows());
+        weighted_kappa_calculator kappa_c(pp_model.attributes[0].scale.size());
 
         for (std::size_t i = 0, e = pp_options.options.rows(); i != e; ++i)
             simulated[i] = solver.solve(pp_options.options.row(i));
@@ -188,9 +187,9 @@ struct efyj::pimpl
         return ret;
     }
 
-    std::vector <result> compute_prediction(int line_limit,
-                                            double time_limit,
-                                            int reduce_mode) const
+    std::vector<result> compute_prediction(int line_limit,
+                                           double time_limit,
+                                           int reduce_mode) const
     {
         Expects(not pp_options.empty() and not pp_model.empty(),
                 "load options and model before trying prediction function.");
@@ -199,10 +198,9 @@ struct efyj::pimpl
         return computer.run(line_limit, time_limit, reduce_mode);
     }
 
-
-    std::vector <result> compute_adjustment(int line_limit,
-                                            double time_limit,
-                                            int reduce_mode) const
+    std::vector<result> compute_adjustment(int line_limit,
+                                           double time_limit,
+                                           int reduce_mode) const
     {
         Expects(not pp_options.empty() and not pp_model.empty(),
                 "load options and model before trying adjustment function.");
@@ -223,67 +221,64 @@ efyj::efyj()
 {
 }
 
-efyj::efyj(const std::string& model_filepath)
+efyj::efyj(const std::string &model_filepath)
     : pp_impl(new efyj::pimpl())
 {
     pp_impl->model_read(model_filepath);
 }
 
-efyj::efyj(const std::string& model_filepath,
-           const std::string& options_filepath)
+efyj::efyj(const std::string &model_filepath,
+           const std::string &options_filepath)
     : pp_impl(new efyj::pimpl())
 {
     pp_impl->model_read(model_filepath);
     pp_impl->options_read(options_filepath);
 }
 
-efyj::efyj(efyj&& /* other */) = default;
-efyj& efyj::operator=(efyj&& /* other */) = default;
+efyj::efyj(efyj && /* other */) = default;
+efyj &efyj::operator=(efyj && /* other */) = default;
 efyj::~efyj() noexcept = default;
 
-void efyj::extract_options(const std::string& output) const
+void efyj::extract_options(const std::string &output) const
 {
     pp_impl->extract_options(output);
 }
 
-void efyj::extract_options(std::vector <std::string>& simulations,
-                           std::vector <std::string>& places,
-                           std::vector <int>& departments,
-                           std::vector <int>& years,
-                           std::vector <int>& observed,
-                           std::vector <int>& options) const
+void efyj::extract_options(std::vector<std::string> &simulations,
+                           std::vector<std::string> &places,
+                           std::vector<int> &departments,
+                           std::vector<int> &years,
+                           std::vector<int> &observed,
+                           std::vector<int> &options) const
 {
-    pp_impl->extract_options(simulations, places, departments,
-                             years, observed, options);
+    pp_impl->extract_options(
+        simulations, places, departments, years, observed, options);
 }
 
-void efyj::set_options(const std::vector <std::string>& simulations,
-                       const std::vector <std::string>& places,
-                       const std::vector <int>& departments,
-                       const std::vector <int>& years,
-                       const std::vector <int>& observed,
-                       const std::vector <int>& options)
+void efyj::set_options(const std::vector<std::string> &simulations,
+                       const std::vector<std::string> &places,
+                       const std::vector<int> &departments,
+                       const std::vector<int> &years,
+                       const std::vector<int> &observed,
+                       const std::vector<int> &options)
 {
-    pp_impl->set_options(simulations, places, departments,
-                         years, observed, options);
+    pp_impl->set_options(
+        simulations, places, departments, years, observed, options);
 }
 
-int efyj::solve(const std::vector<int>& options)
+int efyj::solve(const std::vector<int> &options)
 {
     return pp_impl->solve(options);
 }
 
-int efyj::solve(const std::string& modelname,
-                std::ostream& result,
-                std::ostream& kappa)
+int efyj::solve(const std::string &modelname,
+                std::ostream &result,
+                std::ostream &kappa)
 {
     return pp_impl->solve(modelname, result, kappa);
 }
 
-result efyj::compute_kappa() const
-{
-    return pp_impl->compute_kappa();
-}
+result efyj::compute_kappa() const { return pp_impl->compute_kappa(); }
 
 std::vector<result> efyj::compute_prediction(int line_limit,
                                              double time_limit,
@@ -299,14 +294,8 @@ std::vector<result> efyj::compute_adjustment(int line_limit,
     return pp_impl->compute_adjustment(line_limit, time_limit, reduce_mode);
 }
 
-bool efyj::is_empty() const noexcept
-{
-    return pp_impl->pp_model.empty();
-}
+bool efyj::is_empty() const noexcept { return pp_impl->pp_model.empty(); }
 
-void efyj::clear()
-{
-    pp_impl->clear();
-}
+void efyj::clear() { pp_impl->clear(); }
 
 } // namespace efyj

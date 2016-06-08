@@ -35,64 +35,103 @@
 #include <mutex>
 #include <mpi.h>
 
-namespace efyj {
+namespace efyj
+{
 
-void pack_data(long long int loop, double kappa, int step,
-               const std::vector<std::tuple<int, int, int>>& updaters)
+void pack_data(long long int loop,
+               double kappa,
+               int step,
+               const std::vector<std::tuple<int, int, int>> &updaters)
 {
     std::vector<int> linearupdaters;
     linearupdaters.reserve(updaters.size() * 3);
 
-    std::vector<char> buffer(2 * (sizeof(loop) +
-                                  sizeof(kappa) +
-                                  sizeof(step) +
+    std::vector<char> buffer(2 * (sizeof(loop) + sizeof(kappa) + sizeof(step) +
                                   sizeof(int) * 3 * updaters.size()));
     int pos = 0;
 
-    MPI_Pack(&loop, 1, MPI_LONG_LONG_INT, buffer.data(), buffer.size(),
-             &pos, MPI_COMM_WORLD);
+    MPI_Pack(&loop,
+             1,
+             MPI_LONG_LONG_INT,
+             buffer.data(),
+             buffer.size(),
+             &pos,
+             MPI_COMM_WORLD);
 
-    MPI_Pack(&kappa, 1, MPI_DOUBLE, buffer.data(), buffer.size(),
-             &pos, MPI_COMM_WORLD);
+    MPI_Pack(&kappa,
+             1,
+             MPI_DOUBLE,
+             buffer.data(),
+             buffer.size(),
+             &pos,
+             MPI_COMM_WORLD);
 
-    MPI_Pack(&step, 1, MPI_INT, buffer.data(), buffer.size(),
-             &pos, MPI_COMM_WORLD);
+    MPI_Pack(
+        &step, 1, MPI_INT, buffer.data(), buffer.size(), &pos, MPI_COMM_WORLD);
 
-    for (const auto& updater : updaters) {
+    for (const auto &updater : updaters) {
         linearupdaters.push_back(std::get<0>(updater));
         linearupdaters.push_back(std::get<1>(updater));
         linearupdaters.push_back(std::get<2>(updater));
     }
 
-    MPI_Pack(linearupdaters.data(), linearupdaters.size(), MPI_INT,
-             buffer.data(), buffer.size(), &pos, MPI_COMM_WORLD);
+    MPI_Pack(linearupdaters.data(),
+             linearupdaters.size(),
+             MPI_INT,
+             buffer.data(),
+             buffer.size(),
+             &pos,
+             MPI_COMM_WORLD);
 
     MPI_Send(buffer.data(), buffer.size(), MPI_PACKED, 0, 0, MPI_COMM_WORLD);
 }
 
-void unpack_data(long long int *loop, double *kappa, int *step,
+void unpack_data(long long int *loop,
+                 double *kappa,
+                 int *step,
                  std::vector<std::tuple<int, int, int>> *updaters,
-                 int source, int tag)
+                 int source,
+                 int tag)
 {
     MPI_Status status;
-    std::vector <char> buffer(8192);
+    std::vector<char> buffer(8192);
 
-    MPI_Recv(buffer.data(), buffer.size(), MPI_PACKED,
-             source, tag, MPI_COMM_WORLD, &status);
+    MPI_Recv(buffer.data(),
+             buffer.size(),
+             MPI_PACKED,
+             source,
+             tag,
+             MPI_COMM_WORLD,
+             &status);
 
     int pos = 0;
 
-    MPI_Unpack(buffer.data(), buffer.size(), &pos, loop, 1,
-               MPI_LONG_LONG_INT, MPI_COMM_WORLD);
-    MPI_Unpack(buffer.data(), buffer.size(), &pos, kappa, 1,
-               MPI_DOUBLE, MPI_COMM_WORLD);
-    MPI_Unpack(buffer.data(), buffer.size(), &pos, step, 1,
-               MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(buffer.data(),
+               buffer.size(),
+               &pos,
+               loop,
+               1,
+               MPI_LONG_LONG_INT,
+               MPI_COMM_WORLD);
+    MPI_Unpack(buffer.data(),
+               buffer.size(),
+               &pos,
+               kappa,
+               1,
+               MPI_DOUBLE,
+               MPI_COMM_WORLD);
+    MPI_Unpack(
+        buffer.data(), buffer.size(), &pos, step, 1, MPI_INT, MPI_COMM_WORLD);
 
     std::vector<int> linearupdaters(*step * 3);
 
-    MPI_Unpack(buffer.data(), buffer.size(), &pos, linearupdaters.data(),
-               linearupdaters.size(), MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(buffer.data(),
+               buffer.size(),
+               &pos,
+               linearupdaters.data(),
+               linearupdaters.size(),
+               MPI_INT,
+               MPI_COMM_WORLD);
 
     updaters->resize(*step);
     for (std::size_t i = 0, e = linearupdaters.size(); i != e; i += 3) {
@@ -110,7 +149,7 @@ class Results
     struct Result {
         double kappa;
         unsigned long loop;
-        std::vector <std::tuple<int, int, int>> updaters;
+        std::vector<std::tuple<int, int, int>> updaters;
     };
 
     std::vector<Result> m_results;
@@ -132,9 +171,10 @@ public:
         m_level[0] = threads;
     }
 
-    void emplace_result(int i, double kappa,
+    void emplace_result(int i,
+                        double kappa,
                         unsigned long loop,
-                        const std::vector <std::tuple<int, int, int>>& updaters)
+                        const std::vector<std::tuple<int, int, int>> &updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
                static_cast<std::size_t>(i) < m_results.size());
@@ -144,10 +184,12 @@ public:
         m_results[i].updaters = updaters;
     }
 
-    void push(int step, double kappa, unsigned long loop,
-              const std::vector <std::tuple<int, int, int>>& updaters)
+    void push(int step,
+              double kappa,
+              unsigned long loop,
+              const std::vector<std::tuple<int, int, int>> &updaters)
     {
-        std::lock_guard <std::mutex> locker(m_container_mutex);
+        std::lock_guard<std::mutex> locker(m_container_mutex);
 
         assert(step >= 1);
 
@@ -168,8 +210,7 @@ public:
         m_end = std::chrono::system_clock::now();
         auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-        m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                 " | %f | ",
+        m_context->info().printf("| %d | %13.10f | %" PRIuMAX " | %f | ",
                                  step,
                                  m_results[step - 1].kappa,
                                  m_results[step - 1].loop,
@@ -180,7 +221,7 @@ public:
 };
 
 template <typename Solver>
-bool init_worker(Solver& solver, const int thread_id)
+bool init_worker(Solver &solver, const int thread_id)
 {
     for (auto i = 0; i < thread_id; ++i)
         if (solver.next_line() == false)
@@ -190,16 +231,16 @@ bool init_worker(Solver& solver, const int thread_id)
 }
 
 void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
-                                    const Model& model,
-                                    const Options& options,
+                                    const Model &model,
+                                    const Options &options,
                                     const int thread_id,
                                     const int thread_number,
-                                    bool& stop)
+                                    bool &stop)
 {
-    std::vector <int> m_globalsimulated(options.observated.size());
-    std::vector <int> m_simulated(options.observated.size());
-    std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
-    std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+    std::vector<int> m_globalsimulated(options.observated.size());
+    std::vector<int> m_simulated(options.observated.size());
+    std::vector<std::vector<scale_id>> m_globalfunctions, m_functions;
+    std::vector<std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
     for_each_model_solver solver(context, model);
     weighted_kappa_calculator kappa_c(options.options.rows(),
@@ -227,7 +268,8 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
             for (std::size_t opt = 0, endopt = options.ordered.size();
-                 opt != endopt; ++opt) {
+                 opt != endopt;
+                 ++opt) {
                 double kappa = 0.;
 
                 solver.init_next_value();
@@ -236,10 +278,10 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
                     std::fill(m_simulated.begin(), m_simulated.end(), 0.);
 
                     for (auto x : options.ordered[opt])
-                        m_simulated[x] = solver.solve(
-                            options.options.row(x));
+                        m_simulated[x] = solver.solve(options.options.row(x));
 
-                    auto ret = kappa_c.squared(options.observated, m_simulated);
+                    auto ret =
+                        kappa_c.squared(options.observated, m_simulated);
                     m_loop++;
 
                     if (ret > kappa) {
@@ -250,8 +292,8 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] = solver.solve(
-                    options.options.row(opt));
+                m_globalsimulated[opt] =
+                    solver.solve(options.options.row(opt));
             }
 
             auto ret = kappa_c.squared(options.observated, m_globalsimulated);
@@ -278,7 +320,9 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
 }
 
 void synchronize_result(std::shared_ptr<Context> context,
-                        int /*rank*/, int world, bool& stop)
+                        int /*rank*/,
+                        int world,
+                        bool &stop)
 {
     Results results(context, world);
 
@@ -291,10 +335,15 @@ void synchronize_result(std::shared_ptr<Context> context,
         int step;
         std::vector<std::tuple<int, int, int>> updaters;
 
-        unpack_data(&loop, &kappa, &step, &updaters,
-                    status.MPI_SOURCE, status.MPI_TAG);
+        unpack_data(&loop,
+                    &kappa,
+                    &step,
+                    &updaters,
+                    status.MPI_SOURCE,
+                    status.MPI_TAG);
 
-        context->info().printf("Receives results from %d\n", status.MPI_SOURCE);
+        context->info().printf("Receives results from %d\n",
+                               status.MPI_SOURCE);
 
         results.push(step, kappa, loop, updaters);
 
@@ -312,8 +361,8 @@ void synchronize_result(std::shared_ptr<Context> context,
 }
 
 void prediction_mpi(std::shared_ptr<Context> context,
-                    const Model& model,
-                    const Options& options,
+                    const Model &model,
+                    const Options &options,
                     int rank,
                     int world)
 {
@@ -325,12 +374,11 @@ void prediction_mpi(std::shared_ptr<Context> context,
      */
     if (rank == 0) {
         context->info() << context->info().cyanb()
-                        << "[Computation starts with " << world << " processors]"
-                        << context->info().def()
-                        << '\n';
+                        << "[Computation starts with " << world
+                        << " processors]" << context->info().def() << '\n';
 
-        std::thread sync(synchronize_result, context, rank, world,
-                         std::ref(stop));
+        std::thread sync(
+            synchronize_result, context, rank, world, std::ref(stop));
         sync.detach();
     }
 

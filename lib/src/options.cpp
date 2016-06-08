@@ -27,13 +27,13 @@
 #include <string>
 #include <istream>
 
-namespace {
-
-std::vector <const efyj::attribute *>
-get_basic_attribute(
-    const efyj::Model &model)
+namespace
 {
-    std::vector <const efyj::attribute *> ret;
+
+std::vector<const efyj::attribute *>
+get_basic_attribute(const efyj::Model &model)
+{
+    std::vector<const efyj::attribute *> ret;
     ret.reserve(model.attributes.size());
 
     for (const auto &att : model.attributes)
@@ -44,14 +44,13 @@ get_basic_attribute(
 }
 
 std::size_t
-get_basic_attribute_id(
-    const std::vector<const efyj::attribute*> &att,
-    const std::string &name)
+get_basic_attribute_id(const std::vector<const efyj::attribute *> &att,
+                       const std::string &name)
 {
-    auto it = std::find_if(att.begin(),
-    att.end(), [&name](const efyj::attribute * att) {
-        return att->name == name;
-    });
+    auto it = std::find_if(
+        att.begin(),
+        att.end(),
+        [&name](const efyj::attribute *att) { return att->name == name; });
 
     if (it == att.end())
         throw efyj::csv_parser_error(
@@ -62,23 +61,25 @@ get_basic_attribute_id(
 
 } // anonymous namespace
 
-namespace efyj {
+namespace efyj
+{
 
 void Options::read(std::shared_ptr<Context> context,
-                   std::istream& is,
-                   const Model& model)
+                   std::istream &is,
+                   const Model &model)
 {
     clear();
 
-    std::vector <const attribute *> atts = ::get_basic_attribute(model);
-    std::vector <int> convertheader(atts.size(), 0);
-    std::vector <std::string> columns;
+    std::vector<const attribute *> atts = ::get_basic_attribute(model);
+    std::vector<int> convertheader(atts.size(), 0);
+    std::vector<std::string> columns;
     std::string line;
     int id = -1;
 
     if (is) {
         std::getline(is, line);
-        boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
+        boost::algorithm::split(
+            columns, line, boost::algorithm::is_any_of(";"));
 
         if (columns.size() == atts.size() + 4)
             id = 3;
@@ -86,7 +87,9 @@ void Options::read(std::shared_ptr<Context> context,
             id = 4;
         else
             throw csv_parser_error(
-                0, 0, std::string(),
+                0,
+                0,
+                std::string(),
                 stringf("csv have not correct number of column %ld "
                         "(expected: %ld)",
                         columns.size(),
@@ -112,7 +115,8 @@ void Options::read(std::shared_ptr<Context> context,
         if (not is)
             break;
 
-        boost::algorithm::split(columns, line, boost::algorithm::is_any_of(";"));
+        boost::algorithm::split(
+            columns, line, boost::algorithm::is_any_of(";"));
         if (columns.size() != atts.size() + id + 1) {
             context->err().printf("Options: error in csv file line %d:"
                                   " not correct number of column %d"
@@ -188,12 +192,10 @@ void Options::read(std::shared_ptr<Context> context,
             }
         }
 
-        options.conservativeResize(options.rows() + 1,
-                                   Eigen::NoChange_t());
+        options.conservativeResize(options.rows() + 1, Eigen::NoChange_t());
     }
 
-    options.conservativeResize(options.rows() - 1,
-                               Eigen::NoChange_t());
+    options.conservativeResize(options.rows() - 1, Eigen::NoChange_t());
 
     init_dataset();
     check();
@@ -210,9 +212,8 @@ void Options::init_dataset()
     if (places.empty()) {
         for (std::size_t i = 0; i != size; ++i) {
             for (std::size_t j = 0; j != size; ++j) {
-                if (i != j
-                    and departments[i] != departments[j]
-                    and years[i] != years[j]) {
+                if (i != j and departments[i] != departments[j] and
+                    years[i] != years[j]) {
                     subdataset[i].emplace_back(j);
                 }
             }
@@ -220,10 +221,8 @@ void Options::init_dataset()
     } else {
         for (std::size_t i = 0; i != size; ++i) {
             for (std::size_t j = 0; j != size; ++j) {
-                if (i != j
-                    and departments[i] != departments[j]
-                    and places[i] != places[j]
-                    and years[i] != years[j]) {
+                if (i != j and departments[i] != departments[j] and
+                    places[i] != places[j] and years[i] != years[j]) {
                     subdataset[i].emplace_back(j);
                 }
             }
@@ -243,8 +242,8 @@ void Options::init_dataset()
         id_subdataset_reduced.resize(subdataset.size());
 
         for (std::size_t i = 0, e = subdataset.size(); i != e; ++i) {
-            auto it = std::find(reduced.cbegin(), reduced.cend(),
-                                subdataset[i]);
+            auto it =
+                std::find(reduced.cbegin(), reduced.cend(), subdataset[i]);
 
             if (it == reduced.cend()) {
                 id_subdataset_reduced[i] = (int)reduced.size();
@@ -264,22 +263,21 @@ void Options::init_dataset()
 void Options::check()
 {
     if (static_cast<std::size_t>(options.rows()) != simulations.size() or
-        options.cols() == 0 or
-        simulations.size() != departments.size() or
+        options.cols() == 0 or simulations.size() != departments.size() or
         simulations.size() != years.size() or
         simulations.size() != observed.size() or
-        not (simulations.size() == places.size() or places.empty()) or
+        not(simulations.size() == places.size() or places.empty()) or
         simulations.size() != id_subdataset_reduced.size() or
         subdataset.size() != simulations.size())
         throw internal_error("Options are inconsistent");
 }
 
-void Options::set(const std::vector <std::string>& simulations_,
-                  const std::vector <std::string>& places_,
-                  const std::vector <int>& departments_,
-                  const std::vector <int>& years_,
-                  const std::vector <int>& observed_,
-                  const std::vector <int>& options_)
+void Options::set(const std::vector<std::string> &simulations_,
+                  const std::vector<std::string> &places_,
+                  const std::vector<int> &departments_,
+                  const std::vector<int> &years_,
+                  const std::vector<int> &observed_,
+                  const std::vector<int> &options_)
 {
     simulations = simulations_;
     places = places_;
@@ -305,20 +303,19 @@ void Options::set(const std::vector <std::string>& simulations_,
 
 void Options::clear() noexcept
 {
-    std::vector <std::string>().swap(simulations);
-    std::vector <std::string>().swap(places);
-    std::vector <int>().swap(departments);
-    std::vector <int>().swap(years);
-    std::vector <int>().swap(observed);
+    std::vector<std::string>().swap(simulations);
+    std::vector<std::string>().swap(places);
+    std::vector<int>().swap(departments);
+    std::vector<int>().swap(years);
+    std::vector<int>().swap(observed);
 
     Array().swap(options);
     std::vector<std::vector<int>>().swap(subdataset);
     std::vector<int>().swap(id_subdataset_reduced);
 }
 
-cstream&
-operator<<(cstream &os,
-           const std::vector<std::vector<int>> &ordered) noexcept
+cstream &operator<<(cstream &os,
+                    const std::vector<std::vector<int>> &ordered) noexcept
 {
     for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
         os << i << ' ';
@@ -332,25 +329,20 @@ operator<<(cstream &os,
     return os;
 }
 
-cstream&
-operator<<(cstream &os, const Options &options) noexcept
+cstream &operator<<(cstream &os, const Options &options) noexcept
 {
     os << "option identifiers\n------------------\n";
 
     if (not options.places.empty()) {
         for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i]
-               << options.places[i] << '.'
-               << options.departments[i] << '.'
-               << options.years[i] << '.'
+            os << i << options.simulations[i] << options.places[i] << '.'
+               << options.departments[i] << '.' << options.years[i] << '.'
                << options.observed[i] << "\n";
         }
     } else {
         for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i]
-               << options.departments[i] << '.'
-               << options.years[i] << '.'
-               << options.observed[i] << "\n";
+            os << i << options.simulations[i] << options.departments[i] << '.'
+               << options.years[i] << '.' << options.observed[i] << "\n";
         }
     }
 

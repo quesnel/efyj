@@ -35,24 +35,25 @@
 #include <vector>
 #include <cstdint>
 
-namespace efyj {
+namespace efyj
+{
 
 /**
  * The @e scale_id is used to represent possible value when solving
  * problem. The range of @e scale_id is [0..127].
  */
-//typedef std::int_fast8_t scale_id;
+// typedef std::int_fast8_t scale_id;
 typedef int scale_id;
 
 template <typename T>
-constexpr typename std::enable_if <std::is_unsigned <T>::value, bool>::type
+constexpr typename std::enable_if<std::is_unsigned<T>::value, bool>::type
 is_valid_scale_id(T n) noexcept
 {
     return n <= 127;
 }
 
 template <typename T>
-constexpr typename std::enable_if <!std::is_unsigned <T>::value, bool>::type
+constexpr typename std::enable_if<!std::is_unsigned<T>::value, bool>::type
 is_valid_scale_id(T n) noexcept
 {
     return n >= 0 && n <= 127;
@@ -60,23 +61,23 @@ is_valid_scale_id(T n) noexcept
 
 constexpr scale_id scale_id_unknown() noexcept
 {
-    return std::numeric_limits <scale_id>::max();
+    return std::numeric_limits<scale_id>::max();
 }
 
-struct scalevalue
-{
+struct scalevalue {
     template <typename T>
-    scalevalue(T&& name)
-        : name(name), group(-1)
-    {}
+    scalevalue(T &&name_)
+        : name(std::forward<T>(name_))
+        , group(-1)
+    {
+    }
 
     std::string name;
     std::string description;
     int group;
 };
 
-struct function
-{
+struct function {
     std::string low;
     std::string entered;
     std::string consist;
@@ -87,23 +88,23 @@ struct function
     }
 };
 
-struct scales
-{
+struct scales {
     scales()
         : order(true)
-    {}
+    {
+    }
 
     bool order;
-    std::vector <scalevalue> scale;
+    std::vector<scalevalue> scale;
 
-    scale_id find_scale_value(const std::string& name) const
+    scale_id find_scale_value(const std::string &name) const
     {
         for (std::size_t i = 0, e = scale.size(); i != e; ++i) {
             if (scale[i].name == name) {
                 if (not is_valid_scale_id(i)) {
                     throw dexi_parser_error("bad scale definition");
                 }
-                return static_cast <int>(i);
+                return static_cast<int>(i);
             }
         }
 
@@ -115,75 +116,56 @@ struct scales
         if (not is_valid_scale_id(scale.size()))
             throw dexi_parser_error("bad scale definition");
 
-        return static_cast <int>(scale.size());
+        return static_cast<int>(scale.size());
     }
 };
 
-struct attribute
-{
+struct attribute {
     template <typename T>
-    attribute(T&& name_)
-        : name(name_)
-    {}
-
-    std::size_t children_size() const noexcept
+    attribute(T &&name_)
+        : name(std::forward<T>(name_))
     {
-        return children.size();
     }
 
-    scale_id scale_size() const noexcept
-    {
-        return scale.size();
-    }
+    std::size_t children_size() const noexcept { return children.size(); }
 
-    bool is_basic() const noexcept
-    {
-        return children.empty();
-    }
+    scale_id scale_size() const noexcept { return scale.size(); }
 
-    bool is_aggregate() const noexcept
-    {
-        return !children.empty();
-    }
+    bool is_basic() const noexcept { return children.empty(); }
 
-    void push_back(std::size_t child)
-    {
-        children.emplace_back(child);
-    }
+    bool is_aggregate() const noexcept { return !children.empty(); }
+
+    void push_back(std::size_t child) { children.emplace_back(child); }
 
     std::string name;
     std::string description;
     scales scale;
     function functions;
-    std::vector <int> options;
-    std::vector <std::size_t> children;
+    std::vector<int> options;
+    std::vector<std::size_t> children;
 };
 
-struct Model
-{
+struct Model {
     std::string name;
     std::string version;
     std::string created;
     std::string reports;
-    std::vector <std::string> description;
-    std::vector <std::string> options;
-    std::vector <scale_id> basic_attribute_scale_size;
-    std::vector <std::string> group;
-    std::deque <attribute> attributes;
+    std::vector<std::string> description;
+    std::vector<std::string> options;
+    std::vector<scale_id> basic_attribute_scale_size;
+    std::vector<std::string> group;
+    std::deque<attribute> attributes;
 
-    void read(std::istream& is);
+    void read(std::istream &is);
 
-    void write(std::ostream& os);
+    void write(std::ostream &os);
 
     /** Release all dynamically allocated memory. */
     void clear();
 
-    bool empty() const noexcept
-    {
-        return attributes.empty();
-    }
+    bool empty() const noexcept { return attributes.empty(); }
 
-    int group_id(const std::string& name) const
+    int group_id(const std::string &name) const
     {
         auto it = std::find(group.cbegin(), group.cend(), name);
 
@@ -193,14 +175,13 @@ struct Model
         return it - group.cbegin();
     }
 
-    void write_options(std::ostream& os) const;
+    void write_options(std::ostream &os) const;
 };
 
-bool operator<(const Model& lhs, const Model& rhs);
-bool operator==(const Model& lhs, const Model& rhs);
-bool operator!=(const Model& lhs, const Model& rhs);
-cstream& operator<<(cstream& os, const Model& Model_data) noexcept;
-
+bool operator<(const Model &lhs, const Model &rhs);
+bool operator==(const Model &lhs, const Model &rhs);
+bool operator!=(const Model &lhs, const Model &rhs);
+cstream &operator<<(cstream &os, const Model &Model_data) noexcept;
 }
 
 #endif

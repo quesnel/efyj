@@ -33,20 +33,21 @@
 #include <thread>
 #include <cmath>
 
-namespace {
+namespace
+{
 
 constexpr std::size_t max_step(int need, std::size_t real) noexcept
 {
     return need <= 0 ? real : std::min(static_cast<std::size_t>(need), real);
 }
-
 }
 
-namespace efyj {
+namespace efyj
+{
 
 adjustment_evaluator::adjustment_evaluator(std::shared_ptr<Context> context,
-                                           const Model& model,
-                                           const Options& options)
+                                           const Model &model,
+                                           const Options &options)
     : m_context(context)
     , m_model(model)
     , m_options(options)
@@ -57,36 +58,31 @@ adjustment_evaluator::adjustment_evaluator(std::shared_ptr<Context> context,
 {
 }
 
-std::vector<result> adjustment_evaluator::run(int line_limit,
-                                              double time_limit,
-                                              int reduce_mode)
+std::vector<result>
+adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 {
     (void)time_limit;
 
     std::vector<result> ret;
 
-    m_context->info() << m_context->info().cyanb()
-                      << "[Computation start]"
+    m_context->info() << m_context->info().cyanb() << "[Computation start]"
                       << m_context->info().def() << '\n';
 
     if (reduce_mode)
         solver.reduce(m_options);
 
     solver.get_functions(m_globalfunctions);
-    assert(not m_globalfunctions.empty()
-           and "adjustment can not determine function");
+    assert(not m_globalfunctions.empty() and
+           "adjustment can not determine function");
 
-    const std::size_t max_step = ::max_step(
-        line_limit, solver.get_attribute_line_tuple_limit());
+    const std::size_t max_step =
+        ::max_step(line_limit, solver.get_attribute_line_tuple_limit());
     const std::size_t max_opt = m_options.simulations.size();
 
-    assert(max_step > 0 and
-           "adjustment: can not determine limit");
+    assert(max_step > 0 and "adjustment: can not determine limit");
 
-    m_context->info() << m_context->info().cyanb()
-                     << "[Computation starts 1/"
-                     << max_step << "]"
-                     << m_context->info().def() << '\n';
+    m_context->info() << m_context->info().cyanb() << "[Computation starts 1/"
+                      << max_step << "]" << m_context->info().def() << '\n';
 
     {
         m_start = std::chrono::system_clock::now();
@@ -97,18 +93,22 @@ std::vector<result> adjustment_evaluator::run(int line_limit,
 
         m_end = std::chrono::system_clock::now();
 
-        m_context->info() << "| line updated | kappa | kappa computed "  \
-            "| time (s) | tuple (attribute, line, value) updated |\n";
+        m_context->info()
+            << "| line updated | kappa | kappa computed "
+               "| time (s) | tuple (attribute, line, value) updated |\n";
 
-        m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                " | %f | [] |\n", 0, kappa, 1,
-                                std::chrono::duration<double>(
-                                    m_end - m_start).count());
+        m_context->info().printf(
+            "| %d | %13.10f | %" PRIuMAX " | %f | [] |\n",
+            0,
+            kappa,
+            1,
+            std::chrono::duration<double>(m_end - m_start).count());
 
         ret.emplace_back();
 
         ret.back().kappa = kappa;
-        ret.back().time = std::chrono::duration<double>(m_end - m_start).count();
+        ret.back().time =
+            std::chrono::duration<double>(m_end - m_start).count();
         ret.back().kappa_computed = 1;
         ret.back().function_computed = m_options.size();
     }
@@ -149,11 +149,12 @@ std::vector<result> adjustment_evaluator::run(int line_limit,
         ret.back().kappa_computed = static_cast<unsigned long int>(loop);
         ret.back().function_computed = static_cast<unsigned long int>(0);
 
-        m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                 " | %f | ",
-                                 step, kappa, loop,
-                                 std::chrono::duration<double>(
-                                     m_end - m_start).count());
+        m_context->info().printf(
+            "| %d | %13.10f | %" PRIuMAX " | %f | ",
+            step,
+            kappa,
+            loop,
+            std::chrono::duration<double>(m_end - m_start).count());
 
         m_context->info() << m_updaters << " |\n";
     }

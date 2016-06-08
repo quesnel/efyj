@@ -26,10 +26,10 @@
 #include "cstream.hpp"
 #include <memory>
 
-namespace efyj {
-
-enum LogOption
+namespace efyj
 {
+
+enum LogOption {
     LOG_OPTION_NOTHING,
     LOG_OPTION_ERROR,
     LOG_OPTION_INFO,
@@ -52,10 +52,10 @@ class Context
 public:
     Context(LogOption option = LOG_OPTION_DEBUG);
 
-    Context(const Context&) = delete;
-    Context(Context&&) = delete;
-    Context& operator=(const Context&) = delete;
-    Context& operator=(Context&&) = delete;
+    Context(const Context &) = delete;
+    Context(Context &&) = delete;
+    Context &operator=(const Context &) = delete;
+    Context &operator=(Context &&) = delete;
 
     ~Context();
 
@@ -73,11 +73,11 @@ public:
 
     void set_console_log_stream();
 
-    cstream& info() const noexcept;
+    cstream &info() const noexcept;
 
-    cstream& dbg() const noexcept;
+    cstream &dbg() const noexcept;
 
-    cstream& err() const noexcept;
+    cstream &err() const noexcept;
 
     LogOption log_priority() const;
 
@@ -88,12 +88,11 @@ public:
     std::string log_template() const;
 
 private:
-    std::shared_ptr <cstream> m_cs;
+    std::shared_ptr<cstream> m_cs;
     mutable cstream m_null_cs;
     std::string m_log_filename;
     LogOption m_log_priority;
 };
-
 }
 
 #endif

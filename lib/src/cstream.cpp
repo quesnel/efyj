@@ -29,7 +29,8 @@
 #include <unistd.h>
 #endif
 
-namespace {
+namespace
+{
 
 bool is_use_color_mode(int fd, bool try_color_mode) noexcept
 {
@@ -44,73 +45,61 @@ bool is_use_color_mode(int fd, bool try_color_mode) noexcept
 }
 
 /// Find the length of a C array.
-template <class T, std::size_t N>
-std::size_t array_lenght(T (&)[N])
+template <class T, std::size_t N> std::size_t array_lenght(T(&)[N])
 {
     return N;
 }
 
-const char*
-color_to_str(efyj::cstream::colors c) noexcept
+const char *color_to_str(efyj::cstream::colors c) noexcept
 {
-    static const char colors[][10] = {
-        "\033[39m",
-        "\033[30m",
-        "\033[31m",
-        "\033[32m",
-        "\033[33m",
-        "\033[34m",
-        "\033[35m",
-        "\033[36m",
-        "\033[37m",
-        "\033[90m",
-        "\033[91m",
-        "\033[92m",
-        "\033[93m",
-        "\033[94m",
-        "\033[95m",
-        "\033[96m",
-        "\033[97m" };
+    static const char colors[][10] = {"\033[39m",
+                                      "\033[30m",
+                                      "\033[31m",
+                                      "\033[32m",
+                                      "\033[33m",
+                                      "\033[34m",
+                                      "\033[35m",
+                                      "\033[36m",
+                                      "\033[37m",
+                                      "\033[90m",
+                                      "\033[91m",
+                                      "\033[92m",
+                                      "\033[93m",
+                                      "\033[94m",
+                                      "\033[95m",
+                                      "\033[96m",
+                                      "\033[97m"};
 
-    assert(static_cast<int>(c) <
-           static_cast<int>(array_lenght(colors)));
+    assert(static_cast<int>(c) < static_cast<int>(array_lenght(colors)));
 
     return colors[static_cast<int>(c)];
 }
 
-const char*
-setter_to_str(efyj::cstream::setters s) noexcept
+const char *setter_to_str(efyj::cstream::setters s) noexcept
 {
     static const char setters[][10] = {
-        "\033[0m",
-        "\033[1m",
-        "\033[2m",
-        "\033[4m" };
+        "\033[0m", "\033[1m", "\033[2m", "\033[4m"};
 
-    assert(static_cast<int>(s) <
-           static_cast<int>(array_lenght(setters)));
+    assert(static_cast<int>(s) < static_cast<int>(array_lenght(setters)));
 
     return setters[static_cast<int>(s)];
 }
 
-void err_conversion_error(efyj::cstream& cs, const char *what) noexcept
+void err_conversion_error(efyj::cstream &cs, const char *what) noexcept
 {
-    cs << cs.red()
-       << "stream conversion error "
-       << cs.def()
-       << what
-       << "\n";
+    cs << cs.red() << "stream conversion error " << cs.def() << what << "\n";
 }
 
 } // anonymous namespace
 
-namespace efyj {
+namespace efyj
+{
 
 cstream::cstream(int fd_, bool try_color_mode_, bool close_fd_) noexcept
-: fd(fd_)
-    , color_mode(::is_use_color_mode(fd_, try_color_mode_))
-    , error_detected(false)
-    , close_fd(close_fd_)
+    : fd(fd_),
+      color_mode(::is_use_color_mode(fd_, try_color_mode_)),
+      error_detected(false),
+      close_fd(close_fd_)
 {
 }
 
@@ -124,56 +113,39 @@ cstream::~cstream() noexcept
     }
 }
 
-bool
-cstream::have_color_mode() const noexcept
+bool cstream::have_color_mode() const noexcept { return color_mode; }
+
+bool cstream::error() const noexcept { return error_detected; }
+
+cstream &cstream::operator<<(char c) noexcept { return write(&c, 1); }
+
+cstream &cstream::operator<<(unsigned char c) noexcept
 {
-    return color_mode;
+    return write(reinterpret_cast<const char *>(&c), 1);
 }
 
-bool
-cstream::error() const noexcept
+cstream &cstream::operator<<(signed char c) noexcept
 {
-    return error_detected;
+    return write(reinterpret_cast<const char *>(&c), 1);
 }
 
-cstream&
-cstream::operator<<(char c) noexcept
-{
-    return write(&c, 1);
-}
-
-cstream&
-cstream::operator<<(unsigned char c) noexcept
-{
-    return write(reinterpret_cast<const char*>(&c), 1);
-}
-
-cstream&
-cstream::operator<<(signed char c) noexcept
-{
-    return write(reinterpret_cast<const char*>(&c), 1);
-}
-
-cstream&
-cstream::operator<<(const char *str) noexcept
+cstream &cstream::operator<<(const char *str) noexcept
 {
     return write(str, std::strlen(str));
 }
 
-cstream&
-cstream::operator<<(const std::string& str) noexcept
+cstream &cstream::operator<<(const std::string &str) noexcept
 {
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(unsigned int n) noexcept
+cstream &cstream::operator<<(unsigned int n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -181,14 +153,13 @@ cstream::operator<<(unsigned int n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(signed int n) noexcept
+cstream &cstream::operator<<(signed int n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -196,14 +167,13 @@ cstream::operator<<(signed int n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(unsigned long n) noexcept
+cstream &cstream::operator<<(unsigned long n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -211,14 +181,13 @@ cstream::operator<<(unsigned long n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(signed long n) noexcept
+cstream &cstream::operator<<(signed long n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -226,14 +195,13 @@ cstream::operator<<(signed long n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(unsigned long long n) noexcept
+cstream &cstream::operator<<(unsigned long long n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -241,14 +209,13 @@ cstream::operator<<(unsigned long long n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(signed long long n) noexcept
+cstream &cstream::operator<<(signed long long n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -256,14 +223,13 @@ cstream::operator<<(signed long long n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(long double n) noexcept
+cstream &cstream::operator<<(long double n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -271,14 +237,13 @@ cstream::operator<<(long double n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(double n) noexcept
+cstream &cstream::operator<<(double n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -286,14 +251,13 @@ cstream::operator<<(double n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(float n) noexcept
+cstream &cstream::operator<<(float n) noexcept
 {
     std::string str;
 
     try {
         str = std::to_string(n);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         err_conversion_error(*this, e.what());
         return *this;
     }
@@ -301,14 +265,12 @@ cstream::operator<<(float n) noexcept
     return write(str.data(), str.size());
 }
 
-cstream&
-cstream::operator<<(cstream::modifier m) noexcept
+cstream &cstream::operator<<(cstream::modifier m) noexcept
 {
     return set_modifier(m);
 }
 
-cstream&
-cstream::printf(const char *format, ...) noexcept
+cstream &cstream::printf(const char *format, ...) noexcept
 {
     va_list ap;
 
@@ -319,8 +281,7 @@ cstream::printf(const char *format, ...) noexcept
     return *this;
 }
 
-cstream&
-cstream::printf(const char *format, va_list ap) noexcept
+cstream &cstream::printf(const char *format, va_list ap) noexcept
 {
 #if XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L
     // If we use the glibc2 library, we can use the vdprintf. The function
@@ -329,13 +290,13 @@ cstream::printf(const char *format, va_list ap) noexcept
 
     ::vdprintf(fd, format, ap);
 #else
-    std::vector<char>::size_type size {100};
+    std::vector<char>::size_type size{100};
     std::vector<char> buffer;
 
     for (;;) {
         try {
             buffer.resize(size);
-        } catch (const std::bad_alloc&) {
+        } catch (const std::bad_alloc &) {
             return *this;
         }
 
@@ -354,8 +315,7 @@ cstream::printf(const char *format, va_list ap) noexcept
     return *this;
 }
 
-cstream&
-cstream::write(const char *buf, std::size_t count) noexcept
+cstream &cstream::write(const char *buf, std::size_t count) noexcept
 {
     assert(fd >= 0 && "file already closed");
 
@@ -373,12 +333,10 @@ cstream::write(const char *buf, std::size_t count) noexcept
 #ifndef NDEBUG
             {
                 const char *buf = "cstream::write error. Turn off logging\n";
-                auto ret = ::write(STDERR_FILENO, buf, strlen(buf));
+                auto sz = ::write(STDERR_FILENO, buf, strlen(buf));
 
-                if (ret == -1) {
-                    perror("cstream::write");
-                    puts(buf);
-                }
+                if (sz == -1)
+                    perror("cstream::write error");
             }
 #endif
 
@@ -393,8 +351,7 @@ cstream::write(const char *buf, std::size_t count) noexcept
     return *this;
 }
 
-cstream&
-cstream::set_modifier(modifier m) noexcept
+cstream &cstream::set_modifier(modifier m) noexcept
 {
     if (not color_mode)
         return *this;
@@ -410,15 +367,14 @@ cstream::set_modifier(modifier m) noexcept
         if (m.setter != No_setter_change)
             str += ::setter_to_str(m.setter);
 
-    } catch (const std::bad_alloc&) {
+    } catch (const std::bad_alloc &) {
         return *this;
     }
 
     return write(str);
 }
 
-cstream&
-cstream::reset_modifier() noexcept
+cstream &cstream::reset_modifier() noexcept
 {
     if (not color_mode)
         return *this;
@@ -429,15 +385,14 @@ cstream::reset_modifier() noexcept
         str.reserve(20);
         str = ::color_to_str(colors::Default);
         str += ::setter_to_str(setters::Reset);
-    } catch (const std::bad_alloc&) {
+    } catch (const std::bad_alloc &) {
         return *this;
     }
 
     return write(str);
 }
 
-cstream&
-cstream::indent(unsigned space_number) noexcept
+cstream &cstream::indent(unsigned space_number) noexcept
 {
     static const char spaces[] = "                                ";
 
@@ -446,8 +401,7 @@ cstream::indent(unsigned space_number) noexcept
 
     while (space_number) {
         unsigned to_write = std::min(
-            space_number,
-            static_cast<unsigned>(::array_lenght(spaces) - 1));
+            space_number, static_cast<unsigned>(::array_lenght(spaces) - 1));
         write(spaces, to_write);
         space_number -= to_write;
     }
@@ -455,16 +409,15 @@ cstream::indent(unsigned space_number) noexcept
     return *this;
 }
 
-cstream& out()
+cstream &out()
 {
     static cstream cs(STDOUT_FILENO, true, false);
     return cs;
 }
 
-cstream& err()
+cstream &err()
 {
     static cstream cs(STDERR_FILENO, true, false);
     return cs;
 }
-
 }

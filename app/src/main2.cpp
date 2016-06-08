@@ -31,22 +31,19 @@ int main(int argc, char *argv[])
     int opt_index;
     std::string optionfile;
 
-    const char* const short_opts = "o:h";
+    const char *const short_opts = "o:h";
     const struct option long_opts[] = {
-        {"help", 0, nullptr, 'h'},
-        {"option", 1, nullptr, 'o'},
+        {"help", 0, nullptr, 'h'}, {"option", 1, nullptr, 'o'},
     };
 
     for (;;) {
-        const auto opt = getopt_long(argc, argv, short_opts,
-                                     long_opts, &opt_index);
+        const auto opt =
+            getopt_long(argc, argv, short_opts, long_opts, &opt_index);
         if (opt == -1)
             break;
 
         switch (opt) {
-        case 'o':
-            optionfile = ::optarg;
-            break;
+        case 'o': optionfile = ::optarg; break;
         case 'h':
         case '\?':
         default:
@@ -60,13 +57,16 @@ int main(int argc, char *argv[])
     std::ofstream os_result("results.dat");
     std::ofstream os_kappa("kappa.dat");
 
-    for (auto& elem : dexifiles) {
+    for (auto &elem : dexifiles) {
         try {
             efyj::efyj e(elem, optionfile);
             e.solve(elem, os_result, os_kappa);
-        } catch (const std::exception& e) {
-            fprintf(stderr, "An error occured during processing %s %s: %s\n",
-                    elem.c_str(), optionfile.c_str(), e.what());
+        } catch (const std::exception &e) {
+            fprintf(stderr,
+                    "An error occured during processing %s %s: %s\n",
+                    elem.c_str(),
+                    optionfile.c_str(),
+                    e.what());
             ret = EXIT_FAILURE;
             break;
         }

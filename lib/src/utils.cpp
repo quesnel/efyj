@@ -28,17 +28,17 @@
 #include <unistd.h>
 #endif
 
-namespace {
+namespace
+{
 
-inline unsigned
-hardware_concurrency_from_std() noexcept
+inline unsigned hardware_concurrency_from_std() noexcept
 {
     unsigned ret = std::thread::hardware_concurrency();
 
     return ret == 0 ? 1 : ret;
 }
 
-inline std::string vstringf(const char* format, va_list ap)
+inline std::string vstringf(const char *format, va_list ap)
 {
     std::string buffer(256, '\0');
     int sz;
@@ -49,7 +49,7 @@ inline std::string vstringf(const char* format, va_list ap)
         if (sz < 0)
             return {};
 
-        if (static_cast <std::size_t>(sz) < buffer.size())
+        if (static_cast<std::size_t>(sz) < buffer.size())
             return buffer;
 
         buffer.resize(sz + 1);
@@ -58,9 +58,10 @@ inline std::string vstringf(const char* format, va_list ap)
 
 } // anonymous namespace
 
-namespace efyj {
+namespace efyj
+{
 
-std::string stringf(const char* format, ...)
+std::string stringf(const char *format, ...)
 {
     va_list ap;
 

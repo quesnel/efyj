@@ -29,54 +29,48 @@
 #include "model.hpp"
 #include "types.hpp"
 
-namespace efyj {
+namespace efyj
+{
 
 /** @e The Options class stores the complete option file. (i) A lot of
  * vectors to store simulations identifiers, places, departements, years
  * and observation, (ii) the complete matrix of option and a ordered
  * structure to build link between simulations.
  */
-struct Options
-{
-    std::vector <std::string> simulations;
-    std::vector <std::string> places;
-    std::vector <int> departments;
-    std::vector <int> years;
-    std::vector <int> observed;
+struct Options {
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
     Array options;
 
-    const std::vector<int>& get_subdataset(int id) const noexcept
+    const std::vector<int> &get_subdataset(int id) const noexcept
     {
         return subdataset[id];
     }
 
-    const std::vector<std::vector<int>>& get_subdataset() const noexcept
+    const std::vector<std::vector<int>> &get_subdataset() const noexcept
     {
         return subdataset;
     }
 
-    std::size_t size() const noexcept
-    {
-        return simulations.size();
-    }
+    std::size_t size() const noexcept { return simulations.size(); }
 
-    int identifier(int id) const noexcept
-    {
-        return id_subdataset_reduced[id];
-    }
+    int identifier(int id) const noexcept { return id_subdataset_reduced[id]; }
 
     bool empty() const noexcept
     {
-        return simulations.empty() or departments.empty()
-            or years.empty() or observed.empty();
+        return simulations.empty() or departments.empty() or years.empty() or
+               observed.empty();
     }
 
-    void set(const std::vector <std::string>& simulations,
-             const std::vector <std::string>& places,
-             const std::vector <int>& departments,
-             const std::vector <int>& years,
-             const std::vector <int>& observed,
-             const std::vector <int>& options);
+    void set(const std::vector<std::string> &simulations,
+             const std::vector<std::string> &places,
+             const std::vector<int> &departments,
+             const std::vector<int> &years,
+             const std::vector<int> &observed,
+             const std::vector<int> &options);
 
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.
@@ -88,12 +82,12 @@ struct Options
      * @throw std::bad_alloc or csv_parser_error.
      */
     void read(std::shared_ptr<Context> context,
-              std::istream& is,
-              const Model& model);
+              std::istream &is,
+              const Model &model);
 
     bool have_subdataset() const
     {
-        for (const auto& elem : subdataset)
+        for (const auto &elem : subdataset)
             if (elem.empty())
                 return false;
 
@@ -126,8 +120,7 @@ private:
     std::vector<int> id_subdataset_reduced;
 };
 
-cstream& operator<<(cstream& os, const Options&) noexcept;
-
+cstream &operator<<(cstream &os, const Options &) noexcept;
 }
 
 #endif

@@ -29,12 +29,12 @@
 // #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 #include <Eigen/Core>
 
-namespace efyj {
+namespace efyj
+{
 
 typedef Eigen::ArrayXXi Array;
 typedef Array::RowXpr VectorRef;
 typedef Eigen::VectorXi Vector;
-
 }
 
 #endif

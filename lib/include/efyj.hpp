@@ -27,29 +27,29 @@
 #define EFYJ_HELPER_DLL_EXPORT __declspec(dllexport)
 #define EFYJ_HELPER_DLL_LOCAL
 #else
-# if __GNUC__ >= 4
-#  define EFYJ_HELPER_DLL_IMPORT __attribute__ ((visibility ("default")))
-#  define EFYJ_HELPER_DLL_EXPORT __attribute__ ((visibility ("default")))
-#  define EFYJ_HELPER_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
-# else
-#  define EFYJ_HELPER_DLL_IMPORT
-#  define EFYJ_HELPER_DLL_EXPORT
-#  define EFYJ_HELPER_DLL_LOCAL
-# endif
+#if __GNUC__ >= 4
+#define EFYJ_HELPER_DLL_IMPORT __attribute__((visibility("default")))
+#define EFYJ_HELPER_DLL_EXPORT __attribute__((visibility("default")))
+#define EFYJ_HELPER_DLL_LOCAL __attribute__((visibility("hidden")))
+#else
+#define EFYJ_HELPER_DLL_IMPORT
+#define EFYJ_HELPER_DLL_EXPORT
+#define EFYJ_HELPER_DLL_LOCAL
+#endif
 #endif
 
 #ifdef EFYJ_BUILD_SHARED_LIBRARY
-# ifdef libefyj_EXPORTS
-#  define EFYJ_API EFYJ_HELPER_DLL_EXPORT
-# else
-#  define EFYJ_API EFYJ_HELPER_DLL_IMPORT
-# endif
-# define EFYJ_LOCAL EFYJ_HELPER_DLL_LOCAL
-# define EFYJ_MODULE EFYJ_HELPER_DLL_EXPORT
+#ifdef libefyj_EXPORTS
+#define EFYJ_API EFYJ_HELPER_DLL_EXPORT
 #else
-# define EFYJ_API
-# define EFYJ_LOCAL
-# define EFYJ_MODULE
+#define EFYJ_API EFYJ_HELPER_DLL_IMPORT
+#endif
+#define EFYJ_LOCAL EFYJ_HELPER_DLL_LOCAL
+#define EFYJ_MODULE EFYJ_HELPER_DLL_EXPORT
+#else
+#define EFYJ_API
+#define EFYJ_LOCAL
+#define EFYJ_MODULE
 #endif
 
 #include <memory>
@@ -60,7 +60,8 @@
 
 /** Comments about efyj's API.
  */
-namespace efyj {
+namespace efyj
+{
 
 struct modifier {
     int attribute;
@@ -69,7 +70,7 @@ struct modifier {
 };
 
 struct result {
-    std::vector <modifier> modifiers;
+    std::vector<modifier> modifiers;
     double kappa;
     double time;
     unsigned long int kappa_computed;
@@ -82,11 +83,11 @@ class EFYJ_API internal_error : std::logic_error
     int pp_line;
 
 public:
-    internal_error(const std::string& msg);
-    internal_error(const std::string& file,
-                   const std::string& function,
+    internal_error(const std::string &msg);
+    internal_error(const std::string &file,
+                   const std::string &function,
                    int line,
-                   const std::string& msg);
+                   const std::string &msg);
     virtual ~internal_error() noexcept = default;
 
     std::string file() const;
@@ -99,7 +100,7 @@ class EFYJ_API file_error : public std::runtime_error
     std::string pp_file;
 
 public:
-    file_error(const std::string& file);
+    file_error(const std::string &file);
 
     virtual ~file_error() noexcept = default;
 
@@ -145,10 +146,12 @@ public:
 
     csv_parser_error(const std::string &filepath, const std::string &msg);
 
-    csv_parser_error(std::size_t line, const std::string &filepath,
+    csv_parser_error(std::size_t line,
+                     const std::string &filepath,
                      const std::string &msg);
 
-    csv_parser_error(std::size_t line, std::size_t column,
+    csv_parser_error(std::size_t line,
+                     std::size_t column,
                      const std::string &filepath,
                      const std::string &msg);
 
@@ -177,37 +180,37 @@ class EFYJ_API efyj
 public:
     efyj();
 
-    explicit efyj(const std::string& model_filepath);
+    explicit efyj(const std::string &model_filepath);
 
-    explicit efyj(const std::string& model_filepath,
-                  const std::string& options_filepath);
+    explicit efyj(const std::string &model_filepath,
+                  const std::string &options_filepath);
 
     /** No copy constructor. */
-    efyj(const efyj& other) = delete;
+    efyj(const efyj &other) = delete;
 
     /** No assigment operator. */
-    efyj& operator=(const efyj& other) = delete;
+    efyj &operator=(const efyj &other) = delete;
 
-    efyj(efyj&& other);
-    efyj& operator=(efyj&& other);
+    efyj(efyj &&other);
+    efyj &operator=(efyj &&other);
 
     ~efyj() noexcept;
 
-    void extract_options(const std::string& filepath) const;
+    void extract_options(const std::string &filepath) const;
 
-    void extract_options(std::vector <std::string>& simulations,
-                         std::vector <std::string>& places,
-                         std::vector <int>& departments,
-                         std::vector <int>& years,
-                         std::vector <int>& observed,
-                         std::vector <int>& options) const;
+    void extract_options(std::vector<std::string> &simulations,
+                         std::vector<std::string> &places,
+                         std::vector<int> &departments,
+                         std::vector<int> &years,
+                         std::vector<int> &observed,
+                         std::vector<int> &options) const;
 
-    void set_options(const std::vector <std::string>& simulations,
-                     const std::vector <std::string>& places,
-                     const std::vector <int>& departments,
-                     const std::vector <int>& years,
-                     const std::vector <int>& observed,
-                     const std::vector <int>& options);
+    void set_options(const std::vector<std::string> &simulations,
+                     const std::vector<std::string> &places,
+                     const std::vector<int> &departments,
+                     const std::vector<int> &years,
+                     const std::vector<int> &observed,
+                     const std::vector<int> &options);
 
     /**
      * Use the DEXi model to compute the result of the first attribute.
@@ -216,23 +219,21 @@ public:
      * for each leaf of the model.
      * \return >= 0 otherwise.
      */
-    int solve(const std::vector<int>& options);
+    int solve(const std::vector<int> &options);
 
-    int solve(const std::string& modelname,
-              std::ostream& result,
-              std::ostream& kappa);
+    int solve(const std::string &modelname,
+              std::ostream &result,
+              std::ostream &kappa);
 
     result compute_kappa() const;
 
-    std::vector<result>
-        compute_prediction(int line_limit,
-                           double time_limit,
-                           int reduce_mode) const;
+    std::vector<result> compute_prediction(int line_limit,
+                                           double time_limit,
+                                           int reduce_mode) const;
 
-    std::vector<result>
-        compute_adjustment(int line_limit,
-                           double time_limit,
-                           int reduce_mode) const;
+    std::vector<result> compute_adjustment(int line_limit,
+                                           double time_limit,
+                                           int reduce_mode) const;
 
     /**
      * The \e is_empty function checks if a model was load previously.

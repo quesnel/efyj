@@ -27,13 +27,13 @@
 #include <vector>
 #include <cmath>
 
-namespace efyj {
+namespace efyj
+{
 
-inline double
-rmsep(const std::vector <int>& observated,
-      const std::vector <int>& simulated,
-      const std::size_t N,
-      const std::size_t NC)
+inline double rmsep(const std::vector<int> &observated,
+                    const std::vector<int> &simulated,
+                    const std::size_t N,
+                    const std::size_t NC)
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
@@ -49,11 +49,10 @@ rmsep(const std::vector <int>& observated,
     return std::sqrt((double)sum / (double)N);
 }
 
-inline double
-linear_weighted_kappa(const std::vector <int>& observated,
-                      const std::vector <int>& simulated,
-                      const std::size_t N,
-                      const std::size_t NC)
+inline double linear_weighted_kappa(const std::vector<int> &observated,
+                                    const std::vector<int> &simulated,
+                                    const std::size_t N,
+                                    const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
@@ -78,15 +77,13 @@ linear_weighted_kappa(const std::vector <int>& observated,
         for (int j = 0; j != (int)NC; ++j)
             weighted(i, j) = std::abs(i - j);
 
-    return 1.0 - ((weighted * observed).sum() /
-                  (weighted * expected).sum());
+    return 1.0 - ((weighted * observed).sum() / (weighted * expected).sum());
 }
 
-inline double
-squared_weighted_kappa(const std::vector <int>& observated,
-                       const std::vector <int>& simulated,
-                       const std::size_t N,
-                       const std::size_t NC)
+inline double squared_weighted_kappa(const std::vector<int> &observated,
+                                     const std::vector<int> &simulated,
+                                     const std::size_t N,
+                                     const std::size_t NC)
 {
     Eigen::ArrayXXd observed = Eigen::ArrayXXd::Zero(NC, NC);
     Eigen::ArrayX2d distributions = Eigen::ArrayXXd::Zero(NC, 2);
@@ -111,8 +108,7 @@ squared_weighted_kappa(const std::vector <int>& observated,
         for (int j = 0; j != (int)NC; ++j)
             weighted(i, j) = std::abs(i - j) * std::abs(i - j);
 
-    return 1.0 - ((weighted * observed).sum() /
-                  (weighted * expected).sum());
+    return 1.0 - ((weighted * observed).sum() / (weighted * expected).sum());
 }
 
 /** The \e weighted_kappa_calculator structure is used to reduce
@@ -133,9 +129,8 @@ public:
         assert(NC_ > 0 and "weighted_kappa_calculator bad parameter");
     }
 
-    double
-    linear(const std::vector <int>& observated,
-           const std::vector <int>& simulated) noexcept
+    double linear(const std::vector<int> &observated,
+                  const std::vector<int> &simulated) noexcept
     {
         pre(observated, simulated);
 
@@ -146,9 +141,8 @@ public:
         return post();
     }
 
-    double
-    squared(const std::vector <int>& observated,
-            const std::vector <int>& simulated) noexcept
+    double squared(const std::vector<int> &observated,
+                   const std::vector<int> &simulated) noexcept
     {
         pre(observated, simulated);
 
@@ -159,7 +153,6 @@ public:
         return post();
     }
 
-
 private:
     Eigen::ArrayXXd observed;
     Eigen::ArrayX2d distributions;
@@ -167,8 +160,8 @@ private:
     Eigen::ArrayXXd weighted;
     const int NC;
 
-    void pre(const std::vector <int>& observated,
-             const std::vector <int>& simulated) noexcept
+    void pre(const std::vector<int> &observated,
+             const std::vector<int> &simulated) noexcept
     {
         assert(observated.size() == simulated.size() and
                "weighted_kappa_calculator observated and simulated sizes "
@@ -193,10 +186,10 @@ private:
 
     double post() noexcept
     {
-        return 1. - ((weighted * observed).sum() / (weighted * expected).sum());
+        return 1. -
+               ((weighted * observed).sum() / (weighted * expected).sum());
     }
 };
-
 }
 
 #endif

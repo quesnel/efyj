@@ -27,22 +27,22 @@
 #include "post.hpp"
 #include "solver-stack.hpp"
 
-namespace efyj {
+namespace efyj
+{
 
 class Context;
 struct Model;
 struct Options;
 
-struct prediction_evaluator
-{
+struct prediction_evaluator {
     std::shared_ptr<Context> m_context;
-    const Model& m_model;
-    const Options& m_options;
+    const Model &m_model;
+    const Options &m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
-    std::vector <int> m_globalsimulated;
-    std::vector <std::tuple<int, int, int>> m_updaters;
-    std::vector <std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> m_globalsimulated;
+    std::vector<std::tuple<int, int, int>> m_updaters;
+    std::vector<std::vector<int>> m_globalfunctions, m_functions;
     std::vector<int> simulated;
     std::vector<int> observed;
     for_each_model_solver solver;
@@ -50,12 +50,11 @@ struct prediction_evaluator
     unsigned long long int m_loop = 0;
 
     prediction_evaluator(std::shared_ptr<Context> context,
-                         const Model& model,
-                         const Options& options);
+                         const Model &model,
+                         const Options &options);
 
-    std::vector<result> run(int line_limit,
-                            double time_limit,
-                            int reduce_mode);
+    std::vector<result>
+    run(int line_limit, double time_limit, int reduce_mode);
 };
 
 } // namespace efyj

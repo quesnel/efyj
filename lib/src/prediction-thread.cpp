@@ -34,7 +34,8 @@
 #include <thread>
 #include <mutex>
 
-namespace efyj {
+namespace efyj
+{
 
 class Results
 {
@@ -44,7 +45,7 @@ class Results
     struct Result {
         double kappa;
         unsigned long loop;
-        std::vector <std::tuple<int, int, int>> updaters;
+        std::vector<std::tuple<int, int, int>> updaters;
     };
 
     std::vector<Result> m_results;
@@ -66,9 +67,10 @@ public:
         m_level[0] = threads;
     }
 
-    void emplace_result(int i, double kappa,
+    void emplace_result(int i,
+                        double kappa,
                         unsigned long loop,
-                        const std::vector <std::tuple<int, int, int>>& updaters)
+                        const std::vector<std::tuple<int, int, int>> &updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
                static_cast<std::size_t>(i) < m_results.size());
@@ -78,10 +80,12 @@ public:
         m_results[i].updaters = updaters;
     }
 
-    void push(int step, double kappa, unsigned long loop,
-              const std::vector <std::tuple<int, int, int>>& updaters)
+    void push(int step,
+              double kappa,
+              unsigned long loop,
+              const std::vector<std::tuple<int, int, int>> &updaters)
     {
-        std::lock_guard <std::mutex> locker(m_container_mutex);
+        std::lock_guard<std::mutex> locker(m_container_mutex);
 
         assert(step >= 1);
 
@@ -102,8 +106,7 @@ public:
         m_end = std::chrono::system_clock::now();
         auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-        m_context->info().printf("| %d | %13.10f | %" PRIuMAX
-                                 " | %f | ",
+        m_context->info().printf("| %d | %13.10f | %" PRIuMAX " | %f | ",
                                  step,
                                  m_results[step - 1].kappa,
                                  m_results[step - 1].loop,
@@ -114,7 +117,7 @@ public:
 };
 
 template <typename Solver>
-bool init_worker(Solver& solver, const int thread_id)
+bool init_worker(Solver &solver, const int thread_id)
 {
     for (auto i = 0; i < thread_id; ++i)
         if (solver.next_line() == false)
@@ -124,17 +127,17 @@ bool init_worker(Solver& solver, const int thread_id)
 }
 
 void parallel_prediction_worker(std::shared_ptr<Context> context,
-                                const Model& model,
-                                const Options& options,
+                                const Model &model,
+                                const Options &options,
                                 const unsigned int thread_id,
                                 const unsigned int thread_number,
-                                const bool& stop,
-                                Results& results)
+                                const bool &stop,
+                                Results &results)
 {
-    std::vector <int> m_globalsimulated(options.observed.size());
-    std::vector <int> m_simulated(options.observed.size());
-    std::vector <std::vector<scale_id>> m_globalfunctions, m_functions;
-    std::vector <std::tuple<int, int, int>> m_globalupdaters, m_updaters;
+    std::vector<int> m_globalsimulated(options.observed.size());
+    std::vector<int> m_simulated(options.observed.size());
+    std::vector<std::vector<scale_id>> m_globalfunctions, m_functions;
+    std::vector<std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
     for_each_model_solver solver(context, model);
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
@@ -163,8 +166,8 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
-            for (std::size_t opt = 0, endopt = options.size();
-                 opt != endopt; ++opt) {
+            for (std::size_t opt = 0, endopt = options.size(); opt != endopt;
+                 ++opt) {
                 double kappa = 0.;
 
                 solver.init_next_value();
@@ -173,8 +176,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                     std::fill(m_simulated.begin(), m_simulated.end(), 0.);
 
                     for (auto x : options.get_subdataset(opt))
-                        m_simulated[x] = solver.solve(
-                            options.options.row(x));
+                        m_simulated[x] = solver.solve(options.options.row(x));
 
                     auto ret = kappa_c.squared(options.observed, m_simulated);
                     m_loop++;
@@ -187,8 +189,8 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] = solver.solve(
-                    options.options.row(opt));
+                m_globalsimulated[opt] =
+                    solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -216,30 +218,31 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 }
 
 void prediction_n(std::shared_ptr<Context> context,
-                  const Model& model,
-                  const Options& options,
+                  const Model &model,
+                  const Options &options,
                   unsigned int threads)
 {
-    context->info() << context->info().cyanb()
-                    << "[Computation starts with " << threads << " threads]"
-                    << context->info().def()
-                    << '\n';
+    context->info() << context->info().cyanb() << "[Computation starts with "
+                    << threads << " threads]" << context->info().def() << '\n';
 
     assert(threads > 1);
 
     Results results(context, threads);
     bool stop = false;
 
-    std::vector<std::thread> workers { threads };
+    std::vector<std::thread> workers{threads};
 
     for (auto i = 0u; i != threads; ++i) {
         auto filepath = make_new_name(context->get_log_filename(), i);
-        auto new_ctx = std::make_shared<efyj::Context>(context->log_priority());
+        auto new_ctx =
+            std::make_shared<efyj::Context>(context->log_priority());
         auto ret = new_ctx->set_log_file_stream(filepath);
 
         if (not ret)
             context->err().printf("Failed to assign '%s' to thread %d. Switch "
-                                  "to console.\n", filepath.c_str(), i);
+                                  "to console.\n",
+                                  filepath.c_str(),
+                                  i);
 
         workers[i] = std::thread(parallel_prediction_worker,
                                  new_ctx,
@@ -257,7 +260,7 @@ void prediction_n(std::shared_ptr<Context> context,
     /* Stop work and wait for all prediction workers. */
     /* TODO stop = true; */
 
-    for (auto& w : workers)
+    for (auto &w : workers)
         w.join();
 }
 

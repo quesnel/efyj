@@ -33,21 +33,20 @@
 #include <unistd.h>
 #endif
 
-namespace efyj {
+namespace efyj
+{
 
 Context::Context(LogOption option)
     : m_cs(std::make_shared<cstream>(STDOUT_FILENO, true, false))
-      // TODO found a best solution to avoid this CPU cycle burning
-      // solution. A specific null_cstream that inherits of cstream
-      // with all empty function?
+    // TODO found a best solution to avoid this CPU cycle burning
+    // solution. A specific null_cstream that inherits of cstream
+    // with all empty function?
     , m_null_cs(::open("/dev/null", O_APPEND), false, false)
     , m_log_priority(option)
 {
 }
 
-Context::~Context()
-{
-}
+Context::~Context() {}
 
 bool Context::set_log_file_stream(std::string filepath) noexcept
 {
@@ -65,15 +64,15 @@ bool Context::set_log_file_stream(std::string filepath) noexcept
 
     std::shared_ptr<cstream> tmp;
     try {
-        tmp = std::make_shared <cstream>(fd, false, true);
-    } catch (const std::bad_alloc&) {
+        tmp = std::make_shared<cstream>(fd, false, true);
+    } catch (const std::bad_alloc &) {
         ::close(fd);
         return false;
     }
 
     try {
         m_log_filename.swap(filepath);
-    } catch (const std::bad_alloc&) {
+    } catch (const std::bad_alloc &) {
         ::close(fd);
         return false;
     }
@@ -93,7 +92,7 @@ void Context::set_console_log_stream()
     std::shared_ptr<cstream> tmp;
     try {
         tmp = std::make_shared<cstream>(STDOUT_FILENO, true, false);
-    } catch (const std::bad_alloc&) {
+    } catch (const std::bad_alloc &) {
         return;
     }
 
@@ -101,17 +100,14 @@ void Context::set_console_log_stream()
     m_log_filename.clear();
 }
 
-LogOption Context::log_priority() const
-{
-    return m_log_priority;
-}
+LogOption Context::log_priority() const { return m_log_priority; }
 
 void Context::set_log_priority(LogOption priority)
 {
     m_log_priority = priority;
 }
 
-cstream& Context::info() const noexcept
+cstream &Context::info() const noexcept
 {
     if (static_cast<unsigned>(m_log_priority) >=
         static_cast<unsigned>(LOG_OPTION_INFO))
@@ -120,7 +116,7 @@ cstream& Context::info() const noexcept
     return m_null_cs;
 }
 
-cstream& Context::dbg() const noexcept
+cstream &Context::dbg() const noexcept
 {
     if (static_cast<unsigned>(m_log_priority) >=
         static_cast<unsigned>(LOG_OPTION_DEBUG))
@@ -129,7 +125,7 @@ cstream& Context::dbg() const noexcept
     return m_null_cs;
 }
 
-cstream& Context::err() const noexcept
+cstream &Context::err() const noexcept
 {
     if (static_cast<unsigned>(m_log_priority) >=
         static_cast<unsigned>(LOG_OPTION_ERROR))

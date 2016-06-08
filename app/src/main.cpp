@@ -25,48 +25,47 @@
 #include <getopt.h>
 #include "config.hpp"
 
-namespace {
+namespace
+{
 
 void usage() noexcept
 {
-    std::cout << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-              << "Options:\n"
-              << "    -h                   This help message\n"
-              << "    -m model.dexi        The model file\n"
-              << "    -o options.csv       The options file\n"
-              << "    -e output.csv        Extract the option from dexi files "
-        "into csv file\n"
-              << "    -r                   Without the reduce models generator "
-        "algorithm\n"
-              << "    -l [limit]           Modifier limit [int]\n"
-              << "                         0 means max available (default)\n"
-              << "                         > 1\n"
-              << "    -p                   Compute prediction\n"
-              << "    -a                   Compute adjustment\n"
-              << "    -j [threads]         Use threads [int]\n"
-              << "                         0 means max available\n"
-              << "                         1 means mono\n"
-              << "                         2..max\n"
-              << "\n";
+    std::cout
+        << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+        << "Options:\n"
+        << "    -h                   This help message\n"
+        << "    -m model.dexi        The model file\n"
+        << "    -o options.csv       The options file\n"
+        << "    -e output.csv        Extract the option from dexi files "
+           "into csv file\n"
+        << "    -r                   Without the reduce models generator "
+           "algorithm\n"
+        << "    -l [limit]           Modifier limit [int]\n"
+        << "                         0 means max available (default)\n"
+        << "                         > 1\n"
+        << "    -p                   Compute prediction\n"
+        << "    -a                   Compute adjustment\n"
+        << "    -j [threads]         Use threads [int]\n"
+        << "                         0 means max available\n"
+        << "                         1 means mono\n"
+        << "                         2..max\n"
+        << "\n";
 }
 
-void version() noexcept
-{
-    std::cout << "efyj " << EFYJ_VERSION << '\n';
-}
+void version() noexcept { std::cout << "efyj " << EFYJ_VERSION << '\n'; }
 
-int extract(const std::string& model, const std::string& output) noexcept
+int extract(const std::string &model, const std::string &output) noexcept
 {
     try {
         efyj::efyj e(model);
         e.extract_options(output);
-    } catch (const std::logic_error& e) {
+    } catch (const std::logic_error &e) {
         std::cerr << "internal error: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         std::cerr << "failure: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::bad_alloc& e) {
+    } catch (const std::bad_alloc &e) {
         std::cerr << "not enough memory\n";
         return EXIT_FAILURE;
     }
@@ -74,21 +73,24 @@ int extract(const std::string& model, const std::string& output) noexcept
     return EXIT_SUCCESS;
 }
 
-int adjustment(const std::string& model, const std::string& option,
-               bool reduce, int limit, unsigned int thread) noexcept
+int adjustment(const std::string &model,
+               const std::string &option,
+               bool reduce,
+               int limit,
+               unsigned int thread) noexcept
 {
     (void)thread;
 
     try {
         efyj::efyj e(model, option);
         e.compute_adjustment(limit, -1, reduce);
-    } catch (const std::logic_error& e) {
+    } catch (const std::logic_error &e) {
         std::cerr << "internal failure: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         std::cerr << "fail: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::bad_alloc& e) {
+    } catch (const std::bad_alloc &e) {
         std::cerr << "not enough memory\n";
         return EXIT_FAILURE;
     }
@@ -96,21 +98,24 @@ int adjustment(const std::string& model, const std::string& option,
     return EXIT_SUCCESS;
 }
 
-int prediction(const std::string& model, const std::string& option,
-               bool reduce, int limit, unsigned int thread) noexcept
+int prediction(const std::string &model,
+               const std::string &option,
+               bool reduce,
+               int limit,
+               unsigned int thread) noexcept
 {
     (void)thread;
 
     try {
         efyj::efyj e(model, option);
         e.compute_prediction(limit, -1, reduce);
-    } catch (const std::logic_error& e) {
+    } catch (const std::logic_error &e) {
         std::cerr << "internal failure: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         std::cerr << "fail: " << e.what() << '\n';
         return EXIT_FAILURE;
-    } catch (const std::bad_alloc& e) {
+    } catch (const std::bad_alloc &e) {
         std::cerr << "not enough memory\n";
         return EXIT_FAILURE;
     }
@@ -122,10 +127,12 @@ int prediction(const std::string& model, const std::string& option,
 
 int main(int argc, char *argv[])
 {
-    enum main_mode { NOTHING = 0,
-                     EXTRACT = 1 << 1,
-                     ADJUSTMENT = 1 << 2,
-                     PREDICTION = 1 << 3 };
+    enum main_mode {
+        NOTHING = 0,
+        EXTRACT = 1 << 1,
+        ADJUSTMENT = 1 << 2,
+        PREDICTION = 1 << 3
+    };
 
     std::string modelfilepath, optionfilepath, extractfile;
 
@@ -147,34 +154,18 @@ int main(int argc, char *argv[])
             extractfile.assign(::optarg);
             mode = mode | EXTRACT;
             break;
-        case 'm':
-            modelfilepath.assign(::optarg);
-            break;
-        case 'o':
-            optionfilepath.assign(::optarg);
-            break;
+        case 'm': modelfilepath.assign(::optarg); break;
+        case 'o': optionfilepath.assign(::optarg); break;
         case 'l':
             if (::optarg)
                 limit = std::stoi(::optarg);
             break;
-        case 'r':
-            reduce = true;
-            break;
-        case 'p':
-            mode = mode | PREDICTION;
-            break;
-        case 'a':
-            mode = mode | ADJUSTMENT;
-            break;
-        case 'h':
-            ::usage();
-            exit(EXIT_SUCCESS);
-	case 'v':
-	    ::version();
-	    exit(EXIT_SUCCESS);
-        default:
-            ::version();
-            exit(EXIT_SUCCESS);
+        case 'r': reduce = true; break;
+        case 'p': mode = mode | PREDICTION; break;
+        case 'a': mode = mode | ADJUSTMENT; break;
+        case 'h': ::usage(); exit(EXIT_SUCCESS);
+        case 'v': ::version(); exit(EXIT_SUCCESS);
+        default: ::version(); exit(EXIT_SUCCESS);
         }
     }
 
@@ -183,21 +174,23 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    int return_value  = EXIT_SUCCESS;
+    int return_value = EXIT_SUCCESS;
     if ((mode & EXTRACT)) {
         if (::extract(modelfilepath, extractfile) == EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }
 
     if ((mode & ADJUSTMENT)) {
-        if (::adjustment(modelfilepath, optionfilepath,
-                         reduce, limit, threads) == EXIT_FAILURE)
+        if (::adjustment(
+                modelfilepath, optionfilepath, reduce, limit, threads) ==
+            EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }
 
     if ((mode & PREDICTION)) {
-        if (::prediction(modelfilepath, optionfilepath,
-                         reduce, limit, threads) == EXIT_FAILURE)
+        if (::prediction(
+                modelfilepath, optionfilepath, reduce, limit, threads) ==
+            EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }
 

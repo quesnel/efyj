@@ -28,44 +28,43 @@
 #include <cinttypes>
 
 #if defined __GNUC__
-#define EFYJ_GCC_PRINTF(format__, args__) \
-    __attribute__ ((format (printf, format__, args__)))
+#define EFYJ_GCC_PRINTF(format__, args__)                                     \
+    __attribute__((format(printf, format__, args__)))
 #endif
 
-namespace efyj {
+namespace efyj
+{
 
-std::string stringf(const char* format, ...) EFYJ_GCC_PRINTF(1, 2);
+std::string stringf(const char *format, ...) EFYJ_GCC_PRINTF(1, 2);
 
-inline
-void Expects(bool condition)
+inline void Expects(bool condition)
 {
     if (not condition)
         throw std::invalid_argument("");
 }
 
-inline
-void Expects(bool condition, const char *msg)
+inline void Expects(bool condition, const char *msg)
 {
     if (not condition)
         throw std::invalid_argument(msg);
 }
 
 struct scope_exit {
-    scope_exit(std::function <void (void)> fct)
+    scope_exit(std::function<void(void)> fct)
         : fct(fct)
-    {}
-
-    ~scope_exit()
     {
-        fct();
     }
 
-    std::function <void (void)> fct;
+    ~scope_exit() { fct(); }
+
+    std::function<void(void)> fct;
 };
 
-/** \e make_new_name is used to create new file path with a suffix composed with
+/** \e make_new_name is used to create new file path with a suffix composed
+ *with
  * an identifier.
- * \param filepath Original filepath to be updated.  \e filepath can be empty or
+ * \param filepath Original filepath to be updated.  \e filepath can be empty
+ *or
  * have and extension.
  * \param id Identifier to be attached to the origin filepath.
  * \return A new string represents modified \e filepath with the \e identifier.
@@ -79,9 +78,8 @@ struct scope_exit {
  * \endcode
  * \endexample
  */
-inline
-std::string
-make_new_name(const std::string& filepath, unsigned int id) noexcept
+inline std::string make_new_name(const std::string &filepath,
+                                 unsigned int id) noexcept
 {
     try {
         std::ostringstream os;
@@ -102,10 +100,10 @@ make_new_name(const std::string& filepath, unsigned int id) noexcept
             return os.str();
         }
 
-        os << filepath.substr(0, dotposition)  << '-' << id
+        os << filepath.substr(0, dotposition) << '-' << id
            << filepath.substr(dotposition + 1);
         return os.str();
-    } catch (const std::bad_alloc&) {
+    } catch (const std::bad_alloc &) {
         return std::string();
     }
 }
@@ -115,7 +113,6 @@ make_new_name(const std::string& filepath, unsigned int id) noexcept
  * @return An integer greater or equal to 1.
  */
 unsigned get_hardware_concurrency() noexcept;
-
 }
 
 #endif
