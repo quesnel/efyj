@@ -24,7 +24,8 @@
 #include "solver-stack.hpp"
 #include <sstream>
 #include <cstdlib>
-
+#include <fstream>
+#include <random>
 #if defined(__unix__)
 #include <unistd.h>
 #elif defined(__WIN32__)
@@ -32,17 +33,16 @@
 #include <stdio.h>
 #endif
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include "unit-test.hpp"
 
-TEST_CASE("test empty object equality", "[model]")
+void test_empty_object_equality()
 {
     efyj::Model x1;
     efyj::Model x2;
-    REQUIRE(x1 == x2);
+    Ensures(x1 == x2);
 }
 
-TEST_CASE("test empty object read/write", "[model]")
+void test_empty_object_read_write()
 {
     efyj::Model x1, x2;
     {
@@ -58,7 +58,7 @@ TEST_CASE("test empty object read/write", "[model]")
         }
     }
     bool is_equal = x1 == x2;
-    REQUIRE(is_equal == true);
+    Ensures(is_equal == true);
 }
 
 static inline void change_pwd()
@@ -68,10 +68,10 @@ static inline void change_pwd()
 #else
     int ret = ::_chdir(EXAMPLES_DIR);
 #endif
-    REQUIRE(ret == 0);
+    Ensures(ret == 0);
 }
 
-TEST_CASE("test classic Model file", "[model]")
+void test_classic_Model_file()
 {
     change_pwd();
 
@@ -88,21 +88,21 @@ TEST_CASE("test classic Model file", "[model]")
         output += filepath;
         {
             std::ifstream is(filepath);
-            REQUIRE(is.is_open());
-            REQUIRE_NOTHROW(dex1.read(is));
+            Ensures(is.is_open());
+            EnsuresNotThrow(dex1.read(is), std::exception);
             std::ofstream os(output);
             dex1.write(os);
         }
         {
             std::ifstream is(filepath);
-            REQUIRE(is.is_open());
-            REQUIRE_NOTHROW(dex2.read(is));
+            Ensures(is.is_open());
+            EnsuresNotThrow(dex2.read(is), std::exception);
         }
-        REQUIRE(dex1 == dex2);
+        Ensures(dex1 == dex2);
     }
 }
 
-TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
+void test_car_dxi_load_save_load_via_sstream()
 {
     change_pwd();
 
@@ -110,144 +110,153 @@ TEST_CASE("test car.dxi load/save/load via sstream", "[model]")
     std::stringstream ss;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(car.read(is));
-        REQUIRE_NOTHROW(car.write(ss));
+        Ensures(is.is_open());
+        EnsuresNotThrow(car.read(is), std::exception);
+        EnsuresNotThrow(car.write(ss), std::exception);
     }
     efyj::Model car2;
-    REQUIRE_NOTHROW(car2.read(ss));
-    REQUIRE(car == car2);
+    EnsuresNotThrow(car2.read(ss), std::exception);
+    Ensures(car == car2);
 }
 
-#if (GCC_VERSION >= 40900) or (defined __clang__)
-std::ofstream make_temporary(std::string &name, bool remove = true)
+std::string make_temporary(const std::string &name)
 {
     static const char *names[] = {"TMPDIR", "TMP", "TEMP"};
     static const int names_size = sizeof(names) / sizeof(names[0]);
-    std::string filename;
+    std::string ret;
 
-    // TODO replace X with random bits
-    // transform_if(...);
-
-    for (int i = 0; i != names_size and filename.empty(); ++i)
+    for (int i = 0; i != names_size and ret.empty(); ++i)
         if (::getenv(names[i]))
-            filename = ::getenv(names[i]);
+            ret = ::getenv(names[i]);
 
-    if (filename.empty())
-        filename = "/tmp";
+    if (ret.empty())
+        ret = "./";
+    else
+        ret += '/';
 
-    filename += "/" + name;
-    name = filename;
-    std::ofstream os(filename);
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0, 26);
 
-    if (os && remove) {
-#if defined(__unix__)
-        ::unlink(filename.c_str());
-#elif defined(__WIN32__)
-        ::_unlink(filename.c_str());
-#endif
-    }
+    std::transform(name.begin(),
+                   name.end(),
+                   std::back_inserter(ret),
+                   [&generator, &distribution](int character) {
+                       if (character == 'X')
+                           return 'A' + distribution(generator);
 
-    return std::move(os);
+                       return character;
+                   });
+    return ret;
 }
 
-TEST_CASE("test car.dxi load/save/load via file", "[model]")
+void test_car_dxi_load_save_load_via_file()
 {
     change_pwd();
 
     efyj::Model car;
     std::string outputfile("CarXXXXXXXX.dxi");
+    auto tmp = make_temporary(outputfile);
+
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(car.read(is));
-        std::ofstream os(make_temporary(outputfile, false));
-        REQUIRE(os.is_open());
-        REQUIRE_NOTHROW(car.write(os));
+        Ensures(is.is_open());
+        EnsuresNotThrow(car.read(is), std::exception);
+        std::ofstream os(tmp);
+        Ensures(os.is_open());
+        EnsuresNotThrow(car.write(os), std::exception);
     }
+
     efyj::Model car2;
+
     {
-        std::ifstream is(outputfile);
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(car2.read(is));
+        std::ifstream is(tmp);
+        Ensures(is.is_open());
+        EnsuresNotThrow(car2.read(is), std::exception);
     }
-    REQUIRE(car == car2);
-}
+
+#if defined(__unix__)
+    unlink(tmp.c_str());
+#else
+    _unlink(tmp.c_str());
 #endif
 
-TEST_CASE("test Car.dxi", "[model]")
+    Ensures(car == car2);
+}
+
+void test_Car_dxi()
 {
     change_pwd();
 
     efyj::Model car;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(car.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(car.read(is), std::exception);
     }
-    REQUIRE(car.attributes.size() == 10u);
-    REQUIRE(car.attributes[0].name == "CAR");
-    REQUIRE(car.attributes[0].children.size() == 2u);
-    REQUIRE(car.attributes[0].children == std::vector<std::size_t>({1, 4}));
-    REQUIRE(car.attributes[1].name == "PRICE");
-    REQUIRE(car.attributes[1].children.size() == 2u);
-    REQUIRE(car.attributes[1].children == std::vector<std::size_t>({2, 3}));
-    REQUIRE(car.attributes[2].name == "BUY.PRICE");
-    REQUIRE(car.attributes[2].children.empty() == true);
-    REQUIRE(car.attributes[3].name == "MAINT.PRICE");
-    REQUIRE(car.attributes[3].children.empty() == true);
-    REQUIRE(car.attributes[4].name == "TECH.CHAR.");
-    REQUIRE(car.attributes[4].children.size() == 2u);
-    REQUIRE(car.attributes[4].children == std::vector<std::size_t>({5, 9}));
-    REQUIRE(car.attributes[5].name == "COMFORT");
-    REQUIRE(car.attributes[5].children.size() == 3u);
-    REQUIRE(car.attributes[5].children == std::vector<std::size_t>({6, 7, 8}));
-    REQUIRE(car.attributes[6].name == "#PERS");
-    REQUIRE(car.attributes[6].children.empty() == true);
-    REQUIRE(car.attributes[7].name == "#DOORS");
-    REQUIRE(car.attributes[7].children.empty() == true);
-    REQUIRE(car.attributes[8].name == "LUGGAGE");
-    REQUIRE(car.attributes[8].children.empty() == true);
-    REQUIRE(car.attributes[9].name == "SAFETY");
-    REQUIRE(car.attributes[9].children.empty() == true);
+
+    Ensures(car.attributes.size() == 10u);
+    Ensures(car.attributes[0].name == "CAR");
+    Ensures(car.attributes[0].children.size() == 2u);
+    Ensures(car.attributes[0].children == std::vector<std::size_t>({1, 4}));
+    Ensures(car.attributes[1].name == "PRICE");
+    Ensures(car.attributes[1].children.size() == 2u);
+    Ensures(car.attributes[1].children == std::vector<std::size_t>({2, 3}));
+    Ensures(car.attributes[2].name == "BUY.PRICE");
+    Ensures(car.attributes[2].children.empty() == true);
+    Ensures(car.attributes[3].name == "MAINT.PRICE");
+    Ensures(car.attributes[3].children.empty() == true);
+    Ensures(car.attributes[4].name == "TECH.CHAR.");
+    Ensures(car.attributes[4].children.size() == 2u);
+    Ensures(car.attributes[4].children == std::vector<std::size_t>({5, 9}));
+    Ensures(car.attributes[5].name == "COMFORT");
+    Ensures(car.attributes[5].children.size() == 3u);
+    Ensures(car.attributes[5].children == std::vector<std::size_t>({6, 7, 8}));
+    Ensures(car.attributes[6].name == "#PERS");
+    Ensures(car.attributes[6].children.empty() == true);
+    Ensures(car.attributes[7].name == "#DOORS");
+    Ensures(car.attributes[7].children.empty() == true);
+    Ensures(car.attributes[8].name == "LUGGAGE");
+    Ensures(car.attributes[8].children.empty() == true);
+    Ensures(car.attributes[9].name == "SAFETY");
+    Ensures(car.attributes[9].children.empty() == true);
 }
 
-TEST_CASE("test multiple Car.Model", "[model]")
+void test_multiple_Car_Model()
 {
     change_pwd();
 
     efyj::Model src, dst;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(src.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(src.read(is), std::exception);
     }
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(dst.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(dst.read(is), std::exception);
     }
-    REQUIRE(src == dst);
+    Ensures(src == dst);
     efyj::Model dst2;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(dst2.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(dst2.read(is), std::exception);
     }
-    REQUIRE(dst2 == dst);
+    Ensures(dst2 == dst);
     dst2.attributes[0].name = "change";
-    REQUIRE(dst2 != dst);
+    Ensures(dst2 != dst);
 }
 
-TEST_CASE("test solver Car", "[model]")
+void test_solver_Car()
 {
     change_pwd();
 
     efyj::Model model;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(model.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(model.read(is), std::exception);
     }
     std::size_t problem_size = 1;
     std::size_t basic_scale_number = 0;
@@ -264,22 +273,23 @@ TEST_CASE("test solver Car", "[model]")
         scale_number++;
     }
 
-    REQUIRE(basic_scale_number == 6u);
-    REQUIRE(scale_number == 10u);
-    REQUIRE(scalevalue_number == 19u);
-    REQUIRE(problem_size == 972u);
+    Ensures(basic_scale_number == 6u);
+    Ensures(scale_number == 10u);
+    Ensures(scalevalue_number == 19u);
+    Ensures(problem_size == 972u);
 }
 
-TEST_CASE("test basic solver for Car", "[model]")
+void test_basic_solver_for_Car()
 {
     change_pwd();
 
     efyj::Model model;
     {
         std::ifstream is("Car.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(model.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(model.read(is), std::exception);
     }
+
     efyj::Vector opt_v3(6);
     opt_v3 << 1, 2, 2, 2, 2, 2;
     efyj::Vector opt_v2(6);
@@ -288,46 +298,47 @@ TEST_CASE("test basic solver for Car", "[model]")
     opt_v4 << 2, 2, 2, 3, 2, 2;
     efyj::Vector opt_v5(6);
     opt_v5 << 0, 0, 0, 0, 0, 0;
+
     {
         efyj::solver_stack s(model);
-        REQUIRE(s.solve(opt_v3) == 3);
-        REQUIRE(s.solve(opt_v2) == 2);
-        REQUIRE(s.solve(opt_v4) == 3);
-        REQUIRE(s.solve(opt_v5) == 0);
+        Ensures(s.solve(opt_v3) == 3);
+        Ensures(s.solve(opt_v2) == 2);
+        Ensures(s.solve(opt_v4) == 3);
+        Ensures(s.solve(opt_v5) == 0);
     }
 }
 
-TEST_CASE("test basic solver for Enterprise", "[model]")
+void test_basic_solver_for_Enterprise()
 {
     change_pwd();
 
     efyj::Model model;
     {
         std::ifstream is("Enterprise.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(model.read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(model.read(is), std::exception);
     }
     efyj::Vector opt_v(12);
     opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
     efyj::solver_stack ss(model);
-    REQUIRE(ss.solve(opt_v) == 1);
+    Ensures(ss.solve(opt_v) == 1);
 }
 
-TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
+void test_basic_solver_for_IPSIM_PV_simulation1_1()
 {
     change_pwd();
 
     efyj::Model *model = new efyj::Model;
     {
         std::ifstream is("IPSIM_PV_simulation1-1.dxi");
-        REQUIRE(is.is_open());
-        REQUIRE_NOTHROW(model->read(is));
+        Ensures(is.is_open());
+        EnsuresNotThrow(model->read(is), std::exception);
     }
     {
         efyj::Vector opt_v(14);
         opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
         efyj::solver_stack ss(*model);
-        REQUIRE(ss.solve(opt_v) == 6);
+        Ensures(ss.solve(opt_v) == 6);
     }
     efyj::Model copy1(*model);
     delete model;
@@ -335,11 +346,11 @@ TEST_CASE("test basic solver for IPSIM_PV_simulation1-1", "[model]")
         efyj::Vector opt_v(14);
         opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
         efyj::solver_stack ss(copy1);
-        REQUIRE(ss.solve(opt_v) == 6);
+        Ensures(ss.solve(opt_v) == 6);
     }
 }
 
-TEST_CASE("test problem Model file", "[model]")
+void test_problem_Model_file()
 {
     change_pwd();
 
@@ -366,12 +377,12 @@ TEST_CASE("test problem Model file", "[model]")
 
         printf("===> %f\n", ret.kappa);
 
-        REQUIRE(ret.kappa == 1.0);
-        REQUIRE(ret.kappa_computed == 1);
+        Ensures(ret.kappa == 1.0);
+        Ensures(ret.kappa_computed == 1);
     }
 }
 
-TEST_CASE("check the options set function", "[options]")
+void check_the_options_set_function()
 {
     change_pwd();
 
@@ -419,15 +430,15 @@ TEST_CASE("check the options set function", "[options]")
                 observed_old,
                 options_old);
 
-    REQUIRE(options.options.rows() == array_options_old.rows());
-    REQUIRE(options.options.cols() == array_options_old.cols());
+    Ensures(options.options.rows() == array_options_old.rows());
+    Ensures(options.options.cols() == array_options_old.cols());
 
     for (long int row = 0; row != options.options.rows(); ++row)
         for (long int col = 0; col != options.options.cols(); ++col)
-            REQUIRE(options.options(row, col) == array_options_old(row, col));
+            Ensures(options.options(row, col) == array_options_old(row, col));
 }
 
-TEST_CASE("check the efyj set function", "[options]")
+void check_the_efyj_set_function()
 {
     change_pwd();
 
@@ -472,15 +483,15 @@ TEST_CASE("check the efyj set function", "[options]")
     e.extract_options(
         simulations, places, departments, years, observed, options);
 
-    REQUIRE(simulations_old == simulations);
-    REQUIRE(places_old == places);
-    REQUIRE(departments_old == departments);
-    REQUIRE(years_old == years);
-    REQUIRE(observed_old == observed);
-    REQUIRE(options_old == options);
+    Ensures(simulations_old == simulations);
+    Ensures(places_old == places);
+    Ensures(departments_old == departments);
+    Ensures(years_old == years);
+    Ensures(observed_old == observed);
+    Ensures(options_old == options);
 }
 
-TEST_CASE("test adjustment solver for Car", "[model]")
+void test_adjustment_solver_for_Car()
 {
     change_pwd();
 
@@ -500,7 +511,7 @@ TEST_CASE("test adjustment solver for Car", "[model]")
 
     {
         auto ret = e.compute_kappa();
-        REQUIRE(ret.kappa == 1);
+        Ensures(ret.kappa == 1);
     }
 
     std::vector<std::string> simulations;
@@ -513,8 +524,8 @@ TEST_CASE("test adjustment solver for Car", "[model]")
     e.extract_options(
         simulations, places, departments, years, observed, options);
 
-    REQUIRE(simulations.size() < options.size());
-    REQUIRE(simulations.size() > 0);
+    Ensures(simulations.size() < options.size());
+    Ensures(simulations.size() > 0);
 
     years[0] = 2000;
     years[1] = 2000;
@@ -537,22 +548,22 @@ TEST_CASE("test adjustment solver for Car", "[model]")
     places[4] = "e";
     places[5] = "f";
 
-    REQUIRE(model.attributes[0].scale.size() == 4);
+    Ensures(model.attributes[0].scale.size() == 4);
     observed = {2, 1, 0, 0, 2, 2};
     e.set_options(simulations, places, departments, years, observed, options);
     {
         auto ret = e.compute_adjustment(4, -1, 1);
-        REQUIRE(ret.size() == 5);
+        Ensures(ret.size() == 5);
 
-        REQUIRE(ret[0].kappa == Approx(0.78).epsilon(0.1));
-        REQUIRE(ret[1].kappa == Approx(0.84).epsilon(0.1));
-        REQUIRE(ret[2].kappa == Approx(0.91).epsilon(0.1));
-        REQUIRE(ret[3].kappa == Approx(0.81).epsilon(0.1));
-        REQUIRE(ret[4].kappa == Approx(1).epsilon(0.1));
+        EnsuresApproximatelyEqual(ret[0].kappa, 0.78, 0.1);
+        EnsuresApproximatelyEqual(ret[1].kappa, 0.84, 0.1);
+        EnsuresApproximatelyEqual(ret[2].kappa, 0.91, 0.1);
+        EnsuresApproximatelyEqual(ret[3].kappa, 0.91, 0.1);
+        EnsuresApproximatelyEqual(ret[4].kappa, 1, 0.1);
     }
 }
 
-TEST_CASE("test prediction solver for Car", "[model]")
+void test_prediction_solver_for_Car()
 {
     change_pwd();
 
@@ -572,7 +583,7 @@ TEST_CASE("test prediction solver for Car", "[model]")
 
     {
         auto ret = e.compute_kappa();
-        REQUIRE(ret.kappa == 1);
+        Ensures(ret.kappa == 1);
     }
 
     std::vector<std::string> simulations;
@@ -585,8 +596,8 @@ TEST_CASE("test prediction solver for Car", "[model]")
     e.extract_options(
         simulations, places, departments, years, observed, options);
 
-    REQUIRE(simulations.size() < options.size());
-    REQUIRE(simulations.size() > 0);
+    Ensures(simulations.size() < options.size());
+    Ensures(simulations.size() > 0);
 
     years[0] = 2000;
     years[1] = 2000;
@@ -609,7 +620,7 @@ TEST_CASE("test prediction solver for Car", "[model]")
     places[4] = "e";
     places[5] = "f";
 
-    REQUIRE(model.attributes[0].scale.size() == 4);
+    Ensures(model.attributes[0].scale.size() == 4);
     observed = {3, 2, 0, 0, 3, 3};
 
     e.set_options(simulations, places, departments, years, observed, options);
@@ -617,18 +628,40 @@ TEST_CASE("test prediction solver for Car", "[model]")
     {
         auto ret = e.compute_prediction(1, -1, 1);
 
-        REQUIRE(ret.size() == 2);
-        REQUIRE(ret.front().kappa == 1);
-        REQUIRE(ret.back().kappa == 1);
+        Ensures(ret.size() == 2);
+        Ensures(ret.front().kappa == 1);
+        Ensures(ret.back().kappa == 1);
     }
 
-    observed = {3, 2, 0, 0, 3, 3};
+    observed = {3, 2, 0, 0, 3, 2};
     e.set_options(simulations, places, departments, years, observed, options);
     {
         auto ret = e.compute_prediction(1, -1, 1);
-        REQUIRE(ret.size() == 2);
 
-        REQUIRE(ret.front().kappa == Approx(0.95).epsilon(0.1));
-        REQUIRE(ret.back().kappa == Approx(0.89).epsilon(0.1));
+        Ensures(ret.size() == 2);
+        EnsuresApproximatelyEqual(ret.front().kappa, 0.95, 0.1);
+        EnsuresApproximatelyEqual(ret.back().kappa, 0.89, 0.1);
     }
+}
+
+int main()
+{
+    test_empty_object_equality();
+    test_empty_object_read_write();
+    test_classic_Model_file();
+    test_car_dxi_load_save_load_via_sstream();
+    test_car_dxi_load_save_load_via_file();
+    test_Car_dxi();
+    test_multiple_Car_Model();
+    test_solver_Car();
+    test_basic_solver_for_Car();
+    test_basic_solver_for_Enterprise();
+    test_basic_solver_for_IPSIM_PV_simulation1_1();
+    test_problem_Model_file();
+    check_the_options_set_function();
+    check_the_efyj_set_function();
+    test_adjustment_solver_for_Car();
+    test_prediction_solver_for_Car();
+
+    return unit_test::report_errors();
 }
