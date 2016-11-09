@@ -19,34 +19,172 @@
  * IN THE SOFTWARE.
  */
 
-#include "efyj.hpp"
-#include "model.hpp"
-#include "utils.hpp"
-#include "cstream.hpp"
+#ifndef ORG_VLEPROJECT_EFYJ_MODEL_HPP
+#define ORG_VLEPROJECT_EFYJ_MODEL_HPP
+
 #include <algorithm>
-#include <istream>
-#include <ostream>
-#include <functional>
-#include <stack>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
 #include <cassert>
 #include <cstring>
+#include <deque>
+#include <efyj/details/private.hpp>
+#include <efyj/details/utils.hpp>
 #include <expat.h>
+#include <limits>
+#include <stack>
+#include <string>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-namespace
+namespace efyj {
+
+using scale_id = int;
+
+template <typename T>
+constexpr typename std::enable_if<std::is_unsigned<T>::value, bool>::type
+is_valid_scale_id(T n) noexcept
 {
+    return n <= 127;
+}
+
+template <typename T>
+constexpr typename std::enable_if<!std::is_unsigned<T>::value, bool>::type
+is_valid_scale_id(T n) noexcept
+{
+    return n >= 0 && n <= 127;
+}
+
+constexpr scale_id scale_id_unknown() noexcept
+{
+    return std::numeric_limits<scale_id>::max();
+}
+
+struct scalevalue {
+    scalevalue(const std::string &name_)
+        : name(name_)
+        , group(-1)
+    {
+    }
+
+    std::string name;
+    std::string description;
+    int group;
+};
+
+struct function {
+    std::string low;
+    std::string entered;
+    std::string consist;
+
+    bool empty() const noexcept
+    {
+        return low.empty() and entered.empty() and consist.empty();
+    }
+};
+
+struct scales {
+    scales()
+        : order(true)
+    {
+    }
+
+    bool order;
+    std::vector<scalevalue> scale;
+
+    scale_id find_scale_value(const std::string &name) const
+    {
+        for (std::size_t i = 0, e = scale.size(); i != e; ++i) {
+            if (scale[i].name == name) {
+                if (not is_valid_scale_id(i)) {
+                    throw dexi_parser_error("bad scale definition");
+                }
+                return static_cast<int>(i);
+            }
+        }
+
+        throw dexi_parser_error(stringf("scale `%s' not found", name.c_str()));
+    }
+
+    scale_id size() const
+    {
+        if (not is_valid_scale_id(scale.size()))
+            throw dexi_parser_error("bad scale definition");
+
+        return static_cast<int>(scale.size());
+    }
+};
+
+struct attribute {
+    attribute(const std::string &name_)
+        : name(name_)
+    {
+    }
+
+    std::size_t children_size() const noexcept { return children.size(); }
+
+    scale_id scale_size() const noexcept { return scale.size(); }
+
+    bool is_basic() const noexcept { return children.empty(); }
+
+    bool is_aggregate() const noexcept { return !children.empty(); }
+
+    void push_back(std::size_t child) { children.emplace_back(child); }
+
+    std::string name;
+    std::string description;
+    scales scale;
+    function functions;
+    std::vector<int> options;
+    std::vector<std::size_t> children;
+};
+
+struct Model {
+    std::string name;
+    std::string version;
+    std::string created;
+    std::string reports;
+    std::vector<std::string> description;
+    std::vector<std::string> options;
+    std::vector<scale_id> basic_attribute_scale_size;
+    std::vector<std::string> group;
+    std::deque<attribute> attributes;
+
+    void read(std::istream &is);
+
+    void write(std::ostream &os);
+
+    /** Release all dynamically allocated memory. */
+    void clear();
+
+    bool empty() const noexcept { return attributes.empty(); }
+
+    int group_id(const std::string &name) const
+    {
+        auto it = std::find(group.cbegin(), group.cend(), name);
+
+        if (it == group.cend())
+            return -1;
+
+        return it - group.cbegin();
+    }
+
+    void write_options(std::ostream &os) const;
+    options_data write_options() const;
+};
+
+bool operator<(const Model &lhs, const Model &rhs);
+bool operator==(const Model &lhs, const Model &rhs);
+bool operator!=(const Model &lhs, const Model &rhs);
 
 struct str_compare {
-    bool operator()(const char *lhs, const char *rhs) const noexcept
+    inline bool operator()(const char *lhs, const char *rhs) const noexcept
     {
         return std::strcmp(lhs, rhs) == 0;
     }
 };
 
 struct str_hash {
-    size_t operator()(const char *str) const noexcept
+    inline size_t operator()(const char *str) const noexcept
     {
         size_t hash = 0;
         int c;
@@ -59,15 +197,12 @@ struct str_hash {
 };
 
 struct Model_reader {
-    Model_reader(std::istream &is, efyj::Model &dex) noexcept : is(is),
-                                                                dex(dex)
-    {
-    }
+    Model_reader(std::istream &is, Model &dex) noexcept : is(is), dex(dex) {}
 
-    void read(std::size_t buffer_size)
+    inline void read(std::size_t buffer_size)
     {
         XML_Parser parser = XML_ParserCreate(NULL);
-        efyj::scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
+        scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
         parser_data data(parser, dex);
         XML_SetElementHandler(
             parser, Model_reader::start_element, Model_reader::end_element);
@@ -83,17 +218,16 @@ struct Model_reader {
             is.read(buffer, buffer_size);
 
             if (not::XML_ParseBuffer(parser, is.gcount(), is.eof()))
-                throw ::efyj::dexi_parser_error(
-                    data.error_message,
-                    XML_GetCurrentLineNumber(parser),
-                    XML_GetCurrentColumnNumber(parser),
-                    XML_GetErrorCode(parser));
+                throw dexi_parser_error(data.error_message,
+                                        XML_GetCurrentLineNumber(parser),
+                                        XML_GetCurrentColumnNumber(parser),
+                                        XML_GetErrorCode(parser));
         }
     }
 
 private:
     std::istream &is;
-    efyj::Model &dex;
+    Model &dex;
 
     enum class stack_identifier {
         DEXi,
@@ -121,7 +255,7 @@ private:
         NORMLOCWEIGHTS
     };
 
-    static stack_identifier str_to_stack_identifier(const char *name)
+    inline static stack_identifier str_to_stack_identifier(const char *name)
     {
         static const std::unordered_map<const char *,
                                         stack_identifier,
@@ -154,14 +288,14 @@ private:
 
         try {
             return stack_identifier_map.at(name);
-        } catch (const std::exception & /*e*/) {
-            throw efyj::dexi_parser_error(std::string("unknown element: ") +
-                                          name);
+        }
+        catch (const std::exception & /*e*/) {
+            throw dexi_parser_error(std::string("unknown element: ") + name);
         }
     }
 
     struct parser_data {
-        parser_data(XML_Parser parser, efyj::Model &data)
+        inline parser_data(XML_Parser parser, Model &data)
             : parser(parser)
             , model(data)
         {
@@ -169,9 +303,9 @@ private:
 
         XML_Parser parser;
         std::string error_message;
-        efyj::Model &model;
+        Model &model;
         std::stack<stack_identifier> stack;
-        std::stack<efyj::attribute *> attributes_stack;
+        std::stack<attribute *> attributes_stack;
         std::string char_data;
 
         void is_parent(std::initializer_list<stack_identifier> list)
@@ -182,13 +316,13 @@ private:
                         return;
             }
 
-            throw efyj::dexi_parser_error("Bad parent");
+            throw dexi_parser_error("Bad parent");
         }
     };
 
-    static void start_element(void *data,
-                              const char *element,
-                              const char **attribute) noexcept
+    inline static void start_element(void *data,
+                                     const char *element,
+                                     const char **attribute) noexcept
     {
         (void)attribute;
         parser_data *pd = reinterpret_cast<parser_data *>(data);
@@ -200,7 +334,7 @@ private:
             switch (id) {
             case stack_identifier::DEXi:
                 if (!pd->stack.empty())
-                    throw efyj::dexi_parser_error("Bad parent");
+                    throw dexi_parser_error("Bad parent");
 
                 pd->stack.push(id);
                 break;
@@ -278,8 +412,8 @@ private:
                 pd->model.attributes.back().scale.scale.emplace_back(
                     "unaffected scalevalue");
 
-                if (not efyj::is_valid_scale_id(pd->model.attributes.size()))
-                    throw efyj::dexi_parser_error(
+                if (not is_valid_scale_id(pd->model.attributes.size()))
+                    throw dexi_parser_error(
                         std::string("Too many scale value for attribute: ") +
                         pd->model.attributes.back().name);
 
@@ -304,13 +438,14 @@ private:
                 pd->is_parent({stack_identifier::FUNCTION});
                 break;
             }
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e) {
             pd->error_message = e.what();
             XML_StopParser(pd->parser, XML_FALSE);
         }
     }
 
-    static void end_element(void *data, const char *element) noexcept
+    inline static void end_element(void *data, const char *element) noexcept
     {
         parser_data *pd = reinterpret_cast<parser_data *>(data);
 
@@ -318,7 +453,9 @@ private:
             stack_identifier id = str_to_stack_identifier(element);
 
             switch (id) {
-            case stack_identifier::DEXi: pd->stack.pop(); break;
+            case stack_identifier::DEXi:
+                pd->stack.pop();
+                break;
 
             case stack_identifier::TAG_VERSION:
                 pd->model.version.assign(pd->char_data);
@@ -340,21 +477,27 @@ private:
 
                     try {
                         att = std::stoi(pd->char_data);
-                    } catch (...) {
-                        throw efyj::dexi_parser_error(
+                    }
+                    catch (...) {
+                        throw dexi_parser_error(
                             std::string("Can not convert option string ") +
                             pd->char_data + std::string(" in integer"));
                     }
 
                     pd->model.attributes.back().options.emplace_back(att);
-                } else
-                    throw efyj::dexi_parser_error("bad stack");
+                }
+                else
+                    throw dexi_parser_error("bad stack");
 
                 break;
 
-            case stack_identifier::SETTINGS: pd->stack.pop(); break;
+            case stack_identifier::SETTINGS:
+                pd->stack.pop();
+                break;
 
-            case stack_identifier::FONTSIZE: pd->stack.pop(); break;
+            case stack_identifier::FONTSIZE:
+                pd->stack.pop();
+                break;
 
             case stack_identifier::REPORTS:
                 pd->model.reports.assign(pd->char_data);
@@ -387,7 +530,7 @@ private:
 
             case stack_identifier::DESCRIPTION:
                 if (pd->stack.top() != stack_identifier::DESCRIPTION)
-                    throw efyj::dexi_parser_error("DESCRIPTION");
+                    throw dexi_parser_error("DESCRIPTION");
 
                 pd->stack.pop();
 
@@ -401,7 +544,9 @@ private:
 
                 break;
 
-            case stack_identifier::SCALE: pd->stack.pop(); break;
+            case stack_identifier::SCALE:
+                pd->stack.pop();
+                break;
 
             case stack_identifier::ORDER:
                 if (pd->char_data == "NONE")
@@ -409,7 +554,9 @@ private:
 
                 break;
 
-            case stack_identifier::SCALEVALUE: pd->stack.pop(); break;
+            case stack_identifier::SCALEVALUE:
+                pd->stack.pop();
+                break;
 
             case stack_identifier::GROUP:
                 if (pd->stack.top() == stack_identifier::SCALEVALUE) {
@@ -425,7 +572,9 @@ private:
 
                 break;
 
-            case stack_identifier::FUNCTION: pd->stack.pop(); break;
+            case stack_identifier::FUNCTION:
+                pd->stack.pop();
+                break;
 
             case stack_identifier::LOW:
                 if (pd->stack.top() == stack_identifier::FUNCTION)
@@ -449,21 +598,25 @@ private:
             case stack_identifier::WEIGHTS:
             case stack_identifier::LOCWEIGHTS:
             case stack_identifier::NORMLOCWEIGHTS:
-            case stack_identifier::ROUNDING: break;
+            case stack_identifier::ROUNDING:
+                break;
             }
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e) {
             pd->error_message = e.what();
             XML_StopParser(pd->parser, XML_FALSE);
         }
     }
 
-    static void character_data(void *data, const XML_Char *s, int len) noexcept
+    inline static void
+    character_data(void *data, const XML_Char *s, int len) noexcept
     {
         parser_data *pd = reinterpret_cast<parser_data *>(data);
 
         try {
             pd->char_data.append(s, len);
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e) {
             pd->error_message = "Bad alloc";
             XML_StopParser(pd->parser, XML_FALSE);
         }
@@ -472,23 +625,35 @@ private:
 
 struct to_xml {
 
-    to_xml(const std::string &str)
+    inline to_xml(const std::string &str)
     {
         m_str.reserve(str.size() * 2);
 
         for (char ch : str) {
             switch (ch) {
-            case '&': m_str += "&amp;"; break;
+            case '&':
+                m_str += "&amp;";
+                break;
 
-            case '\'': m_str += "&apos;"; break;
+            case '\'':
+                m_str += "&apos;";
+                break;
 
-            case '"': m_str += "&quot;"; break;
+            case '"':
+                m_str += "&quot;";
+                break;
 
-            case '<': m_str += "&lt;"; break;
+            case '<':
+                m_str += "&lt;";
+                break;
 
-            case '>': m_str += "&gt;"; break;
+            case '>':
+                m_str += "&gt;";
+                break;
 
-            default: m_str += ch; break;
+            default:
+                m_str += ch;
+                break;
             }
         }
     }
@@ -496,20 +661,20 @@ struct to_xml {
     std::string m_str;
 };
 
-std::ostream &operator<<(std::ostream &os, const to_xml &str)
+inline std::ostream &operator<<(std::ostream &os, const to_xml &str)
 {
     return os << str.m_str;
 }
 
 struct Model_writer {
-    Model_writer(std::ostream &os, const efyj::Model &Model_data) noexcept
+    inline Model_writer(std::ostream &os, const Model &Model_data) noexcept
         : os(os),
           dex(Model_data),
           space(0)
     {
     }
 
-    void write()
+    inline void write()
     {
         os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
            << "<DEXi>\n"
@@ -543,39 +708,46 @@ struct Model_writer {
 
 private:
     std::ostream &os;
-    const efyj::Model &dex;
+    const Model &dex;
     std::size_t space;
 
-    std::string make_space() const { return std::string(space, ' '); }
+    inline std::string make_space() const { return std::string(space, ' '); }
 
-    std::string make_space(std::size_t adding) const
+    inline std::string make_space(std::size_t adding) const
     {
         return std::string(space + adding, ' ');
     }
 
-    template <typename T> void write_Model_option(const std::vector<T> &opts)
+    void write_Model_option(const std::vector<std::string> &opts)
     {
         for (const auto &opt : opts)
             os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
     }
 
-    void write_Model_attribute(std::size_t child)
+    void write_Model_option(const std::vector<int> &opts)
+    {
+        for (const auto &opt : opts)
+            os << make_space() << "<OPTION>" << opt << "</OPTION>\n";
+    }
+
+    inline void write_Model_attribute(std::size_t child)
     {
         assert(child <= dex.attributes.size());
-        const efyj::attribute &att(dex.attributes[child]);
+        const attribute &att(dex.attributes[child]);
         os << make_space() << "<ATTRIBUTE>\n";
         space += 2;
         os << make_space() << "<NAME>" << to_xml(att.name) << "</NAME>\n"
            << make_space() << "<DESCRIPTION>" << to_xml(att.description)
-           << "</DESCRIPTION>\n" << make_space() << "<SCALE>\n";
+           << "</DESCRIPTION>\n"
+           << make_space() << "<SCALE>\n";
         space += 2;
 
         if (not att.scale.scale.empty() and not att.scale.order)
             os << make_space() << "<ORDER>NONE</ORDER>\n";
 
         for (const auto &sv : att.scale.scale) {
-            os << make_space() << "<SCALEVALUE>\n" << make_space(2) << "<NAME>"
-               << to_xml(sv.name) << "</NAME>\n";
+            os << make_space() << "<SCALEVALUE>\n"
+               << make_space(2) << "<NAME>" << to_xml(sv.name) << "</NAME>\n";
 
             if (not sv.description.empty())
                 os << make_space(2) << "<DESCRIPTION>"
@@ -620,9 +792,9 @@ private:
     }
 };
 
-void reorder_basic_attribute(const efyj::Model &model,
-                             std::size_t att,
-                             std::vector<std::size_t> &out)
+inline void reorder_basic_attribute(const Model &model,
+                                    std::size_t att,
+                                    std::vector<std::size_t> &out)
 {
     if (model.attributes[att].is_basic())
         out.push_back(att);
@@ -631,42 +803,10 @@ void reorder_basic_attribute(const efyj::Model &model,
             reorder_basic_attribute(model, child, out);
 }
 
-efyj::cstream &model_show(efyj::cstream &cs,
-                          const efyj::Model &model,
-                          std::size_t att,
-                          std::size_t space)
-{
-    cs.indent(space);
-    cs << cs.red() << model.attributes[att].name << cs.def() << "\n";
-
-    for (const auto &sc : model.attributes[att].scale.scale) {
-        cs.indent(space);
-        cs << "| " << sc.name << "\n";
-    }
-
-    if (model.attributes[att].is_aggregate()) {
-        cs.indent(space + 1);
-        cs << "\\ -> (fct: " << model.attributes[att].functions.low
-           << "), (scale size: " << model.attributes[att].scale_size()
-           << ")\n";
-
-        for (std::size_t child : model.attributes[att].children) {
-            ::model_show(cs, model, child, space + 2);
-        }
-    }
-
-    return cs;
-}
-
-} // anonymous namespace
-
-namespace efyj
-{
-
-void Model::write_options(std::ostream &os) const
+inline void Model::write_options(std::ostream &os) const
 {
     std::vector<std::size_t> ordered_att;
-    ::reorder_basic_attribute(*this, 0, ordered_att);
+    reorder_basic_attribute(*this, 0, ordered_att);
     os << "simulation;place;department;year;";
 
     for (int child : ordered_att)
@@ -680,26 +820,49 @@ void Model::write_options(std::ostream &os) const
         for (int child : ordered_att)
             os << attributes[child]
                       .scale.scale[attributes[child].options[opt]]
-                      .name << ';';
+                      .name
+               << ';';
 
         os << attributes[0].scale.scale[attributes[0].options[opt]].name
            << '\n';
     }
 }
 
-void Model::read(std::istream &is)
+inline options_data Model::write_options() const
 {
-    ::Model_reader dr(is, *this);
+    options_data ret;
+    std::vector<std::size_t> ordered_att;
+    reorder_basic_attribute(*this, 0, ordered_att);
+
+    for (std::size_t opt = 0; opt != options.size(); ++opt) {
+        ret.simulations.emplace_back(options[opt] + "../");
+        ret.places.emplace_back("-");
+        ret.departments.emplace_back(0);
+        ret.years.emplace_back(0);
+        ret.options.resize(ordered_att.size(), options.size());
+
+        for (std::size_t c = 0, ec = ordered_att.size(); c != ec; ++c)
+            ret.options(c, opt) = attributes[ordered_att[c]].options[opt];
+
+        ret.observed.emplace_back(attributes[0].options[opt]);
+    }
+
+    return ret;
+}
+
+inline void Model::read(std::istream &is)
+{
+    Model_reader dr(is, *this);
     dr.read(4096u);
 }
 
-void Model::write(std::ostream &os)
+inline void Model::write(std::ostream &os)
 {
-    ::Model_writer dw(os, *this);
+    Model_writer dw(os, *this);
     dw.write();
 }
 
-void Model::clear()
+inline void Model::clear()
 {
     std::string().swap(name);
     std::string().swap(version);
@@ -712,36 +875,36 @@ void Model::clear()
     std::deque<attribute>().swap(attributes);
 }
 
-bool operator==(const scalevalue &lhs, const scalevalue &rhs)
+inline bool operator==(const scalevalue &lhs, const scalevalue &rhs)
 {
     return lhs.name == rhs.name && lhs.description == rhs.description &&
            lhs.group == rhs.group;
 }
 
-bool operator==(const scales &lhs, const scales &rhs)
+inline bool operator==(const scales &lhs, const scales &rhs)
 {
     return lhs.order == rhs.order && lhs.scale == rhs.scale;
 }
 
-bool operator==(const function &lhs, const function &rhs)
+inline bool operator==(const function &lhs, const function &rhs)
 {
     return lhs.low == rhs.low && lhs.entered == rhs.entered &&
            lhs.consist == rhs.consist;
 }
 
-bool operator==(const attribute &lhs, const attribute &rhs)
+inline bool operator==(const attribute &lhs, const attribute &rhs)
 {
     return lhs.name == rhs.name && lhs.description == rhs.description &&
            lhs.scale == rhs.scale && lhs.functions == rhs.functions &&
            lhs.children == rhs.children;
 }
 
-bool operator<(const Model &lhs, const Model &rhs)
+inline bool operator<(const Model &lhs, const Model &rhs)
 {
     return lhs.name < rhs.name;
 }
 
-bool operator==(const Model &lhs, const Model &rhs)
+inline bool operator==(const Model &lhs, const Model &rhs)
 {
     return lhs.name == rhs.name && lhs.version == rhs.version &&
            lhs.created == rhs.created && lhs.description == rhs.description &&
@@ -750,35 +913,16 @@ bool operator==(const Model &lhs, const Model &rhs)
            lhs.group == rhs.group && lhs.attributes == rhs.attributes;
 }
 
-bool operator!=(const Model &lhs, const Model &rhs) { return not(lhs == rhs); }
+inline bool operator!=(const Model &lhs, const Model &rhs)
+{
+    return not(lhs == rhs);
+}
 
-bool operator<(const attribute &lhs, const attribute &rhs)
+inline bool operator<(const attribute &lhs, const attribute &rhs)
 {
     return lhs.name < rhs.name;
 }
 
-cstream &operator<<(cstream &cs, const Model &model) noexcept
-{
-    ::model_show(cs, model, 0, 0);
+} // namespace efyj
 
-    cs << "\n";
-
-    long long int option_scale = 1, model_scale = 1;
-    for (const auto &att : model.attributes) {
-        if (att.children.empty()) {
-            cs << "- " << att.name << " is a leaf with " << att.scale_size()
-               << " scale values\n";
-            option_scale *= att.scale_size();
-        } else {
-            cs << "- " << att.name << " is a function with "
-               << att.scale_size() << " scale values\n";
-            model_scale *= att.scale_size();
-        }
-    }
-
-    return cs << cs.defu() << "Option, full line numbers:" << cs.def() << " "
-              << cs.red() << option_scale << cs.def() << "\n" << cs.defu()
-              << "Model, full line numbers:" << cs.def() << " " << cs.red()
-              << model_scale << cs.def() << "\n";
-}
-}
+#endif

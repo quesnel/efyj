@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2016 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,35 +19,46 @@
  * IN THE SOFTWARE.
  */
 
-#include "efyj.hpp"
-#include "prediction.hpp"
-#include "post.hpp"
-#include "solver-stack.hpp"
-#include "model.hpp"
-#include "context.hpp"
-#include "utils.hpp"
-#include "options.hpp"
-#include <iterator>
-#include <fstream>
+#ifndef ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
+#define ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
+
 #include <chrono>
-#include <thread>
-#include <cmath>
+#include <efyj/details/model.hpp>
+#include <efyj/details/options.hpp>
+#include <efyj/details/post.hpp>
+#include <efyj/details/private.hpp>
+#include <efyj/details/solver-stack.hpp>
+#include <map>
 
-namespace
-{
+namespace efyj {
 
-constexpr std::size_t max_step(int need, std::size_t real) noexcept
-{
-    return need <= 0 ? real : std::min(static_cast<std::size_t>(need), real);
-}
-}
+struct prediction_evaluator {
+    std::shared_ptr<context> m_context;
+    const Model &m_model;
+    const Options &m_options;
 
-namespace efyj
-{
+    std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
+    std::vector<int> m_globalsimulated;
+    std::vector<std::tuple<int, int, int>> m_updaters;
+    std::vector<std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
+    for_each_model_solver solver;
+    weighted_kappa_calculator kappa_c;
+    unsigned long long int m_loop = 0;
 
-prediction_evaluator::prediction_evaluator(std::shared_ptr<Context> context,
-                                           const Model &model,
-                                           const Options &options)
+    prediction_evaluator(std::shared_ptr<context> context,
+                         const Model &model,
+                         const Options &options);
+
+    std::vector<result>
+    run(int line_limit, double time_limit, int reduce_mode);
+};
+
+inline prediction_evaluator::prediction_evaluator(
+    std::shared_ptr<context> context,
+    const Model &model,
+    const Options &options)
     : m_context(context)
     , m_model(model)
     , m_options(options)
@@ -62,15 +73,14 @@ prediction_evaluator::prediction_evaluator(std::shared_ptr<Context> context,
             "options does not have enough data to build the training set");
 }
 
-std::vector<result>
+inline std::vector<result>
 prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 {
     (void)time_limit;
 
     std::vector<result> ret;
 
-    m_context->info() << m_context->info().cyanb() << "[Computation start]"
-                      << m_context->info().def() << '\n';
+    vInfo(m_context, "[Computation starts]\n");
 
     if (reduce_mode)
         solver.reduce(m_options);
@@ -80,13 +90,12 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
            "prediction can not determine function");
 
     const std::size_t max_step =
-        ::max_step(line_limit, solver.get_attribute_line_tuple_limit());
+        max_value(line_limit, solver.get_attribute_line_tuple_limit());
     const std::size_t max_opt = m_options.simulations.size();
 
     assert(max_step > 0 and "prediction: can not determine limit");
 
-    m_context->info() << m_context->info().cyanb() << "[Computation starts 1/"
-                      << max_step << "]" << m_context->info().def() << '\n';
+    vInfo(m_context, "[Computation starts 1/%zu\n", max_step);
 
     {
         m_start = std::chrono::system_clock::now();
@@ -97,16 +106,16 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
         m_end = std::chrono::system_clock::now();
 
-        m_context->info()
-            << "| line updated | kappa | kappa computed "
-               "| time (s) | tuple (attribute, line, value) updated |\n";
+        vInfo(m_context,
+              "| line updated | kappa | kappa computed "
+              "| time (s) | tuple (attribute, line, value) updated |\n");
 
-        m_context->info().printf(
-            "| %d | %13.10f | %" PRIuMAX " | %f | [] |\n",
-            0,
-            kappa,
-            1,
-            std::chrono::duration<double>(m_end - m_start).count());
+        vInfo(m_context,
+              "| %d | %13.10f | %d | %f | [] |\n",
+              0,
+              kappa,
+              1,
+              std::chrono::duration<double>(m_end - m_start).count());
 
         ret.emplace_back();
 
@@ -191,17 +200,20 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         ret.back().kappa_computed = static_cast<unsigned long int>(loop);
         ret.back().function_computed = static_cast<unsigned long int>(0);
 
-        m_context->info().printf(
-            "| %d | %13.10f | %" PRIuMAX " | %f | ",
-            step,
-            line_kappa,
-            loop,
-            std::chrono::duration<double>(m_end - m_start).count());
+        vInfo(m_context,
+              "| %zu | %13.10f | %zu | %f | ",
+              step,
+              line_kappa,
+              loop,
+              std::chrono::duration<double>(m_end - m_start).count());
 
-        m_context->info() << m_updaters << " |\n";
+        // TODO
+        // m_context->info() << m_updaters << " |\n";
     }
 
     return ret;
 }
 
 } // namespace efyj
+
+#endif

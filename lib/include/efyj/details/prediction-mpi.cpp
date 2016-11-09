@@ -19,24 +19,22 @@
  * IN THE SOFTWARE.
  */
 
-#include "prediction.hpp"
-#include "problem.hpp"
-#include "solver-stack.hpp"
-#include "model.hpp"
-#include "context.hpp"
-#include "exception.hpp"
-#include "utils.hpp"
-#include "options.hpp"
-#include "post.hpp"
-#include <iterator>
-#include <fstream>
 #include <chrono>
-#include <thread>
-#include <mutex>
+#include <efyj/details/exception.hpp>
+#include <efyj/details/model.hpp>
+#include <efyj/details/options.hpp>
+#include <efyj/details/post.hpp>
+#include <efyj/details/prediction.hpp>
+#include <efyj/details/problem.hpp>
+#include <efyj/details/solver-stack.hpp>
+#include <efyj/details/utils.hpp>
+#include <fstream>
+#include <iterator>
 #include <mpi.h>
+#include <mutex>
+#include <thread>
 
-namespace efyj
-{
+namespace efyj {
 
 void pack_data(long long int loop,
                double kappa,
@@ -141,8 +139,7 @@ void unpack_data(long long int *loop,
     }
 }
 
-class Results
-{
+class Results {
     std::shared_ptr<Context> m_context;
     std::mutex m_container_mutex;
 
@@ -200,7 +197,8 @@ public:
             m_results.emplace_back();
 
             emplace_result(m_results.size() - 1, kappa, loop, updaters);
-        } else {
+        }
+        else {
             if (m_results[step - 1].kappa < kappa)
                 emplace_result(step - 1, kappa, loop, updaters);
             else

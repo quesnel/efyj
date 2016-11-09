@@ -22,14 +22,13 @@
 #ifndef FR_INRA_EFYJ_CSTREAM_HPP
 #define FR_INRA_EFYJ_CSTREAM_HPP
 
-#include "efyj.hpp"
-#include <string>
-#include <cstdio>
-#include <cstdarg>
 #include <cinttypes>
+#include <cstdarg>
+#include <cstdio>
+#include <efyj/efyj.hpp>
+#include <string>
 
-namespace efyj
-{
+namespace efyj {
 
 /** efyj::cstream is an inspired class from the std::ostream. This class
  * implements an extremely fast and simple output stream that can only
@@ -51,8 +50,7 @@ namespace efyj
  * }
  * @endcode
  */
-class cstream
-{
+class cstream {
 public:
     enum colors {
         Default = 0,
@@ -194,14 +192,6 @@ private:
     bool close_fd;
 };
 
-// /** Give an access to the standard output stream (stdout).
-//  */
-cstream &out();
-
-// /** Give an access to the standard output error stream (stderr).
-//  */
-cstream &err();
-
 //
 // implementation part.
 //
@@ -217,4 +207,172 @@ inline cstream &cstream::write(unsigned char c) noexcept
 }
 }
 
+#include <efyj/details/cstream.hpp>
+#include <efyj/details/model.hpp>
+
+namespace efyj {
+
+inline cstream &
+model_show(cstream &cs, const Model &model, std::size_t att, std::size_t space)
+{
+    cs.indent(space);
+    cs << cs.red() << model.attributes[att].name << cs.def() << "\n";
+
+    for (const auto &sc : model.attributes[att].scale.scale) {
+        cs.indent(space);
+        cs << "| " << sc.name << "\n";
+    }
+
+    if (model.attributes[att].is_aggregate()) {
+        cs.indent(space + 1);
+        cs << "\\ -> (fct: " << model.attributes[att].functions.low
+           << "), (scale size: " << model.attributes[att].scale_size()
+           << ")\n";
+
+        for (std::size_t child : model.attributes[att].children) {
+            ::model_show(cs, model, child, space + 2);
+        }
+    }
+
+    return cs;
+}
+
+inline cstream &operator<<(cstream &cs, const Model &model) noexcept
+{
+    ::model_show(cs, model, 0, 0);
+
+    cs << "\n";
+
+    long long int option_scale = 1, model_scale = 1;
+    for (const auto &att : model.attributes) {
+        if (att.children.empty()) {
+            cs << "- " << att.name << " is a leaf with " << att.scale_size()
+               << " scale values\n";
+            option_scale *= att.scale_size();
+        }
+        else {
+            cs << "- " << att.name << " is a function with "
+               << att.scale_size() << " scale values\n";
+            model_scale *= att.scale_size();
+        }
+    }
+
+    return cs << cs.defu() << "Option, full line numbers:" << cs.def() << " "
+              << cs.red() << option_scale << cs.def() << "\n"
+              << cs.defu() << "Model, full line numbers:" << cs.def() << " "
+              << cs.red() << model_scale << cs.def() << "\n";
+}
+
+inline cstream &
+operator<<(cstream &os, const std::vector<std::vector<int>> &ordered) noexcept
+{
+    for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
+        os << i << ' ';
+
+        for (auto j : ordered[i])
+            os << j << ' ';
+
+        os << '\n';
+    }
+
+    return os;
+}
+
+inline cstream &operator<<(cstream &os,
+                           const std::vector<line_updater> &updaters)
+{
+    for (const auto &x : updaters)
+        os << x << ' ';
+
+    return os;
+}
+
+inline cstream &operator<<(cstream &cs, const std::tuple<int, int, int> &att)
+{
+    return cs << '[' << std::get<0>(att) << ',' << std::get<1>(att) << ','
+              << std::get<2>(att) << ']';
+}
+
+inline cstream &operator<<(cstream &cs,
+                           const std::vector<std::tuple<int, int, int>> &atts)
+{
+    for (std::size_t i = 0, e = atts.size(); i != e; ++i) {
+        cs << atts[i];
+        if (i + 1 != e)
+            cs << ' ';
+    }
+
+    return cs;
+}
+
+inline cstream &operator<<(cstream &os, const line_updater &updater) noexcept
+{
+    return os << '[' << updater.attribute << ',' << updater.line << ']';
+}
+
+inline cstream &operator<<(cstream &os, const aggregate_attribute &att)
+{
+    os << "f:";
+    for (const auto &x : att.functions)
+        os << x;
+
+    return os << " sz:" << att.scale;
+}
+
+inline cstream &operator<<(cstream &os,
+                           const std::vector<aggregate_attribute> &atts)
+{
+    for (const auto &x : atts)
+        os << x << "\n";
+
+    return os;
+}
+inline cstream &operator<<(cstream &os, const std::vector<scale_id> &v)
+{
+    for (auto x : v)
+        os << x;
+
+    return os;
+}
+
+inline cstream &operator<<(cstream &os, const Options &options) noexcept
+{
+    os << "option identifiers\n------------------\n";
+
+    if (not options.places.empty()) {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i] << options.places[i] << '.'
+               << options.departments[i] << '.' << options.years[i] << '.'
+               << options.observed[i] << "\n";
+        }
+    }
+    else {
+        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
+            os << i << options.simulations[i] << options.departments[i] << '.'
+               << options.years[i] << '.' << options.observed[i] << "\n";
+        }
+    }
+
+    std::ostringstream ss;
+    ss << options.options;
+
+    os << "\noption matrix\n-------------\n" << ss.str();
+
+    os << "\nordered option\n--------------\n";
+
+    for (std::size_t i = 0, e = options.size(); i != e; ++i) {
+        os << i << ' ';
+
+        for (auto v : options.get_subdataset(i))
+            os << v << ' ';
+
+        os << '\n';
+    }
+
+    return os;
+}
+}
+
 #endif
+
+#include <efyj/details/cstream.ipp>

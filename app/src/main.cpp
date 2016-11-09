@@ -19,56 +19,59 @@
  * IN THE SOFTWARE.
  */
 
-#include "efyj.hpp"
+#include <efyj/efyj.hpp>
 #include <fstream>
-#include <iostream>
 #include <getopt.h>
-#include "config.hpp"
+#include <unistd.h>
 
-namespace
-{
+namespace {
 
 void usage() noexcept
 {
-    std::cout
-        << "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-        << "Options:\n"
-        << "    -h                   This help message\n"
-        << "    -m model.dexi        The model file\n"
-        << "    -o options.csv       The options file\n"
-        << "    -e output.csv        Extract the option from dexi files "
-           "into csv file\n"
-        << "    -r                   Without the reduce models generator "
-           "algorithm\n"
-        << "    -l [limit]           Modifier limit [int]\n"
-        << "                         0 means max available (default)\n"
-        << "                         > 1\n"
-        << "    -p                   Compute prediction\n"
-        << "    -a                   Compute adjustment\n"
-        << "    -j [threads]         Use threads [int]\n"
-        << "                         0 means max available\n"
-        << "                         1 means mono\n"
-        << "                         2..max\n"
-        << "\n";
+    puts("efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+         "Options:\n"
+         "    -h                   This help message\n"
+         "    -m model.dexi        The model file\n"
+         "    -o options.csv       The options file\n"
+         "    -e output.csv        Extract the option from dexi files "
+         "into csv file\n"
+         "    -r                   Without the reduce models generator "
+         "algorithm\n"
+         "    -l [limit]           Modifier limit [int]\n"
+         "                         0 means max available (default)\n"
+         "                         > 1\n"
+         "    -p                   Compute prediction\n"
+         "    -a                   Compute adjustment\n"
+         "    -j [threads]         Use threads [int]\n"
+         "                         0 means max available\n"
+         "                         1 means mono\n"
+         "                         2..max\n"
+         "\n");
 }
 
-void version() noexcept { std::cout << "efyj " << EFYJ_VERSION << '\n'; }
+void version() noexcept
+{
+    puts("efyj 0.6.0\n");
+}
 
 int extract(const std::string &model, const std::string &output) noexcept
 {
-    try {
-        efyj::efyj e(model);
-        e.extract_options(output);
-    } catch (const std::logic_error &e) {
-        std::cerr << "internal error: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error &e) {
-        std::cerr << "failure: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::bad_alloc &e) {
-        std::cerr << "not enough memory\n";
-        return EXIT_FAILURE;
-    }
+    // try {
+    //     efyj::efyj e(model);
+    //     e.extract_options(output);
+    // }
+    // catch (const std::bad_alloc &e) {
+    //     fprintf(stderr, "not enough memory\n");
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::logic_error &e) {
+    //     fprintf(stderr, "internal error: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::runtime_error &e) {
+    //     fprintf(stderr, "failure: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
 
     return EXIT_SUCCESS;
 }
@@ -81,19 +84,22 @@ int adjustment(const std::string &model,
 {
     (void)thread;
 
-    try {
-        efyj::efyj e(model, option);
-        e.compute_adjustment(limit, -1, reduce);
-    } catch (const std::logic_error &e) {
-        std::cerr << "internal failure: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error &e) {
-        std::cerr << "fail: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::bad_alloc &e) {
-        std::cerr << "not enough memory\n";
-        return EXIT_FAILURE;
-    }
+    // try {
+    //     efyj::efyj e(model, option);
+    //     e.compute_adjustment(limit, -1, reduce);
+    // }
+    // catch (const std::bad_alloc &e) {
+    //     fprintf(stderr, "not enough memory\n");
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::logic_error &e) {
+    //     fprintf(stderr, "internal error: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::runtime_error &e) {
+    //     fprintf(stderr, "failure: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
 
     return EXIT_SUCCESS;
 }
@@ -106,24 +112,81 @@ int prediction(const std::string &model,
 {
     (void)thread;
 
-    try {
-        efyj::efyj e(model, option);
-        e.compute_prediction(limit, -1, reduce);
-    } catch (const std::logic_error &e) {
-        std::cerr << "internal failure: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error &e) {
-        std::cerr << "fail: " << e.what() << '\n';
-        return EXIT_FAILURE;
-    } catch (const std::bad_alloc &e) {
-        std::cerr << "not enough memory\n";
-        return EXIT_FAILURE;
-    }
+    // try {
+    //     efyj::efyj e(model, option);
+    //     e.compute_prediction(limit, -1, reduce);
+    // }
+    // catch (const std::bad_alloc &e) {
+    //     fprintf(stderr, "not enough memory\n");
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::logic_error &e) {
+    //     fprintf(stderr, "internal error: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
+    // catch (const std::runtime_error &e) {
+    //     fprintf(stderr, "failure: %s\n", e.what());
+    //     return EXIT_FAILURE;
+    // }
 
     return EXIT_SUCCESS;
 }
 
 } // anonymous namespace
+
+class console_logger : public efyj::logger {
+public:
+    virtual void write(int priority,
+                       const char *file,
+                       int line,
+                       const char *fn,
+                       const char *format,
+                       va_list args) noexcept
+    {
+        if (priority >= 5)
+            vfprintf(stdout, format, args);
+        else {
+            fprintf(stderr,
+                    "LOG: %d at %d in function '%s' from file %s: ",
+                    priority,
+                    line,
+                    fn,
+                    file);
+            vfprintf(stderr, format, args);
+        }
+    }
+
+    virtual void
+    write(efyj::message_type m, const char *format, va_list args) noexcept
+    {
+#ifdef __unix__
+        if (::isatty(STDIN_FILENO)) {
+            switch (m) {
+            case efyj::message_type::highlight:
+                ::puts("\033[30m\033[2m");
+                break;
+            case efyj::message_type::observation:
+                ::puts("\033[32m\033[1m");
+                break;
+            case efyj::message_type::important:
+                ::puts("\033[33m\033[1m");
+                break;
+            default:
+                break;
+            }
+            vfprintf(stdout, format, args);
+            ::puts("\033[30m\033[0m");
+        }
+        else {
+            vfprintf(stdout, format, args);
+        }
+#else
+        vfprintf(stdout, format, args);
+#endif
+    }
+
+    virtual ~console_logger() {}
+};
 
 int main(int argc, char *argv[])
 {
@@ -154,23 +217,39 @@ int main(int argc, char *argv[])
             extractfile.assign(::optarg);
             mode = mode | EXTRACT;
             break;
-        case 'm': modelfilepath.assign(::optarg); break;
-        case 'o': optionfilepath.assign(::optarg); break;
+        case 'm':
+            modelfilepath.assign(::optarg);
+            break;
+        case 'o':
+            optionfilepath.assign(::optarg);
+            break;
         case 'l':
             if (::optarg)
                 limit = std::stoi(::optarg);
             break;
-        case 'r': reduce = true; break;
-        case 'p': mode = mode | PREDICTION; break;
-        case 'a': mode = mode | ADJUSTMENT; break;
-        case 'h': ::usage(); exit(EXIT_SUCCESS);
-        case 'v': ::version(); exit(EXIT_SUCCESS);
-        default: ::version(); exit(EXIT_SUCCESS);
+        case 'r':
+            reduce = true;
+            break;
+        case 'p':
+            mode = mode | PREDICTION;
+            break;
+        case 'a':
+            mode = mode | ADJUSTMENT;
+            break;
+        case 'h':
+            ::usage();
+            exit(EXIT_SUCCESS);
+        case 'v':
+            ::version();
+            exit(EXIT_SUCCESS);
+        default:
+            ::version();
+            exit(EXIT_SUCCESS);
         }
     }
 
     if (::optind > argc) {
-        std::cerr << "Expected argument after -m, -o or -s options\n";
+        fprintf(stderr, "Expected argument after -m, -o or -s options\n");
         exit(EXIT_FAILURE);
     }
 

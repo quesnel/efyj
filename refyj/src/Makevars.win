@@ -1,0 +1,8 @@
+PKG_CPPFLAGS = -std=c++14 -I../../lib/include -I$(MINGW_PATH)/mingw$(WIN)/include  -I$(MINGW_PATH)/mingw$(WIN)/include/eigen3
+PKG_LIBS = -Llibexpat -lexpat
+
+$(SHLIB): libexpat/libexpat.a
+
+libexpat/libexpat.a:
+	@(rm -fr libexpat && mkdir libexpat)
+	@(cp $(MINGW_PATH)/mingw$(WIN)/lib/libexpat.a libexpat/libexpat.a)

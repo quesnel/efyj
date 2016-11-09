@@ -1,0 +1,7 @@
+simulation;place;department;year;BUY.PRICE;MAINT.PRICE;#PERS;#DOORS;LUGGAGE;SAFETY;CAR
+Car1;Castanet-Tolosan;31;1991;medium;low;more;4;big;high;exc
+Car2;Castanet-Tolosan;31;1991;medium;medium;more;4;big;medium;good
+Car3;Castanet-Tolosan;31;1991;high;high;to_2;2;small;small;unacc
+Car4;Castanet-Tolosan;31;1991;high;high;to_2;2;medium;medium;unacc
+Car5;Castanet-Tolosan;31;1991;medium;medium;3-4;4;big;high;exc
+Car6;Castanet-Tolosan;31;1991;low;low;more;4;big;high;exc

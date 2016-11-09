@@ -22,32 +22,26 @@
 #ifndef INRA_EFYj_UTILS_HPP
 #define INRA_EFYj_UTILS_HPP
 
+#include <cstdarg>
 #include <functional>
 #include <sstream>
-#include <cstdint>
-#include <cinttypes>
+#include <string>
+#include <thread>
+#include <unistd.h>
+#include <vector>
 
 #if defined __GNUC__
 #define EFYJ_GCC_PRINTF(format__, args__)                                     \
     __attribute__((format(printf, format__, args__)))
 #endif
 
-namespace efyj
-{
+namespace efyj {
 
-std::string stringf(const char *format, ...) EFYJ_GCC_PRINTF(1, 2);
+inline constexpr std::size_t max_value(int need, std::size_t real) noexcept;
 
-inline void Expects(bool condition)
-{
-    if (not condition)
-        throw std::invalid_argument("");
-}
+std::string stringf(const char *format, ...) noexcept EFYJ_GCC_PRINTF(1, 2);
 
-inline void Expects(bool condition, const char *msg)
-{
-    if (not condition)
-        throw std::invalid_argument(msg);
-}
+std::string vstringf(const char *format, va_list) noexcept;
 
 struct scope_exit {
     scope_exit(std::function<void(void)> fct)
@@ -79,6 +73,80 @@ struct scope_exit {
  * \endexample
  */
 inline std::string make_new_name(const std::string &filepath,
+                                 unsigned int id) noexcept;
+
+/**
+ * Return number of available concurrency processor.
+ * @return An integer greater or equal to 1.
+ */
+unsigned get_hardware_concurrency() noexcept;
+
+void tokenize(const std::string &str,
+              std::vector<std::string> &tokens,
+              const std::string &delim,
+              bool trimEmpty);
+
+inline constexpr std::size_t max_value(int need, std::size_t real) noexcept
+{
+    return need <= 0 ? real : std::min(static_cast<std::size_t>(need), real);
+}
+
+inline unsigned hardware_concurrency_from_std() noexcept
+{
+    unsigned ret = std::thread::hardware_concurrency();
+
+    return ret == 0 ? 1 : ret;
+}
+
+inline std::string vstringf(const char *format, va_list ap) noexcept
+{
+    try {
+        std::string buffer(256, '\0');
+        int sz;
+
+        for (;;) {
+            sz = std::vsnprintf(&buffer[0], buffer.size(), format, ap);
+
+            if (sz < 0)
+                return {};
+
+            if (static_cast<std::size_t>(sz) < buffer.size())
+                return buffer;
+
+            buffer.resize(sz + 1);
+        }
+    }
+    catch (const std::exception & /*e*/) {
+    }
+
+    return std::string();
+}
+
+inline std::string stringf(const char *format, ...) noexcept
+{
+    va_list ap;
+
+    va_start(ap, format);
+    std::string ret = vstringf(format, ap);
+    va_end(ap);
+
+    return ret;
+}
+
+inline unsigned get_hardware_concurrency() noexcept
+{
+#ifdef __unix__
+    long nb_procs = ::sysconf(_SC_NPROCESSORS_ONLN);
+    if (nb_procs == -1)
+        return hardware_concurrency_from_std();
+
+    return static_cast<unsigned>(nb_procs);
+#else
+    return hardware_concurrency_from_std();
+#endif
+}
+
+inline std::string make_new_name(const std::string &filepath,
                                  unsigned int id) noexcept
 {
     try {
@@ -103,16 +171,35 @@ inline std::string make_new_name(const std::string &filepath,
         os << filepath.substr(0, dotposition) << '-' << id
            << filepath.substr(dotposition + 1);
         return os.str();
-    } catch (const std::bad_alloc &) {
+    }
+    catch (const std::bad_alloc &) {
         return std::string();
     }
 }
 
-/**
- * Return number of available concurrency processor.
- * @return An integer greater or equal to 1.
- */
-unsigned get_hardware_concurrency() noexcept;
+inline void tokenize(const std::string &str,
+                     std::vector<std::string> &tokens,
+                     const std::string &delim,
+                     bool trimEmpty)
+{
+    tokens.clear();
+    std::string::size_type pos, lastPos = 0, length = str.length();
+
+    using value_type = typename std::vector<std::string>::value_type;
+    using size_type = typename std::vector<std::string>::size_type;
+
+    while (lastPos < length + 1) {
+        pos = str.find_first_of(delim, lastPos);
+        if (pos == std::string::npos) {
+            pos = length;
+        }
+        if (pos != lastPos || !trimEmpty)
+            tokens.push_back(
+                value_type(str.data() + lastPos, (size_type)pos - lastPos));
+        lastPos = pos + 1;
+    }
 }
+
+} // namespace efyj
 
 #endif

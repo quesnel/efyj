@@ -22,13 +22,10 @@
 #ifndef INRA_EFYj_POST_HPP
 #define INRA_EFYj_POST_HPP
 
-#include "utils.hpp"
 #include <Eigen/Core>
 #include <vector>
-#include <cmath>
 
-namespace efyj
-{
+namespace efyj {
 
 inline double rmsep(const std::vector<int> &observated,
                     const std::vector<int> &simulated,
@@ -37,7 +34,7 @@ inline double rmsep(const std::vector<int> &observated,
 {
     Eigen::ArrayXXi matrix = Eigen::ArrayXXi::Zero(NC, NC);
 
-    for (auto i = 0ul, e = observated.size(); i != e; ++i)
+    for (std::size_t i = 0, e = observated.size(); i != e; ++i)
         matrix(observated[i], simulated[i])++;
 
     unsigned long sum = 0.0;
@@ -116,8 +113,7 @@ inline double squared_weighted_kappa(const std::vector<int> &observated,
  * \e squared_weighted_kappa and \e linear_weighted_kappa when no vector
  * or matrix resizing is necessary.
  */
-class weighted_kappa_calculator
-{
+class weighted_kappa_calculator {
 public:
     weighted_kappa_calculator(std::size_t NC_)
         : observed(Eigen::ArrayXXd::Zero(NC_, NC_))

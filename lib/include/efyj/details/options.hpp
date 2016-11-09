@@ -19,21 +19,106 @@
  * IN THE SOFTWARE.
  */
 
-#include "options.hpp"
-#include "utils.hpp"
-#include <boost/algorithm/string.hpp>
-#include <iterator>
-#include <fstream>
-#include <string>
-#include <istream>
+#ifndef ORG_VLEPROJECT_EFYj_OPTIONS_HPP
+#define ORG_VLEPROJECT_EFYj_OPTIONS_HPP
 
-namespace
-{
+#include <Eigen/Core>
+#include <cassert>
+#include <efyj/details/model.hpp>
 
-std::vector<const efyj::attribute *>
-get_basic_attribute(const efyj::Model &model)
+namespace efyj {
+
+using Array = Eigen::ArrayXXi;
+
+/** @e The Options class stores the complete option file. (i) A lot of
+ * vectors to store simulations identifiers, places, departements, years and
+ * observation, (ii) the complete matrix of option and a ordered structure to
+ * build link between simulations.
+ */
+class Options {
+public:
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    Array options;
+
+    const std::vector<int> &get_subdataset(int id) const noexcept
+    {
+        return subdataset[id];
+    }
+
+    const std::vector<std::vector<int>> &get_subdataset() const noexcept
+    {
+        return subdataset;
+    }
+
+    std::size_t size() const noexcept { return simulations.size(); }
+
+    int identifier(int id) const noexcept { return id_subdataset_reduced[id]; }
+
+    bool empty() const noexcept
+    {
+        return simulations.empty() or departments.empty() or years.empty() or
+               observed.empty();
+    }
+
+    void set(const options_data &options);
+
+    /** Reads CSV from the input stream and ensures correspondence between
+     * the readed data and the model.
+     *
+     * @param context use to log message if necessary.
+     * @param [in] is input stream where read the CSV data.
+     * @param [in] model to ensure correspondence.
+     *
+     * @throw std::bad_alloc or csv_parser_error.
+     */
+    void read(std::shared_ptr<context> context,
+              std::istream &is,
+              const Model &model);
+
+    bool have_subdataset() const
+    {
+        for (const auto &elem : subdataset)
+            if (elem.empty())
+                return false;
+
+        return true;
+    }
+
+    /** Release all dynamically allocated memory. */
+    void clear() noexcept;
+
+    /// check consistency of all data into the object. This function is
+    /// automatically used after \e read(...) or \e set(...) functions. If
+    /// data are not consistency, \e clear() is called.
+    ///
+    /// \execption \e internal_error or \e options_error.
+    void check();
+
+private:
+    /// \e init_dataset is called after \e read(...) or \e set(...)
+    /// functions to initialize the \e subdataset and \e
+    /// id_subdataset_reduced variables.
+    void init_dataset();
+
+    /// \e subdataset stores a list of line that defines the learning
+    /// options for each options. \e subdataset.size() equals \e
+    /// simulations.size()
+    std::vector<std::vector<int>> subdataset;
+
+    /// \e id_subdataset_reduced stores indices for each options. Index
+    /// may appear several times if the learning options are equals.
+    std::vector<int> id_subdataset_reduced;
+};
+
+namespace details {
+
+inline std::vector<const attribute *> get_basic_attribute(const Model &model)
 {
-    std::vector<const efyj::attribute *> ret;
+    std::vector<const attribute *> ret;
     ret.reserve(model.attributes.size());
 
     for (const auto &att : model.attributes)
@@ -43,34 +128,30 @@ get_basic_attribute(const efyj::Model &model)
     return ret;
 }
 
-std::size_t
-get_basic_attribute_id(const std::vector<const efyj::attribute *> &att,
+inline std::size_t
+get_basic_attribute_id(const std::vector<const attribute *> &att,
                        const std::string &name)
 {
-    auto it = std::find_if(
-        att.begin(),
-        att.end(),
-        [&name](const efyj::attribute *att) { return att->name == name; });
+    auto it =
+        std::find_if(att.begin(), att.end(), [&name](const attribute *att) {
+            return att->name == name;
+        });
 
     if (it == att.end())
-        throw efyj::csv_parser_error(
-            efyj::stringf("unknown attribute `%s' in model", name.c_str()));
+        throw csv_parser_error(
+            stringf("unknown attribute `%s' in model", name.c_str()));
 
     return it - att.begin();
 }
+} // namespace details
 
-} // anonymous namespace
-
-namespace efyj
-{
-
-void Options::read(std::shared_ptr<Context> context,
-                   std::istream &is,
-                   const Model &model)
+inline void Options::read(std::shared_ptr<context> context,
+                          std::istream &is,
+                          const Model &model)
 {
     clear();
 
-    std::vector<const attribute *> atts = ::get_basic_attribute(model);
+    std::vector<const attribute *> atts = details::get_basic_attribute(model);
     std::vector<int> convertheader(atts.size(), 0);
     std::vector<std::string> columns;
     std::string line;
@@ -78,8 +159,7 @@ void Options::read(std::shared_ptr<Context> context,
 
     if (is) {
         std::getline(is, line);
-        boost::algorithm::split(
-            columns, line, boost::algorithm::is_any_of(";"));
+        tokenize(line, columns, ";", false);
 
         if (columns.size() == atts.size() + 4)
             id = 3;
@@ -97,12 +177,16 @@ void Options::read(std::shared_ptr<Context> context,
     }
 
     for (std::size_t i = 0, e = atts.size(); i != e; ++i)
-        context->info() << "column " << i << ' ' << columns[i] << '\n';
+        vInfo(context, "column %zu %s\n", i, columns[i].c_str());
 
     for (std::size_t i = id, e = id + atts.size(); i != e; ++i) {
-        context->info() << "try to get_basic_atribute_id " << i << " : "
-                        << columns[i] << '\n';
-        convertheader[i - id] = ::get_basic_attribute_id(atts, columns[i]);
+        vInfo(context,
+              "try to get_basic_atribute_id %zu : %s\n",
+              i,
+              columns[i].c_str());
+
+        convertheader[i - id] =
+            details::get_basic_attribute_id(atts, columns[i]);
     }
 
     options = Eigen::ArrayXXi::Zero(1, atts.size());
@@ -115,34 +199,37 @@ void Options::read(std::shared_ptr<Context> context,
         if (not is)
             break;
 
-        boost::algorithm::split(
-            columns, line, boost::algorithm::is_any_of(";"));
+        tokenize(line, columns, ";", false);
         if (columns.size() != atts.size() + id + 1) {
-            context->err().printf("Options: error in csv file line %d:"
-                                  " not correct number of column %d"
-                                  " (expected: %d)\n",
-                                  line_number,
-                                  static_cast<int>(columns.size()),
-                                  static_cast<int>(atts.size() + id + 1));
+            vErr(context,
+                 "Options: error in csv file line %d:"
+                 " not correct number of column %d"
+                 " (expected: %d)\n",
+                 line_number,
+                 static_cast<int>(columns.size()),
+                 static_cast<int>(atts.size() + id + 1));
             continue;
         }
 
         int obs;
         try {
             obs = model.attributes[0].scale.find_scale_value(columns.back());
-        } catch (const std::runtime_error &e) {
-            context->err().printf("Options: error in csv file line %d:"
-                                  " convertion failure of `%s'\n",
-                                  line_number,
-                                  columns.back().c_str());
+        }
+        catch (const std::runtime_error &e) {
+            vErr(context,
+                 "Options: error in csv file line %d:"
+                 " convertion failure of `%s'\n",
+                 line_number,
+                 columns.back().c_str());
             continue;
         }
 
         if (obs < 0) {
-            context->err().printf("Options: error in csv file line %d:"
-                                  " fail to convert observed `%s'\n",
-                                  line_number,
-                                  columns.back().c_str());
+            vErr(context,
+                 "Options: error in csv file line %d:"
+                 " fail to convert observed `%s'\n",
+                 line_number,
+                 columns.back().c_str());
             continue;
         }
 
@@ -150,10 +237,12 @@ void Options::read(std::shared_ptr<Context> context,
         try {
             year = std::stoi(columns[id - 1]);
             department = std::stoi(columns[id - 2]);
-        } catch (const std::exception &e) {
-            context->err().printf("Options: error in csv file line %d."
-                                  " Malformed year or department\n",
-                                  line_number);
+        }
+        catch (const std::exception &e) {
+            vErr(context,
+                 "Options: error in csv file line %d."
+                 " Malformed year or department\n",
+                 line_number);
             continue;
         }
 
@@ -170,12 +259,12 @@ void Options::read(std::shared_ptr<Context> context,
             int option = atts[attid]->scale.find_scale_value(columns[i]);
 
             if (option < 0) {
-                context->err().printf(
-                    "Options: error in csv file line %d: "
-                    "unknown scale value `%s' for attribute `%s'",
-                    line_number,
-                    columns[i].c_str(),
-                    atts[attid]->name.c_str());
+                vErr(context,
+                     "Options: error in csv file line %d: "
+                     "unknown scale value `%s' for attribute `%s'",
+                     line_number,
+                     columns[i].c_str(),
+                     atts[attid]->name.c_str());
 
                 simulations.pop_back();
                 if (id == 4)
@@ -187,7 +276,8 @@ void Options::read(std::shared_ptr<Context> context,
                 options.conservativeResize(options.rows() - 1,
                                            Eigen::NoChange_t());
                 break;
-            } else {
+            }
+            else {
                 options(options.rows() - 1, attid) = option;
             }
         }
@@ -201,7 +291,7 @@ void Options::read(std::shared_ptr<Context> context,
     check();
 }
 
-void Options::init_dataset()
+inline void Options::init_dataset()
 {
     const std::size_t size = simulations.size();
 
@@ -218,7 +308,8 @@ void Options::init_dataset()
                 }
             }
         }
-    } else {
+    }
+    else {
         for (std::size_t i = 0; i != size; ++i) {
             for (std::size_t j = 0; j != size; ++j) {
                 if (i != j and departments[i] != departments[j] and
@@ -248,7 +339,8 @@ void Options::init_dataset()
             if (it == reduced.cend()) {
                 id_subdataset_reduced[i] = (int)reduced.size();
                 reduced.push_back(subdataset[i]);
-            } else {
+            }
+            else {
                 id_subdataset_reduced[i] = std::distance(reduced.cbegin(), it);
             }
         }
@@ -260,7 +352,7 @@ void Options::init_dataset()
     // printf("]\n");
 }
 
-void Options::check()
+inline void Options::check()
 {
     if (static_cast<std::size_t>(options.rows()) != simulations.size() or
         options.cols() == 0 or simulations.size() != departments.size() or
@@ -272,36 +364,27 @@ void Options::check()
         throw internal_error("Options are inconsistent");
 }
 
-void Options::set(const std::vector<std::string> &simulations_,
-                  const std::vector<std::string> &places_,
-                  const std::vector<int> &departments_,
-                  const std::vector<int> &years_,
-                  const std::vector<int> &observed_,
-                  const std::vector<int> &options_)
+void Options::set(const options_data &opts)
 {
-    simulations = simulations_;
-    places = places_;
-    departments = departments_;
-    years = years_;
-    observed = observed_;
+    simulations = opts.simulations;
+    places = opts.places;
+    departments = opts.departments;
+    years = opts.years;
+    observed = opts.observed;
 
-    const auto rows = simulations.size();
-    const auto columns = options_.size() / rows;
-
-    if (columns == 0)
-        throw internal_error("Inconsistent array");
-
+    const auto rows = opts.options.rows();
+    const auto columns = opts.options.columns();
     options.conservativeResize(rows, columns);
 
-    for (auto row = decltype(rows){0}; row != rows; ++row)
-        for (auto col = decltype(columns){0}; col != columns; ++col)
-            options(row, col) = options_[row * columns + col];
+    for (std::size_t r = 0; r != rows; ++r)
+        for (std::size_t c = 0; c != columns; ++c)
+            options(r, c) = opts.options(c, r);
 
     init_dataset();
     check();
 }
 
-void Options::clear() noexcept
+inline void Options::clear() noexcept
 {
     std::vector<std::string>().swap(simulations);
     std::vector<std::string>().swap(places);
@@ -313,56 +396,6 @@ void Options::clear() noexcept
     std::vector<std::vector<int>>().swap(subdataset);
     std::vector<int>().swap(id_subdataset_reduced);
 }
-
-cstream &operator<<(cstream &os,
-                    const std::vector<std::vector<int>> &ordered) noexcept
-{
-    for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
-        os << i << ' ';
-
-        for (auto j : ordered[i])
-            os << j << ' ';
-
-        os << '\n';
-    }
-
-    return os;
 }
 
-cstream &operator<<(cstream &os, const Options &options) noexcept
-{
-    os << "option identifiers\n------------------\n";
-
-    if (not options.places.empty()) {
-        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i] << options.places[i] << '.'
-               << options.departments[i] << '.' << options.years[i] << '.'
-               << options.observed[i] << "\n";
-        }
-    } else {
-        for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
-            os << i << options.simulations[i] << options.departments[i] << '.'
-               << options.years[i] << '.' << options.observed[i] << "\n";
-        }
-    }
-
-    std::ostringstream ss;
-    ss << options.options;
-
-    os << "\noption matrix\n-------------\n" << ss.str();
-
-    os << "\nordered option\n--------------\n";
-
-    for (std::size_t i = 0, e = options.size(); i != e; ++i) {
-        os << i << ' ';
-
-        for (auto v : options.get_subdataset(i))
-            os << v << ' ';
-
-        os << '\n';
-    }
-
-    return os;
-}
-
-} // namespace efyj
+#endif

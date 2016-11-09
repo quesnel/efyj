@@ -8,7 +8,6 @@ The software is released under the MIT license. See the COPYING file.
 ## Requirements
 
 * libexpat (≥ 2)
-* boost (≥ 1.50)
 * eigen3 (≥ 3)
 * cmake (≥ 3)
 * c++ compiler with c++14 support (gcc ≥ 4.8, clang ≥ 3.5)
@@ -17,7 +16,7 @@ For recent Debian and Ubuntu derivatives (remove clang to only use
 gcc):
 
     apt-get install build-essential cmake clang libexpat1-dev \
-                    libboost-dev libeigen3-dev
+                    libeigen3-dev
 
 ## Compilation
 
@@ -60,3 +59,67 @@ For example, if a DEXi file `test.dxi` have one aggregate attribute
 
 The '-p' option starts a prediction algorithm, '-a' option starts am
 adjustment algorithm.
+
+# R
+
+To use *efyj* from the R project.
+
+## R linux
+
+cd efyj/refyj
+Rscript -e 'library(Rcpp); compileAttributes(".")'
+Rscript -e 'library(devtools); compileAttributes(".")'
+cd ..
+R CMD build refyj
+R CMD INSTALL --build refyj
+
+## R Windows 7+
+
+First we need to install expat and eigen for both i386 and x86_64 architecture:
+
+```
+msys2-x86_64-20161025.exe http://msys2.github.io/
+
+pacman -Syu
+pacman -Su
+pacman -S expat libexpat-devel expat mingw32/mingw-w64-i686-expat mingw64/mingw-w64-x86_64-expat
+pacman -S mingw64/mingw-w64-x86_64-eigen3 mingw32/mingw-w64-i686-eigen3
+pacman -S pkg-config cmake make
+
+cp FindEigen3.cmake /C/msys64/usr/share/cmake-3.6.2/Modules
+```
+
+To build the command line interface:
+
+```
+export PATH=$PATH:/C/Rtools/mingw_64/bin
+cd /d/natifvle/efyj
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/c/msys64/mingw64 ..
+make install
+
+To build the R package. First under the R interface or Rstudio:
+
+```R
+install.packages("stringi")
+install.packages("devtools")
+install.packages("roxygen2")
+install.packages("Rcpp")
+library(Rcpp)
+library(devtools)
+setwd("d:/natifvle/efyj/refyj")
+Rcpp::compileAttributes(".")
+devtools::document()
+```
+
+Then in a terminal (`cmd.exe`):
+
+```
+set PATH=C:\Program Files\R\R-3.3.2\bin;d:\msys64\usr\bin;C:\Rtools\bin
+set MINGW_PATH=d:/msys64
+d:
+cd natifvle/efyj
+R CMD build refyj
+R CMD INSTALL --build refyj
+```
