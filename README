@@ -1,7 +1,6 @@
-efyj
-====
+# efyj
 
-Copyright © 2014-2016 INRA
+Copyright © 2014-2017 INRA
 
 The software is released under the MIT license. See the COPYING file.
 
@@ -10,10 +9,9 @@ The software is released under the MIT license. See the COPYING file.
 * libexpat (≥ 2)
 * eigen3 (≥ 3)
 * cmake (≥ 3)
-* c++ compiler with c++14 support (gcc ≥ 4.8, clang ≥ 3.5)
+* c++ compiler with c++14 support (gcc ≥ 4.9, clang ≥ 3.5)
 
-For recent Debian and Ubuntu derivatives (remove clang to only use
-gcc):
+For recent Debian and Ubuntu derivatives (remove clang to only use gcc):
 
     apt-get install build-essential cmake clang libexpat1-dev \
                     libeigen3-dev
@@ -42,7 +40,7 @@ To use clang replace the previous `./configure ...` command with the following:
 
 # Usage
 
-    $ efyj -m file.dxi -o file.csv [-p] [-a]
+    efyj -m file.dxi -o file.csv [-p] [-a]
 
 The `file.csv` contains the options of the model. Four first one
 columns contains fields: site, fields, department, year. Next columns
