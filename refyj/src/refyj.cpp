@@ -103,7 +103,9 @@ extract_model(const std::string& model)
         const auto x = efyj::extract_model(ctx, model);
 
         return Rcpp::List::create(
-          Rcpp::wrap(x.attributes), Rcpp::wrap(x.basic_attributes), x.number);
+          Rcpp::Named("attributes") = Rcpp::wrap(x.attributes),
+          Rcpp::Named("basic attributes") = Rcpp::wrap(x.basic_attributes),
+          Rcpp::Named("number") = x.number);
     } catch (const std::bad_alloc& e) {
         Rcpp::Rcout << "refyj: " << e.what() << '\n';
     } catch (const std::exception& e) {
@@ -156,7 +158,9 @@ simulate(const std::string& model, const std::string& options)
         for (std::size_t i = 0, end_i = simulations.size(); i != end_i; ++i)
             simulations(i) = x.simulations[i];
 
-        return Rcpp::List::create(options, attributes, simulations);
+        return Rcpp::List::create(Rcpp::Named("options") = options,
+                                  Rcpp::Named("attributes") = attributes,
+                                  Rcpp::Named("simulations") = simulations);
     } catch (const std::bad_alloc& e) {
         Rcpp::Rcout << "refyj: " << e.what() << '\n';
     } catch (const std::exception& e) {
@@ -219,13 +223,14 @@ evaluate(const std::string& model, const std::string& options)
                  ++c)
                 confusion(c, r) = x.confusion(c, r);
 
-        return Rcpp::List::create(options,
-                                  attributes,
-                                  simulations,
-                                  observations,
-                                  confusion,
-                                  x.linear_weighted_kappa,
-                                  x.squared_weighted_kappa);
+        return Rcpp::List::create(
+          Rcpp::Named("options") = options,
+          Rcpp::Named("attributes") = attributes,
+          Rcpp::Named("simulations") = simulations,
+          Rcpp::Named("observations") = observations,
+          Rcpp::Named("confusion") = confusion,
+          Rcpp::Named("linear weighted kappa") = x.linear_weighted_kappa,
+          Rcpp::Named("squared weighted kappa") = x.squared_weighted_kappa);
     } catch (const std::bad_alloc& e) {
         Rcpp::Rcout << "refyj: " << e.what() << '\n';
     } catch (const std::exception& e) {
@@ -282,8 +287,11 @@ extract_options(const std::string& model)
                  ++c)
                 options(c, r) = x.options(c, r);
 
-        return Rcpp::List::create(
-          simulations, places, departments, years, options);
+        return Rcpp::List::create(Rcpp::Named("simulations") = simulations,
+                                  Rcpp::Named("places") = places,
+                                  Rcpp::Named("departments") = departments,
+                                  Rcpp::Named("years") = years,
+                                  Rcpp::Named("options") = options);
     } catch (const std::bad_alloc& e) {
         Rcpp::Rcout << "refyj: " << e.what() << '\n';
     } catch (const std::exception& e) {
