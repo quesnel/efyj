@@ -19,27 +19,62 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef ORG_VLEPROJECT_EFYJ_DETAILS_PREDICTION_THREAD_HPP
+#define ORG_VLEPROJECT_EFYJ_DETAILS_PREDICTION_THREAD_HPP
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wdeprecated-register"
+#endif
+
 #include <chrono>
-#include <efyj/details/exception.hpp>
-#include <efyj/details/model.hpp>
-#include <efyj/details/options.hpp>
-#include <efyj/details/post.hpp>
-#include <efyj/details/prediction.hpp>
-#include <efyj/details/problem.hpp>
-#include <efyj/details/solver-stack.hpp>
-#include <efyj/details/utils.hpp>
 #include <fstream>
 #include <iterator>
 #include <mutex>
 #include <thread>
 
+#include <chrono>
+#include <efyj/details/model.hpp>
+#include <efyj/details/options.hpp>
+#include <efyj/details/post.hpp>
+#include <efyj/details/private.hpp>
+#include <efyj/details/solver-stack.hpp>
+#include <map>
+
 namespace efyj {
 
-class Results {
-    std::shared_ptr<Context> m_context;
+struct prediction_thread_evaluator
+{
+    std::shared_ptr<context> m_context;
+    const Model& m_model;
+    const Options& m_options;
+
+    std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
+    std::vector<int> m_globalsimulated;
+    std::vector<std::tuple<int, int, int>> m_updaters;
+    std::vector<std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
+    for_each_model_solver solver;
+    weighted_kappa_calculator kappa_c;
+    unsigned long long int m_loop = 0;
+
+    prediction_thread_evaluator(std::shared_ptr<context> context,
+                                const Model& model,
+                                const Options& options);
+
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode,
+                            unsigned int threads);
+};
+
+class Results
+{
+    std::shared_ptr<context> m_context;
     std::mutex m_container_mutex;
 
-    struct Result {
+    struct Result
+    {
         double kappa;
         unsigned long loop;
         std::vector<std::tuple<int, int, int>> updaters;
@@ -51,10 +86,10 @@ class Results {
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(std::shared_ptr<Context> context, unsigned int threads)
-        : m_context(context)
-        , m_threads(threads)
-        , m_start(std::chrono::system_clock::now())
+    Results(std::shared_ptr<context> context, unsigned int threads)
+      : m_context(context)
+      , m_threads(threads)
+      , m_start(std::chrono::system_clock::now())
     {
         m_results.reserve(32);
         m_results.resize(1u);
@@ -67,7 +102,7 @@ public:
     void emplace_result(int i,
                         double kappa,
                         unsigned long loop,
-                        const std::vector<std::tuple<int, int, int>> &updaters)
+                        const std::vector<std::tuple<int, int, int>>& updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
                static_cast<std::size_t>(i) < m_results.size());
@@ -80,7 +115,7 @@ public:
     void push(int step,
               double kappa,
               unsigned long loop,
-              const std::vector<std::tuple<int, int, int>> &updaters)
+              const std::vector<std::tuple<int, int, int>>& updaters)
     {
         std::lock_guard<std::mutex> locker(m_container_mutex);
 
@@ -93,8 +128,7 @@ public:
             m_results.emplace_back();
 
             emplace_result(m_results.size() - 1, kappa, loop, updaters);
-        }
-        else {
+        } else {
             if (m_results[step - 1].kappa < kappa)
                 emplace_result(step - 1, kappa, loop, updaters);
             else
@@ -104,18 +138,21 @@ public:
         m_end = std::chrono::system_clock::now();
         auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-        m_context->info().printf("| %d | %13.10f | %" PRIuMAX " | %f | ",
-                                 step,
-                                 m_results[step - 1].kappa,
-                                 m_results[step - 1].loop,
-                                 duration);
+        vInfo(m_context,
+              "| %d | %13.10f | %lu | %f |",
+              step,
+              m_results[step - 1].kappa,
+              m_results[step - 1].loop,
+              duration);
 
-        m_context->info() << m_results[step - 1].updaters << " |\n";
+        print(m_context, m_results[step - 1].updaters);
+        vInfo(m_context, "\n");
     }
 };
 
-template <typename Solver>
-bool init_worker(Solver &solver, const int thread_id)
+template<typename Solver>
+bool
+init_worker(Solver& solver, const int thread_id)
 {
     for (auto i = 0; i < thread_id; ++i)
         if (solver.next_line() == false)
@@ -124,13 +161,14 @@ bool init_worker(Solver &solver, const int thread_id)
     return true;
 }
 
-void parallel_prediction_worker(std::shared_ptr<Context> context,
-                                const Model &model,
-                                const Options &options,
-                                const unsigned int thread_id,
-                                const unsigned int thread_number,
-                                const bool &stop,
-                                Results &results)
+void
+parallel_prediction_worker(std::shared_ptr<context> context,
+                           const Model& model,
+                           const Options& options,
+                           const unsigned int thread_id,
+                           const unsigned int thread_number,
+                           const bool& stop,
+                           Results& results)
 {
     std::vector<int> m_globalsimulated(options.observed.size());
     std::vector<int> m_simulated(options.observed.size());
@@ -188,7 +226,7 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
 
                 solver.set_functions(m_functions);
                 m_globalsimulated[opt] =
-                    solver.solve(options.options.row(opt));
+                  solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -215,37 +253,90 @@ void parallel_prediction_worker(std::shared_ptr<Context> context,
     }
 }
 
-void prediction_n(std::shared_ptr<Context> context,
-                  const Model &model,
-                  const Options &options,
-                  unsigned int threads)
+inline prediction_thread_evaluator::prediction_thread_evaluator(
+  std::shared_ptr<context> context,
+  const Model& model,
+  const Options& options)
+  : m_context(context)
+  , m_model(model)
+  , m_options(options)
+  , m_globalsimulated(options.observed.size(), 0)
+  , simulated(options.options.rows())
+  , observed(options.options.rows())
+  , solver(context, model)
+  , kappa_c(model.attributes[0].scale.size())
 {
-    context->info() << context->info().cyanb() << "[Computation starts with "
-                    << threads << " threads]" << context->info().def() << '\n';
+    if (not options.have_subdataset())
+        throw solver_error(
+          "options does not have enough data to build the training set");
+}
 
-    assert(threads > 1);
+class my_logger : public logger
+{
+    FILE* m_stream;
 
-    Results results(context, threads);
+public:
+    my_logger(unsigned int id) noexcept
+      : m_stream(fopen(make_new_name("", id).c_str(), "w"))
+    {}
+
+    bool is_open() const noexcept
+    {
+        return m_stream != nullptr;
+    }
+
+    void write(int priority,
+               const char* file,
+               int line,
+               const char* fn,
+               const char* format,
+               va_list args) noexcept final
+    {
+        FILE* stream = m_stream;
+        if (not is_open())
+            stream = stdout;
+
+        fprintf(stream, "%s (%d) in %s:\n", file, line, fn);
+        vfprintf(stream, format, args);
+        fprintf(stream, "\n");
+    }
+
+    void write(message_type /*m*/,
+               const char* format,
+               va_list args) noexcept final
+    {
+        FILE* stream = m_stream;
+        if (not is_open())
+            stream = stdout;
+
+        vfprintf(stream, format, args);
+        fprintf(stream, "\n");
+    }
+};
+
+inline std::vector<result>
+prediction_thread_evaluator::run(int line_limit,
+                                 double time_limit,
+                                 int reduce_mode,
+                                 unsigned int threads)
+{
+    (void)time_limit;
+
+    vInfo(m_context, "[Computation starts with %u thread(s)]\n", threads);
+
+    Results results(m_context, threads);
     bool stop = false;
 
-    std::vector<std::thread> workers{threads};
+    std::vector<std::thread> workers{ threads };
 
     for (auto i = 0u; i != threads; ++i) {
-        auto filepath = make_new_name(context->get_log_filename(), i);
-        auto new_ctx =
-            std::make_shared<efyj::Context>(context->log_priority());
-        auto ret = new_ctx->set_log_file_stream(filepath);
-
-        if (not ret)
-            context->err().printf("Failed to assign '%s' to thread %d. Switch "
-                                  "to console.\n",
-                                  filepath.c_str(),
-                                  i);
+        auto newctx = std::make_shared<efyj::context>();
+        newctx->set_logger(std::make_unique<my_logger>(i));
 
         workers[i] = std::thread(parallel_prediction_worker,
-                                 new_ctx,
-                                 std::cref(model),
-                                 std::cref(options),
+                                 newctx,
+                                 std::cref(m_model),
+                                 std::cref(m_options),
                                  i,
                                  threads,
                                  std::cref(stop),
@@ -258,8 +349,12 @@ void prediction_n(std::shared_ptr<Context> context,
     /* Stop work and wait for all prediction workers. */
     /* TODO stop = true; */
 
-    for (auto &w : workers)
+    for (auto& w : workers)
         w.join();
+
+    return {};
 }
 
 } // namespace efyj
+
+#endif

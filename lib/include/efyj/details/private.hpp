@@ -35,19 +35,17 @@
 
 static inline void
 #if defined(__GNUC__)
-    __attribute__((always_inline, format(printf, 2, 3)))
+  __attribute__((always_inline, format(printf, 2, 3)))
 #endif
-    efyj_log_null(const std::shared_ptr<efyj::context> &, const char *, ...)
-{
-}
+  efyj_log_null(const std::shared_ptr<efyj::context>&, const char*, ...)
+{}
 
 static inline void
 #if defined(__GNUC__)
-    __attribute__((always_inline, format(printf, 2, 3)))
+  __attribute__((always_inline, format(printf, 2, 3)))
 #endif
-    efyj_log_null(const efyj::context *, const char *, ...)
-{
-}
+  efyj_log_null(const efyj::context*, const char*, ...)
+{}
 
 #define efyj_log_cond(ctx, prio, arg...)                                      \
     do {                                                                      \
@@ -62,18 +60,18 @@ static inline void
 // Define NDEBUG to remove @c vDbg() macro.
 //
 
-#ifndef DISABLE_LOGGING
-#ifndef NDEBUG
+// #ifndef DISABLE_LOGGING
+// #ifndef NDEBUG
 #define vDbg(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_DEBUG, ##arg)
-#else
-#define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
-#endif
+// #else
+// #define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
+// #endif
 #define vInfo(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_INFO, ##arg)
 #define vErr(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_ERR, ##arg)
-#else
-#define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
-#define vInfo(ctx, arg...) efyj_log_null(ctx, ##arg)
-#define vErr(ctx, arg...) efyj_log_null(ctx, ##arg)
-#endif
+    // #else
+    // #define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
+    // #define vInfo(ctx, arg...) efyj_log_null(ctx, ##arg)
+    // #define vErr(ctx, arg...) efyj_log_null(ctx, ##arg)
+    // #endif
 
 #endif

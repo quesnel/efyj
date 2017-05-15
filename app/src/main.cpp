@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2015-2017 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +26,8 @@
 
 namespace {
 
-void usage() noexcept
+void
+usage() noexcept
 {
     puts("efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
          "Options:\n"
@@ -49,101 +50,96 @@ void usage() noexcept
          "\n");
 }
 
-void version() noexcept
+void
+version() noexcept
 {
     puts("efyj 0.6.0\n");
 }
 
-int extract(const std::string &model, const std::string &output) noexcept
+int
+extract(std::shared_ptr<efyj::context> ctx,
+        const std::string& model,
+        const std::string& output) noexcept
 {
-    // try {
-    //     efyj::efyj e(model);
-    //     e.extract_options(output);
-    // }
-    // catch (const std::bad_alloc &e) {
-    //     fprintf(stderr, "not enough memory\n");
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::logic_error &e) {
-    //     fprintf(stderr, "internal error: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::runtime_error &e) {
-    //     fprintf(stderr, "failure: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
+    try {
+        auto opts = efyj::extract_options(ctx, model);
+    } catch (const std::bad_alloc& e) {
+        fprintf(stderr, "not enough memory\n");
+        return EXIT_FAILURE;
+    } catch (const std::logic_error& e) {
+        fprintf(stderr, "internal error: %s\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        fprintf(stderr, "failure: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
 
-int adjustment(const std::string &model,
-               const std::string &option,
-               bool reduce,
-               int limit,
-               unsigned int thread) noexcept
+int
+adjustment(std::shared_ptr<efyj::context> ctx,
+           const std::string& model,
+           const std::string& option,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept
 {
-    (void)thread;
-
-    // try {
-    //     efyj::efyj e(model, option);
-    //     e.compute_adjustment(limit, -1, reduce);
-    // }
-    // catch (const std::bad_alloc &e) {
-    //     fprintf(stderr, "not enough memory\n");
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::logic_error &e) {
-    //     fprintf(stderr, "internal error: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::runtime_error &e) {
-    //     fprintf(stderr, "failure: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
+    try {
+        auto result =
+          efyj::adjustment(ctx, model, option, reduce, limit, thread);
+    } catch (const std::bad_alloc& e) {
+        fprintf(stderr, "not enough memory\n");
+        return EXIT_FAILURE;
+    } catch (const std::logic_error& e) {
+        fprintf(stderr, "internal error: %s\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        fprintf(stderr, "failure: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
 
-int prediction(const std::string &model,
-               const std::string &option,
-               bool reduce,
-               int limit,
-               unsigned int thread) noexcept
+int
+prediction(std::shared_ptr<efyj::context> ctx,
+           const std::string& model,
+           const std::string& option,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept
 {
-    (void)thread;
-
-    // try {
-    //     efyj::efyj e(model, option);
-    //     e.compute_prediction(limit, -1, reduce);
-    // }
-    // catch (const std::bad_alloc &e) {
-    //     fprintf(stderr, "not enough memory\n");
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::logic_error &e) {
-    //     fprintf(stderr, "internal error: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
-    // catch (const std::runtime_error &e) {
-    //     fprintf(stderr, "failure: %s\n", e.what());
-    //     return EXIT_FAILURE;
-    // }
+    try {
+        auto result =
+          efyj::prediction(ctx, model, option, reduce, limit, thread);
+    } catch (const std::bad_alloc& e) {
+        fprintf(stderr, "not enough memory\n");
+        return EXIT_FAILURE;
+    } catch (const std::logic_error& e) {
+        fprintf(stderr, "internal error: %s\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        fprintf(stderr, "failure: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
 
 } // anonymous namespace
 
-class console_logger : public efyj::logger {
+class console_logger : public efyj::logger
+{
 public:
     virtual void write(int priority,
-                       const char *file,
+                       const char* file,
                        int line,
-                       const char *fn,
-                       const char *format,
+                       const char* fn,
+                       const char* format,
                        va_list args) noexcept
     {
-        if (priority >= 5)
+        if (priority <= 6)
             vfprintf(stdout, format, args);
         else {
             fprintf(stderr,
@@ -156,8 +152,9 @@ public:
         }
     }
 
-    virtual void
-    write(efyj::message_type m, const char *format, va_list args) noexcept
+    virtual void write(efyj::message_type m,
+                       const char* format,
+                       va_list args) noexcept
     {
 #ifdef __unix__
         if (::isatty(STDIN_FILENO)) {
@@ -176,21 +173,20 @@ public:
             }
             vfprintf(stdout, format, args);
             ::puts("\033[30m\033[0m");
-        }
-        else {
+        } else {
             vfprintf(stdout, format, args);
         }
 #else
         vfprintf(stdout, format, args);
 #endif
     }
-
-    virtual ~console_logger() {}
 };
 
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
-    enum main_mode {
+    enum main_mode
+    {
         NOTHING = 0,
         EXTRACT = 1 << 1,
         ADJUSTMENT = 1 << 2,
@@ -253,22 +249,26 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    auto ctx = std::make_shared<efyj::context>();
+    ctx->set_log_priority(7);
+    ctx->set_logger(std::make_unique<console_logger>());
+
     int return_value = EXIT_SUCCESS;
     if ((mode & EXTRACT)) {
-        if (::extract(modelfilepath, extractfile) == EXIT_FAILURE)
+        if (::extract(ctx, modelfilepath, extractfile) == EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }
 
     if ((mode & ADJUSTMENT)) {
         if (::adjustment(
-                modelfilepath, optionfilepath, reduce, limit, threads) ==
+              ctx, modelfilepath, optionfilepath, reduce, limit, threads) ==
             EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }
 
     if ((mode & PREDICTION)) {
         if (::prediction(
-                modelfilepath, optionfilepath, reduce, limit, threads) ==
+              ctx, modelfilepath, optionfilepath, reduce, limit, threads) ==
             EXIT_FAILURE)
             return_value = EXIT_FAILURE;
     }

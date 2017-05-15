@@ -32,10 +32,11 @@
 
 namespace efyj {
 
-struct prediction_evaluator {
+struct prediction_evaluator
+{
     std::shared_ptr<context> m_context;
-    const Model &m_model;
-    const Options &m_options;
+    const Model& m_model;
+    const Options& m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
     std::vector<int> m_globalsimulated;
@@ -48,29 +49,30 @@ struct prediction_evaluator {
     unsigned long long int m_loop = 0;
 
     prediction_evaluator(std::shared_ptr<context> context,
-                         const Model &model,
-                         const Options &options);
+                         const Model& model,
+                         const Options& options);
 
-    std::vector<result>
-    run(int line_limit, double time_limit, int reduce_mode);
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode);
 };
 
 inline prediction_evaluator::prediction_evaluator(
-    std::shared_ptr<context> context,
-    const Model &model,
-    const Options &options)
-    : m_context(context)
-    , m_model(model)
-    , m_options(options)
-    , m_globalsimulated(options.observed.size(), 0)
-    , simulated(options.options.rows())
-    , observed(options.options.rows())
-    , solver(context, model)
-    , kappa_c(model.attributes[0].scale.size())
+  std::shared_ptr<context> context,
+  const Model& model,
+  const Options& options)
+  : m_context(context)
+  , m_model(model)
+  , m_options(options)
+  , m_globalsimulated(options.observed.size(), 0)
+  , simulated(options.options.rows())
+  , observed(options.options.rows())
+  , solver(context, model)
+  , kappa_c(model.attributes[0].scale.size())
 {
     if (not options.have_subdataset())
         throw solver_error(
-            "options does not have enough data to build the training set");
+          "options does not have enough data to build the training set");
 }
 
 inline std::vector<result>
@@ -90,12 +92,12 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
            "prediction can not determine function");
 
     const std::size_t max_step =
-        max_value(line_limit, solver.get_attribute_line_tuple_limit());
+      max_value(line_limit, solver.get_attribute_line_tuple_limit());
     const std::size_t max_opt = m_options.simulations.size();
 
     assert(max_step > 0 and "prediction: can not determine limit");
 
-    vInfo(m_context, "[Computation starts 1/%zu\n", max_step);
+    vInfo(m_context, "[Computation starts 1/%zu]\n", max_step);
 
     {
         m_start = std::chrono::system_clock::now();
@@ -121,7 +123,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
         ret.back().kappa = kappa;
         ret.back().time =
-            std::chrono::duration<double>(m_end - m_start).count();
+          std::chrono::duration<double>(m_end - m_start).count();
         ret.back().kappa_computed = 1;
         ret.back().function_computed = m_options.size();
     }
@@ -131,7 +133,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         long int loop = 0;
 
         std::fill(
-            std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
+          std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
 
         // This cache stores best function found for the same
         // subdataset. This cache drastically improves computation time if
@@ -145,7 +147,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
                 if (it != cache.end()) {
                     solver.set_functions(it->second);
                     m_globalsimulated[opt] =
-                        solver.solve(m_options.options.row(opt));
+                      solver.solve(m_options.options.row(opt));
                     continue;
                 }
             }
@@ -188,7 +190,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         }
 
         auto line_kappa =
-            kappa_c.squared(m_options.observed, m_globalsimulated);
+          kappa_c.squared(m_options.observed, m_globalsimulated);
         m_end = std::chrono::system_clock::now();
 
         auto time = std::chrono::duration<double>(m_end - m_start).count();
@@ -207,8 +209,8 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
               loop,
               std::chrono::duration<double>(m_end - m_start).count());
 
-        // TODO
-        // m_context->info() << m_updaters << " |\n";
+        print(m_context, m_updaters);
+        vInfo(m_context, "\n");
     }
 
     return ret;

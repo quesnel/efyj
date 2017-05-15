@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2015-2017 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,11 +33,12 @@ namespace efyj {
 using VectorRef = Array::RowXpr;
 using Vector = Eigen::VectorXi;
 
-struct aggregate_attribute {
-    inline aggregate_attribute(const Model &model, std::size_t att_, int id_)
-        : stack_size(0)
-        , att(att_)
-        , id(id_)
+struct aggregate_attribute
+{
+    inline aggregate_attribute(const Model& model, std::size_t att_, int id_)
+      : stack_size(0)
+      , att(att_)
+      , id(id_)
     {
         std::transform(model.attributes[att].children.cbegin(),
                        model.attributes[att].children.cend(),
@@ -70,9 +71,15 @@ struct aggregate_attribute {
         scale = model.attributes[att].scale_size();
     }
 
-    inline scale_id scale_size() const noexcept { return scale; }
+    inline scale_id scale_size() const noexcept
+    {
+        return scale;
+    }
 
-    inline std::size_t option_size() const { return coeffs.size(); }
+    inline std::size_t option_size() const
+    {
+        return coeffs.size();
+    }
 
     inline void push(int i)
     {
@@ -81,7 +88,10 @@ struct aggregate_attribute {
         stack(stack_size--) = i;
     }
 
-    inline void clear() { stack_size = coeffs.size() - 1; }
+    inline void clear()
+    {
+        stack_size = coeffs.size() - 1;
+    }
 
     inline int result() const
     {
@@ -114,7 +124,7 @@ struct aggregate_attribute {
      * opt1 opt2  1 opt3  1
      * opt1 opt2  1 opt3  2
      */
-    inline void reduce(std::set<int> &whitelist)
+    inline void reduce(std::set<int>& whitelist)
     {
 #ifndef NDEBUG
         for (long i = 0; i < coeffs.size(); ++i) {
@@ -122,13 +132,13 @@ struct aggregate_attribute {
         }
 #endif
 
-        struct walker {
+        struct walker
+        {
             inline walker(int column_, int current_, int max_) noexcept
-                : column(column_),
-                  current(current_),
-                  max(max_)
-            {
-            }
+              : column(column_)
+              , current(current_)
+              , max(max_)
+            {}
 
             int column, current, max;
         };
@@ -162,19 +172,20 @@ struct aggregate_attribute {
                     if (i == 0) {
                         end = true;
                         break;
-                    }
-                    else {
+                    } else {
                         i--;
                     }
-                }
-                else {
+                } else {
                     break;
                 }
             } while (not end);
         } while (not end);
     }
 
-    inline void function_restore() noexcept { functions = saved_functions; }
+    inline void function_restore() noexcept
+    {
+        functions = saved_functions;
+    }
 
     Vector coeffs;
     std::vector<scale_id> functions;
@@ -187,46 +198,55 @@ struct aggregate_attribute {
     int id; /* Reference in the solver_stack atts attribute. */
 };
 
-struct Block {
-    inline constexpr Block(int value) noexcept : value(value),
-                                                 type(BlockType::BLOCK_VALUE)
-    {
-    }
+struct Block
+{
+    inline constexpr Block(int value) noexcept
+      : value(value)
+      , type(BlockType::BLOCK_VALUE)
+    {}
 
-    inline constexpr Block(aggregate_attribute *att) noexcept
-        : att(att),
-          type(BlockType::BLOCK_ATTRIBUTE)
-    {
-    }
+    inline constexpr Block(aggregate_attribute* att) noexcept
+      : att(att)
+      , type(BlockType::BLOCK_ATTRIBUTE)
+    {}
 
     inline constexpr bool is_value() const noexcept
     {
         return type == BlockType::BLOCK_VALUE;
     }
 
-    union {
+    union
+    {
         int value;
-        aggregate_attribute *att;
+        aggregate_attribute* att;
     };
 
-    enum class BlockType { BLOCK_VALUE, BLOCK_ATTRIBUTE } type;
+    enum class BlockType
+    {
+        BLOCK_VALUE,
+        BLOCK_ATTRIBUTE
+    } type;
 };
 
-struct line_updater {
-    constexpr line_updater() noexcept : attribute(0), line(0) {}
+struct line_updater
+{
+    constexpr line_updater() noexcept
+      : attribute(0)
+      , line(0)
+    {}
 
     constexpr line_updater(int attribute_, int line_) noexcept
-        : attribute(attribute_),
-          line(line_)
-    {
-    }
+      : attribute(attribute_)
+      , line(line_)
+    {}
 
     int attribute;
     int line;
 };
 
-struct solver_stack {
-    inline solver_stack(const Model &model)
+struct solver_stack
+{
+    inline solver_stack(const Model& model)
     {
         atts.reserve(model.attributes.size());
 
@@ -239,19 +259,19 @@ struct solver_stack {
      */
     inline void reinit()
     {
-        for (auto &att : atts)
+        for (auto& att : atts)
             att.function_restore();
     }
 
-    template <typename T> scale_id solve(const T &options)
+    template<typename T>
+    scale_id solve(const T& options)
     {
         result.clear();
 
-        for (auto &block : function) {
+        for (auto& block : function) {
             if (block.is_value()) {
                 result.emplace_back(options(block.value));
-            }
-            else {
+            } else {
                 block.att->clear();
 
                 for (std::size_t i = 0; i != block.att->option_size(); ++i) {
@@ -268,16 +288,15 @@ struct solver_stack {
         return result[0];
     }
 
-    template <typename V>
-    void reduce(const V &options, std::vector<std::set<int>> &whitelist)
+    template<typename V>
+    void reduce(const V& options, std::vector<std::set<int>>& whitelist)
     {
         result.clear();
 
-        for (auto &block : function) {
+        for (auto& block : function) {
             if (block.is_value()) {
                 result.emplace_back(options(block.value));
-            }
-            else {
+            } else {
                 block.att->clear();
 
                 for (std::size_t i = 0; i != block.att->option_size(); ++i) {
@@ -333,9 +352,8 @@ struct solver_stack {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
         assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].saved_functions.size() < INT_MAX);
-        assert(line >= 0 and
-               line <
-                   static_cast<int>(atts[attribute].saved_functions.size()));
+        assert(line >= 0 and line < static_cast<int>(
+                                      atts[attribute].saved_functions.size()));
 
         return static_cast<int>(atts[attribute].saved_functions[line]);
     }
@@ -349,7 +367,7 @@ struct solver_stack {
                line < static_cast<int>(atts[attribute].functions.size()));
 
         atts[attribute].functions[line] =
-            atts[attribute].saved_functions[line];
+          atts[attribute].saved_functions[line];
     }
 
     inline void value_set(int attribute, int line, int scale_value) noexcept
@@ -387,13 +405,12 @@ struct solver_stack {
         atts[attribute].functions[line] = 0;
     }
 
-    void recursive_fill(const Model &model, std::size_t att, int &value_id)
+    void recursive_fill(const Model& model, std::size_t att, int& value_id)
     {
         if (model.attributes[att].is_basic()) {
             function.emplace_back(value_id++);
-        }
-        else {
-            for (auto &child : model.attributes[att].children)
+        } else {
+            for (auto& child : model.attributes[att].children)
                 recursive_fill(model, child, value_id);
 
             atts.emplace_back(model, att, static_cast<int>(atts.size()));
@@ -401,7 +418,7 @@ struct solver_stack {
         }
     }
 
-    void set_functions(const std::vector<std::vector<scale_id>> &functions)
+    void set_functions(const std::vector<std::vector<scale_id>>& functions)
     {
         assert(functions.size() == atts.size() &&
                "incoherent: internal error");
@@ -415,31 +432,31 @@ struct solver_stack {
         }
     }
 
-    void get_functions(std::vector<std::vector<scale_id>> &functions)
+    void get_functions(std::vector<std::vector<scale_id>>& functions)
     {
         functions.resize(atts.size());
 
         std::transform(
-            atts.cbegin(),
-            atts.cend(),
-            functions.begin(),
-            [](const aggregate_attribute &att) { return att.functions; });
+          atts.cbegin(),
+          atts.cend(),
+          functions.begin(),
+          [](const aggregate_attribute& att) { return att.functions; });
     }
 
     std::string string_functions() const
     {
         std::string ret;
 
-        for (const auto &att : atts)
+        for (const auto& att : atts)
             for (auto id : att.functions)
                 ret += id + '0';
 
         return ret;
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const solver_stack &s)
+    friend std::ostream& operator<<(std::ostream& os, const solver_stack& s)
     {
-        for (const auto &att : s.atts)
+        for (const auto& att : s.atts)
             for (auto id : att.functions)
                 os << id;
 
@@ -455,7 +472,8 @@ struct solver_stack {
     std::vector<int> result;
 };
 
-class for_each_model_solver {
+class for_each_model_solver
+{
 public:
     std::shared_ptr<context> m_context;
     solver_stack m_solver;
@@ -482,7 +500,7 @@ public:
     {
         vInfo(m_context, "[Number of models available]\n");
 
-        long double model_number{1};
+        long double model_number{ 1 };
         for (std::size_t i = 0, e = m_whitelist.size(); i != e; ++i) {
             vInfo(m_context,
                   "%d ^ %zu\n",
@@ -492,7 +510,7 @@ public:
                 vInfo(m_context, " * ");
 
             model_number *=
-                std::pow(m_solver.scale_size(i), m_whitelist[i].size());
+              std::pow(m_solver.scale_size(i), m_whitelist[i].size());
         }
 
         vInfo(m_context, " = %LF\n", model_number);
@@ -536,9 +554,9 @@ public:
     }
 
 public:
-    for_each_model_solver(std::shared_ptr<context> context, const Model &model)
-        : m_context(context)
-        , m_solver(model)
+    for_each_model_solver(std::shared_ptr<context> context, const Model& model)
+      : m_context(context)
+      , m_solver(model)
     {
         full();
         init_walkers(1);
@@ -555,10 +573,10 @@ public:
     }
 
     for_each_model_solver(std::shared_ptr<context> context,
-                          const Model &model,
+                          const Model& model,
                           int walker_number)
-        : m_context(context)
-        , m_solver(model)
+      : m_context(context)
+      , m_solver(model)
     {
         full();
         init_walkers(walker_number);
@@ -575,7 +593,7 @@ public:
     /** @e reduce is used to reduce the size of the problem. It removes
      * from the solver, all lines from the solver based on options.
      */
-    void reduce(const Options &options)
+    void reduce(const Options& options)
     {
         vInfo(m_context, "[Reducing problem size]");
 
@@ -633,8 +651,7 @@ public:
 
                 m_solver.value_increase(attribute, line);
                 return true;
-            }
-            else {
+            } else {
                 if (i == 0)
                     return false;
 
@@ -706,8 +723,7 @@ public:
                     }
 
                     return true;
-                }
-                else {
+                } else {
                     if (m_updaters[i].attribute + 1 <
                         m_solver.attribute_size()) {
                         ++m_updaters[i].attribute;
@@ -733,8 +749,7 @@ public:
                         }
 
                         return true;
-                    }
-                    else {
+                    } else {
                         if (i == 0)
                             return false;
 
@@ -745,17 +760,18 @@ public:
         }
     }
 
-    template <typename V> scale_id solve(const V &options)
+    template<typename V>
+    scale_id solve(const V& options)
     {
         return m_solver.solve(options);
     }
 
-    void set_functions(const std::vector<std::vector<scale_id>> &functions)
+    void set_functions(const std::vector<std::vector<scale_id>>& functions)
     {
         return m_solver.set_functions(functions);
     }
 
-    void get_functions(std::vector<std::vector<scale_id>> &functions)
+    void get_functions(std::vector<std::vector<scale_id>>& functions)
     {
         return m_solver.get_functions(functions);
     }
@@ -783,7 +799,7 @@ public:
     {
         std::size_t ret = 0;
 
-        for (const auto &att : m_whitelist)
+        for (const auto& att : m_whitelist)
             ret += att.size();
 
         return ret;
@@ -794,6 +810,18 @@ public:
         return m_solver.string_functions();
     }
 };
+
+inline void
+print(std::shared_ptr<context> ctx,
+      const std::vector<std::tuple<int, int, int>>& updaters) noexcept
+{
+    for (const auto& elem : updaters)
+        vInfo(ctx,
+              "[%d %d %d] ",
+              std::get<0>(elem),
+              std::get<1>(elem),
+              std::get<2>(elem));
+}
 
 } // namespace efyj
 

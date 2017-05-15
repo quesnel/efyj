@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 INRA
+/* Copyright (C) 2016-2017 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,9 @@ namespace efyj {
  * \tparam T Type of element
  * \tparam Containre Type of container to store two-dimensional array.
  */
-template <typename T, class Container = std::vector<T>> class matrix {
+template<typename T, class Container = std::vector<T>>
+class matrix
+{
 public:
     using container_type = Container;
     using value_type = T;
@@ -44,7 +46,7 @@ public:
     using const_iterator = typename container_type::const_iterator;
     using reverse_iterator = typename container_type::reverse_iterator;
     using const_reverse_iterator =
-        typename container_type::const_reverse_iterator;
+      typename container_type::const_reverse_iterator;
     using size_type = typename container_type::size_type;
 
 protected:
@@ -55,18 +57,18 @@ public:
     matrix();
 
     explicit matrix(size_type cols, size_type rows);
-    explicit matrix(size_type cols, size_type rows, const value_type &value);
+    explicit matrix(size_type cols, size_type rows, const value_type& value);
 
     ~matrix() = default;
 
-    matrix(const matrix &q) = default;
-    matrix(matrix &&q) = default;
+    matrix(const matrix& q) = default;
+    matrix(matrix&& q) = default;
 
-    matrix &operator=(const matrix &q) = default;
-    matrix &operator=(matrix &&q) = default;
+    matrix& operator=(const matrix& q) = default;
+    matrix& operator=(matrix&& q) = default;
 
     void resize(size_type cols, size_type rows);
-    void resize(size_type cols, size_type rows, const value_type &value);
+    void resize(size_type cols, size_type rows, const value_type& value);
 
     iterator begin() noexcept;
     const_iterator begin() const noexcept;
@@ -89,49 +91,47 @@ public:
     size_type rows() const noexcept;
     size_type columns() const noexcept;
 
-    void set(size_type col, size_type row, const value_type &x);
-    void set(size_type col, size_type row, value_type &&x);
+    void set(size_type col, size_type row, const value_type& x);
+    void set(size_type col, size_type row, value_type&& x);
 
-    template <class... Args>
-    void emplace(size_type col, size_type row, Args &&... args);
+    template<class... Args>
+    void emplace(size_type col, size_type row, Args&&... args);
 
     const_reference operator()(size_type col, size_type row) const;
     reference operator()(size_type col, size_type row);
 
-    void swap(matrix &c) noexcept(noexcept(swap(m_c, c.m_c)));
+    void swap(matrix& c) noexcept(noexcept(m_c.swap(c.m_c)));
 
 private:
     void m_check_index(size_type col, size_type) const;
 };
 
-template <typename T, class Container>
+template<typename T, class Container>
 matrix<T, Container>::matrix()
-    : m_c()
-    , m_rows(0)
-    , m_columns(0)
-{
-}
+  : m_c()
+  , m_rows(0)
+  , m_columns(0)
+{}
 
-template <typename T, class Container>
+template<typename T, class Container>
 matrix<T, Container>::matrix(size_type columns, size_type rows)
-    : m_c(rows * columns)
-    , m_rows(rows)
-    , m_columns(columns)
-{
-}
+  : m_c(rows * columns)
+  , m_rows(rows)
+  , m_columns(columns)
+{}
 
-template <typename T, class Container>
+template<typename T, class Container>
 matrix<T, Container>::matrix(size_type columns,
                              size_type rows,
-                             const value_type &value)
-    : m_c(rows * columns, value)
-    , m_rows(rows)
-    , m_columns(columns)
-{
-}
+                             const value_type& value)
+  : m_c(rows * columns, value)
+  , m_rows(rows)
+  , m_columns(columns)
+{}
 
-template <typename T, class Container>
-void matrix<T, Container>::resize(size_type cols, size_type rows)
+template<typename T, class Container>
+void
+matrix<T, Container>::resize(size_type cols, size_type rows)
 {
     container_type new_c(rows * cols);
 
@@ -147,10 +147,11 @@ void matrix<T, Container>::resize(size_type cols, size_type rows)
     std::swap(new_c, m_c);
 }
 
-template <typename T, class Container>
-void matrix<T, Container>::resize(size_type cols,
-                                  size_type rows,
-                                  const value_type &value)
+template<typename T, class Container>
+void
+matrix<T, Container>::resize(size_type cols,
+                             size_type rows,
+                             const value_type& value)
 {
     m_c.resize(rows * cols);
     m_rows = rows;
@@ -159,168 +160,172 @@ void matrix<T, Container>::resize(size_type cols,
     std::fill(std::begin(m_c), std::end(m_c), value);
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::iterator matrix<T, Container>::begin() noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::iterator
+matrix<T, Container>::begin() noexcept
 {
     return m_c.begin();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_iterator
 matrix<T, Container>::begin() const noexcept
 {
     return m_c.begin();
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::iterator matrix<T, Container>::end() noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::iterator
+matrix<T, Container>::end() noexcept
 {
     return m_c.end();
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::const_iterator matrix<T, Container>::end() const
-    noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::const_iterator
+matrix<T, Container>::end() const noexcept
 {
     return m_c.end();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::reverse_iterator
 matrix<T, Container>::rbegin() noexcept
 {
     return m_c.rbegin();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_reverse_iterator
 matrix<T, Container>::rbegin() const noexcept
 {
     return m_c.rbegin();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::reverse_iterator
 matrix<T, Container>::rend() noexcept
 {
     return m_c.rend();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_reverse_iterator
 matrix<T, Container>::rend() const noexcept
 {
     return m_c.rend();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_iterator
 matrix<T, Container>::cbegin() const noexcept
 {
     return m_c.cbegin();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_iterator
 matrix<T, Container>::cend() const noexcept
 {
     return m_c.cend();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_reverse_iterator
 matrix<T, Container>::crbegin() const noexcept
 {
     return m_c.crbegin();
 }
 
-template <typename T, class Container>
+template<typename T, class Container>
 typename matrix<T, Container>::const_reverse_iterator
 matrix<T, Container>::crend() const noexcept
 {
     return m_c.crend();
 }
 
-template <typename T, class Container>
-bool matrix<T, Container>::empty() const noexcept
+template<typename T, class Container>
+bool
+matrix<T, Container>::empty() const noexcept
 {
     return m_c.empty();
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::size_type matrix<T, Container>::size() const
-    noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::size_type
+matrix<T, Container>::size() const noexcept
 {
     return m_c.size();
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::size_type matrix<T, Container>::rows() const
-    noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::size_type
+matrix<T, Container>::rows() const noexcept
 {
     return m_rows;
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::size_type matrix<T, Container>::columns() const
-    noexcept
+template<typename T, class Container>
+typename matrix<T, Container>::size_type
+matrix<T, Container>::columns() const noexcept
 {
     return m_columns;
 }
 
-template <typename T, class Container>
-void matrix<T, Container>::set(size_type column,
-                               size_type row,
-                               const value_type &x)
+template<typename T, class Container>
+void
+matrix<T, Container>::set(size_type column, size_type row, const value_type& x)
 {
     m_check_index(column, row);
     m_c[row * m_columns + column] = x;
 }
 
-template <typename T, class Container>
-void matrix<T, Container>::set(size_type column, size_type row, value_type &&x)
+template<typename T, class Container>
+void
+matrix<T, Container>::set(size_type column, size_type row, value_type&& x)
 {
     m_check_index(column, row);
     m_c.emplace(std::begin(m_c) + (row * m_columns + column), std::move(x));
 }
 
-template <typename T, class Container>
-template <class... Args>
-void matrix<T, Container>::emplace(size_type column,
-                                   size_type row,
-                                   Args &&... args)
+template<typename T, class Container>
+template<class... Args>
+void
+matrix<T, Container>::emplace(size_type column, size_type row, Args&&... args)
 {
     m_check_index(column, row);
     m_c.emplace(std::begin(m_c) + (row * m_columns + column),
                 std::forward<Args>(args)...);
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::const_reference matrix<T, Container>::
-operator()(size_type column, size_type row) const
+template<typename T, class Container>
+typename matrix<T, Container>::const_reference
+matrix<T, Container>::operator()(size_type column, size_type row) const
 {
     m_check_index(column, row);
     return m_c[row * m_columns + column];
 }
 
-template <typename T, class Container>
-typename matrix<T, Container>::reference matrix<T, Container>::
-operator()(size_type column, size_type row)
+template<typename T, class Container>
+typename matrix<T, Container>::reference
+matrix<T, Container>::operator()(size_type column, size_type row)
 {
     m_check_index(column, row);
     return m_c[row * m_columns + column];
 }
 
-template <typename T, class Container>
-void matrix<T, Container>::swap(matrix &c) noexcept(noexcept(swap(m_c, c.m_c)))
+template<typename T, class Container>
+void
+matrix<T, Container>::swap(matrix& c) noexcept(noexcept(m_c.swap(c.m_c)))
 {
     std::swap(m_c, c.m_c);
     std::swap(m_columns, c.m_columns);
     std::swap(m_rows, c.m_rows);
 }
 
-template <typename T, class Container>
-void matrix<T, Container>::m_check_index(size_type column, size_type row) const
+template<typename T, class Container>
+void
+matrix<T, Container>::m_check_index(size_type column, size_type row) const
 {
     if (column >= m_columns or row >= m_rows)
 #ifdef __func__

@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2015-2017 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,9 +50,11 @@ namespace efyj {
  * }
  * @endcode
  */
-class cstream {
+class cstream
+{
 public:
-    enum colors {
+    enum colors
+    {
         Default = 0,
         Black,
         Red,
@@ -73,12 +75,20 @@ public:
         No_color_change
     };
 
-    enum setters { Reset = 0, Bold, Dim, Underlined, No_setter_change };
+    enum setters
+    {
+        Reset = 0,
+        Bold,
+        Dim,
+        Underlined,
+        No_setter_change
+    };
 
-    struct modifier {
+    struct modifier
+    {
         constexpr modifier(colors color_, setters setter_) noexcept
-            : color(color_),
-              setter(setter_)
+          : color(color_),
+            setter(setter_)
         {
         }
 
@@ -110,70 +120,145 @@ public:
     /// a previous write.
     bool error() const noexcept;
 
-    cstream(const cstream &) = delete;
-    cstream &operator=(const cstream &) = delete;
-    cstream(cstream &&) = delete;
-    cstream &operator=(cstream &&) = delete;
+    cstream(const cstream&) = delete;
+    cstream& operator=(const cstream&) = delete;
+    cstream(cstream&&) = delete;
+    cstream& operator=(cstream&&) = delete;
 
-    cstream &operator<<(char c) noexcept;
-    cstream &operator<<(unsigned char c) noexcept;
-    cstream &operator<<(signed char c) noexcept;
-    cstream &operator<<(const char *str) noexcept;
-    cstream &operator<<(const std::string &str) noexcept;
-    cstream &operator<<(unsigned int n) noexcept;
-    cstream &operator<<(signed int n) noexcept;
-    cstream &operator<<(unsigned long n) noexcept;
-    cstream &operator<<(signed long n) noexcept;
-    cstream &operator<<(unsigned long long n) noexcept;
-    cstream &operator<<(signed long long n) noexcept;
-    cstream &operator<<(long double n) noexcept;
-    cstream &operator<<(double n) noexcept;
-    cstream &operator<<(float n) noexcept;
-    cstream &operator<<(modifier m) noexcept;
+    cstream& operator<<(char c) noexcept;
+    cstream& operator<<(unsigned char c) noexcept;
+    cstream& operator<<(signed char c) noexcept;
+    cstream& operator<<(const char* str) noexcept;
+    cstream& operator<<(const std::string& str) noexcept;
+    cstream& operator<<(unsigned int n) noexcept;
+    cstream& operator<<(signed int n) noexcept;
+    cstream& operator<<(unsigned long n) noexcept;
+    cstream& operator<<(signed long n) noexcept;
+    cstream& operator<<(unsigned long long n) noexcept;
+    cstream& operator<<(signed long long n) noexcept;
+    cstream& operator<<(long double n) noexcept;
+    cstream& operator<<(double n) noexcept;
+    cstream& operator<<(float n) noexcept;
+    cstream& operator<<(modifier m) noexcept;
 
-    cstream &printf(const char *format, ...) noexcept;
-    cstream &printf(const char *format, va_list ap) noexcept;
+    cstream& printf(const char* format, ...) noexcept;
+    cstream& printf(const char* format, va_list ap) noexcept;
 
-    cstream &write(const char *buf, std::size_t count) noexcept;
-    cstream &write(const std::string &str) noexcept;
-    cstream &write(unsigned char c) noexcept;
+    cstream& write(const char* buf, std::size_t count) noexcept;
+    cstream& write(const std::string& str) noexcept;
+    cstream& write(unsigned char c) noexcept;
 
-    cstream &set_modifier(modifier m) noexcept;
-    cstream &reset_modifier() noexcept;
+    cstream& set_modifier(modifier m) noexcept;
+    cstream& reset_modifier() noexcept;
 
-    cstream &indent(unsigned space_number) noexcept;
+    cstream& indent(unsigned space_number) noexcept;
 
-    modifier def() const noexcept { return {Default, Reset}; }
-    modifier defb() const noexcept { return {Default, Bold}; }
-    modifier defd() const noexcept { return {Default, Dim}; }
-    modifier defu() const noexcept { return {Default, Underlined}; }
+    modifier def() const noexcept
+    {
+        return { Default, Reset };
+    }
+    modifier defb() const noexcept
+    {
+        return { Default, Bold };
+    }
+    modifier defd() const noexcept
+    {
+        return { Default, Dim };
+    }
+    modifier defu() const noexcept
+    {
+        return { Default, Underlined };
+    }
 
-    modifier red() const noexcept { return {Red, Reset}; }
-    modifier redb() const noexcept { return {Red, Bold}; }
-    modifier redd() const noexcept { return {Red, Dim}; }
-    modifier redu() const noexcept { return {Red, Underlined}; }
+    modifier red() const noexcept
+    {
+        return { Red, Reset };
+    }
+    modifier redb() const noexcept
+    {
+        return { Red, Bold };
+    }
+    modifier redd() const noexcept
+    {
+        return { Red, Dim };
+    }
+    modifier redu() const noexcept
+    {
+        return { Red, Underlined };
+    }
 
-    modifier green() const noexcept { return {Green, Reset}; }
-    modifier greenb() const noexcept { return {Green, Bold}; }
-    modifier greend() const noexcept { return {Green, Dim}; }
-    modifier greenu() const noexcept { return {Green, Underlined}; }
+    modifier green() const noexcept
+    {
+        return { Green, Reset };
+    }
+    modifier greenb() const noexcept
+    {
+        return { Green, Bold };
+    }
+    modifier greend() const noexcept
+    {
+        return { Green, Dim };
+    }
+    modifier greenu() const noexcept
+    {
+        return { Green, Underlined };
+    }
 
-    modifier yellow() const noexcept { return {Yellow, Reset}; }
-    modifier yellowb() const noexcept { return {Yellow, Bold}; }
-    modifier yellowd() const noexcept { return {Yellow, Dim}; }
-    modifier yellowu() const noexcept { return {Yellow, Underlined}; }
+    modifier yellow() const noexcept
+    {
+        return { Yellow, Reset };
+    }
+    modifier yellowb() const noexcept
+    {
+        return { Yellow, Bold };
+    }
+    modifier yellowd() const noexcept
+    {
+        return { Yellow, Dim };
+    }
+    modifier yellowu() const noexcept
+    {
+        return { Yellow, Underlined };
+    }
 
-    modifier magenta() const noexcept { return {Magenta, Reset}; }
-    modifier magentab() const noexcept { return {Magenta, Bold}; }
-    modifier magentad() const noexcept { return {Magenta, Dim}; }
-    modifier magentau() const noexcept { return {Magenta, Underlined}; }
+    modifier magenta() const noexcept
+    {
+        return { Magenta, Reset };
+    }
+    modifier magentab() const noexcept
+    {
+        return { Magenta, Bold };
+    }
+    modifier magentad() const noexcept
+    {
+        return { Magenta, Dim };
+    }
+    modifier magentau() const noexcept
+    {
+        return { Magenta, Underlined };
+    }
 
-    modifier cyan() const noexcept { return {Cyan, Reset}; }
-    modifier cyanb() const noexcept { return {Cyan, Bold}; }
-    modifier cyand() const noexcept { return {Cyan, Dim}; }
-    modifier cyanu() const noexcept { return {Cyan, Underlined}; }
+    modifier cyan() const noexcept
+    {
+        return { Cyan, Reset };
+    }
+    modifier cyanb() const noexcept
+    {
+        return { Cyan, Bold };
+    }
+    modifier cyand() const noexcept
+    {
+        return { Cyan, Dim };
+    }
+    modifier cyanu() const noexcept
+    {
+        return { Cyan, Underlined };
+    }
 
-    modifier reset() const noexcept { return {Default, Reset}; }
+    modifier reset() const noexcept
+    {
+        return { Default, Reset };
+    }
 
 private:
     /// \e fd the file descriptor.
@@ -196,14 +281,16 @@ private:
 // implementation part.
 //
 
-inline cstream &cstream::write(const std::string &str) noexcept
+inline cstream&
+cstream::write(const std::string& str) noexcept
 {
     return write(str.c_str(), str.size());
 }
 
-inline cstream &cstream::write(unsigned char c) noexcept
+inline cstream&
+cstream::write(unsigned char c) noexcept
 {
-    return write(reinterpret_cast<char *>(c), 1);
+    return write(reinterpret_cast<char*>(c), 1);
 }
 }
 
@@ -212,13 +299,13 @@ inline cstream &cstream::write(unsigned char c) noexcept
 
 namespace efyj {
 
-inline cstream &
-model_show(cstream &cs, const Model &model, std::size_t att, std::size_t space)
+inline cstream&
+model_show(cstream& cs, const Model& model, std::size_t att, std::size_t space)
 {
     cs.indent(space);
     cs << cs.red() << model.attributes[att].name << cs.def() << "\n";
 
-    for (const auto &sc : model.attributes[att].scale.scale) {
+    for (const auto& sc : model.attributes[att].scale.scale) {
         cs.indent(space);
         cs << "| " << sc.name << "\n";
     }
@@ -237,20 +324,20 @@ model_show(cstream &cs, const Model &model, std::size_t att, std::size_t space)
     return cs;
 }
 
-inline cstream &operator<<(cstream &cs, const Model &model) noexcept
+inline cstream&
+operator<<(cstream& cs, const Model& model) noexcept
 {
     ::model_show(cs, model, 0, 0);
 
     cs << "\n";
 
     long long int option_scale = 1, model_scale = 1;
-    for (const auto &att : model.attributes) {
+    for (const auto& att : model.attributes) {
         if (att.children.empty()) {
             cs << "- " << att.name << " is a leaf with " << att.scale_size()
                << " scale values\n";
             option_scale *= att.scale_size();
-        }
-        else {
+        } else {
             cs << "- " << att.name << " is a function with "
                << att.scale_size() << " scale values\n";
             model_scale *= att.scale_size();
@@ -263,8 +350,8 @@ inline cstream &operator<<(cstream &cs, const Model &model) noexcept
               << cs.red() << model_scale << cs.def() << "\n";
 }
 
-inline cstream &
-operator<<(cstream &os, const std::vector<std::vector<int>> &ordered) noexcept
+inline cstream&
+operator<<(cstream& os, const std::vector<std::vector<int>>& ordered) noexcept
 {
     for (std::size_t i = 0, e = ordered.size(); i != e; ++i) {
         os << i << ' ';
@@ -278,23 +365,24 @@ operator<<(cstream &os, const std::vector<std::vector<int>> &ordered) noexcept
     return os;
 }
 
-inline cstream &operator<<(cstream &os,
-                           const std::vector<line_updater> &updaters)
+inline cstream&
+operator<<(cstream& os, const std::vector<line_updater>& updaters)
 {
-    for (const auto &x : updaters)
+    for (const auto& x : updaters)
         os << x << ' ';
 
     return os;
 }
 
-inline cstream &operator<<(cstream &cs, const std::tuple<int, int, int> &att)
+inline cstream&
+operator<<(cstream& cs, const std::tuple<int, int, int>& att)
 {
     return cs << '[' << std::get<0>(att) << ',' << std::get<1>(att) << ','
               << std::get<2>(att) << ']';
 }
 
-inline cstream &operator<<(cstream &cs,
-                           const std::vector<std::tuple<int, int, int>> &atts)
+inline cstream&
+operator<<(cstream& cs, const std::vector<std::tuple<int, int, int>>& atts)
 {
     for (std::size_t i = 0, e = atts.size(); i != e; ++i) {
         cs << atts[i];
@@ -305,29 +393,32 @@ inline cstream &operator<<(cstream &cs,
     return cs;
 }
 
-inline cstream &operator<<(cstream &os, const line_updater &updater) noexcept
+inline cstream&
+operator<<(cstream& os, const line_updater& updater) noexcept
 {
     return os << '[' << updater.attribute << ',' << updater.line << ']';
 }
 
-inline cstream &operator<<(cstream &os, const aggregate_attribute &att)
+inline cstream&
+operator<<(cstream& os, const aggregate_attribute& att)
 {
     os << "f:";
-    for (const auto &x : att.functions)
+    for (const auto& x : att.functions)
         os << x;
 
     return os << " sz:" << att.scale;
 }
 
-inline cstream &operator<<(cstream &os,
-                           const std::vector<aggregate_attribute> &atts)
+inline cstream&
+operator<<(cstream& os, const std::vector<aggregate_attribute>& atts)
 {
-    for (const auto &x : atts)
+    for (const auto& x : atts)
         os << x << "\n";
 
     return os;
 }
-inline cstream &operator<<(cstream &os, const std::vector<scale_id> &v)
+inline cstream&
+operator<<(cstream& os, const std::vector<scale_id>& v)
 {
     for (auto x : v)
         os << x;
@@ -335,7 +426,8 @@ inline cstream &operator<<(cstream &os, const std::vector<scale_id> &v)
     return os;
 }
 
-inline cstream &operator<<(cstream &os, const Options &options) noexcept
+inline cstream&
+operator<<(cstream& os, const Options& options) noexcept
 {
     os << "option identifiers\n------------------\n";
 
@@ -345,8 +437,7 @@ inline cstream &operator<<(cstream &os, const Options &options) noexcept
                << options.departments[i] << '.' << options.years[i] << '.'
                << options.observed[i] << "\n";
         }
-    }
-    else {
+    } else {
         for (std::size_t i = 0, e = options.simulations.size(); i != e; ++i) {
             os << i << options.simulations[i] << options.departments[i] << '.'
                << options.years[i] << '.' << options.observed[i] << "\n";

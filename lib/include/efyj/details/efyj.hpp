@@ -31,25 +31,29 @@
 #include <efyj/details/model.hpp>
 #include <efyj/details/options.hpp>
 #include <efyj/details/post.hpp>
+#include <efyj/details/prediction-thread.hpp>
 #include <efyj/details/prediction.hpp>
 #include <efyj/details/private.hpp>
 #include <efyj/details/solver-stack.hpp>
 #include <efyj/details/utils.hpp>
+
 #include <fstream>
 
 namespace efyj {
 
 namespace details {
 
-inline std::string internal_error_format_message(const std::string &msg)
+inline std::string
+internal_error_format_message(const std::string& msg)
 {
     return stringf("Internal error: %s", msg.c_str());
 }
 
-inline std::string internal_error_format_message(const std::string &file,
-                                                 const std::string &function,
-                                                 int line,
-                                                 const std::string &msg)
+inline std::string
+internal_error_format_message(const std::string& file,
+                              const std::string& function,
+                              int line,
+                              const std::string& msg)
 {
     return stringf("Internal error at %s:%s line: %d, %s",
                    file.c_str(),
@@ -58,22 +62,24 @@ inline std::string internal_error_format_message(const std::string &file,
                    msg.c_str());
 }
 
-inline std::string file_error_format_message(const std::string &file)
+inline std::string
+file_error_format_message(const std::string& file)
 {
     return stringf("Access error to file `%s'", file.c_str());
 }
 
-inline std::string csv_parser_error_format(std::size_t line,
-                                           std::size_t column,
-                                           const std::string &filepath,
-                                           const std::string &msg)
+inline std::string
+csv_parser_error_format(std::size_t line,
+                        std::size_t column,
+                        const std::string& filepath,
+                        const std::string& msg)
 {
     if (filepath.empty())
         return stringf("CSV Error: %s", msg.c_str());
 
     if (line == 0u)
         return stringf(
-            "CSV Error: file `%s': %s", filepath.c_str(), msg.c_str());
+          "CSV Error: file `%s': %s", filepath.c_str(), msg.c_str());
     if (column == 0u)
         return stringf("CSV Error: file `%s' line %ld: %s",
                        filepath.c_str(),
@@ -87,21 +93,23 @@ inline std::string csv_parser_error_format(std::size_t line,
                    msg.c_str());
 }
 
-inline std::string dexi_parser_error_format(const std::string &msg)
+inline std::string
+dexi_parser_error_format(const std::string& msg)
 {
     return stringf("DEXI error: %s", msg.c_str());
 }
 
-inline std::string dexi_parser_error_format(const std::string &msg,
-                                            const std::string &filepath)
+inline std::string
+dexi_parser_error_format(const std::string& msg, const std::string& filepath)
 {
     return stringf("DEXI error: '%s' %s", filepath.c_str(), msg.c_str());
 }
 
-inline std::string dexi_parser_error_format(const std::string &msg,
-                                            int line,
-                                            int column,
-                                            int error)
+inline std::string
+dexi_parser_error_format(const std::string& msg,
+                         int line,
+                         int column,
+                         int error)
 {
     return stringf("DEXI error: error %s at %d:%d, error code: %d",
                    msg.c_str(),
@@ -110,200 +118,151 @@ inline std::string dexi_parser_error_format(const std::string &msg,
                    error);
 }
 
-inline std::string solver_error_format(const std::string &msg)
+inline std::string
+solver_error_format(const std::string& msg)
 {
     return stringf("Solver error: %s", msg.c_str());
 }
 
 } // namespace details
 
-inline internal_error::internal_error(const std::string &msg)
-    : std::logic_error(details::internal_error_format_message(msg))
-{
-}
+inline internal_error::internal_error(const std::string& msg)
+  : std::logic_error(details::internal_error_format_message(msg))
+{}
 
-inline internal_error::internal_error(const std::string &file,
-                                      const std::string &function,
+inline internal_error::internal_error(const std::string& file,
+                                      const std::string& function,
                                       int line,
-                                      const std::string &msg)
-    : std::logic_error(
-          details::internal_error_format_message(file, function, line, msg))
-    , pp_file(file)
-    , pp_function(function)
-    , pp_line(line)
-{
-}
+                                      const std::string& msg)
+  : std::logic_error(
+      details::internal_error_format_message(file, function, line, msg))
+  , pp_file(file)
+  , pp_function(function)
+  , pp_line(line)
+{}
 
-inline std::string internal_error::file() const
+inline std::string
+internal_error::file() const
 {
     return pp_file;
 }
 
-inline std::string internal_error::function() const
+inline std::string
+internal_error::function() const
 {
     return pp_function;
 }
 
-inline int internal_error::line() const
+inline int
+internal_error::line() const
 {
     return pp_line;
 }
 
-inline file_error::file_error(const std::string &file)
-    : std::runtime_error(details::file_error_format_message(file))
-    , pp_file(file)
-{
-}
+inline file_error::file_error(const std::string& file)
+  : std::runtime_error(details::file_error_format_message(file))
+  , pp_file(file)
+{}
 
-inline std::string file_error::file() const
+inline std::string
+file_error::file() const
 {
     return pp_file;
 }
 
-inline solver_error::solver_error(const std::string &msg)
-    : std::runtime_error(details::solver_error_format(msg))
-{
-}
+inline solver_error::solver_error(const std::string& msg)
+  : std::runtime_error(details::solver_error_format(msg))
+{}
 
-inline dexi_parser_error::dexi_parser_error(const std::string &msg)
-    : std::runtime_error(details::dexi_parser_error_format(msg))
-    , m_line(0)
-    , m_column(0)
-    , m_internal_error_code(0)
-    , m_message(msg)
-{
-}
+inline dexi_parser_error::dexi_parser_error(const std::string& msg)
+  : std::runtime_error(details::dexi_parser_error_format(msg))
+  , m_line(0)
+  , m_column(0)
+  , m_internal_error_code(0)
+  , m_message(msg)
+{}
 
-inline dexi_parser_error::dexi_parser_error(const std::string &msg,
-                                            const std::string &filepath)
-    : std::runtime_error(details::dexi_parser_error_format(filepath, msg))
-    , m_line(0)
-    , m_column(0)
-    , m_internal_error_code(0)
-    , m_filepath(filepath)
-    , m_message(msg)
-{
-}
-inline dexi_parser_error::dexi_parser_error(const std::string &msg,
+inline dexi_parser_error::dexi_parser_error(const std::string& msg,
+                                            const std::string& filepath)
+  : std::runtime_error(details::dexi_parser_error_format(filepath, msg))
+  , m_line(0)
+  , m_column(0)
+  , m_internal_error_code(0)
+  , m_filepath(filepath)
+  , m_message(msg)
+{}
+inline dexi_parser_error::dexi_parser_error(const std::string& msg,
                                             int line,
                                             int column,
                                             int error)
-    : std::runtime_error(
-          details::dexi_parser_error_format(msg, line, column, error))
-    , m_line(line)
-    , m_column(column)
-    , m_internal_error_code(error)
-    , m_message(msg)
-{
-}
+  : std::runtime_error(
+      details::dexi_parser_error_format(msg, line, column, error))
+  , m_line(line)
+  , m_column(column)
+  , m_internal_error_code(error)
+  , m_message(msg)
+{}
 
-inline csv_parser_error::csv_parser_error(const std::string &msg)
-    : std::runtime_error(
-          details::csv_parser_error_format(0, 0, std::string(), msg))
-    , m_line(0)
-    , m_column(0)
-    , m_msg(msg)
-{
-}
+inline csv_parser_error::csv_parser_error(const std::string& msg)
+  : std::runtime_error(
+      details::csv_parser_error_format(0, 0, std::string(), msg))
+  , m_line(0)
+  , m_column(0)
+  , m_msg(msg)
+{}
 
-inline csv_parser_error::csv_parser_error(const std::string &filepath,
-                                          const std::string &msg)
-    : std::runtime_error(details::csv_parser_error_format(0, 0, filepath, msg))
-    , m_line(0)
-    , m_column(0)
-    , m_filepath(filepath)
-    , m_msg(msg)
-{
-}
+inline csv_parser_error::csv_parser_error(const std::string& filepath,
+                                          const std::string& msg)
+  : std::runtime_error(details::csv_parser_error_format(0, 0, filepath, msg))
+  , m_line(0)
+  , m_column(0)
+  , m_filepath(filepath)
+  , m_msg(msg)
+{}
 
 inline csv_parser_error::csv_parser_error(std::size_t line,
-                                          const std::string &filepath,
-                                          const std::string &msg)
-    : std::runtime_error(
-          details::csv_parser_error_format(line, 0, filepath, msg))
-    , m_line(line)
-    , m_column(0)
-    , m_filepath(filepath)
-    , m_msg(msg)
-{
-}
+                                          const std::string& filepath,
+                                          const std::string& msg)
+  : std::runtime_error(
+      details::csv_parser_error_format(line, 0, filepath, msg))
+  , m_line(line)
+  , m_column(0)
+  , m_filepath(filepath)
+  , m_msg(msg)
+{}
 
 inline csv_parser_error::csv_parser_error(std::size_t line,
                                           std::size_t column,
-                                          const std::string &filepath,
-                                          const std::string &msg)
-    : std::runtime_error(
-          details::csv_parser_error_format(line, column, filepath, msg))
-    , m_line(line)
-    , m_column(column)
-    , m_filepath(filepath)
-    , m_msg(msg)
-{
-}
+                                          const std::string& filepath,
+                                          const std::string& msg)
+  : std::runtime_error(
+      details::csv_parser_error_format(line, column, filepath, msg))
+  , m_line(line)
+  , m_column(column)
+  , m_filepath(filepath)
+  , m_msg(msg)
+{}
 
-//     void set_options(const std::vector<std::string> &simulations,
-//                      const std::vector<std::string> &places,
-//                      const std::vector<int> &departments,
-//                      const std::vector<int> &years,
-//                      const std::vector<int> &observed,
-//                      const std::vector<int> &options)
-//     {
-//         // TODO add test to ensure simulation.size() == departments.size()
-//         // and etc.
-
-//         pp_options.set(
-//             simulations, places, departments, years, observed, options);
-//     }
-
-//     std::vector<result> compute_prediction(int line_limit,
-//                                            double time_limit,
-//                                            int reduce_mode) const
-//     {
-//         if (pp_options.empty() or pp_model.empty())
-//             throw std::logic_error(
-//                 "load options and model before trying prediction
-//                 function.");
-
-//         prediction_evaluator computer(pp_context, pp_model, pp_options);
-//         return computer.run(line_limit, time_limit, reduce_mode);
-//     }
-
-//     std::vector<result> compute_adjustment(int line_limit,
-//                                            double time_limit,
-//                                            int reduce_mode) const
-//     {
-//         if (pp_options.empty() or pp_model.empty())
-//             throw std::logic_error(
-//                 "load options and model before trying adjustment
-//                 function.");
-
-//         adjustment_evaluator computer(pp_context, pp_model, pp_options);
-//         return computer.run(line_limit, time_limit, reduce_mode);
-//     }
-
-//     void clear()
-//     {
-//         pp_options.clear();
-//         pp_model.clear();
-//     }
-// };
-
-inline void context::set_log_priority(int priority) noexcept
+inline void
+context::set_log_priority(int priority) noexcept
 {
     m_log_priority = priority;
 }
 
-inline int context::get_log_priority() const noexcept
+inline int
+context::get_log_priority() const noexcept
 {
     return m_log_priority;
 }
 
-inline void context::set_logger(std::unique_ptr<logger> fn) noexcept
+inline void
+context::set_logger(std::unique_ptr<logger> fn) noexcept
 {
     m_logger = std::move(fn);
 }
 
-inline void context::log(message_type type, const char *format, ...) noexcept
+inline void
+context::log(message_type type, const char* format, ...) noexcept
 {
     if (m_logger) {
         va_list args;
@@ -314,12 +273,13 @@ inline void context::log(message_type type, const char *format, ...) noexcept
     }
 }
 
-inline void context::log(int priority,
-                         const char *file,
-                         int line,
-                         const char *fn,
-                         const char *format,
-                         ...) noexcept
+inline void
+context::log(int priority,
+             const char* file,
+             int line,
+             const char* fn,
+             const char* format,
+             ...) noexcept
 {
     if (m_logger) {
         va_list args;
@@ -330,8 +290,8 @@ inline void context::log(int priority,
     }
 }
 
-Model make_model(std::shared_ptr<context> ctx,
-                 const std::string &model_file_path)
+Model
+make_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
 {
     Model model;
 
@@ -346,9 +306,10 @@ Model make_model(std::shared_ptr<context> ctx,
     return model;
 }
 
-Options make_options(std::shared_ptr<context> ctx,
-                     Model &model,
-                     const std::string &options_file_path)
+Options
+make_options(std::shared_ptr<context> ctx,
+             Model& model,
+             const std::string& options_file_path)
 {
     Options options;
 
@@ -363,8 +324,8 @@ Options make_options(std::shared_ptr<context> ctx,
     return options;
 }
 
-inline model_data extract_model(std::shared_ptr<context> ctx,
-                                const std::string &model_file_path)
+inline model_data
+extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     model_data ret;
@@ -375,7 +336,7 @@ inline model_data extract_model(std::shared_ptr<context> ctx,
         auto key = ret.attributes.emplace(model.attributes[i].name,
                                           std::vector<std::string>());
 
-        for (auto &scale : model.attributes[i].scale.scale)
+        for (auto& scale : model.attributes[i].scale.scale)
             key.first->second.emplace_back(scale.name);
 
         if (model.attributes[i].is_basic())
@@ -385,9 +346,10 @@ inline model_data extract_model(std::shared_ptr<context> ctx,
     return ret;
 }
 
-inline simulation_results simulate(std::shared_ptr<context> ctx,
-                                   const std::string &model_file_path,
-                                   const std::string &options_file_path)
+inline simulation_results
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -410,9 +372,10 @@ inline simulation_results simulate(std::shared_ptr<context> ctx,
     return ret;
 }
 
-inline simulation_results simulate(std::shared_ptr<context> ctx,
-                                   const std::string &model_file_path,
-                                   const options_data &opts)
+inline simulation_results
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const options_data& opts)
 {
     auto model = make_model(ctx, model_file_path);
     Options options;
@@ -436,9 +399,10 @@ inline simulation_results simulate(std::shared_ptr<context> ctx,
 
     return ret;
 }
-inline evaluation_results evaluate(std::shared_ptr<context> ctx,
-                                   const std::string &model_file_path,
-                                   const std::string &options_file_path)
+inline evaluation_results
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -451,7 +415,7 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
     ret.simulations.resize(max_opt);
     ret.observations.resize(max_opt);
     ret.confusion.resize(
-        model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
+      model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
 
     for (std::size_t opt = 0; opt != max_opt; ++opt) {
         ret.observations[opt] = options.observed[opt];
@@ -461,10 +425,10 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
 
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
     ret.squared_weighted_kappa =
-        kappa_c.squared(ret.observations, ret.simulations);
+      kappa_c.squared(ret.observations, ret.simulations);
 
     ret.linear_weighted_kappa =
-        kappa_c.linear(ret.observations, ret.simulations);
+      kappa_c.linear(ret.observations, ret.simulations);
 
     for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
         for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
@@ -473,9 +437,10 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
     return ret;
 }
 
-inline evaluation_results evaluate(std::shared_ptr<context> ctx,
-                                   const std::string &model_file_path,
-                                   const options_data &opts)
+inline evaluation_results
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const options_data& opts)
 {
     auto model = make_model(ctx, model_file_path);
     Options options;
@@ -490,7 +455,7 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
     ret.simulations.resize(max_opt);
     ret.observations.resize(max_opt);
     ret.confusion.resize(
-        model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
+      model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
 
     for (std::size_t opt = 0; opt != max_opt; ++opt) {
         ret.observations[opt] = options.observed[opt];
@@ -500,10 +465,10 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
 
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
     ret.squared_weighted_kappa =
-        kappa_c.squared(ret.observations, ret.simulations);
+      kappa_c.squared(ret.observations, ret.simulations);
 
     ret.linear_weighted_kappa =
-        kappa_c.linear(ret.observations, ret.simulations);
+      kappa_c.linear(ret.observations, ret.simulations);
 
     for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
         for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
@@ -512,17 +477,54 @@ inline evaluation_results evaluate(std::shared_ptr<context> ctx,
     return ret;
 }
 
-inline options_data extract_options(std::shared_ptr<context> ctx,
-                                    const std::string &model_file_path)
+std::vector<result>
+adjustment(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
+           bool reduce,
+           int limit,
+           unsigned int thread)
+{
+    auto model = make_model(ctx, model_file_path);
+    auto options = make_options(ctx, model, options_file_path);
+
+    efyj::adjustment_evaluator adj(ctx, model, options);
+    return adj.run(limit, 0.0, reduce);
+}
+
+std::vector<result>
+prediction(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
+           bool reduce,
+           int limit,
+           unsigned int thread)
+{
+    auto model = make_model(ctx, model_file_path);
+    auto options = make_options(ctx, model, options_file_path);
+
+    if (thread <= 1) {
+        efyj::prediction_evaluator pre(ctx, model, options);
+        return pre.run(limit, 0.0, reduce);
+    }
+
+    efyj::prediction_thread_evaluator pre(ctx, model, options);
+    return pre.run(limit, 0.0, reduce, thread);
+}
+
+inline options_data
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
 
     return model.write_options();
 }
 
-inline options_data extract_options(std::shared_ptr<context> ctx,
-                                    const std::string &model_file_path,
-                                    const std::string &options_file_path)
+inline options_data
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);

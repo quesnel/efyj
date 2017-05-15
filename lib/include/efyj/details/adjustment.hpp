@@ -31,10 +31,11 @@
 
 namespace efyj {
 
-struct adjustment_evaluator {
+struct adjustment_evaluator
+{
     std::shared_ptr<context> m_context;
-    const Model &m_model;
-    const Options &m_options;
+    const Model& m_model;
+    const Options& m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
     std::vector<std::tuple<int, int, int>> m_updaters;
@@ -46,26 +47,26 @@ struct adjustment_evaluator {
     unsigned long long int m_loop = 0;
 
     adjustment_evaluator(std::shared_ptr<context> context,
-                         const Model &model,
-                         const Options &options);
+                         const Model& model,
+                         const Options& options);
 
-    std::vector<result>
-    run(int line_limit, double time_limit, int reduce_mode);
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode);
 };
 
 inline adjustment_evaluator::adjustment_evaluator(
-    std::shared_ptr<context> context,
-    const Model &model,
-    const Options &options)
-    : m_context(context)
-    , m_model(model)
-    , m_options(options)
-    , simulated(options.options.rows())
-    , observed(options.options.rows())
-    , solver(context, model)
-    , kappa_c(model.attributes[0].scale.size())
-{
-}
+  std::shared_ptr<context> context,
+  const Model& model,
+  const Options& options)
+  : m_context(context)
+  , m_model(model)
+  , m_options(options)
+  , simulated(options.options.rows())
+  , observed(options.options.rows())
+  , solver(context, model)
+  , kappa_c(model.attributes[0].scale.size())
+{}
 
 inline std::vector<result>
 adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
@@ -84,7 +85,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
            "adjustment can not determine function");
 
     const std::size_t max_step =
-        max_value(line_limit, solver.get_attribute_line_tuple_limit());
+      max_value(line_limit, solver.get_attribute_line_tuple_limit());
     const std::size_t max_opt = m_options.simulations.size();
 
     assert(max_step > 0 and "adjustment: can not determine limit");
@@ -115,7 +116,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
         ret.back().kappa = kappa;
         ret.back().time =
-            std::chrono::duration<double>(m_end - m_start).count();
+          std::chrono::duration<double>(m_end - m_start).count();
         ret.back().kappa_computed = 1;
         ret.back().function_computed = m_options.size();
     }
@@ -130,6 +131,8 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
         do {
             solver.init_next_value();
+            printf("\r");
+            printf("%lu ", loop);
 
             do {
                 for (std::size_t opt = 0; opt != max_opt; ++opt) {
@@ -163,8 +166,8 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
               loop,
               std::chrono::duration<double>(m_end - m_start).count());
 
-        // TODO
-        // m_context->info() << m_updaters << " |\n";
+        print(m_context, m_updaters);
+        vInfo(m_context, "\n");
     }
 
     return ret;

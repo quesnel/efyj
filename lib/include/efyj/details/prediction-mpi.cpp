@@ -36,10 +36,11 @@
 
 namespace efyj {
 
-void pack_data(long long int loop,
-               double kappa,
-               int step,
-               const std::vector<std::tuple<int, int, int>> &updaters)
+void
+pack_data(long long int loop,
+          double kappa,
+          int step,
+          const std::vector<std::tuple<int, int, int>>& updaters)
 {
     std::vector<int> linearupdaters;
     linearupdaters.reserve(updaters.size() * 3);
@@ -65,9 +66,9 @@ void pack_data(long long int loop,
              MPI_COMM_WORLD);
 
     MPI_Pack(
-        &step, 1, MPI_INT, buffer.data(), buffer.size(), &pos, MPI_COMM_WORLD);
+      &step, 1, MPI_INT, buffer.data(), buffer.size(), &pos, MPI_COMM_WORLD);
 
-    for (const auto &updater : updaters) {
+    for (const auto& updater : updaters) {
         linearupdaters.push_back(std::get<0>(updater));
         linearupdaters.push_back(std::get<1>(updater));
         linearupdaters.push_back(std::get<2>(updater));
@@ -84,12 +85,13 @@ void pack_data(long long int loop,
     MPI_Send(buffer.data(), buffer.size(), MPI_PACKED, 0, 0, MPI_COMM_WORLD);
 }
 
-void unpack_data(long long int *loop,
-                 double *kappa,
-                 int *step,
-                 std::vector<std::tuple<int, int, int>> *updaters,
-                 int source,
-                 int tag)
+void
+unpack_data(long long int* loop,
+            double* kappa,
+            int* step,
+            std::vector<std::tuple<int, int, int>>* updaters,
+            int source,
+            int tag)
 {
     MPI_Status status;
     std::vector<char> buffer(8192);
@@ -119,7 +121,7 @@ void unpack_data(long long int *loop,
                MPI_DOUBLE,
                MPI_COMM_WORLD);
     MPI_Unpack(
-        buffer.data(), buffer.size(), &pos, step, 1, MPI_INT, MPI_COMM_WORLD);
+      buffer.data(), buffer.size(), &pos, step, 1, MPI_INT, MPI_COMM_WORLD);
 
     std::vector<int> linearupdaters(*step * 3);
 
@@ -139,11 +141,13 @@ void unpack_data(long long int *loop,
     }
 }
 
-class Results {
+class Results
+{
     std::shared_ptr<Context> m_context;
     std::mutex m_container_mutex;
 
-    struct Result {
+    struct Result
+    {
         double kappa;
         unsigned long loop;
         std::vector<std::tuple<int, int, int>> updaters;
@@ -156,9 +160,9 @@ class Results {
 
 public:
     Results(std::shared_ptr<Context> context, unsigned int threads)
-        : m_context(context)
-        , m_threads(threads)
-        , m_start(std::chrono::system_clock::now())
+      : m_context(context)
+      , m_threads(threads)
+      , m_start(std::chrono::system_clock::now())
     {
         m_results.reserve(32);
         m_results.resize(1u);
@@ -171,7 +175,7 @@ public:
     void emplace_result(int i,
                         double kappa,
                         unsigned long loop,
-                        const std::vector<std::tuple<int, int, int>> &updaters)
+                        const std::vector<std::tuple<int, int, int>>& updaters)
     {
         assert(static_cast<std::size_t>(i) < m_level.size() and
                static_cast<std::size_t>(i) < m_results.size());
@@ -184,7 +188,7 @@ public:
     void push(int step,
               double kappa,
               unsigned long loop,
-              const std::vector<std::tuple<int, int, int>> &updaters)
+              const std::vector<std::tuple<int, int, int>>& updaters)
     {
         std::lock_guard<std::mutex> locker(m_container_mutex);
 
@@ -197,8 +201,7 @@ public:
             m_results.emplace_back();
 
             emplace_result(m_results.size() - 1, kappa, loop, updaters);
-        }
-        else {
+        } else {
             if (m_results[step - 1].kappa < kappa)
                 emplace_result(step - 1, kappa, loop, updaters);
             else
@@ -219,7 +222,8 @@ public:
 };
 
 template <typename Solver>
-bool init_worker(Solver &solver, const int thread_id)
+bool
+init_worker(Solver& solver, const int thread_id)
 {
     for (auto i = 0; i < thread_id; ++i)
         if (solver.next_line() == false)
@@ -228,12 +232,13 @@ bool init_worker(Solver &solver, const int thread_id)
     return true;
 }
 
-void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
-                                    const Model &model,
-                                    const Options &options,
-                                    const int thread_id,
-                                    const int thread_number,
-                                    bool &stop)
+void
+parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
+                               const Model& model,
+                               const Options& options,
+                               const int thread_id,
+                               const int thread_number,
+                               bool& stop)
 {
     std::vector<int> m_globalsimulated(options.observated.size());
     std::vector<int> m_simulated(options.observated.size());
@@ -279,7 +284,7 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
                         m_simulated[x] = solver.solve(options.options.row(x));
 
                     auto ret =
-                        kappa_c.squared(options.observated, m_simulated);
+                      kappa_c.squared(options.observated, m_simulated);
                     m_loop++;
 
                     if (ret > kappa) {
@@ -291,7 +296,7 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
 
                 solver.set_functions(m_functions);
                 m_globalsimulated[opt] =
-                    solver.solve(options.options.row(opt));
+                  solver.solve(options.options.row(opt));
             }
 
             auto ret = kappa_c.squared(options.observated, m_globalsimulated);
@@ -317,10 +322,11 @@ void parallel_mpi_prediction_worker(std::shared_ptr<Context> context,
     stop = true;
 }
 
-void synchronize_result(std::shared_ptr<Context> context,
-                        int /*rank*/,
-                        int world,
-                        bool &stop)
+void
+synchronize_result(std::shared_ptr<Context> context,
+                   int /*rank*/,
+                   int world,
+                   bool& stop)
 {
     Results results(context, world);
 
@@ -333,12 +339,8 @@ void synchronize_result(std::shared_ptr<Context> context,
         int step;
         std::vector<std::tuple<int, int, int>> updaters;
 
-        unpack_data(&loop,
-                    &kappa,
-                    &step,
-                    &updaters,
-                    status.MPI_SOURCE,
-                    status.MPI_TAG);
+        unpack_data(
+          &loop, &kappa, &step, &updaters, status.MPI_SOURCE, status.MPI_TAG);
 
         context->info().printf("Receives results from %d\n",
                                status.MPI_SOURCE);
@@ -358,11 +360,12 @@ void synchronize_result(std::shared_ptr<Context> context,
     }
 }
 
-void prediction_mpi(std::shared_ptr<Context> context,
-                    const Model &model,
-                    const Options &options,
-                    int rank,
-                    int world)
+void
+prediction_mpi(std::shared_ptr<Context> context,
+               const Model& model,
+               const Options& options,
+               int rank,
+               int world)
 {
     bool stop = false;
 
@@ -376,7 +379,7 @@ void prediction_mpi(std::shared_ptr<Context> context,
                         << " processors]" << context->info().def() << '\n';
 
         std::thread sync(
-            synchronize_result, context, rank, world, std::ref(stop));
+          synchronize_result, context, rank, world, std::ref(stop));
         sync.detach();
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 INRA
+/* Copyright (C) 2016-2017 INRA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -39,27 +39,29 @@ namespace efyj {
 
 inline constexpr std::size_t max_value(int need, std::size_t real) noexcept;
 
-std::string stringf(const char *format, ...) noexcept EFYJ_GCC_PRINTF(1, 2);
+std::string stringf(const char* format, ...) noexcept EFYJ_GCC_PRINTF(1, 2);
 
-std::string vstringf(const char *format, va_list) noexcept;
+std::string vstringf(const char* format, va_list) noexcept;
 
-struct scope_exit {
+struct scope_exit
+{
     scope_exit(std::function<void(void)> fct)
-        : fct(fct)
+      : fct(fct)
     {
     }
 
-    ~scope_exit() { fct(); }
+    ~scope_exit()
+    {
+        fct();
+    }
 
     std::function<void(void)> fct;
 };
 
 /** \e make_new_name is used to create new file path with a suffix composed
- *with
- * an identifier.
- * \param filepath Original filepath to be updated.  \e filepath can be empty
- *or
- * have and extension.
+ * with an identifier.
+ * \param filepath Original filepath to be updated.  \e filepath can be empty *
+ * or have and extension.
  * \param id Identifier to be attached to the origin filepath.
  * \return A new string represents modified \e filepath with the \e identifier.
  *
@@ -72,7 +74,7 @@ struct scope_exit {
  * \endcode
  * \endexample
  */
-inline std::string make_new_name(const std::string &filepath,
+inline std::string make_new_name(const std::string& filepath,
                                  unsigned int id) noexcept;
 
 /**
@@ -81,24 +83,27 @@ inline std::string make_new_name(const std::string &filepath,
  */
 unsigned get_hardware_concurrency() noexcept;
 
-void tokenize(const std::string &str,
-              std::vector<std::string> &tokens,
-              const std::string &delim,
+void tokenize(const std::string& str,
+              std::vector<std::string>& tokens,
+              const std::string& delim,
               bool trimEmpty);
 
-inline constexpr std::size_t max_value(int need, std::size_t real) noexcept
+inline constexpr std::size_t
+max_value(int need, std::size_t real) noexcept
 {
     return need <= 0 ? real : std::min(static_cast<std::size_t>(need), real);
 }
 
-inline unsigned hardware_concurrency_from_std() noexcept
+inline unsigned
+hardware_concurrency_from_std() noexcept
 {
     unsigned ret = std::thread::hardware_concurrency();
 
     return ret == 0 ? 1 : ret;
 }
 
-inline std::string vstringf(const char *format, va_list ap) noexcept
+inline std::string
+vstringf(const char* format, va_list ap) noexcept
 {
     try {
         std::string buffer(256, '\0');
@@ -115,14 +120,14 @@ inline std::string vstringf(const char *format, va_list ap) noexcept
 
             buffer.resize(sz + 1);
         }
-    }
-    catch (const std::exception & /*e*/) {
+    } catch (const std::exception& /*e*/) {
     }
 
     return std::string();
 }
 
-inline std::string stringf(const char *format, ...) noexcept
+inline std::string
+stringf(const char* format, ...) noexcept
 {
     va_list ap;
 
@@ -133,7 +138,8 @@ inline std::string stringf(const char *format, ...) noexcept
     return ret;
 }
 
-inline unsigned get_hardware_concurrency() noexcept
+inline unsigned
+get_hardware_concurrency() noexcept
 {
 #ifdef __unix__
     long nb_procs = ::sysconf(_SC_NPROCESSORS_ONLN);
@@ -146,8 +152,8 @@ inline unsigned get_hardware_concurrency() noexcept
 #endif
 }
 
-inline std::string make_new_name(const std::string &filepath,
-                                 unsigned int id) noexcept
+inline std::string
+make_new_name(const std::string& filepath, unsigned int id) noexcept
 {
     try {
         std::ostringstream os;
@@ -171,16 +177,16 @@ inline std::string make_new_name(const std::string &filepath,
         os << filepath.substr(0, dotposition) << '-' << id
            << filepath.substr(dotposition + 1);
         return os.str();
-    }
-    catch (const std::bad_alloc &) {
+    } catch (const std::bad_alloc&) {
         return std::string();
     }
 }
 
-inline void tokenize(const std::string &str,
-                     std::vector<std::string> &tokens,
-                     const std::string &delim,
-                     bool trimEmpty)
+inline void
+tokenize(const std::string& str,
+         std::vector<std::string>& tokens,
+         const std::string& delim,
+         bool trimEmpty)
 {
     tokens.clear();
     std::string::size_type pos, lastPos = 0, length = str.length();
@@ -195,7 +201,7 @@ inline void tokenize(const std::string &str,
         }
         if (pos != lastPos || !trimEmpty)
             tokens.push_back(
-                value_type(str.data() + lastPos, (size_type)pos - lastPos));
+              value_type(str.data() + lastPos, (size_type)pos - lastPos));
         lastPos = pos + 1;
     }
 }
