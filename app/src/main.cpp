@@ -19,6 +19,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <EASTL/string.h>
+
 #include <efyj/efyj.hpp>
 #include <fstream>
 #include <getopt.h>

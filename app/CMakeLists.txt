@@ -1,6 +1,6 @@
 add_executable(app src/main.cpp)
 
-target_link_libraries(app libefyj eigen3 expat threads)
+target_link_libraries(app libefyj eigen3 expat threads ${EASTL_LIBRARY})
 
 set_property(TARGET app PROPERTY CXX_STANDARD 14)
 
@@ -12,5 +12,4 @@ set_target_properties(app PROPERTIES
 install(TARGETS app
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+  RUNTIME DESTINATION bin)
