@@ -22,7 +22,9 @@
 #include <EASTL/string.h>
 
 #include <efyj/efyj.hpp>
-#include <fstream>
+
+#include <cstdio>
+
 #include <getopt.h>
 #include <unistd.h>
 
@@ -206,10 +208,18 @@ main(int argc, char* argv[])
     while ((opt = ::getopt(argc, argv, "j::m:o:l:e:phvra")) != -1) {
         switch (opt) {
         case 'j':
-            if (::optarg)
-                threads = std::stoi(::optarg);
-            else
-                threads = 1;
+            if (::optarg) {
+                int read = std::sscanf(::optarg, "%u", &threads);
+                if (read != 1) {
+                    fprintf(stderr, "Fail to read thread argument '%s'. Assumed"
+                            "1.\n", ::optarg);
+                    threads = 1;
+                } else if (threads == 0) {
+                    fprintf(stderr, "Bad thread argument '%s'. Assumed 1.\n",
+                            ::optarg);
+                    threads = 1;
+                }
+            }
             break;
         case 'e':
             extractfile.assign(::optarg);
@@ -222,8 +232,18 @@ main(int argc, char* argv[])
             optionfilepath.assign(::optarg);
             break;
         case 'l':
-            if (::optarg)
-                limit = std::stoi(::optarg);
+            if (::optarg) {
+                int read = std::sscanf(::optarg, "%d", &limit);
+                if (read != 1) {
+                    fprintf(stderr, "Fail to read limit argument '%s'. Assumed"
+                            " 0 (infinity).\n", ::optarg);
+                    limit = 0;
+                } else if (limit < 0) {
+                    fprintf(stderr, "Bad thread argument '%s'. Assumed 0"
+                            " (infinity).\n", ::optarg);
+                    limit = 0;
+                }
+            }
             break;
         case 'r':
             reduce = true;
