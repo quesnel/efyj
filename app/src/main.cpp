@@ -19,14 +19,79 @@
  * IN THE SOFTWARE.
  */
 
-#include <EASTL/string.h>
-
 #include <efyj/efyj.hpp>
 
-#include <cstdio>
-
-#include <getopt.h>
+#ifdef __unix__
 #include <unistd.h>
+#endif
+
+namespace EA {
+namespace StdC {
+
+int
+Vsnprintf(char8_t* p, size_t n, const char8_t* pFormat, va_list arguments)
+{
+#ifdef _MSC_VER
+    return vsnprintf_s(p, n, _TRUNCATE, pFormat, arguments);
+#else
+    return vsnprintf(p, n, pFormat, arguments);
+#endif
+}
+}
+}
+
+void*
+operator new[](size_t size,
+               const char* pName,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    // #ifndef NDEBUG
+    //     fprintf(stderr,
+    //             "%zu in %s (flags: %d debug flags: %u) from file %s:%d\n",
+    //             size,
+    //             pName,
+    //             flags,
+    //             debugFlags,
+    //             file,
+    //             line);
+    // #endif
+
+    return malloc(size);
+}
+
+void*
+operator new[](size_t size,
+               size_t alignment,
+               size_t alignmentOffset,
+               const char* pName,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    // #ifndef NDEBUG
+    //     fprintf(stderr,
+    //             "%zu (alignment: %zu offset: %zu) in %s (flags: %d debug
+    //             flags: "
+    //             "%u) from file %s:%d\n",
+    //             size,
+    //             alignment,
+    //             alignmentOffset,
+    //             pName,
+    //             flags,
+    //             debugFlags,
+    //             file,
+    //             line);
+    // #endif
+
+    if ((alignmentOffset % alignment) == 0)
+        return aligned_alloc(alignment, size);
+
+    return malloc(size);
+}
 
 namespace {
 
@@ -61,9 +126,9 @@ version() noexcept
 }
 
 int
-extract(std::shared_ptr<efyj::context> ctx,
-        const std::string& model,
-        const std::string& output) noexcept
+extract(eastl::shared_ptr<efyj::context> ctx,
+        const eastl::string& model,
+        const eastl::string& output) noexcept
 {
     try {
         auto opts = efyj::extract_options(ctx, model);
@@ -82,9 +147,9 @@ extract(std::shared_ptr<efyj::context> ctx,
 }
 
 int
-adjustment(std::shared_ptr<efyj::context> ctx,
-           const std::string& model,
-           const std::string& option,
+adjustment(eastl::shared_ptr<efyj::context> ctx,
+           const eastl::string& model,
+           const eastl::string& option,
            bool reduce,
            int limit,
            unsigned int thread) noexcept
@@ -107,9 +172,9 @@ adjustment(std::shared_ptr<efyj::context> ctx,
 }
 
 int
-prediction(std::shared_ptr<efyj::context> ctx,
-           const std::string& model,
-           const std::string& option,
+prediction(eastl::shared_ptr<efyj::context> ctx,
+           const eastl::string& model,
+           const eastl::string& option,
            bool reduce,
            int limit,
            unsigned int thread) noexcept
@@ -197,7 +262,7 @@ main(int argc, char* argv[])
         PREDICTION = 1 << 3
     };
 
-    std::string modelfilepath, optionfilepath, extractfile;
+    eastl::string modelfilepath, optionfilepath, extractfile;
 
     unsigned int mode = 0;
     unsigned int threads = 0;
@@ -211,11 +276,14 @@ main(int argc, char* argv[])
             if (::optarg) {
                 int read = std::sscanf(::optarg, "%u", &threads);
                 if (read != 1) {
-                    fprintf(stderr, "Fail to read thread argument '%s'. Assumed"
-                            "1.\n", ::optarg);
+                    fprintf(stderr,
+                            "Fail to read thread argument '%s'. Assumed"
+                            "1.\n",
+                            ::optarg);
                     threads = 1;
                 } else if (threads == 0) {
-                    fprintf(stderr, "Bad thread argument '%s'. Assumed 1.\n",
+                    fprintf(stderr,
+                            "Bad thread argument '%s'. Assumed 1.\n",
                             ::optarg);
                     threads = 1;
                 }
@@ -235,12 +303,16 @@ main(int argc, char* argv[])
             if (::optarg) {
                 int read = std::sscanf(::optarg, "%d", &limit);
                 if (read != 1) {
-                    fprintf(stderr, "Fail to read limit argument '%s'. Assumed"
-                            " 0 (infinity).\n", ::optarg);
+                    fprintf(stderr,
+                            "Fail to read limit argument '%s'. Assumed"
+                            " 0 (infinity).\n",
+                            ::optarg);
                     limit = 0;
                 } else if (limit < 0) {
-                    fprintf(stderr, "Bad thread argument '%s'. Assumed 0"
-                            " (infinity).\n", ::optarg);
+                    fprintf(stderr,
+                            "Bad thread argument '%s'. Assumed 0"
+                            " (infinity).\n",
+                            ::optarg);
                     limit = 0;
                 }
             }
@@ -271,9 +343,9 @@ main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    auto ctx = std::make_shared<efyj::context>();
+    auto ctx = eastl::make_shared<efyj::context>();
     ctx->set_log_priority(7);
-    ctx->set_logger(std::make_unique<console_logger>());
+    ctx->set_logger(eastl::make_unique<console_logger>());
 
     int return_value = EXIT_SUCCESS;
     if ((mode & EXTRACT)) {

@@ -19,74 +19,141 @@
  * IN THE SOFTWARE.
  */
 
+#include <efyj/efyj.hpp>
+
+#include "model.hpp"
+#include "options.hpp"
+#include "post.hpp"
+#include "solver-stack.hpp"
+#include "utils.hpp"
+
+#include <iostream>
+#include <random>
+
+#include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <efyj/efyj.hpp>
-#include <fstream>
-#include <random>
-#include <sstream>
 
 #if defined(__unix__)
 #include <unistd.h>
+#if 0
 #elif defined(__WIN32__)
 #include <direct.h>
 #include <io.h>
-#include <stdio.h>
 #endif
+#endif
+
+namespace EA {
+namespace StdC {
+
+int
+Vsnprintf(char8_t* p, size_t n, const char8_t* pFormat, va_list arguments)
+{
+#ifdef _MSC_VER
+    return vsnprintf_s(p, n, _TRUNCATE, pFormat, arguments);
+#else
+    return vsnprintf(p, n, pFormat, arguments);
+#endif
+}
+}
+}
+
+void*
+operator new[](size_t size,
+               const char* pName,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    // #ifndef NDEBUG
+    //     fprintf(stderr,
+    //             "%zu in %s (flags: %d debug flags: %u) from file %s:%d\n",
+    //             size,
+    //             pName,
+    //             flags,
+    //             debugFlags,
+    //             file,
+    //             line);
+    // #endif
+
+    return new uint8_t[size];
+}
+
+void*
+operator new[](size_t size,
+               size_t alignment,
+               size_t alignmentOffset,
+               const char* pName,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+#ifndef NDEBUG
+    // fprintf(stderr,
+    //         "%zu (alignment: %zu offset: %zu) in %s (flags: %d debug flags:
+    //         "
+    //         "%u) from file %s:%d\n",
+    //         size,
+    //         alignment,
+    //         alignmentOffset,
+    //         pName,
+    //         flags,
+    //         debugFlags,
+    //         file,
+    //         line);
+#endif
+
+    if ((alignmentOffset % alignment) == 0)
+        return new uint8_t[size];
+
+    return new uint8_t[size];
+}
 
 #include "unit-test.hpp"
 
-static inline void change_pwd()
+static inline bool
+change_pwd()
 {
 #if defined(__unix__)
     int ret = ::chdir(EXAMPLES_DIR);
 #else
     int ret = ::_chdir(EXAMPLES_DIR);
 #endif
-    Ensures(ret == 0);
+
+    return ret == 0;
 }
 
-struct test_logger : public efyj::logger {
+struct test_logger : public efyj::logger
+{
 public:
     virtual ~test_logger() = default;
 
-    virtual void write(int priority,
-                       const char *file,
-                       int line,
-                       const char *fn,
-                       const char *format,
+    virtual void write(efyj::message_type,
+                       const char* format,
                        va_list args) noexcept
-    {
-        fprintf(stderr,
-                "LOG: %d at %d in function '%s' from file %s: ",
-                priority,
-                line,
-                fn,
-                file);
-        vfprintf(stderr, format, args);
-    }
-
-    virtual void
-    write(efyj::message_type, const char *format, va_list args) noexcept
     {
         vfprintf(stdout, format, args);
     }
 };
 
-std::shared_ptr<efyj::context> make_context()
+eastl::shared_ptr<efyj::context>
+make_context()
 {
-    auto ret = std::make_shared<efyj::context>();
+    auto ret = eastl::make_shared<efyj::context>();
     ret->set_log_priority(7);
-    ret->set_logger(std::make_unique<test_logger>());
+    ret->set_logger(eastl::make_unique<test_logger>());
 
     return ret;
 }
 
-std::string make_temporary(const std::string &name)
+eastl::string
+make_temporary(eastl::string name)
 {
-    static const char *names[] = {"TMPDIR", "TMP", "TEMP"};
+    static const char* names[] = { "TMPDIR", "TMP", "TEMP" };
     static const int names_size = sizeof(names) / sizeof(names[0]);
-    std::string ret;
+    eastl::string ret;
 
     for (int i = 0; i != names_size and ret.empty(); ++i)
         if (::getenv(names[i]))
@@ -102,36 +169,110 @@ std::string make_temporary(const std::string &name)
         ret += '/';
 
     std::minstd_rand generator(time(nullptr));
-    std::uniform_int_distribution<int> distribution(0, 52);
+    std::uniform_int_distribution<int> distribution(0, 25);
 
-    std::transform(name.begin(),
-                   name.end(),
-                   std::back_inserter(ret),
-                   [&generator, &distribution](int character) {
-                       if (character == 'X')
-                           return 'A' + distribution(generator);
+    for (auto c : name) {
+        if (c == 'X')
+            ret += 'a' + distribution(generator);
+        else
+            ret += c;
+    }
 
-                       return character;
-                   });
     return ret;
 }
 
-void test_tokenize()
+void
+test_tokenize()
 {
-    std::vector<std::string> output;
-    std::string s1 = "simulation;place;department;year;BUY.PRICE;MAINT.PRICE;#"
-                     "PERS;#DOORS;LUGGAGE;SAFETY;CAR";
+    eastl::vector<eastl::string> output;
+    eastl::string s1 =
+      "simulation;place;department;year;BUY.PRICE;MAINT.PRICE;#"
+      "PERS;#DOORS;LUGGAGE;SAFETY;CAR";
 
     efyj::tokenize(s1, output, ";", false);
     Ensures(output.size() == 11);
 
-    std::string s2 = "Car1../;-;0;0;medium;low;more;4;big;high;exc";
+    eastl::string s2 = "Car1../;-;0;0;medium;low;more;4;big;high;exc";
     efyj::tokenize(s1, output, ";", false);
 
     Ensures(output.size() == 11);
 }
 
-void test_empty_object_equality()
+void
+test_matrix()
+{
+    efyj::matrix<double> m(2, 2);
+    m(0, 0) = 3;
+    m(1, 0) = 2;
+    m(0, 1) = -1;
+    m(1, 1) = m(1, 0) + m(0, 1);
+
+    Ensures(m(0, 0) == 3);
+    Ensures(m(0, 1) == -1);
+    Ensures(m(1, 0) == 2);
+    Ensures(m(1, 1) == 1);
+
+    Ensures(*m.begin() == 3);
+    Ensures(*(m.begin() + 1) == -1);
+    Ensures(*(m.begin() + 2) == 2);
+    Ensures(*(m.begin() + 3) == 1);
+}
+
+void
+test_matrix_multiplcation()
+{
+    efyj::matrix<double> m1(2, 2);
+    m1.assign({ 1, 2, 3, 4 });
+
+    efyj::matrix<double> m2(2, 2);
+    m2.assign({ 5, 6, 7, 8 });
+
+    efyj::matrix<double> product(m1.rows(), m2.columns(), 0.0);
+
+    for (size_t row = 0; row != m1.rows(); ++row)
+        for (size_t col = 0; col != m2.columns(); ++col)
+            for (size_t i = 0; i != m1.columns(); ++i)
+                product(row, col) += m1(row, i) * m2(i, col);
+
+    Ensures(product(0, 0) == 19);
+    Ensures(product(0, 1) == 22);
+    Ensures(product(1, 0) == 43);
+    Ensures(product(1, 1) == 50);
+
+    Ensures(mult_and_sum(m1, m2) == 70);
+}
+
+void
+test_matrix_multiplcation_2()
+{
+    efyj::matrix<double> m1(3, 3);
+    m1.assign({ 1, 2, 3, 2, 3, 1, 3, 1, 2 });
+
+    efyj::matrix<double> m2(3, 3);
+    m2.assign({ 1, 2, 3, 2, 3, 1, 3, 1, 2 });
+
+    efyj::matrix<double> product(m1.rows(), m2.columns(), 0.0);
+
+    for (size_t row = 0; row != m1.rows(); ++row)
+        for (size_t col = 0; col != m2.columns(); ++col)
+            for (size_t i = 0; i != m1.columns(); ++i)
+                product(row, col) += m1(row, i) * m2(i, col);
+
+    Ensures(product(0, 0) == 14);
+    Ensures(product(0, 1) == 11);
+    Ensures(product(0, 2) == 11);
+    Ensures(product(1, 0) == 11);
+    Ensures(product(1, 1) == 14);
+    Ensures(product(1, 2) == 11);
+    Ensures(product(2, 0) == 11);
+    Ensures(product(2, 1) == 11);
+    Ensures(product(2, 2) == 14);
+
+    Ensures(mult_and_sum(m1, m2) == 39);
+}
+
+void
+test_empty_object_equality()
 {
     efyj::Model x1;
     efyj::Model x2;
@@ -139,19 +280,36 @@ void test_empty_object_equality()
     Ensures(x1 == x2);
 }
 
-void test_empty_object_read_write()
+void
+test_empty_object_read_write()
 {
     efyj::Model x1, x2;
+
     {
-        std::string result;
+        char* ptr{ nullptr };
+        size_t size{ 0 };
+
+        efyj::scope_exit se_ptr([ptr]() { free(ptr); });
+
         {
-            std::ostringstream os;
-            x1.write(os);
-            result = os.str();
+            {
+                auto* out = open_memstream(&ptr, &size);
+                Ensures(out);
+                efyj::scope_exit se_out([out]() { fclose(out); });
+
+                x1.write(out);
+            }
+
+            Ensures(ptr);
         }
+
         {
-            std::istringstream is(result);
-            x2.read(is);
+            auto* in = fmemopen(ptr, strlen(ptr), "r");
+
+            Ensures(in);
+            efyj::scope_exit se_in([in]() { fclose(in); });
+
+            x2.read(in);
         }
     }
 
@@ -159,38 +317,45 @@ void test_empty_object_read_write()
     Ensures(is_equal == true);
 }
 
-void test_classic_Model_file()
+void
+test_classic_Model_file()
 {
     change_pwd();
 
-    std::vector<std::string> filepaths = {"Car.dxi",
-                                          "Employ.dxi",
-                                          "Enterprise.dxi",
-                                          "IPSIM_PV_simulation1-1.dxi",
-                                          "Nursery.dxi",
-                                          "Shuttle.dxi"};
+    eastl::vector<eastl::string> filepaths = {
+        "Car.dxi",        "Employ.dxi",
+        "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi",
+        "Nursery.dxi",    "Shuttle.dxi"
+    };
 
-    std::string output;
+    eastl::string output;
 
-    for (const auto &filepath : filepaths) {
+    for (const auto& filepath : filepaths) {
         efyj::Model dex1, dex2;
 
         output = "XXXXXX" + filepath;
         output = make_temporary(output);
 
         {
-            std::ifstream is(filepath);
-            Ensures(is.is_open());
+            auto* is = fopen(filepath.c_str(), "r");
+            Ensures(is);
+
+            efyj::scope_exit se_is([is]() { fclose(is); });
+
             EnsuresNotThrow(dex1.read(is), std::exception);
 
-            std::ofstream os(output);
+            auto* os = fopen(output.c_str(), "w");
+            Ensures(os);
+
+            efyj::scope_exit se_os([os]() { fclose(os); });
             dex1.write(os);
         }
 
         {
-            std::ifstream is(output);
+            auto* is = fopen(output.c_str(), "r");
+            Ensures(is);
+            efyj::scope_exit se_is([is]() { fclose(is); });
 
-            Ensures(is.is_open());
             EnsuresNotThrow(dex2.read(is), std::exception);
         }
 
@@ -198,45 +363,72 @@ void test_classic_Model_file()
     }
 }
 
-void test_car_dxi_load_save_load_via_sstream()
+void
+test_car_dxi_load_save_load_via_sstream()
 {
     change_pwd();
 
     efyj::Model car;
-    std::stringstream ss;
+    char* ptr{ nullptr };
+    size_t size{ 0 };
+
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
+
         EnsuresNotThrow(car.read(is), std::exception);
-        EnsuresNotThrow(car.write(ss), std::exception);
+
+        {
+            auto* out = open_memstream(&ptr, &size);
+            Ensures(out);
+            efyj::scope_exit se_out([out]() { fclose(out); });
+
+            EnsuresNotThrow(car.write(out), std::exception);
+        }
     }
+
     efyj::Model car2;
-    EnsuresNotThrow(car2.read(ss), std::exception);
+
+    Ensures(ptr);
+
+    auto* is = fmemopen(ptr, size, "r");
+    Ensures(is);
+    EnsuresNotThrow(car2.read(is), std::exception);
+    free(ptr);
+
     Ensures(car == car2);
 }
 
-void test_car_dxi_load_save_load_via_file()
+void
+test_car_dxi_load_save_load_via_file()
 {
     change_pwd();
 
     efyj::Model car;
-    std::string outputfile("CarXXXXXXXX.dxi");
+    eastl::string outputfile("CarXXXXXXXX.dxi");
     auto tmp = make_temporary(outputfile);
 
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
+
         EnsuresNotThrow(car.read(is), std::exception);
-        std::ofstream os(tmp);
-        Ensures(os.is_open());
+
+        auto* os = fopen(tmp.c_str(), "w");
+        Ensures(os);
+        efyj::scope_exit se_os([os]() { fclose(os); });
+
         EnsuresNotThrow(car.write(os), std::exception);
     }
 
     efyj::Model car2;
 
     {
-        std::ifstream is(tmp);
-        Ensures(is.is_open());
+        auto* is = fopen(tmp.c_str(), "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(car2.read(is), std::exception);
     }
 
@@ -249,34 +441,41 @@ void test_car_dxi_load_save_load_via_file()
     Ensures(car == car2);
 }
 
-void test_Car_dxi()
+void
+test_Car_dxi()
 {
     change_pwd();
 
     efyj::Model car;
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
+
         EnsuresNotThrow(car.read(is), std::exception);
     }
 
     Ensures(car.attributes.size() == 10u);
     Ensures(car.attributes[0].name == "CAR");
     Ensures(car.attributes[0].children.size() == 2u);
-    Ensures(car.attributes[0].children == std::vector<std::size_t>({1, 4}));
+    Ensures(car.attributes[0].children ==
+            eastl::vector<std::size_t>({ 1, 4 }));
     Ensures(car.attributes[1].name == "PRICE");
     Ensures(car.attributes[1].children.size() == 2u);
-    Ensures(car.attributes[1].children == std::vector<std::size_t>({2, 3}));
+    Ensures(car.attributes[1].children ==
+            eastl::vector<std::size_t>({ 2, 3 }));
     Ensures(car.attributes[2].name == "BUY.PRICE");
     Ensures(car.attributes[2].children.empty() == true);
     Ensures(car.attributes[3].name == "MAINT.PRICE");
     Ensures(car.attributes[3].children.empty() == true);
     Ensures(car.attributes[4].name == "TECH.CHAR.");
     Ensures(car.attributes[4].children.size() == 2u);
-    Ensures(car.attributes[4].children == std::vector<std::size_t>({5, 9}));
+    Ensures(car.attributes[4].children ==
+            eastl::vector<std::size_t>({ 5, 9 }));
     Ensures(car.attributes[5].name == "COMFORT");
     Ensures(car.attributes[5].children.size() == 3u);
-    Ensures(car.attributes[5].children == std::vector<std::size_t>({6, 7, 8}));
+    Ensures(car.attributes[5].children ==
+            eastl::vector<std::size_t>({ 6, 7, 8 }));
     Ensures(car.attributes[6].name == "#PERS");
     Ensures(car.attributes[6].children.empty() == true);
     Ensures(car.attributes[7].name == "#DOORS");
@@ -287,26 +486,30 @@ void test_Car_dxi()
     Ensures(car.attributes[9].children.empty() == true);
 }
 
-void test_multiple_Car_Model()
+void
+test_multiple_Car_Model()
 {
     change_pwd();
 
     efyj::Model src, dst;
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(src.read(is), std::exception);
     }
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(dst.read(is), std::exception);
     }
     Ensures(src == dst);
     efyj::Model dst2;
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(dst2.read(is), std::exception);
     }
     Ensures(dst2 == dst);
@@ -314,14 +517,16 @@ void test_multiple_Car_Model()
     Ensures(dst2 != dst);
 }
 
-void test_solver_Car()
+void
+test_solver_Car()
 {
     change_pwd();
 
     efyj::Model model;
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(model.read(is), std::exception);
     }
     std::size_t problem_size = 1;
@@ -329,7 +534,7 @@ void test_solver_Car()
     std::size_t scale_number = 0;
     std::size_t scalevalue_number = 0;
 
-    for (const auto &att : model.attributes) {
+    for (const auto& att : model.attributes) {
         if (att.is_basic()) {
             basic_scale_number++;
             scalevalue_number += att.scale.size();
@@ -345,25 +550,23 @@ void test_solver_Car()
     Ensures(problem_size == 972u);
 }
 
-void test_basic_solver_for_Car()
+void
+test_basic_solver_for_Car()
 {
     change_pwd();
 
     efyj::Model model;
     {
-        std::ifstream is("Car.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Car.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(model.read(is), std::exception);
     }
 
-    efyj::Vector opt_v3(6);
-    opt_v3 << 1, 2, 2, 2, 2, 2;
-    efyj::Vector opt_v2(6);
-    opt_v2 << 1, 1, 2, 2, 2, 1;
-    efyj::Vector opt_v4(6);
-    opt_v4 << 2, 2, 2, 3, 2, 2;
-    efyj::Vector opt_v5(6);
-    opt_v5 << 0, 0, 0, 0, 0, 0;
+    eastl::vector<int> opt_v3{ 1, 2, 2, 2, 2, 2 };
+    eastl::vector<int> opt_v2{ 1, 1, 2, 2, 2, 1 };
+    eastl::vector<int> opt_v4{ 2, 2, 2, 3, 2, 2 };
+    eastl::vector<int> opt_v5{ 0, 0, 0, 0, 0, 0 };
 
     {
         efyj::solver_stack s(model);
@@ -374,83 +577,98 @@ void test_basic_solver_for_Car()
     }
 }
 
-void test_basic_solver_for_Enterprise()
+void
+test_basic_solver_for_Enterprise()
 {
     change_pwd();
 
     efyj::Model model;
     {
-        std::ifstream is("Enterprise.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("Enterprise.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(model.read(is), std::exception);
     }
-    efyj::Vector opt_v(12);
-    opt_v << 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1;
+    eastl::vector<int> opt_v{ 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1 };
     efyj::solver_stack ss(model);
     Ensures(ss.solve(opt_v) == 1);
 }
 
-void test_basic_solver_for_IPSIM_PV_simulation1_1()
+void
+test_basic_solver_for_IPSIM_PV_simulation1_1()
 {
     change_pwd();
 
-    efyj::Model *model = new efyj::Model;
+    efyj::Model* model = new efyj::Model;
     {
-        std::ifstream is("IPSIM_PV_simulation1-1.dxi");
-        Ensures(is.is_open());
+        auto* is = fopen("IPSIM_PV_simulation1-1.dxi", "r");
+        Ensures(is);
+        efyj::scope_exit se_is([is]() { fclose(is); });
         EnsuresNotThrow(model->read(is), std::exception);
     }
     {
-        efyj::Vector opt_v(14);
-        opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
+        eastl::vector<int> opt_v{ 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1 };
         efyj::solver_stack ss(*model);
         Ensures(ss.solve(opt_v) == 6);
     }
+
     efyj::Model copy1(*model);
     delete model;
+
     {
-        efyj::Vector opt_v(14);
-        opt_v << 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1;
+        eastl::vector<int> opt_v{ 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1 };
         efyj::solver_stack ss(copy1);
         Ensures(ss.solve(opt_v) == 6);
     }
 }
 
-void test_problem_Model_file()
+void
+test_problem_Model_file()
 {
     change_pwd();
 
-    std::vector<std::string> filepaths = {"Car.dxi",
-                                          "Employ.dxi",
-                                          "Enterprise.dxi",
-                                          "IPSIM_PV_simulation1-1.dxi"};
+    eastl::vector<eastl::string> filepaths = {
+        "Car.dxi", "Employ.dxi", "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi"
+    };
 
-    std::string outputfilename("outputXXXXX.dxi");
+    eastl::string outputfilename("outputXXXXX.csv");
     auto output = make_temporary(outputfilename);
 
-    for (const auto &filepath : filepaths) {
+    for (const auto& filepath : filepaths) {
 
         {
+            printf("read %s\n", filepath.c_str());
             efyj::Model model;
 
-            std::ifstream ifs(filepath);
-            Ensures(ifs.is_open());
+            auto* ifs = fopen(filepath.c_str(), "r");
+            Ensures(ifs);
+            efyj::scope_exit se_ifs([ifs]() { fclose(ifs); });
 
             model.read(ifs);
 
-            std::ofstream ofs(output);
-            Ensures(ofs.is_open());
+            printf("write %s\n", output.c_str());
+            auto* ofs = fopen(output.c_str(), "w");
+            Ensures(ofs);
 
             model.write_options(ofs);
+            efyj::scope_exit se_ofs([ofs]() { fclose(ofs); });
         }
 
+        printf("%s [%s]\n", filepath.c_str(), output.c_str());
+
         auto results = efyj::evaluate(make_context(), filepath, output);
-        Ensures(results.squared_weighted_kappa == 1.0);
+
+        printf("squared: %g linear: %g\n",
+               results.squared_weighted_kappa,
+               results.linear_weighted_kappa);
+
         Ensures(results.linear_weighted_kappa == 1.0);
+        Ensures(results.squared_weighted_kappa == 1.0);
     }
 }
 
-void check_the_options_set_function()
+void
+check_the_options_set_function()
 {
     change_pwd();
 
@@ -458,10 +676,16 @@ void check_the_options_set_function()
 
     {
         efyj::Model model;
-        std::ifstream ifs("Car.dxi");
+        auto* ifs = fopen("Car.dxi", "r");
+        Ensures(ifs);
+        efyj::scope_exit se_ifs([ifs]() { fclose(ifs); });
+
         model.read(ifs);
 
-        std::ofstream ofs(output);
+        auto* ofs = fopen(output.c_str(), "w");
+        Ensures(ofs);
+        efyj::scope_exit se_ofs([ofs]() { fclose(ofs); });
+
         model.write_options(ofs);
     }
 
@@ -484,7 +708,8 @@ void check_the_options_set_function()
             Ensures(opt1.options(row, col) == opt2.options(row, col));
 }
 
-void check_the_efyj_set_function()
+void
+check_the_efyj_set_function()
 {
     // change_pwd();
 
@@ -500,12 +725,12 @@ void check_the_efyj_set_function()
 
     // efyj::efyj e("Car.dxi", output);
 
-    // std::vector<std::string> simulations_old;
-    // std::vector<std::string> places_old;
-    // std::vector<int> departments_old;
-    // std::vector<int> years_old;
-    // std::vector<int> observed_old;
-    // std::vector<int> options_old;
+    // eastl::vector<eastl::string> simulations_old;
+    // eastl::vector<eastl::string> places_old;
+    // eastl::vector<int> departments_old;
+    // eastl::vector<int> years_old;
+    // eastl::vector<int> observed_old;
+    // eastl::vector<int> options_old;
 
     // e.extract_options(simulations_old,
     //                   places_old,
@@ -521,12 +746,12 @@ void check_the_efyj_set_function()
     //               observed_old,
     //               options_old);
 
-    // std::vector<std::string> simulations;
-    // std::vector<std::string> places;
-    // std::vector<int> departments;
-    // std::vector<int> years;
-    // std::vector<int> observed;
-    // std::vector<int> options;
+    // eastl::vector<eastl::string> simulations;
+    // eastl::vector<eastl::string> places;
+    // eastl::vector<int> departments;
+    // eastl::vector<int> years;
+    // eastl::vector<int> observed;
+    // eastl::vector<int> options;
 
     // e.extract_options(
     //     simulations, places, departments, years, observed, options);
@@ -539,7 +764,8 @@ void check_the_efyj_set_function()
     // Ensures(options_old == options);
 }
 
-void test_adjustment_solver_for_Car()
+void
+test_adjustment_solver_for_Car()
 {
     // change_pwd();
 
@@ -550,7 +776,7 @@ void test_adjustment_solver_for_Car()
     //     model.read(ifs);
     // }
 
-    // std::string output = make_temporary("CarXXXXXXXX.csv");
+    // eastl::string output = make_temporary("CarXXXXXXXX.csv");
 
     // {
     //     std::ofstream ofs(output);
@@ -564,12 +790,12 @@ void test_adjustment_solver_for_Car()
     //     Ensures(ret.kappa == 1);
     // }
 
-    // std::vector<std::string> simulations;
-    // std::vector<std::string> places;
-    // std::vector<int> departments;
-    // std::vector<int> years;
-    // std::vector<int> observed;
-    // std::vector<int> options;
+    // eastl::vector<eastl::string> simulations;
+    // eastl::vector<eastl::string> places;
+    // eastl::vector<int> departments;
+    // eastl::vector<int> years;
+    // eastl::vector<int> observed;
+    // eastl::vector<int> options;
 
     // e.extract_options(
     //     simulations, places, departments, years, observed, options);
@@ -614,7 +840,8 @@ void test_adjustment_solver_for_Car()
     // }
 }
 
-void test_prediction_solver_for_Car()
+void
+test_prediction_solver_for_Car()
 {
     // change_pwd();
 
@@ -627,7 +854,7 @@ void test_prediction_solver_for_Car()
     //     model.read(ifs);
     // }
 
-    // std::string output = make_temporary("CarXXXXXXXX.csv");
+    // eastl::string output = make_temporary("CarXXXXXXXX.csv");
 
     // {
     //     std::ofstream ofs(output);
@@ -643,12 +870,12 @@ void test_prediction_solver_for_Car()
     //     Ensures(ret.kappa == 1);
     // }
 
-    // std::vector<std::string> simulations;
-    // std::vector<std::string> places;
-    // std::vector<int> departments;
-    // std::vector<int> years;
-    // std::vector<int> observed;
-    // std::vector<int> options;
+    // eastl::vector<eastl::string> simulations;
+    // eastl::vector<eastl::string> places;
+    // eastl::vector<int> departments;
+    // eastl::vector<int> years;
+    // eastl::vector<int> observed;
+    // eastl::vector<int> options;
 
     // e.extract_options(
     //     simulations, places, departments, years, observed, options);
@@ -703,9 +930,12 @@ void test_prediction_solver_for_Car()
     // }
 }
 
-int main()
+int
+main()
 {
     test_tokenize();
+    test_matrix();
+    test_matrix_multiplcation();
     test_empty_object_equality();
     test_empty_object_read_write();
     test_classic_Model_file();

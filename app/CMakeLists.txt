@@ -1,10 +1,12 @@
 add_executable(app src/main.cpp)
 
-target_link_libraries(app libefyj eigen3 expat threads ${EASTL_LIBRARY})
+target_link_libraries(app libstaticefyj expat threads ${EASTL_LIBRARY})
 
 set_property(TARGET app PROPERTY CXX_STANDARD 14)
 
 target_include_directories(app PRIVATE ${CMAKE_BINARY_DIR})
+
+target_compile_definitions(app PRIVATE EASTL_EASTDC_VSNPRINTF=1)
 
 set_target_properties(app PROPERTIES
   OUTPUT_NAME "efyj-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")

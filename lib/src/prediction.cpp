@@ -19,48 +19,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
-#define ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
-
-#include <chrono>
-#include <efyj/details/model.hpp>
-#include <efyj/details/options.hpp>
-#include <efyj/details/post.hpp>
-#include <efyj/details/private.hpp>
-#include <efyj/details/solver-stack.hpp>
-#include <map>
+#include "prediction.hpp"
+#include "utils.hpp"
 
 namespace efyj {
 
-struct prediction_evaluator
-{
-    std::shared_ptr<context> m_context;
-    const Model& m_model;
-    const Options& m_options;
-
-    std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
-    std::vector<int> m_globalsimulated;
-    std::vector<std::tuple<int, int, int>> m_updaters;
-    std::vector<std::vector<int>> m_globalfunctions, m_functions;
-    std::vector<int> simulated;
-    std::vector<int> observed;
-    for_each_model_solver solver;
-    weighted_kappa_calculator kappa_c;
-    unsigned long long int m_loop = 0;
-
-    prediction_evaluator(std::shared_ptr<context> context,
-                         const Model& model,
-                         const Options& options);
-
-    std::vector<result> run(int line_limit,
-                            double time_limit,
-                            int reduce_mode);
-};
-
-inline prediction_evaluator::prediction_evaluator(
-  std::shared_ptr<context> context,
-  const Model& model,
-  const Options& options)
+prediction_evaluator::prediction_evaluator(eastl::shared_ptr<context> context,
+                                           const Model& model,
+                                           const Options& options)
   : m_context(context)
   , m_model(model)
   , m_options(options)
@@ -75,12 +41,12 @@ inline prediction_evaluator::prediction_evaluator(
           "options does not have enough data to build the training set");
 }
 
-inline std::vector<result>
+eastl::vector<result>
 prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 {
     (void)time_limit;
 
-    std::vector<result> ret;
+    eastl::vector<result> ret;
 
     vInfo(m_context, "[Computation starts]\n");
 
@@ -91,9 +57,9 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
     assert(not m_globalfunctions.empty() and
            "prediction can not determine function");
 
-    const std::size_t max_step =
+    const size_t max_step =
       max_value(line_limit, solver.get_attribute_line_tuple_limit());
-    const std::size_t max_opt = m_options.simulations.size();
+    const size_t max_opt = m_options.simulations.size();
 
     assert(max_step > 0 and "prediction: can not determine limit");
 
@@ -101,7 +67,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
     {
         m_start = std::chrono::system_clock::now();
-        for (std::size_t opt = 0; opt != m_options.size(); ++opt)
+        for (size_t opt = 0; opt != m_options.size(); ++opt)
             m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
 
         auto kappa = kappa_c.squared(m_options.observed, m_globalsimulated);
@@ -128,19 +94,18 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         ret.back().function_computed = m_options.size();
     }
 
-    for (std::size_t step = 1; step <= max_step; ++step) {
+    for (size_t step = 1; step <= max_step; ++step) {
         m_start = std::chrono::system_clock::now();
         long int loop = 0;
 
-        std::fill(
-          std::begin(m_globalsimulated), std::end(m_globalsimulated), 0);
+        eastl::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
         // This cache stores best function found for the same
         // subdataset. This cache drastically improves computation time if
         // their is few subdataset.
-        std::map<std::size_t, std::vector<std::vector<scale_id>>> cache;
+        eastl::map<size_t, eastl::vector<eastl::vector<scale_id>>> cache;
 
-        for (std::size_t opt = 0; opt != max_opt; ++opt) {
+        for (size_t opt = 0; opt != max_opt; ++opt) {
 
             {
                 auto it = cache.find(m_options.identifier(opt));
@@ -165,7 +130,7 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
                     observed.resize(size, 0);
                     assert(size > 0);
 
-                    for (std::size_t i = 0; i != size; ++i) {
+                    for (size_t i = 0; i != size; ++i) {
                         auto id = m_options.get_subdataset(opt)[i];
                         observed[i] = m_options.observed[id];
                         simulated[i] = solver.solve(m_options.options.row(id));
@@ -217,5 +182,3 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 }
 
 } // namespace efyj
-
-#endif

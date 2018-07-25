@@ -23,6 +23,21 @@
 #define ORG_VLEPROJECT_EFYJ_PRIVATE_HPP
 
 #include <cstdarg>
+#include <cstdio>
+
+namespace efyj {
+
+enum class log_level
+{
+    LOG_EMERG,   // system is unusable
+    LOG_ALERT,   // action must be taken immediately
+    LOG_CRIT,    // critical conditions
+    LOG_ERR,     // error conditions
+    LOG_WARNING, // warning conditions
+    LOG_NOTICE,  // normal but significant condition
+    LOG_INFO,    // informational
+    LOG_DEBUG    // debug-level messages
+};
 
 #define EFYJ_LOG_EMERG 0   // system is unusable
 #define EFYJ_LOG_ALERT 1   // action must be taken immediately
@@ -33,45 +48,49 @@
 #define EFYJ_LOG_INFO 6    // informational
 #define EFYJ_LOG_DEBUG 7   // debug-level messages
 
-static inline void
-#if defined(__GNUC__)
-  __attribute__((always_inline, format(printf, 2, 3)))
-#endif
-  efyj_log_null(const std::shared_ptr<efyj::context>&, const char*, ...)
-{}
+inline void
+vInfo(const eastl::shared_ptr<context>& ctx, const char* format, ...)
+{
+    (void)ctx;
 
-static inline void
-#if defined(__GNUC__)
-  __attribute__((always_inline, format(printf, 2, 3)))
-#endif
-  efyj_log_null(const efyj::context*, const char*, ...)
-{}
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stdout, format, ap);
+    va_end(ap);
+}
 
-#define efyj_log_cond(ctx, prio, arg...)                                      \
-    do {                                                                      \
-        if (ctx->get_log_priority() >= prio) {                                \
-            ctx->log(prio, __FILE__, __LINE__, __FUNCTION__, ##arg);          \
-        }                                                                     \
-    } while (0)
+inline void
+vInfo(const context& ctx, const char* format, ...)
+{
+    (void)ctx;
 
-//
-// Default, logging system is active and the @c vDbg() macro checks log
-// priority argument. Define DISABLE_LOGGING to hide all logging message.
-// Define NDEBUG to remove @c vDbg() macro.
-//
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stdout, format, ap);
+    va_end(ap);
+}
 
-// #ifndef DISABLE_LOGGING
-// #ifndef NDEBUG
-#define vDbg(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_DEBUG, ##arg)
-// #else
-// #define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
-// #endif
-#define vInfo(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_INFO, ##arg)
-#define vErr(ctx, arg...) efyj_log_cond(ctx, EFYJ_LOG_ERR, ##arg)
-    // #else
-    // #define vDbg(ctx, arg...) efyj_log_null(ctx, ##arg)
-    // #define vInfo(ctx, arg...) efyj_log_null(ctx, ##arg)
-    // #define vErr(ctx, arg...) efyj_log_null(ctx, ##arg)
-    // #endif
+inline void
+vErr(const eastl::shared_ptr<context>& ctx, const char* format, ...)
+{
+    (void)ctx;
+
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+}
+
+inline void
+vErr(const context& ctx, const char* format, ...)
+{
+    (void)ctx;
+
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+}
+}
 
 #endif

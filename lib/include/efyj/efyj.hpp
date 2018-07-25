@@ -26,34 +26,37 @@
 #define EFYJ_MINOR_VERSION 6
 #define EFYJ_PATCH_VERSION 0
 
-#include <efyj/matrix.hpp>
-#include <limits>
-#include <map>
-#include <memory>
+#include <EASTL/map.h>
+#include <EASTL/numeric_limits.h>
+#include <EASTL/shared_ptr.h>
+#include <EASTL/string.h>
+#include <EASTL/unique_ptr.h>
+#include <EASTL/vector.h>
+
 #include <stdexcept>
-#include <string>
-#include <vector>
+
+#include <efyj/matrix.hpp>
 
 /** Comments about efyj's API.
-*/
+ */
 namespace efyj {
 
 using value = int; // std::int8_t;
 
 struct model_data
 {
-    std::map<std::string, std::vector<std::string>> attributes;
-    std::vector<int> basic_attributes;
+    eastl::map<eastl::string, eastl::vector<eastl::string>> attributes;
+    eastl::vector<int> basic_attributes;
     int number;
 };
 
 struct options_data
 {
-    std::vector<std::string> simulations;
-    std::vector<std::string> places;
-    std::vector<int> departments;
-    std::vector<int> years;
-    std::vector<int> observed;
+    eastl::vector<eastl::string> simulations;
+    eastl::vector<eastl::string> places;
+    eastl::vector<int> departments;
+    eastl::vector<int> years;
+    eastl::vector<int> observed;
     matrix<value> options;
 };
 
@@ -61,15 +64,15 @@ struct simulation_results
 {
     matrix<value> options;
     matrix<value> attributes;
-    std::vector<value> simulations;
+    eastl::vector<value> simulations;
 };
 
 struct evaluation_results
 {
     matrix<value> options;
     matrix<value> attributes;
-    std::vector<value> simulations;
-    std::vector<value> observations;
+    eastl::vector<value> simulations;
+    eastl::vector<value> observations;
     matrix<value> confusion;
     double linear_weighted_kappa;
     double squared_weighted_kappa;
@@ -84,7 +87,7 @@ struct modifier
 
 struct result
 {
-    std::vector<modifier> modifiers;
+    eastl::vector<modifier> modifiers;
     double kappa;
     double time;
     unsigned long int kappa_computed;
@@ -101,15 +104,15 @@ struct result
  * @tparam Target An integer type.
  * @return true if @c static_cast<Target>(Source) is valid.
  */
-template <typename Target, typename Source>
+template<typename Target, typename Source>
 inline bool
 is_numeric_castable(Source arg)
 {
-    static_assert(std::is_integral<Source>::value, "Integer required.");
-    static_assert(std::is_integral<Target>::value, "Integer required.");
+    static_assert(eastl::is_integral<Source>::value, "Integer required.");
+    static_assert(eastl::is_integral<Target>::value, "Integer required.");
 
-    using arg_traits = std::numeric_limits<Source>;
-    using result_traits = std::numeric_limits<Target>;
+    using arg_traits = eastl::numeric_limits<Source>;
+    using result_traits = eastl::numeric_limits<Target>;
 
     if (result_traits::digits == arg_traits::digits and
         result_traits::is_signed == arg_traits::is_signed)
@@ -142,7 +145,7 @@ struct numeric_cast_error : public std::exception
 /**
  * @brief Tries to convert @c Source into @c Target integer.
  * @code
- * std::vector<int> v(1000, 5);
+ * eastl::vector<int> v(1000, 5);
  *
  * // No exception.
  * int i = efyj::numeric_cast<int>(v.size());
@@ -156,7 +159,7 @@ struct numeric_cast_error : public std::exception
  * @tparam Target An integer type.
  * @return @c static_cast<Target>(Source) integer.
  */
-template <typename Target, typename Source>
+template<typename Target, typename Source>
 inline Target
 numeric_cast(Source s)
 {
@@ -166,123 +169,84 @@ numeric_cast(Source s)
     return static_cast<Target>(s);
 }
 
-class internal_error : std::logic_error
+struct internal_error
 {
-    std::string pp_file, pp_function;
+    eastl::string pp_file, pp_function;
     int pp_line;
 
-public:
-    internal_error(const std::string& msg);
-    internal_error(const std::string& file,
-                   const std::string& function,
-                   int line,
-                   const std::string& msg);
-    virtual ~internal_error() noexcept = default;
-
-    std::string file() const;
-    std::string function() const;
-    int line() const;
+    internal_error(const eastl::string& file,
+                   const eastl::string& function,
+                   int line)
+      : pp_file(file)
+      , pp_function(function)
+      , pp_line(line)
+    {}
 };
 
-class file_error : public std::runtime_error
+struct file_error
 {
-    std::string pp_file;
+    eastl::string pp_file;
 
-public:
-    file_error(const std::string& file);
-
-    virtual ~file_error() noexcept = default;
-
-    std::string file() const;
+    file_error(const eastl::string& file)
+      : pp_file(file)
+    {}
 };
 
-class solver_error : public std::runtime_error
+struct solver_error
 {
-public:
-    solver_error(const std::string& msg);
+    eastl::string pp_file;
 
-    virtual ~solver_error() noexcept = default;
+    solver_error(const eastl::string& file)
+      : pp_file(file)
+    {}
 };
 
-class dexi_parser_error : public std::runtime_error
+struct dexi_parser_status
 {
-public:
-    dexi_parser_error(const std::string& msg);
-
-    dexi_parser_error(const std::string& msg, const std::string& filepath);
-
-    dexi_parser_error(const std::string& msg, int line, int column, int error);
-
-    virtual ~dexi_parser_error() noexcept = default;
-
-    int line() const
+    enum class tag
     {
-        return m_line;
-    }
-    int column() const
-    {
-        return m_column;
-    }
-    int internal_error_code() const
-    {
-        return m_internal_error_code;
-    }
-    std::string filepath() const
-    {
-        return m_filepath;
-    }
-    std::string message() const
-    {
-        return m_message;
-    }
+        done = 0,
+        scale_definition_error,
+        scale_not_found,
+        scale_too_big,
+        file_format_error,
+        not_enough_memory,
+        element_unknown,
+        option_conversion_error,
+    };
 
-private:
-    int m_line, m_column;
-    int m_internal_error_code;
-    std::string m_filepath;
-    std::string m_message;
+    unsigned long int m_line, m_column;
+    tag m_tag;
+
+    dexi_parser_status(dexi_parser_status::tag t,
+                       unsigned long int line,
+                       unsigned long int column)
+      : m_line(line)
+      , m_column(column)
+      , m_tag(t)
+    {}
 };
 
-class csv_parser_error : public std::runtime_error
+struct csv_parser_status
 {
-public:
-    csv_parser_error(const std::string& msg);
-
-    csv_parser_error(const std::string& filepath, const std::string& msg);
-
-    csv_parser_error(std::size_t line,
-                     const std::string& filepath,
-                     const std::string& msg);
-
-    csv_parser_error(std::size_t line,
-                     std::size_t column,
-                     const std::string& filepath,
-                     const std::string& msg);
-
-    virtual ~csv_parser_error() noexcept = default;
-
-    std::size_t line() const
+    enum class tag
     {
-        return m_line;
-    }
-    std::size_t column() const
-    {
-        return m_column;
-    }
-    std::string filepath() const
-    {
-        return m_filepath;
-    }
-    std::string message() const
-    {
-        return m_msg;
-    }
+        file_error,
+        column_number_incorrect,
+        scale_value_unknown,
+        column_conversion_failure,
+        basic_attribute_unknown
+    };
 
-private:
-    std::size_t m_line;
-    std::size_t m_column;
-    std::string m_filepath;
-    std::string m_msg;
+    csv_parser_status(csv_parser_status::tag tag, size_t line, size_t column)
+      : m_line(line)
+      , m_column(column)
+      , m_tag(tag)
+    {}
+
+    size_t m_line;
+    size_t m_column;
+    tag m_tag;
 };
 
 enum class message_type
@@ -298,12 +262,6 @@ class logger
 public:
     logger() = default;
     virtual ~logger() = default;
-    virtual void write(int priority,
-                       const char* file,
-                       int line,
-                       const char* fn,
-                       const char* format,
-                       va_list args) noexcept = 0;
 
     virtual void write(message_type m,
                        const char* format,
@@ -313,7 +271,7 @@ public:
 class context
 {
     int m_log_priority = 7;
-    std::unique_ptr<logger> m_logger;
+    eastl::unique_ptr<logger> m_logger;
 
 public:
     context() = default;
@@ -326,7 +284,7 @@ public:
 
     int get_log_priority() const noexcept;
 
-    void set_logger(std::unique_ptr<logger> fn) noexcept;
+    void set_logger(eastl::unique_ptr<logger> fn) noexcept;
 
     void log(message_type type, const char* format, ...)
 #if defined(__GNUC__)
@@ -334,48 +292,56 @@ public:
 #else
       noexcept;
 #endif
-
-    void log(int priority,
-             const char* file,
-             int line,
-             const char* fn,
-             const char* format,
-             ...)
-#if defined(__GNUC__)
-      noexcept __attribute__((format(printf, 6, 7)));
-#else
-      noexcept;
-#endif
 };
 
-model_data extract_model(std::shared_ptr<context> ctx,
-                         const std::string& model_file_path);
+model_data
+extract_model(eastl::shared_ptr<context> ctx,
+              const eastl::string& model_file_path);
 
-simulation_results simulate(std::shared_ptr<context> context,
-                            const std::string& model_file_path,
-                            const std::string& options_file_path);
+simulation_results
+simulate(eastl::shared_ptr<context> ctx,
+         const eastl::string& model_file_path,
+         const eastl::string& options_file_path);
 
-simulation_results simulate(std::shared_ptr<context> context,
-                            const std::string& model_file_path,
-                            const options_data& options);
+simulation_results
+simulate(eastl::shared_ptr<context> ctx,
+         const eastl::string& model_file_path,
+         const options_data& opts);
 
-evaluation_results evaluate(std::shared_ptr<context> context,
-                            const std::string& model_file_path,
-                            const std::string& options_file_path);
+evaluation_results
+evaluate(eastl::shared_ptr<context> ctx,
+         const eastl::string& model_file_path,
+         const eastl::string& options_file_path);
 
-evaluation_results evaluate(std::shared_ptr<context> context,
-                            const std::string& model_file_path,
-                            const options_data& options);
+evaluation_results
+evaluate(eastl::shared_ptr<context> ctx,
+         const eastl::string& model_file_path,
+         const options_data& opts);
 
-options_data extract_options(std::shared_ptr<context> context,
-                             const std::string& model_file_path);
+eastl::vector<result>
+adjustment(eastl::shared_ptr<context> ctx,
+           const eastl::string& model_file_path,
+           const eastl::string& options_file_path,
+           bool reduce,
+           int limit,
+           unsigned int thread);
 
-options_data extract_options(std::shared_ptr<context> context,
-                             const std::string& model_file_path,
-                             const std::string& options_file_path);
+eastl::vector<result>
+prediction(eastl::shared_ptr<context> ctx,
+           const eastl::string& model_file_path,
+           const eastl::string& options_file_path,
+           bool reduce,
+           int limit,
+           unsigned int thread);
 
+options_data
+extract_options(eastl::shared_ptr<context> ctx,
+                const eastl::string& model_file_path);
+
+options_data
+extract_options(eastl::shared_ptr<context> ctx,
+                const eastl::string& model_file_path,
+                const eastl::string& options_file_path);
 } // namespace efyj
-
-#include <efyj/details/efyj.hpp>
 
 #endif
