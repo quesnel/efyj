@@ -268,8 +268,6 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
             }
         }
 
-        info(context, "next-line {}\n", options.rows());
-
         options.push_line();
     }
 
