@@ -164,6 +164,66 @@ tokenize(const eastl::string& str,
     }
 }
 
+/**
+ * @brief Return true if @c Source can be casted into @c Target integer type.
+ * @details Check if the integer type @c Source is castable into @c Target.
+ *
+ * @param arg A value.
+ * @tparam Source An integer type.
+ * @tparam Target An integer type.
+ * @return true if @c static_cast<Target>(Source) is valid.
+ */
+template<typename Target, typename Source>
+inline bool
+is_numeric_castable(Source arg)
+{
+    static_assert(eastl::is_integral<Source>::value, "Integer required.");
+    static_assert(eastl::is_integral<Target>::value, "Integer required.");
+
+    using arg_traits = eastl::numeric_limits<Source>;
+    using result_traits = eastl::numeric_limits<Target>;
+
+    if (result_traits::digits == arg_traits::digits and
+        result_traits::is_signed == arg_traits::is_signed)
+        return true;
+
+    if (result_traits::digits > arg_traits::digits)
+        return result_traits::is_signed or arg >= 0;
+
+    if (arg_traits::is_signed and
+        arg < static_cast<Source>(result_traits::min()))
+        return false;
+
+    return arg <= static_cast<Source>(result_traits::max());
+}
+
+/**
+ * @brief Tries to convert @c Source into @c Target integer.
+ * @code
+ * eastl::vector<int> v(1000, 5);
+ *
+ * // No exception.
+ * int i = efyj::numeric_cast<int>(v.size());
+ *
+ * // Throw exception.
+ * int8_t j = efyj::numeric_cast<int8_t>(v.size());
+ * @endcode
+ *
+ * @param arg A value.
+ * @tparam Source An integer type.
+ * @tparam Target An integer type.
+ * @return @c static_cast<Target>(Source) integer.
+ */
+template<typename Target, typename Source>
+inline Target
+numeric_cast(Source s)
+{
+    if (not is_numeric_castable<Target>(s))
+        throw numeric_cast_error();
+
+    return static_cast<Target>(s);
+}
+
 } // namespace efyj
 
 #endif
