@@ -22,74 +22,490 @@
 #ifndef ORG_VLEPROJECT_EFYJ_PRIVATE_HPP
 #define ORG_VLEPROJECT_EFYJ_PRIVATE_HPP
 
-#include <cstdarg>
-#include <cstdio>
+#include <fmt/format.h>
 
 namespace efyj {
 
 enum class log_level
 {
-    LOG_EMERG,   // system is unusable
-    LOG_ALERT,   // action must be taken immediately
-    LOG_CRIT,    // critical conditions
-    LOG_ERR,     // error conditions
-    LOG_WARNING, // warning conditions
-    LOG_NOTICE,  // normal but significant condition
-    LOG_INFO,    // informational
-    LOG_DEBUG    // debug-level messages
+    emerg,   // system is unusable
+    alert,   // action must be taken immediately
+    crit,    // critical conditions
+    err,     // error conditions
+    warning, // warning conditions
+    notice,  // normal but significant condition
+    info,    // informational
+    debug    // debug-level messages
 };
 
-#define EFYJ_LOG_EMERG 0   // system is unusable
-#define EFYJ_LOG_ALERT 1   // action must be taken immediately
-#define EFYJ_LOG_CRIT 2    // critical conditions
-#define EFYJ_LOG_ERR 3     // error conditions
-#define EFYJ_LOG_WARNING 4 // warning conditions
-#define EFYJ_LOG_NOTICE 5  // normal but significant condition
-#define EFYJ_LOG_INFO 6    // informational
-#define EFYJ_LOG_DEBUG 7   // debug-level messages
-
-inline void
-vInfo(const eastl::shared_ptr<context>& ctx, const char* format, ...)
+class context
 {
-    (void)ctx;
+public:
+    eastl::function<void(int, const eastl::string&)> log_cb;
 
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stdout, format, ap);
-    va_end(ap);
+    log_level log_priority;
+
+    bool log_console = true;
+};
+
+inline bool
+is_loggable(log_level current_level, log_level level) noexcept
+{
+    return static_cast<int>(current_level) >= static_cast<int>(level);
+}
+
+template<typename... Args>
+void
+log(const eastl::shared_ptr<context>& ctx,
+    FILE* stream,
+    log_level level,
+    const char* fmt,
+    const Args&... args)
+{
+    if (!is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, fmt, args...);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level),
+                    fmt::format(fmt, args...).c_str());
+}
+
+template<typename... Args>
+void
+log(const eastl::shared_ptr<context>& ctx,
+    FILE* stream,
+    log_level level,
+    const char* msg)
+{
+    if (!is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, msg);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level), fmt::format(msg).c_str());
+}
+
+template<typename... Args>
+void
+log(context* ctx,
+    FILE* stream,
+    log_level level,
+    const char* fmt,
+    const Args&... args)
+{
+    if (not is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, fmt, args...);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level),
+                    fmt::format(fmt, args...).c_str());
+}
+
+template<typename... Args>
+void
+log(context* ctx, FILE* stream, log_level level, const char* msg)
+{
+    if (not is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, msg);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level), fmt::format(msg).c_str());
+}
+
+struct sink_arguments
+{
+    template<typename... Args>
+    sink_arguments(const Args&...)
+    {}
+};
+
+template<typename... Args>
+void
+emerg(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::emerg, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+alert(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::alert, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+crit(const eastl::shared_ptr<context>& ctx,
+     const char* fmt,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::crit, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+error(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::err, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+warning(const eastl::shared_ptr<context>& ctx,
+        const char* fmt,
+        const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::warning, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+notice(const eastl::shared_ptr<context>& ctx,
+       const char* fmt,
+       const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::notice, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+info(const eastl::shared_ptr<context>& ctx,
+     const char* fmt,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stdout, log_level::info, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+debug(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    log(ctx, stdout, log_level::debug, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+emerg(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::emerg, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+alert(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::alert, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+crit(const eastl::shared_ptr<context>& ctx,
+     const char* fmt,
+     const Arg1& arg1,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::crit, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+error(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::err, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+warning(const eastl::shared_ptr<context>& ctx,
+        const char* fmt,
+        const Arg1& arg1,
+        const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::warning, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+notice(const eastl::shared_ptr<context>& ctx,
+       const char* fmt,
+       const Arg1& arg1,
+       const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stdout, log_level::notice, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+info(const eastl::shared_ptr<context>& ctx,
+     const char* fmt,
+     const Arg1& arg1,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stdout, log_level::info, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+debug(const eastl::shared_ptr<context>& ctx,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    log(ctx, stdout, log_level::debug, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+#endif
+}
+
+template<typename T>
+void
+log(const eastl::shared_ptr<context>& ctx,
+    FILE* stream,
+    log_level level,
+    const T& msg)
+{
+    if (not is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, "{}", msg);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level), fmt::format("{}", msg).c_str());
+}
+
+template<typename T>
+void
+log(context* ctx, FILE* stream, log_level level, const T& msg)
+{
+    if (not is_loggable(ctx->log_priority, level))
+        return;
+
+    if (ctx->log_console)
+        fmt::print(stream, "{}", msg);
+
+    if (ctx->log_cb)
+        ctx->log_cb(static_cast<int>(level), fmt::format("{}", msg).c_str());
+}
+
+////////////////////////////////////////////////
+
+template<typename T>
+void
+emerg(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::emerg, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+alert(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::alert, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+crit(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::crit, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+error(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::err, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+warning(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stderr, log_level::warning, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+notice(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stdout, log_level::notice, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+info(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log(ctx, stdout, log_level::info, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+}
+
+template<typename T>
+void
+debug(const eastl::shared_ptr<context>& ctx, const T& msg)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifndef EFYJ_ENABLE_DEBUG
+    log(ctx, stdout, log_level::debug, msg);
+#else
+    sink_arguments(ctx, msg);
+#endif
+#endif
+}
+
+inline eastl::shared_ptr<context>
+make_context(int log_priority)
+{
+    auto ret = eastl::make_shared<context>();
+
+    ret->log_priority = log_priority < 0
+                          ? log_level::emerg
+                          : log_priority > 7
+                              ? log_level::debug
+                              : static_cast<log_level>(log_priority);
+
+    return ret;
+}
+
+inline eastl::shared_ptr<context>
+copy_context(const eastl::shared_ptr<context>& ctx)
+{
+    auto ret = make_context();
+
+    ret->log_priority = ctx->log_priority;
+    ret->log_console = ctx->log_console;
+
+    return ret;
 }
 
 inline void
-vInfo(const context& ctx, const char* format, ...)
+set_logger_callback(
+  eastl::shared_ptr<context> ctx,
+  eastl::function<void(int, const eastl::string& message)> cb)
 {
-    (void)ctx;
+    debug(ctx, "efyj: change logger callback function.\n");
 
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stdout, format, ap);
-    va_end(ap);
-}
-
-inline void
-vErr(const eastl::shared_ptr<context>& ctx, const char* format, ...)
-{
-    (void)ctx;
-
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stderr, format, ap);
-    va_end(ap);
-}
-
-inline void
-vErr(const context& ctx, const char* format, ...)
-{
-    (void)ctx;
-
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stderr, format, ap);
-    va_end(ap);
+    ctx->log_cb = cb;
 }
 }
 

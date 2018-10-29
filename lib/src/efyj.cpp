@@ -116,36 +116,6 @@ solver_error_format(const eastl::string& msg)
     return stringf("Solver error: %s", msg.c_str());
 }
 
-void
-context::set_log_priority(int priority) noexcept
-{
-    m_log_priority = priority;
-}
-
-int
-context::get_log_priority() const noexcept
-{
-    return m_log_priority;
-}
-
-void
-context::set_logger(eastl::unique_ptr<logger> fn) noexcept
-{
-    m_logger = eastl::move(fn);
-}
-
-void
-context::log(message_type type, const char* format, ...) noexcept
-{
-    if (m_logger) {
-        va_list args;
-
-        va_start(args, format);
-        m_logger->write(type, format, args);
-        va_end(args);
-    }
-}
-
 Model
 make_model(eastl::shared_ptr<context> ctx,
            const eastl::string& model_file_path)
@@ -154,7 +124,7 @@ make_model(eastl::shared_ptr<context> ctx,
 
     FILE* ifs = fopen(model_file_path.c_str(), "r");
     if (!ifs) {
-        vErr(ctx, "fail to open `%s'\n", model_file_path.c_str());
+        error(ctx, "fail to open `{}'\n", model_file_path.c_str());
         throw file_error(model_file_path);
     }
 
@@ -174,7 +144,7 @@ make_options(eastl::shared_ptr<context> ctx,
 
     auto* ifs = fopen(options_file_path.c_str(), "r");
     if (!ifs) {
-        vErr(ctx, "fail to open `%s'", options_file_path.c_str());
+        error(ctx, "fail to open `{}'", options_file_path.c_str());
         throw file_error(options_file_path);
     }
 

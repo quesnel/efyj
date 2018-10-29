@@ -159,33 +159,6 @@ prediction_thread_evaluator::prediction_thread_evaluator(
           "options does not have enough data to build the training set");
 }
 
-class my_logger : public logger
-{
-    FILE* m_stream;
-
-public:
-    my_logger(unsigned int id) noexcept
-      : m_stream(fopen(make_new_name("", id).c_str(), "w"))
-    {}
-
-    bool is_open() const noexcept
-    {
-        return m_stream != nullptr;
-    }
-
-    void write(message_type /*m*/,
-               const char* format,
-               va_list args) noexcept final
-    {
-        FILE* stream = m_stream;
-        if (not is_open())
-            stream = stdout;
-
-        vfprintf(stream, format, args);
-        fprintf(stream, "\n");
-    }
-};
-
 eastl::vector<result>
 prediction_thread_evaluator::run(int line_limit,
                                  double time_limit,
@@ -194,7 +167,7 @@ prediction_thread_evaluator::run(int line_limit,
 {
     (void)time_limit;
 
-    vInfo(m_context, "[Computation starts with %u thread(s)]\n", threads);
+    info(m_context, "[Computation starts with %u thread(s)]\n", threads);
 
     Results results(m_context, threads);
     bool stop = false;
@@ -202,8 +175,7 @@ prediction_thread_evaluator::run(int line_limit,
     eastl::vector<std::thread> workers{ threads };
 
     for (auto i = 0u; i != threads; ++i) {
-        auto newctx = eastl::make_shared<efyj::context>();
-        newctx->set_logger(eastl::make_unique<my_logger>(i));
+        auto newctx = copy_context(m_context);
 
         workers[i] = std::thread(parallel_prediction_worker,
                                  newctx,
@@ -282,15 +254,15 @@ Results::push(int step,
     m_end = std::chrono::system_clock::now();
     auto duration = std::chrono::duration<double>(m_end - m_start).count();
 
-    vInfo(m_context,
-          "| %d | %13.10f | %lu | %f |",
-          step,
-          m_results[step - 1].kappa,
-          m_results[step - 1].loop,
-          duration);
+    info(m_context,
+         "| {} | {:13.10f} | {} | {} |",
+         step,
+         m_results[step - 1].kappa,
+         m_results[step - 1].loop,
+         duration);
 
     print(m_context, m_results[step - 1].updaters);
-    vInfo(m_context, "\n");
+    info(m_context, "\n");
 }
 
 } // namespace efyj

@@ -43,7 +43,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
     eastl::vector<result> ret;
 
-    vInfo(m_context, "[Computation starts]\n");
+    info(m_context, "[Computation starts]\n");
 
     if (reduce_mode)
         solver.reduce(m_options);
@@ -58,7 +58,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
     assert(max_step > 0 and "adjustment: can not determine limit");
 
-    vInfo(m_context, "[Computation starts 1/%zu\n", max_step);
+    info(m_context, "[Computation starts 1/{}\n", max_step);
 
     {
         m_start = eastl::chrono::system_clock::now();
@@ -69,16 +69,16 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 
         m_end = eastl::chrono::system_clock::now();
 
-        vInfo(m_context,
-              "| line updated | kappa | kappa computed "
-              "| time (s) | tuple (attribute, line, value) updated |\n");
+        info(m_context,
+             "| line updated | kappa | kappa computed "
+             "| time (s) | tuple (attribute, line, value) updated |\n");
 
-        vInfo(m_context,
-              "| %d | %13.10f | %d | %f | [] |\n",
-              0,
-              kappa,
-              1,
-              eastl::chrono::duration<double>(m_end - m_start).count());
+        info(m_context,
+             "| {} | {:13.10f} | {} | {} | [] |\n",
+             0,
+             kappa,
+             1,
+             eastl::chrono::duration<double>(m_end - m_start).count());
 
         ret.emplace_back();
 
@@ -127,15 +127,15 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         ret.back().kappa_computed = static_cast<unsigned long int>(loop);
         ret.back().function_computed = static_cast<unsigned long int>(0);
 
-        vInfo(m_context,
-              "| %zu | %13.10f | %zu | %f | ",
-              step,
-              kappa,
-              loop,
-              eastl::chrono::duration<double>(m_end - m_start).count());
+        info(m_context,
+             "| {} | {:13.10f} | {} | {} | ",
+             step,
+             kappa,
+             loop,
+             eastl::chrono::duration<double>(m_end - m_start).count());
 
         print(m_context, m_updaters);
-        vInfo(m_context, "\n");
+        info(m_context, "\n");
     }
 
     return ret;

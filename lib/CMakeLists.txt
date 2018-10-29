@@ -1,5 +1,8 @@
 project(libefyj VERSION 0.1.0 LANGUAGES CXX)
 
+option(WITH_DEBUG "enable maximium debug code. [default: ON]" ON)
+option(WITH_LOG "enable log message. [default: ON]" ON)
+
 set(header_files
   include/efyj/efyj.hpp
   include/efyj/matrix.hpp)
@@ -59,6 +62,7 @@ set_target_properties(libstaticefyj PROPERTIES
 target_compile_definitions(libefyj
   PRIVATE
   $<$<BOOL:${WITH_DEBUG}>:EFYJ_ENABLE_DEBUG>
+  $<$<BOOL:${WITH_LOG}>:EFYJ_ENABLE_LOG>
   $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
   $<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>
   VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
@@ -68,6 +72,7 @@ target_compile_definitions(libefyj
 target_compile_definitions(libstaticefyj
   PRIVATE
   $<$<BOOL:${WITH_DEBUG}>:EFYJ_ENABLE_DEBUG>
+  $<$<BOOL:${WITH_LOG}>:EFYJ_ENABLE_LOG>
   $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
   $<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>
   VERSION_MAJOR=${PROJECT_VERSION_MAJOR}

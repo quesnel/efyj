@@ -144,7 +144,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
     {
         auto opt_line = ls.getline();
         if (!opt_line) {
-            vInfo(context, "Fail to read header\n");
+            info(context, "Fail to read header\n");
             return eastl::make_optional<csv_parser_status>(
               csv_parser_status::tag::file_error, size_t(0), columns.size());
         }
@@ -165,13 +165,13 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
-        vInfo(context, "column %zu %s\n", i, columns[i].c_str());
+        info(context, "column {} {}\n", i, columns[i].c_str());
 
     for (size_t i = id, e = id + atts.size(); i != e; ++i) {
-        vInfo(context,
-              "try to get_basic_atribute_id %zu : %s\n",
-              i,
-              columns[i].c_str());
+        info(context,
+             "try to get_basic_atribute_id {} : {}\n",
+             i,
+             columns[i].c_str());
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
@@ -184,7 +184,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
         convertheader[i - id] = *opt_att_id;
     }
 
-    vInfo(context, "Starts to read data (atts.size() = %zu\n", atts.size());
+    info(context, "Starts to read data (atts.size() = {}\n", atts.size());
 
     options.init(atts.size());
     options.push_line();
@@ -200,13 +200,13 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
 
         tokenize(line, columns, ";", false);
         if (columns.size() != atts.size() + id + 1) {
-            vErr(context,
-                 "Options: error in csv file line %d:"
-                 " not correct number of column %d"
-                 " (expected: %d)\n",
-                 line_number,
-                 static_cast<int>(columns.size()),
-                 static_cast<int>(atts.size() + id + 1));
+            error(context,
+                  "Options: error in csv file line {}:"
+                  " not correct number of column {}"
+                  " (expected: {})\n",
+                  line_number,
+                  columns.size(),
+                  atts.size() + id + 1);
             continue;
         }
 
@@ -228,10 +228,10 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
             auto len2 = sscanf(columns[id - 1].c_str(), "%d", &department);
 
             if (len1 != 1 or len2 != 1) {
-                vErr(context,
-                     "Options: error in csv file line %d."
-                     " Malformed year or department\n",
-                     line_number);
+                error(context,
+                      "Options: error in csv file line {}."
+                      " Malformed year or department\n",
+                      line_number);
                 continue;
             }
         }
@@ -249,12 +249,12 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
 
             auto opt_option = atts[attid]->scale.find_scale_value(columns[i]);
             if (!opt_option) {
-                vErr(context,
-                     "Options: error in csv file line %d: "
-                     "unknown scale value `%s' for attribute `%s'",
-                     line_number,
-                     columns[i].c_str(),
-                     atts[attid]->name.c_str());
+                error(context,
+                      "Options: error in csv file line {}: "
+                      "unknown scale value `{}' for attribute `{}'",
+                      line_number,
+                      columns[i].c_str(),
+                      atts[attid]->name.c_str());
                 simulations.pop_back();
                 if (id == 4)
                     places.pop_back();
@@ -268,7 +268,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
             }
         }
 
-        vInfo(context, "next-line %ld\n", options.rows());
+        info(context, "next-line {}\n", options.rows());
 
         options.push_line();
     }

@@ -243,7 +243,7 @@ solver_stack::string_functions() const
 void
 for_each_model_solver::full()
 {
-    vInfo(m_context, "[Full problem size]\n");
+    info(m_context, "[Full problem size]\n");
 
     m_whitelist.clear();
     m_whitelist.resize(m_solver.attribute_size());
@@ -256,43 +256,43 @@ for_each_model_solver::full()
 void
 for_each_model_solver::detect_missing_scale_value()
 {
-    vInfo(m_context, "[Number of models available]\n");
+    info(m_context, "[Number of models available]\n");
 
     long double model_number{ 1 };
     for (size_t i = 0, e = m_whitelist.size(); i != e; ++i) {
-        vInfo(m_context,
-              "%d ^ %zu\n",
-              m_solver.scale_size(i),
-              m_whitelist[i].size());
+        info(m_context,
+             "{} ^ {}\n",
+             m_solver.scale_size(i),
+             m_whitelist[i].size());
         if (i + 1 != e)
-            vInfo(m_context, " * ");
+            info(m_context, " * ");
 
         model_number *=
           std::pow(m_solver.scale_size(i), m_whitelist[i].size());
     }
 
-    vInfo(m_context, " = %LF\n", model_number);
+    info(m_context, " = {}\n", model_number);
 
-    vInfo(m_context, "[Detect unused scale value]\n");
+    info(m_context, "[Detect unused scale value]\n");
 
     for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
         int sv = m_solver.scale_size(i);
 
-        vInfo(m_context,
-              "Attribute %d\n"
-              "\n- scale size........ : %d"
-              "\n- used rows......... : ",
-              i,
-              sv);
+        info(m_context,
+             "Attribute {}\n"
+             "\n- scale size........ : {}"
+             "\n- used rows......... : ",
+             i,
+             sv);
 
         for (size_t x = 0, endx = m_whitelist[i].size(); x != endx; ++x)
-            vInfo(m_context, "%d ", m_whitelist[i][x]);
+            info(m_context, "{} ", m_whitelist[i][x]);
 
-        vInfo(m_context, "\n- function.......... : ");
+        info(m_context, "\n- function.......... : ");
         for (size_t x = 0, endx = m_solver.function_size(i); x != endx; ++x)
-            vInfo(m_context, "%d ", m_solver.value(i, x));
+            info(m_context, "{} ", m_solver.value(i, x));
 
-        vInfo(m_context, "\n- unused scale value : ");
+        info(m_context, "\n- unused scale value : ");
         for (int j = 0, endj = sv; j != endj; ++j) {
             size_t x, endx;
 
@@ -302,9 +302,9 @@ for_each_model_solver::detect_missing_scale_value()
             }
 
             if (x == endx)
-                vInfo(m_context, "%d ", j);
+                info(m_context, "{} ", j);
         }
-        vInfo(m_context, "\n");
+        info(m_context, "\n");
     }
 }
 
@@ -319,13 +319,13 @@ for_each_model_solver::for_each_model_solver(
 
     detect_missing_scale_value();
 
-    vInfo(context, "[internal attribute id -> real attribute]\n");
+    info(context, "[internal attribute id -> real attribute]\n");
 
     for (size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
-        vInfo(context,
-              "  %zu %s\n",
-              i,
-              model.attributes[m_solver.atts[i].att].name.c_str());
+        info(context,
+             "  {} {}\n",
+             i,
+             model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
 for_each_model_solver::for_each_model_solver(
@@ -341,10 +341,10 @@ for_each_model_solver::for_each_model_solver(
     detect_missing_scale_value();
 
     for (size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
-        vInfo(context,
-              "  %zu %s\n",
-              i,
-              model.attributes[m_solver.atts[i].att].name.c_str());
+        info(context,
+             "  {} {}\n",
+             i,
+             model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
 /** @e reduce is used to reduce the size of the problem. It removes
@@ -353,7 +353,7 @@ for_each_model_solver::for_each_model_solver(
 void
 for_each_model_solver::reduce(const Options& options)
 {
-    vInfo(m_context, "[Reducing problem size]");
+    info(m_context, "[Reducing problem size]");
 
     m_whitelist.clear();
     m_whitelist.resize(m_solver.attribute_size());
@@ -365,11 +365,11 @@ for_each_model_solver::reduce(const Options& options)
         m_solver.reduce(options.options.row(i), whitelist);
 
     for (size_t i = 0, e = whitelist.size(); i != e; ++i) {
-        vInfo(m_context, "  Whitelist ");
+        info(m_context, "  Whitelist ");
         for (const auto v : whitelist[i])
-            vInfo(m_context, "%d ", v);
+            info(m_context, "{} ", v);
 
-        vInfo(m_context, "(%d)\n", m_solver.function_size(i));
+        info(m_context, "({})\n", m_solver.function_size(i));
     }
 
     /* convert the set into vector of vector. */
@@ -556,11 +556,11 @@ print(eastl::shared_ptr<context> ctx,
       const eastl::vector<eastl::tuple<int, int, int>>& updaters) noexcept
 {
     for (const auto& elem : updaters)
-        vInfo(ctx,
-              "[%d %d %d] ",
-              eastl::get<0>(elem),
-              eastl::get<1>(elem),
-              eastl::get<2>(elem));
+        info(ctx,
+             "[{} {} {}] ",
+             eastl::get<0>(elem),
+             eastl::get<1>(elem),
+             eastl::get<2>(elem));
 }
 
 } // namespace efyj

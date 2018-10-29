@@ -249,50 +249,14 @@ struct csv_parser_status
     tag m_tag;
 };
 
-enum class message_type
-{
-    classic,
-    highlight,   // underline
-    observation, // green and bold
-    important    // red and bold
-};
+class context;
 
-class logger
-{
-public:
-    logger() = default;
-    virtual ~logger() = default;
+eastl::shared_ptr<context>
+make_context(int log_priority = 6);
 
-    virtual void write(message_type m,
-                       const char* format,
-                       va_list args) noexcept = 0;
-};
-
-class context
-{
-    int m_log_priority = 7;
-    eastl::unique_ptr<logger> m_logger;
-
-public:
-    context() = default;
-    virtual ~context() = default;
-
-    context(const context&) = delete;
-    context& operator=(const context&) = delete;
-
-    void set_log_priority(int priority) noexcept;
-
-    int get_log_priority() const noexcept;
-
-    void set_logger(eastl::unique_ptr<logger> fn) noexcept;
-
-    void log(message_type type, const char* format, ...)
-#if defined(__GNUC__)
-      noexcept __attribute__((format(printf, 3, 4)));
-#else
-      noexcept;
-#endif
-};
+void
+set_logger_callback(eastl::shared_ptr<context> ctx,
+                    eastl::function<void(int, const eastl::string&)> cb);
 
 model_data
 extract_model(eastl::shared_ptr<context> ctx,

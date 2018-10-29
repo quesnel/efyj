@@ -125,25 +125,10 @@ change_pwd()
     return ret == 0;
 }
 
-struct test_logger : public efyj::logger
-{
-public:
-    virtual ~test_logger() = default;
-
-    virtual void write(efyj::message_type,
-                       const char* format,
-                       va_list args) noexcept
-    {
-        vfprintf(stdout, format, args);
-    }
-};
-
 eastl::shared_ptr<efyj::context>
 make_context()
 {
-    auto ret = eastl::make_shared<efyj::context>();
-    ret->set_log_priority(7);
-    ret->set_logger(eastl::make_unique<test_logger>());
+    auto ret = efyj::make_context(7);
 
     return ret;
 }

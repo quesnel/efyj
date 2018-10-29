@@ -198,59 +198,6 @@ prediction(eastl::shared_ptr<efyj::context> ctx,
 
 } // anonymous namespace
 
-class console_logger : public efyj::logger
-{
-public:
-    virtual void write(int priority,
-                       const char* file,
-                       int line,
-                       const char* fn,
-                       const char* format,
-                       va_list args) noexcept
-    {
-        if (priority <= 6)
-            vfprintf(stdout, format, args);
-        else {
-            fprintf(stderr,
-                    "LOG: %d at %d in function '%s' from file %s: ",
-                    priority,
-                    line,
-                    fn,
-                    file);
-            vfprintf(stderr, format, args);
-        }
-    }
-
-    virtual void write(efyj::message_type m,
-                       const char* format,
-                       va_list args) noexcept
-    {
-#ifdef __unix__
-        if (::isatty(STDIN_FILENO)) {
-            switch (m) {
-            case efyj::message_type::highlight:
-                ::puts("\033[30m\033[2m");
-                break;
-            case efyj::message_type::observation:
-                ::puts("\033[32m\033[1m");
-                break;
-            case efyj::message_type::important:
-                ::puts("\033[33m\033[1m");
-                break;
-            default:
-                break;
-            }
-            vfprintf(stdout, format, args);
-            ::puts("\033[30m\033[0m");
-        } else {
-            vfprintf(stdout, format, args);
-        }
-#else
-        vfprintf(stdout, format, args);
-#endif
-    }
-};
-
 int
 main(int argc, char* argv[])
 {
@@ -343,9 +290,7 @@ main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    auto ctx = eastl::make_shared<efyj::context>();
-    ctx->set_log_priority(7);
-    ctx->set_logger(eastl::make_unique<console_logger>());
+    auto ctx = efyj::make_context(7);
 
     int return_value = EXIT_SUCCESS;
     if ((mode & EXTRACT)) {
