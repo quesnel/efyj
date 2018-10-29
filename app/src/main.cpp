@@ -105,6 +105,8 @@ usage() noexcept
          "    -o options.csv       The options file\n"
          "    -e output.csv        Extract the option from dexi files "
          "into csv file\n"
+         "    -g output.dxi        Merge model and option file into a new "
+         "DEXi file\n"
          "    -r                   Without the reduce models generator "
          "algorithm\n"
          "    -l [limit]           Modifier limit [int]\n"
@@ -132,6 +134,28 @@ extract(eastl::shared_ptr<efyj::context> ctx,
 {
     try {
         auto opts = efyj::extract_options(ctx, model);
+    } catch (const std::bad_alloc& e) {
+        fprintf(stderr, "not enough memory\n");
+        return EXIT_FAILURE;
+    } catch (const std::logic_error& e) {
+        fprintf(stderr, "internal error: %s\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        fprintf(stderr, "failure: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int
+merge(eastl::shared_ptr<efyj::context> ctx,
+      const eastl::string& model,
+      const eastl::string& option,
+      const eastl::string& output) noexcept
+{
+    try {
+        efyj::merge_options(ctx, model, option, output);
     } catch (const std::bad_alloc& e) {
         fprintf(stderr, "not enough memory\n");
         return EXIT_FAILURE;
@@ -205,11 +229,12 @@ main(int argc, char* argv[])
     {
         NOTHING = 0,
         EXTRACT = 1 << 1,
-        ADJUSTMENT = 1 << 2,
-        PREDICTION = 1 << 3
+        MERGE = 1 << 2,
+        ADJUSTMENT = 1 << 3,
+        PREDICTION = 1 << 4
     };
 
-    eastl::string modelfilepath, optionfilepath, extractfile;
+    eastl::string modelfilepath, optionfilepath, extractfile, mergefile;
 
     unsigned int mode = 0;
     unsigned int threads = 0;
@@ -217,7 +242,7 @@ main(int argc, char* argv[])
     int opt;
     bool reduce = true;
 
-    while ((opt = ::getopt(argc, argv, "j::m:o:l:e:phvra")) != -1) {
+    while ((opt = ::getopt(argc, argv, "j::m:o:l:e:g:phvra")) != -1) {
         switch (opt) {
         case 'j':
             if (::optarg) {
@@ -238,7 +263,11 @@ main(int argc, char* argv[])
             break;
         case 'e':
             extractfile.assign(::optarg);
-            mode = mode | EXTRACT;
+            mode = EXTRACT;
+            break;
+        case 'g':
+            mergefile.assign(::optarg);
+            mode = MERGE;
             break;
         case 'm':
             modelfilepath.assign(::optarg);
@@ -292,25 +321,19 @@ main(int argc, char* argv[])
 
     auto ctx = efyj::make_context(7);
 
-    int return_value = EXIT_SUCCESS;
-    if ((mode & EXTRACT)) {
-        if (::extract(ctx, modelfilepath, extractfile) == EXIT_FAILURE)
-            return_value = EXIT_FAILURE;
-    }
+    if (mode == EXTRACT)
+        return ::extract(ctx, modelfilepath, extractfile);
 
-    if ((mode & ADJUSTMENT)) {
-        if (::adjustment(
-              ctx, modelfilepath, optionfilepath, reduce, limit, threads) ==
-            EXIT_FAILURE)
-            return_value = EXIT_FAILURE;
-    }
+    if (mode == MERGE)
+        return ::merge(ctx, modelfilepath, optionfilepath, mergefile);
 
-    if ((mode & PREDICTION)) {
-        if (::prediction(
-              ctx, modelfilepath, optionfilepath, reduce, limit, threads) ==
-            EXIT_FAILURE)
-            return_value = EXIT_FAILURE;
-    }
+    if (mode == ADJUSTMENT)
+        return ::adjustment(
+          ctx, modelfilepath, optionfilepath, reduce, limit, threads);
 
-    return return_value;
+    if (mode == PREDICTION)
+        return ::prediction(
+          ctx, modelfilepath, optionfilepath, reduce, limit, threads);
+
+    return EXIT_SUCCESS;
 }

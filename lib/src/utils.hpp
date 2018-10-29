@@ -24,6 +24,7 @@
 
 #include <EASTL/algorithm.h>
 #include <EASTL/functional.h>
+#include <EASTL/numeric_limits.h>
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
 

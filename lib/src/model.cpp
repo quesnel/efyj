@@ -828,6 +828,20 @@ Model::write_options() const
 }
 
 void
+Model::set_options(const options_data& options)
+{
+    eastl::vector<size_t> ordered_att;
+    reorder_basic_attribute(*this, 0, ordered_att);
+
+    for (size_t opt = 0; opt != options.options.rows(); ++opt) {
+        for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c) {
+            attributes[ordered_att[c]].options.emplace_back(
+              options.options(c, opt));
+        }
+    }
+}
+
+void
 Model::read(FILE* is)
 {
     Model_reader dr(is, *this);

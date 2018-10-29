@@ -185,6 +185,7 @@ struct Model
 
     void write_options(FILE* os) const;
     options_data write_options() const;
+    void set_options(const options_data& options);
 };
 
 bool

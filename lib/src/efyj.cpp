@@ -384,4 +384,65 @@ extract_options(eastl::shared_ptr<context> ctx,
     return ret;
 }
 
+struct c_file
+{
+    enum class file_mode
+    {
+        read,
+        write
+    };
+
+    FILE* file = nullptr;
+
+    c_file(const char* file_path, file_mode mode = file_mode::read)
+      : file(fopen(file_path, mode == file_mode::read ? "r" : "w"))
+    {}
+
+    FILE* get() const
+    {
+        return file;
+    }
+
+    bool is_open() const
+    {
+        return file != nullptr;
+    }
+
+    ~c_file()
+    {
+        if (file)
+            fclose(file);
+    }
+};
+
+void
+merge_options(eastl::shared_ptr<context> ctx,
+              const eastl::string& model_file_path,
+              const eastl::string& options_file_path,
+              const eastl::string& output_file_path)
+{
+    debug(ctx,
+          "[efyj] make DEXi file {} from the DEXi {}/ csv {}",
+          output_file_path.c_str(),
+          model_file_path.c_str(),
+          options_file_path.c_str());
+
+    if (model_file_path == output_file_path) {
+        warning(ctx, "Can not merge into the same file\n");
+        return;
+    }
+
+    auto model = make_model(ctx, model_file_path);
+    auto options = extract_options(ctx, model_file_path, options_file_path);
+
+    c_file ofs(output_file_path.c_str(), c_file::file_mode::write);
+    if (!ofs.is_open()) {
+        warning(ctx, "Fail to open DEXi file {}.\n", output_file_path.c_str());
+        return;
+    }
+
+    model.set_options(options);
+    model.write(ofs.get());
+}
+
 } // namespace efyj

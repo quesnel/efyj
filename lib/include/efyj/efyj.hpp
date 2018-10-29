@@ -27,7 +27,6 @@
 #define EFYJ_PATCH_VERSION 0
 
 #include <EASTL/map.h>
-#include <EASTL/numeric_limits.h>
 #include <EASTL/shared_ptr.h>
 #include <EASTL/string.h>
 #include <EASTL/unique_ptr.h>
@@ -245,6 +244,13 @@ options_data
 extract_options(eastl::shared_ptr<context> ctx,
                 const eastl::string& model_file_path,
                 const eastl::string& options_file_path);
+
+void
+merge_options(eastl::shared_ptr<context> ctx,
+              const eastl::string& model,
+              const eastl::string& options,
+              const eastl::string& output_file_path);
+
 } // namespace efyj
 
 #endif
