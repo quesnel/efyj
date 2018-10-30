@@ -85,26 +85,6 @@ max_value(int need, size_t real) noexcept
     return need <= 0 ? real : eastl::min(static_cast<size_t>(need), real);
 }
 
-inline eastl::string
-vstringf(const char* format, va_list ap) noexcept
-{
-    eastl::string ret;
-
-    return ret.sprintf_va_list(format, ap);
-}
-
-inline eastl::string
-stringf(const char* format, ...) noexcept
-{
-    va_list ap;
-
-    va_start(ap, format);
-    eastl::string ret = vstringf(format, ap);
-    va_end(ap);
-
-    return ret;
-}
-
 // inline unsigned
 // get_hardware_concurrency() noexcept
 // {
