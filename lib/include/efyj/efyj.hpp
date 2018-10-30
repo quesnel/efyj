@@ -36,6 +36,36 @@
 
 #include <efyj/matrix.hpp>
 
+#if defined _WIN32 || defined __CYGWIN__
+#define EFYJ_HELPER_DLL_IMPORT __declspec(dllimport)
+#define EFYJ_HELPER_DLL_EXPORT __declspec(dllexport)
+#define EFYJ_HELPER_DLL_LOCAL
+#else
+#if __GNUC__ >= 4
+#define EFYJ_HELPER_DLL_IMPORT __attribute__((visibility("default")))
+#define EFYJ_HELPER_DLL_EXPORT __attribute__((visibility("default")))
+#define EFYJ_HELPER_DLL_LOCAL __attribute__((visibility("hidden")))
+#else
+#define EFYJ_HELPER_DLL_IMPORT
+#define EFYJ_HELPER_DLL_EXPORT
+#define EFYJ_HELPER_DLL_LOCAL
+#endif
+#endif
+
+#ifdef EFYJ_DLL
+#ifdef libefyj_EXPORTS
+#define EFYJ_API EFYJ_HELPER_DLL_EXPORT
+#else
+#define EFYJ_API EFYJ_HELPER_DLL_IMPORT
+#endif
+#define EFYJ_LOCAL EFYJ_HELPER_DLL_LOCAL
+#define EFYJ_MODULE EFYJ_HELPER_DLL_EXPORT
+#else
+#define EFYJ_API
+#define EFYJ_LOCAL
+#define EFYJ_MODULE BARYONYX_HELPER_DLL_EXPORT
+#endif
+
 /** Comments about efyj's API.
  */
 namespace efyj {
@@ -189,37 +219,45 @@ struct csv_parser_status
 
 class context;
 
+EFYJ_API
 eastl::shared_ptr<context>
 make_context(int log_priority = 6);
 
+EFYJ_API
 void
 set_logger_callback(eastl::shared_ptr<context> ctx,
                     eastl::function<void(int, const eastl::string&)> cb);
 
+EFYJ_API
 model_data
 extract_model(eastl::shared_ptr<context> ctx,
               const eastl::string& model_file_path);
 
+EFYJ_API
 simulation_results
 simulate(eastl::shared_ptr<context> ctx,
          const eastl::string& model_file_path,
          const eastl::string& options_file_path);
 
+EFYJ_API
 simulation_results
 simulate(eastl::shared_ptr<context> ctx,
          const eastl::string& model_file_path,
          const options_data& opts);
 
+EFYJ_API
 evaluation_results
 evaluate(eastl::shared_ptr<context> ctx,
          const eastl::string& model_file_path,
          const eastl::string& options_file_path);
 
+EFYJ_API
 evaluation_results
 evaluate(eastl::shared_ptr<context> ctx,
          const eastl::string& model_file_path,
          const options_data& opts);
 
+EFYJ_API
 eastl::vector<result>
 adjustment(eastl::shared_ptr<context> ctx,
            const eastl::string& model_file_path,
@@ -228,6 +266,7 @@ adjustment(eastl::shared_ptr<context> ctx,
            int limit,
            unsigned int thread);
 
+EFYJ_API
 eastl::vector<result>
 prediction(eastl::shared_ptr<context> ctx,
            const eastl::string& model_file_path,
@@ -236,15 +275,18 @@ prediction(eastl::shared_ptr<context> ctx,
            int limit,
            unsigned int thread);
 
+EFYJ_API
 options_data
 extract_options(eastl::shared_ptr<context> ctx,
                 const eastl::string& model_file_path);
 
+EFYJ_API
 options_data
 extract_options(eastl::shared_ptr<context> ctx,
                 const eastl::string& model_file_path,
                 const eastl::string& options_file_path);
 
+EFYJ_API
 void
 merge_options(eastl::shared_ptr<context> ctx,
               const eastl::string& model,
