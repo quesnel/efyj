@@ -644,19 +644,19 @@ private:
 
     void make_space() const
     {
-        fprintf(os, "%*c\n", space, ' ');
+        fprintf(os, "%*c", space, ' ');
     }
 
     void make_space(int adding) const
     {
-        fprintf(os, "%*c\n", space + adding, ' ');
+        fprintf(os, "%*c", space + adding, ' ');
     }
 
     void write_Model_option(const eastl::vector<eastl::string>& opts)
     {
         for (const auto& opt : opts) {
             make_space();
-            fprintf(os, " <OPTION>%s</OPTION>\n", opt.c_str());
+            fprintf(os, "<OPTION>%s</OPTION>\n", opt.c_str());
         }
     }
 
@@ -664,7 +664,7 @@ private:
     {
         for (const auto& opt : opts) {
             make_space();
-            fprintf(os, " <OPTION>%d</OPTION>\n", opt);
+            fprintf(os, "<OPTION>%d</OPTION>\n", opt);
         }
     }
 
