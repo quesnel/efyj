@@ -1,4 +1,4 @@
-project(libefyj VERSION 0.1.0 LANGUAGES CXX)
+project(libefyj VERSION 0.6.0 LANGUAGES CXX)
 
 option(WITH_DEBUG "enable maximium debug code. [default: ON]" ON)
 option(WITH_LOG "enable log message. [default: ON]" ON)
@@ -112,8 +112,16 @@ target_link_libraries(testlib libstaticefyj expat threads ${EASTL_LIBRARY})
 set_property(TARGET testlib PROPERTY CXX_STANDARD 14)
 
 configure_file(efyj.pc.in "${CMAKE_BINARY_DIR}/efyj.pc" @ONLY)
-
 install(FILES "${CMAKE_BINARY_DIR}/efyj.pc"
   DESTINATION "lib/pkgconfig")
+
+# Configure the version.hpp.in to produce the VLE_VERSION macro.
+
+math(EXPR EFYJ_MACRO_VERSION "${PROJECT_VERSION_MAJOR} * 100000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+
+configure_file(include/efyj/version.hpp.in
+  ${CMAKE_BINARY_DIR}/version.hpp @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION
+  "include/efyj")
 
 add_test(testlib testlib)
