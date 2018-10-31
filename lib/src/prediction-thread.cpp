@@ -83,12 +83,11 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
         }
 
         bool isend = false;
-        while (not isend) {
+        while (isend == false) {
             if (stop)
                 return;
 
-            eastl::fill(
-              m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
+            eastl::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
             for (size_t opt = 0, endopt = options.size(); opt != endopt;
                  ++opt) {
@@ -113,8 +112,7 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] =
-                  solver.solve(options.options.row(opt));
+                m_globalsimulated[opt] = solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -154,7 +152,7 @@ prediction_thread_evaluator::prediction_thread_evaluator(
   , solver(context, model)
   , kappa_c(model.attributes[0].scale.size())
 {
-    if (not options.have_subdataset())
+    if (!options.have_subdataset())
         throw solver_error(
           "options does not have enough data to build the training set");
 }
@@ -219,7 +217,7 @@ Results::emplace_result(
   unsigned long loop,
   const eastl::vector<eastl::tuple<int, int, int>>& updaters)
 {
-    assert(static_cast<size_t>(i) < m_level.size() and
+    assert(static_cast<size_t>(i) < m_level.size() &&
            static_cast<size_t>(i) < m_results.size());
 
     m_results[i].kappa = kappa;

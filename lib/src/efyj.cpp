@@ -34,9 +34,22 @@
 
 namespace efyj {
 
+eastl::shared_ptr<context>
+make_context(int log_priority)
+{
+    auto ret = eastl::make_shared<context>();
+
+    ret->log_priority = log_priority < 0
+                          ? log_level::emerg
+                          : log_priority > 7
+                              ? log_level::debug
+                              : static_cast<log_level>(log_priority);
+
+    return ret;
+}
+
 Model
-make_model(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path)
+make_model(eastl::shared_ptr<context> ctx, const eastl::string& model_file_path)
 {
     Model model;
 

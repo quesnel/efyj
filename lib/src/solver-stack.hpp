@@ -211,7 +211,7 @@ struct solver_stack
     inline int function_size(int attribute) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
 
         return static_cast<int>(atts[attribute].functions.size());
@@ -220,7 +220,7 @@ struct solver_stack
     inline int scale_size(int attribute) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
 
         return static_cast<int>(atts[attribute].scale_size());
     }
@@ -228,9 +228,9 @@ struct solver_stack
     inline int value(int attribute, int line) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
-        assert(line >= 0 and
+        assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
         return static_cast<int>(atts[attribute].functions[line]);
@@ -239,10 +239,10 @@ struct solver_stack
     inline int default_value(int attribute, int line) const noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].saved_functions.size() < INT_MAX);
-        assert(line >= 0 and line < static_cast<int>(
-                                      atts[attribute].saved_functions.size()));
+        assert(line >= 0 &&
+               line < static_cast<int>(atts[attribute].saved_functions.size()));
 
         return static_cast<int>(atts[attribute].saved_functions[line]);
     }
@@ -250,21 +250,20 @@ struct solver_stack
     inline void value_restore(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
-        assert(line >= 0 and
+        assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
-        atts[attribute].functions[line] =
-          atts[attribute].saved_functions[line];
+        atts[attribute].functions[line] = atts[attribute].saved_functions[line];
     }
 
     inline void value_set(int attribute, int line, int scale_value) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
-        assert(line >= 0 and
+        assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
         atts[attribute].functions[line] = scale_value;
@@ -273,9 +272,9 @@ struct solver_stack
     inline void value_increase(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
-        assert(line >= 0 and
+        assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
         atts[attribute].functions[line] += 1;
@@ -286,9 +285,9 @@ struct solver_stack
     inline void value_clear(int attribute, int line) noexcept
     {
         assert(atts.size() > 0 && atts.size() < INT_MAX);
-        assert(attribute >= 0 and attribute < static_cast<int>(atts.size()));
+        assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].functions.size() < INT_MAX);
-        assert(line >= 0 and
+        assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
         atts[attribute].functions[line] = 0;
@@ -296,8 +295,7 @@ struct solver_stack
 
     void recursive_fill(const Model& model, size_t att, int& value_id);
 
-    void set_functions(
-      const eastl::vector<eastl::vector<scale_id>>& functions);
+    void set_functions(const eastl::vector<eastl::vector<scale_id>>& functions);
 
     void get_functions(eastl::vector<eastl::vector<scale_id>>& functions);
 

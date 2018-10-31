@@ -62,7 +62,7 @@ rmsep(const eastl::vector<int>& observated,
     for (size_t i = 0, e = observated.size(); i != e; ++i)
         mat(observated[i], simulated[i])++;
 
-    unsigned long sum = 0.0;
+    int sum = { 0 };
 
     for (size_t i = 0; i != NC; ++i)
         for (size_t j = 0; j != NC; ++j)
@@ -119,7 +119,7 @@ public:
       , weighted(NC_, NC_)
       , NC(NC_)
     {
-        assert(NC_ > 0 and "weighted_kappa_calculator bad parameter");
+        assert(NC_ > 0 && "weighted_kappa_calculator bad parameter");
     }
 
     double linear(const eastl::vector<int>& observated,
@@ -156,7 +156,7 @@ private:
     void pre(const eastl::vector<int>& observated,
              const eastl::vector<int>& simulated) noexcept
     {
-        assert(observated.size() == simulated.size() and
+        assert(observated.size() == simulated.size() &&
                "weighted_kappa_calculator observated and simulated sizes "
                "are different");
 

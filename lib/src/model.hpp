@@ -47,7 +47,7 @@ template<typename T>
 void
 is_valid_scale_id(T n) noexcept
 {
-    assert(n >= 0 and n <= 127);
+    assert(n >= 0 && n <= 127);
 }
 
 constexpr scale_id

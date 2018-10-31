@@ -36,11 +36,9 @@
 
 #if defined(__unix__)
 #include <unistd.h>
-#if 0
 #elif defined(__WIN32__)
 #include <direct.h>
 #include <io.h>
-#endif
 #endif
 
 namespace EA {
@@ -119,7 +117,7 @@ change_pwd()
 #if defined(__unix__)
     int ret = ::chdir(EXAMPLES_DIR);
 #else
-    int ret = ::_chdir(EXAMPLES_DIR);
+    int ret = _chdir(EXAMPLES_DIR);
 #endif
 
     return ret == 0;
@@ -140,7 +138,7 @@ make_temporary(eastl::string name)
     static const int names_size = sizeof(names) / sizeof(names[0]);
     eastl::string ret;
 
-    for (int i = 0; i != names_size and ret.empty(); ++i)
+    for (int i = 0; i != names_size && ret.empty(); ++i)
         if (::getenv(names[i]))
             ret = ::getenv(names[i]);
 
@@ -153,7 +151,7 @@ make_temporary(eastl::string name)
     else
         ret += '/';
 
-    std::minstd_rand generator(time(nullptr));
+    std::minstd_rand generator(static_cast<unsigned int>(time(nullptr)));
     std::uniform_int_distribution<int> distribution(0, 25);
 
     for (auto c : name) {
@@ -268,6 +266,7 @@ test_empty_object_equality()
 void
 test_empty_object_read_write()
 {
+#ifdef __unix__
     efyj::Model x1, x2;
 
     {
@@ -300,6 +299,7 @@ test_empty_object_read_write()
 
     bool is_equal = x1 == x2;
     Ensures(is_equal == true);
+#endif
 }
 
 void
@@ -351,6 +351,7 @@ test_classic_Model_file()
 void
 test_car_dxi_load_save_load_via_sstream()
 {
+#ifdef __unix__
     change_pwd();
 
     efyj::Model car;
@@ -383,6 +384,7 @@ test_car_dxi_load_save_load_via_sstream()
     free(ptr);
 
     Ensures(car == car2);
+#endif
 }
 
 void

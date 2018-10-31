@@ -340,7 +340,7 @@ template<typename T, class Container>
 void
 matrix<T, Container>::m_check_index(size_type row, size_type column) const
 {
-    assert(column < m_columns or row < m_rows);
+    assert(column < m_columns || row < m_rows);
 }
 }
 

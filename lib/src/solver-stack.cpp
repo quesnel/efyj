@@ -51,7 +51,8 @@ aggregate_attribute::aggregate_attribute(const Model& model,
     coeffs.resize(m_scale_size.size(), 0);
     coeffs[m_scale_size.size() - 1] = 1;
 
-    assert(m_scale_size.size() < eastl::numeric_limits<int>::max());
+    assert(m_scale_size.size() <
+           eastl::numeric_limits<decltype(m_scale_size)::value_type>::max());
     assert(m_scale_size.size() >= 1);
 
     if (m_scale_size.size() >= 2) {
@@ -69,7 +70,7 @@ int
 aggregate_attribute::result() const
 {
 #ifndef NDEBUG
-    for (long i = 0; i < coeffs.size(); ++i) {
+    for (size_t i = 0; i < coeffs.size(); ++i) {
         assert(stack[i] < (int)m_scale_size[i] && "too big scale size");
     }
 #endif
@@ -78,7 +79,7 @@ aggregate_attribute::result() const
            "not enough attribute in function's stack to get a result");
 
     auto id = 0;
-    for (size_t i{ 0 }, e{ coeffs.size() }; i != e; ++i)
+    for (size_t i = 0, e = coeffs.size(); i != e; ++i)
         id += coeffs[i] * stack[i];
 
     return functions[id];
@@ -107,7 +108,7 @@ void
 aggregate_attribute::reduce(eastl::set<int>& whitelist)
 {
 #ifndef NDEBUG
-    for (long i = 0; i < coeffs.size(); ++i) {
+    for (size_t i = 0; i < coeffs.size(); ++i) {
         assert(stack[i] < (int)m_scale_size[i] && "too big scale size");
     }
 #endif
@@ -168,8 +169,8 @@ aggregate_attribute::reduce(eastl::set<int>& whitelist)
             } else {
                 break;
             }
-        } while (not end);
-    } while (not end);
+        } while (!end);
+    } while (!end);
 }
 
 solver_stack::solver_stack(const Model& model)
@@ -267,8 +268,7 @@ for_each_model_solver::detect_missing_scale_value()
         if (i + 1 != e)
             info(m_context, " * ");
 
-        model_number *=
-          std::pow(m_solver.scale_size(i), m_whitelist[i].size());
+        model_number *= std::pow(m_solver.scale_size(i), m_whitelist[i].size());
     }
 
     info(m_context, " = {}\n", model_number);
@@ -308,9 +308,8 @@ for_each_model_solver::detect_missing_scale_value()
     }
 }
 
-for_each_model_solver::for_each_model_solver(
-  eastl::shared_ptr<context> context,
-  const Model& model)
+for_each_model_solver::for_each_model_solver(eastl::shared_ptr<context> context,
+                                             const Model& model)
   : m_context(context)
   , m_solver(model)
 {
@@ -328,10 +327,9 @@ for_each_model_solver::for_each_model_solver(
              model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
-for_each_model_solver::for_each_model_solver(
-  eastl::shared_ptr<context> context,
-  const Model& model,
-  int walker_number)
+for_each_model_solver::for_each_model_solver(eastl::shared_ptr<context> context,
+                                             const Model& model,
+                                             int walker_number)
   : m_context(context)
   , m_solver(model)
 {
@@ -397,7 +395,7 @@ for_each_model_solver::init_next_value()
 bool
 for_each_model_solver::next_value()
 {
-    assert(not m_updaters.empty() and m_updaters.size() < INT_MAX);
+    assert(!m_updaters.empty() && m_updaters.size() < INT_MAX);
 
     size_t i = m_updaters.size() - 1;
 
@@ -454,7 +452,7 @@ for_each_model_solver::init_walkers(size_t walker_numbers)
 bool
 for_each_model_solver::next_line()
 {
-    assert(not m_updaters.empty() and m_updaters.size() < INT_MAX);
+    assert(!m_updaters.empty() && m_updaters.size() < INT_MAX);
 
     for (;;) {
         size_t i = m_updaters.size() - 1;

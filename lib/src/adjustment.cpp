@@ -49,14 +49,14 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         solver.reduce(m_options);
 
     solver.get_functions(m_globalfunctions);
-    assert(not m_globalfunctions.empty() and
+    assert(!m_globalfunctions.empty() &&
            "adjustment can not determine function");
 
     const size_t max_step =
       max_value(line_limit, solver.get_attribute_line_tuple_limit());
     const size_t max_opt = m_options.simulations.size();
 
-    assert(max_step > 0 and "adjustment: can not determine limit");
+    assert(max_step > 0 && "adjustment: can not determine limit");
 
     info(m_context, "[Computation starts 1/{}\n", max_step);
 

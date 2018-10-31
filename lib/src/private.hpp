@@ -69,8 +69,7 @@ log(const eastl::shared_ptr<context>& ctx,
         fmt::print(stream, fmt, args...);
 
     if (ctx->log_cb)
-        ctx->log_cb(static_cast<int>(level),
-                    fmt::format(fmt, args...).c_str());
+        ctx->log_cb(static_cast<int>(level), fmt::format(fmt, args...).c_str());
 }
 
 template<typename... Args>
@@ -105,8 +104,7 @@ log(context* ctx,
         fmt::print(stream, fmt, args...);
 
     if (ctx->log_cb)
-        ctx->log_cb(static_cast<int>(level),
-                    fmt::format(fmt, args...).c_str());
+        ctx->log_cb(static_cast<int>(level), fmt::format(fmt, args...).c_str());
 }
 
 template<typename... Args>
@@ -474,20 +472,6 @@ debug(const eastl::shared_ptr<context>& ctx, const T& msg)
 }
 
 inline eastl::shared_ptr<context>
-make_context(int log_priority)
-{
-    auto ret = eastl::make_shared<context>();
-
-    ret->log_priority = log_priority < 0
-                          ? log_level::emerg
-                          : log_priority > 7
-                              ? log_level::debug
-                              : static_cast<log_level>(log_priority);
-
-    return ret;
-}
-
-inline eastl::shared_ptr<context>
 copy_context(const eastl::shared_ptr<context>& ctx)
 {
     auto ret = make_context();
@@ -499,9 +483,8 @@ copy_context(const eastl::shared_ptr<context>& ctx)
 }
 
 inline void
-set_logger_callback(
-  eastl::shared_ptr<context> ctx,
-  eastl::function<void(int, const eastl::string& message)> cb)
+set_logger_callback(eastl::shared_ptr<context> ctx,
+                    eastl::function<void(int, const eastl::string& message)> cb)
 {
     debug(ctx, "efyj: change logger callback function.\n");
 

@@ -681,8 +681,7 @@ private:
         make_space();
         fprintf(os, "<NAME>%s</NAME>\n", att.name.c_str());
         make_space();
-        fprintf(
-          os, "<DESCRIPTION>%s</DESCRIPTION>\n", att.description.c_str());
+        fprintf(os, "<DESCRIPTION>%s</DESCRIPTION>\n", att.description.c_str());
         make_space();
         fputs("<SCALE>\n", os);
 
@@ -708,8 +707,7 @@ private:
 
             if (sv.group >= 0) {
                 make_space(2);
-                fprintf(
-                  os, "<GROUP>%s</GROUP>\n", dex.group[sv.group].c_str());
+                fprintf(os, "<GROUP>%s</GROUP>\n", dex.group[sv.group].c_str());
             }
 
             make_space();
@@ -731,16 +729,14 @@ private:
 
             if (!att.functions.entered.empty()) {
                 make_space(2);
-                fprintf(os,
-                        "<ENTERED>%s</ENTERED>\n",
-                        att.functions.entered.c_str());
+                fprintf(
+                  os, "<ENTERED>%s</ENTERED>\n", att.functions.entered.c_str());
             }
 
             if (!att.functions.consist.empty()) {
                 make_space(2);
-                fprintf(os,
-                        "<CONSIST>%s</CONSIST>\n",
-                        att.functions.consist.c_str());
+                fprintf(
+                  os, "<CONSIST>%s</CONSIST>\n", att.functions.consist.c_str());
             }
 
             make_space();

@@ -164,14 +164,14 @@ is_numeric_castable(Source arg)
     using arg_traits = eastl::numeric_limits<Source>;
     using result_traits = eastl::numeric_limits<Target>;
 
-    if (result_traits::digits == arg_traits::digits and
+    if (result_traits::digits == arg_traits::digits &&
         result_traits::is_signed == arg_traits::is_signed)
         return true;
 
     if (result_traits::digits > arg_traits::digits)
-        return result_traits::is_signed or arg >= 0;
+        return result_traits::is_signed || arg >= 0;
 
-    if (arg_traits::is_signed and
+    if (arg_traits::is_signed &&
         arg < static_cast<Source>(result_traits::min()))
         return false;
 
@@ -199,7 +199,7 @@ template<typename Target, typename Source>
 inline Target
 numeric_cast(Source s)
 {
-    if (not is_numeric_castable<Target>(s))
+    if (!is_numeric_castable<Target>(s))
         throw numeric_cast_error();
 
     return static_cast<Target>(s);

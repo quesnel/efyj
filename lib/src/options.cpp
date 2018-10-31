@@ -53,8 +53,11 @@ get_basic_attribute_id(const eastl::vector<const attribute*>& att,
           return att->name == name;
       });
 
+    // return it == att.end() ? eastl::nullopt
+    //    : eastl::make_optional(it - att.begin());
     return it == att.end() ? eastl::nullopt
-                           : eastl::make_optional(it - att.begin());
+                           : eastl::make_optional(static_cast<long int>(
+                               eastl::distance(att.begin(), it)));
 }
 
 struct line_reader
@@ -213,7 +216,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
         auto opt_obs =
           model.attributes[0].scale.find_scale_value(columns.back());
 
-        if (not opt_obs) {
+        if (!opt_obs) {
             return eastl::make_optional<csv_parser_status>(
               csv_parser_status::tag::scale_value_unknown,
               static_cast<size_t>(line_number),
@@ -227,7 +230,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
             auto len1 = sscanf(columns[id - 1].c_str(), "%d", &year);
             auto len2 = sscanf(columns[id - 1].c_str(), "%d", &department);
 
-            if (len1 != 1 or len2 != 1) {
+            if (len1 != 1 || len2 != 1) {
                 error(context,
                       "Options: error in csv file line {}."
                       " Malformed year or department\n",
@@ -284,14 +287,14 @@ Options::init_dataset()
 {
     const size_t size = simulations.size();
 
-    assert(not simulations.empty());
+    assert(!simulations.empty());
 
     subdataset.resize(size);
 
     if (places.empty()) {
         for (size_t i = 0; i != size; ++i) {
             for (size_t j = 0; j != size; ++j) {
-                if (i != j and departments[i] != departments[j] and
+                if (i != j && departments[i] != departments[j] &&
                     years[i] != years[j]) {
                     subdataset[i].emplace_back(j);
                 }
@@ -300,8 +303,8 @@ Options::init_dataset()
     } else {
         for (size_t i = 0; i != size; ++i) {
             for (size_t j = 0; j != size; ++j) {
-                if (i != j and departments[i] != departments[j] and
-                    places[i] != places[j] and years[i] != years[j]) {
+                if (i != j && departments[i] != departments[j] &&
+                    places[i] != places[j] && years[i] != years[j]) {
                     subdataset[i].emplace_back(j);
                 }
             }
@@ -343,12 +346,12 @@ Options::init_dataset()
 void
 Options::check()
 {
-    if (static_cast<size_t>(options.rows()) != simulations.size() or
-        options.cols() == 0 or simulations.size() != departments.size() or
-        simulations.size() != years.size() or
-        simulations.size() != observed.size() or
-        not(simulations.size() == places.size() or places.empty()) or
-        simulations.size() != id_subdataset_reduced.size() or
+    if (static_cast<size_t>(options.rows()) != simulations.size() ||
+        options.cols() == 0 || simulations.size() != departments.size() ||
+        simulations.size() != years.size() ||
+        simulations.size() != observed.size() ||
+        !(simulations.size() == places.size() || places.empty()) ||
+        simulations.size() != id_subdataset_reduced.size() ||
         subdataset.size() != simulations.size())
         throw solver_error("Options are inconsistent");
 }

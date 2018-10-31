@@ -69,7 +69,7 @@ public:
 
     bool empty() const noexcept
     {
-        return simulations.empty() or departments.empty() or years.empty() or
+        return simulations.empty() || departments.empty() || years.empty() ||
                observed.empty();
     }
 
