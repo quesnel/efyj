@@ -1,6 +1,6 @@
 add_executable(app src/main.cpp)
 
-target_link_libraries(app libefyj Threads::Threads EXPAT::EXPAT EASTL::EASTL)
+target_link_libraries(app libefyj Threads::Threads EXPAT::EXPAT ${EASTL_LIBRARY})
 
 set_property(TARGET app PROPERTY CXX_STANDARD 17)
 

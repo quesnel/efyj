@@ -65,12 +65,7 @@ find_package_handle_standard_args(EASTL
 if (EASTL_FOUND)
   set(EASTL_INCLUDE_DIRS
     ${EASTL_INCLUDE_DIR}
-    ${EASTL_ROOT_DIR}/test/packages/EAAssert/include
-    ${EASTL_ROOT_DIR}/test/packages/EABase/include/Common
-    ${EASTL_ROOT_DIR}/test/packages/EAMain/include
-    ${EASTL_ROOT_DIR}/test/packages/EAStdC/include
-    ${EASTL_ROOT_DIR}/test/packages/EATest/include
-    ${EASTL_ROOT_DIR}/test/packages/EAThread/include)
+    ${EASTL_ROOT_DIR}/include/EABase)
 
   if (NOT EASTL_LIBRARIES)
     set(EASTL_DEBUG_LIBRARIES ${EASTL_LIBRARY_DEBUG})

@@ -30,51 +30,54 @@
 #include <iostream>
 #include <random>
 
+#include "unit-test.hpp"
+
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 
+
 #if defined(__unix__)
 #include <unistd.h>
-#elif defined(__WIN32__)
+#elif defined(_WIN32)
 #include <direct.h>
+#include <tchar.h>
 #include <io.h>
 #endif
 
-namespace EA {
-namespace StdC {
-
-int
-Vsnprintf(char8_t* p, size_t n, const char8_t* pFormat, va_list arguments)
-{
-#ifdef _MSC_VER
-    return vsnprintf_s(p, n, _TRUNCATE, pFormat, arguments);
-#else
-    return vsnprintf(p, n, pFormat, arguments);
-#endif
-}
-}
-}
-
-void*
+#ifdef _WIN32
+void* __cdecl
 operator new[](size_t size,
-               const char* pName,
+               const char* name,
                int flags,
                unsigned debugFlags,
                const char* file,
                int line)
 {
-    // #ifndef NDEBUG
-    //     fprintf(stderr,
-    //             "%zu in %s (flags: %d debug flags: %u) from file %s:%d\n",
-    //             size,
-    //             pName,
-    //             flags,
-    //             debugFlags,
-    //             file,
-    //             line);
-    // #endif
+    return new uint8_t[size];
+}
 
+void* __cdecl
+operator new[](size_t size,
+               size_t alignment,
+               size_t alignmentOffset,
+               const char* name,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    return new uint8_t[size];
+}
+#else
+void*
+operator new[](size_t size,
+               const char* name,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
     return new uint8_t[size];
 }
 
@@ -82,34 +85,15 @@ void*
 operator new[](size_t size,
                size_t alignment,
                size_t alignmentOffset,
-               const char* pName,
+               const char* name,
                int flags,
                unsigned debugFlags,
                const char* file,
                int line)
 {
-#ifndef NDEBUG
-    // fprintf(stderr,
-    //         "%zu (alignment: %zu offset: %zu) in %s (flags: %d debug flags:
-    //         "
-    //         "%u) from file %s:%d\n",
-    //         size,
-    //         alignment,
-    //         alignmentOffset,
-    //         pName,
-    //         flags,
-    //         debugFlags,
-    //         file,
-    //         line);
-#endif
-
-    if ((alignmentOffset % alignment) == 0)
-        return new uint8_t[size];
-
     return new uint8_t[size];
 }
-
-#include "unit-test.hpp"
+#endif
 
 static inline bool
 change_pwd()

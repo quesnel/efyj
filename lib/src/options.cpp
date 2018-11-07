@@ -99,7 +99,7 @@ struct line_reader
                 return {};
             }
 
-            auto len = fread(buffer, 1, BUFSIZ, is);
+            auto len = fread(buffer, 1, BUFSIZ - 1, is);
             buffer[len] = '\0';
 
             if (len == 0) {

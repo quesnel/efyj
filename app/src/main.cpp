@@ -31,75 +31,55 @@
 #include <unistd.h>
 #endif
 
-namespace EA {
-namespace StdC {
-
-int
-Vsnprintf(char8_t* p, size_t n, const char8_t* pFormat, va_list arguments)
-{
-#ifdef _MSC_VER
-    return vsnprintf_s(p, n, _TRUNCATE, pFormat, arguments);
-#else
-    return vsnprintf(p, n, pFormat, arguments);
-#endif
-}
-}
-}
-
-void*
+#ifdef _WIN32
+void* __cdecl
 operator new[](size_t size,
-               const char* pName,
+               const char* name,
                int flags,
                unsigned debugFlags,
                const char* file,
                int line)
 {
-    // #ifndef NDEBUG
-    //     fmt::print(stderr,
-    //             "%zu in %s (flags: %d debug flags: %u) from file %s:%d\n",
-    //             size,
-    //             pName,
-    //             flags,
-    //             debugFlags,
-    //             file,
-    //             line);
-    // #endif
+    return new uint8_t[size];
+}
 
-    return malloc(size);
+void* __cdecl
+operator new[](size_t size,
+               size_t alignment,
+               size_t alignmentOffset,
+               const char* name,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    return new uint8_t[size];
+}
+#else
+void*
+operator new[](size_t size,
+               const char* name,
+               int flags,
+               unsigned debugFlags,
+               const char* file,
+               int line)
+{
+    return new uint8_t[size];
 }
 
 void*
 operator new[](size_t size,
                size_t alignment,
                size_t alignmentOffset,
-               const char* pName,
+               const char* name,
                int flags,
                unsigned debugFlags,
                const char* file,
                int line)
 {
-    // #ifndef NDEBUG
-    //     fmt::print(stderr,
-    //             "%zu (alignment: %zu offset: %zu) in %s (flags: %d debug
-    //             flags: "
-    //             "%u) from file %s:%d\n",
-    //             size,
-    //             alignment,
-    //             alignmentOffset,
-    //             pName,
-    //             flags,
-    //             debugFlags,
-    //             file,
-    //             line);
-    // #endif
-
-#ifdef __unix__
-    if ((alignmentOffset % alignment) == 0)
-        return aligned_alloc(alignment, size);
-#endif
-
-    return malloc(size);
+    return new uint8_t[size];
 }
+#endif
 
 static void
 usage() noexcept
