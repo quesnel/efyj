@@ -273,10 +273,15 @@ struct attributes
     bool show_version = false;
     bool show_help = false;
 
-    bool
-    parse_long_option(eastl::string_view opt, eastl::string_view arg)
+    bool parse_long_option(eastl::string_view opt,
+                           eastl::optional<eastl::string_view> arg)
     {
-        fmt::print(fmt::color::beige, "parse long option {} arg {}", opt, arg);
+        if (arg)
+            fmt::print(
+              fmt::color::gray, "parse long option {} arg {}\n", opt, *arg);
+        else
+            fmt::print(
+              fmt::color::gray, "parse long option {} without arg\n", opt);
 
         bool consume_arg = false;
 
@@ -284,8 +289,8 @@ struct attributes
             show_help = true;
         else if (opt.compare("version") == 0)
             show_version = true;
-        else if (opt.compare("jobs") == 0)
-            consume_arg = parse_jobs(arg);
+        else if (opt.compare("jobs") == 0 && arg)
+            consume_arg = parse_jobs(*arg);
         else if (opt.compare("extract") == 0)
             type = operation_type::extract;
         else if (opt.compare("merge") == 0)
@@ -296,8 +301,8 @@ struct attributes
             type = operation_type::adjustment;
         else if (opt.compare("prediction") == 0)
             type = operation_type::prediction;
-        else if (opt.compare("limit") == 0)
-            consume_arg = parse_limit(arg);
+        else if (opt.compare("limit") == 0 && arg)
+            consume_arg = parse_limit(*arg);
         else if (opt.compare("without-reduce") == 0)
             reduce = false;
         else
@@ -306,10 +311,14 @@ struct attributes
         return consume_arg;
     }
 
-    bool
-    parse_short_option(char opt, eastl::string_view arg)
+    bool parse_short_option(char opt, eastl::optional<eastl::string_view> arg)
     {
-        fmt::print(fmt::color::beige, "parse short option {} arg {}", opt, arg);
+        if (arg)
+            fmt::print(
+              fmt::color::beige, "parse short option {} arg {}\n", opt, *arg);
+        else
+            fmt::print(
+              fmt::color::beige, "parse short option {} without arg\n", opt);
 
         bool consume_arg = false;
 
@@ -317,13 +326,13 @@ struct attributes
             show_help = true;
         else if (opt == 'v')
             show_version = true;
-        else if (opt == 'j')
-            consume_arg = parse_jobs(arg);
-        else if (opt == 'e')
+        else if (opt == 'j' && arg)
+            consume_arg = parse_jobs(*arg);
+        else if (opt == 'x')
             type = operation_type::extract;
         else if (opt == 'm')
             type = operation_type::merge;
-        else if (opt == 'v')
+        else if (opt == 'e')
             type = operation_type::evaluate;
         else if (opt == 'a')
             type = operation_type::adjustment;
