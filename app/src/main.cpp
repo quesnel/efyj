@@ -116,7 +116,7 @@ extract(eastl::shared_ptr<efyj::context> ctx,
         const eastl::string& output) noexcept
 {
     try {
-        auto opts = efyj::extract_options(ctx, model);
+        efyj::extract_options_to_file(ctx, model, output);
     } catch (const std::bad_alloc&) {
         fmt::print(stderr, "not enough memory\n");
         return EXIT_FAILURE;

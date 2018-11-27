@@ -347,6 +347,22 @@ struct c_file
 };
 
 void
+extract_options_to_file(eastl::shared_ptr<context> ctx,
+                        const eastl::string& model_file_path,
+                        const eastl::string& output_file_path)
+{
+    auto model = make_model(ctx, model_file_path);
+
+    c_file file(output_file_path.c_str(), c_file::file_mode::write);
+    if (file.is_open())
+        model.write_options(file.get());
+    else
+        fmt::print(fmt::color::red,
+                   "Fail to open csv file `{}'\n",
+                   output_file_path.c_str());
+}
+
+void
 merge_options(eastl::shared_ptr<context> ctx,
               const eastl::string& model_file_path,
               const eastl::string& options_file_path,

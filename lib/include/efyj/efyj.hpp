@@ -276,6 +276,12 @@ prediction(eastl::shared_ptr<context> ctx,
            unsigned int thread);
 
 EFYJ_API
+void
+extract_options_to_file(eastl::shared_ptr<context> ctx,
+                        const eastl::string& model_file_path,
+                        const eastl::string& output_file_path);
+
+EFYJ_API
 options_data
 extract_options(eastl::shared_ptr<context> ctx,
                 const eastl::string& model_file_path);
