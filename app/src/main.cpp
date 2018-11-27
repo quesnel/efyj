@@ -21,11 +21,13 @@
 
 #include <efyj/efyj.hpp>
 
-#include <cstdio>
-#include <charconv>
+#include <EASTL/optional.h>
 
-#include <fmt/format.h>
+#include <charconv>
+#include <cstdio>
+
 #include <fmt/color.h>
+#include <fmt/format.h>
 
 #ifdef __unix__
 #include <unistd.h>
@@ -237,16 +239,21 @@ enum class operation_type {
 };
 
 namespace fmt {
-    template <>
-    struct formatter<eastl::string_view> {
-        template <typename ParseContext>
-        constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+template<>
+struct formatter<eastl::string_view>
+{
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
 
-        template <typename FormatContext>
-        auto format(const eastl::string_view &p, FormatContext &ctx) {
-            return format_to(ctx.begin(), "{}", p.data());
-        }
-    };
+    template<typename FormatContext>
+    auto format(const eastl::string_view& p, FormatContext& ctx)
+    {
+        return format_to(ctx.begin(), "{:{}}", p.data(), p.size());
+    }
+};
 }
 
 struct attributes
