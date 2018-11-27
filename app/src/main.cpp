@@ -87,29 +87,32 @@ static void
 usage() noexcept
 {
     std::puts(
-        "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-         "Options:\n"
-        "    -h/--help            This help message\n"
-        "    -v/--version          Show efyj version\n"
-        "    -e/--extract         Extract the option from dexi files "
-         "into csv file (need 1 csv, 1 dexi)\n"
-         "    -m/--merge           Merge model and option file into a new "
-         "DEXi file (need 1 csv, 2 dexi\n"
-         "    -p/--prediction      Compute prediction\n"
-         "    -a/--adjustement     Compute adjustment\n"
-         "    -e/--evaluate        Compulte evalaution\n"
-         "    --without-reduce     Without the reduce models generator "
-         "algorithm\n"
-         "    -l/--limit integer   Limit of computation\n"
-         "    -j/--jobs thread     Use threads [int]\n"
-         "...                      DEXi and CSV files\n"
-         "\n");
+      "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+      "Options:\n"
+      "    -h/--help            This help message\n"
+      "    -v/--version          Show efyj version\n"
+      "    -x/--extract         Extract the option from dexi files "
+      "into csv file (need 1 csv, 1 dexi)\n"
+      "    -m/--merge           Merge model and option file into a new "
+      "DEXi file (need 1 csv, 2 dexi\n"
+      "    -p/--prediction      Compute prediction\n"
+      "    -a/--adjustement     Compute adjustment\n"
+      "    -e/--evaluate        Compulte evalaution\n"
+      "    --without-reduce     Without the reduce models generator "
+      "algorithm\n"
+      "    -l/--limit integer   Limit of computation\n"
+      "    -j/--jobs thread     Use threads [int]\n"
+      "    ...                  DEXi and CSV files\n"
+      "\n");
 }
 
 static void
 version() noexcept
 {
-    fmt::print("efyj {}.{}.{}\n", EFYJ_MAJOR_VERSION, EFYJ_MINOR_VERSION, EFYJ_PATCH_VERSION);
+    fmt::print("efyj {}.{}.{}\n",
+               EFYJ_MAJOR_VERSION,
+               EFYJ_MINOR_VERSION,
+               EFYJ_PATCH_VERSION);
 }
 
 static int
@@ -157,22 +160,18 @@ merge(eastl::shared_ptr<efyj::context> ctx,
 
 static int
 evaluate(eastl::shared_ptr<efyj::context> ctx,
-    const eastl::string& model,
-    const eastl::string& option) noexcept
+         const eastl::string& model,
+         const eastl::string& option) noexcept
 {
     try {
-        auto result =
-            efyj::evaluate(ctx, model, option);
-    }
-    catch (const std::bad_alloc&) {
+        auto result = efyj::evaluate(ctx, model, option);
+    } catch (const std::bad_alloc&) {
         fmt::print(stderr, "not enough memory\n");
         return EXIT_FAILURE;
-    }
-    catch (const std::logic_error& e) {
+    } catch (const std::logic_error& e) {
         fmt::print(stderr, "internal error: {}\n", e.what());
         return EXIT_FAILURE;
-    }
-    catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
         return EXIT_FAILURE;
     }
@@ -229,7 +228,8 @@ prediction(eastl::shared_ptr<efyj::context> ctx,
     return EXIT_SUCCESS;
 }
 
-enum class operation_type {
+enum class operation_type
+{
     none,
     extract,
     merge,
@@ -343,13 +343,16 @@ struct attributes
         }
 
         int var;
-        if (std::from_chars(arg.data(), arg.data() + arg.size(), var).ec != std::errc()) {
+        if (std::from_chars(arg.data(), arg.data() + arg.size(), var).ec !=
+            std::errc()) {
             fmt::print(stderr, "Missing argument for -j[threads]\n");
             return false;
         }
 
         if (var <= 0) {
-            fmt::print(stderr, "Negative or zero argument for -j[threads]. Assume threads=1\n");
+            fmt::print(
+              stderr,
+              "Negative or zero argument for -j[threads]. Assume threads=1\n");
             return true;
         }
 
@@ -366,13 +369,17 @@ struct attributes
         }
 
         int var;
-        if (std::from_chars(arg.data(), arg.data() + arg.size(), var).ec != std::errc()) {
+        if (std::from_chars(arg.data(), arg.data() + arg.size(), var).ec !=
+            std::errc()) {
             fmt::print(stderr, "Missing argument for --limit [int]\n");
             return false;
         }
 
         if (var <= 0) {
-            fmt::print(stderr, "Negative or zero argument for --limit [int]. Assume limit = {}\n", eastl::numeric_limits<int>::max());
+            fmt::print(stderr,
+                       "Negative or zero argument for --limit [int]. Assume "
+                       "limit = {}\n",
+                       eastl::numeric_limits<int>::max());
             return true;
         }
 
@@ -381,7 +388,6 @@ struct attributes
         return true;
     }
 };
-
 
 int
 main(int argc, char* argv[])
@@ -392,38 +398,53 @@ main(int argc, char* argv[])
     while (i < argc) {
         const eastl::string_view arg(argv[i]);
 
+        fmt::print("Param `{}`\n", arg);
+
         if (arg[0] == '-') {
             if (arg.size() > 1U) {
                 if (arg[1] == '-') {
                     auto pos = arg.find_first_of(":=", 2U);
 
                     if (pos == eastl::string_view::npos && i + 1 < argc) {
-                        if (atts.parse_long_option(arg.substr(2), argv[i + 1]))
+                        if (atts.parse_long_option(
+                              arg.substr(2),
+                              eastl::optional<eastl::string_view>(
+                                argv[i + 1])))
                             ++i;
-                    }
-                    else if (pos + 1 < arg.size())
-                        atts.parse_long_option(arg.substr(2), arg.substr(pos + 1));
+                    } else if (pos + 1 < arg.size())
+                        atts.parse_long_option(
+                          arg.substr(2),
+                          eastl::optional<eastl::string_view>(
+                            arg.substr(pos + 1)));
                     else
-                        atts.parse_long_option(arg.substr(2), eastl::string_view());
-                }
-                else {
+                        atts.parse_long_option(
+                          arg.substr(2),
+                          eastl::optional<eastl::string_view>());
+                } else {
                     if (arg.size() > 2U)
-                        atts.parse_short_option(arg[1], arg.substr(3));
+                        atts.parse_short_option(
+                          arg[1], eastl::make_optional(arg.substr(3)));
                     else if (i + 1 < argc) {
-                        if (atts.parse_short_option(arg[1], argv[i + 1]))
+                        if (atts.parse_short_option(
+                              arg[1],
+                              eastl::optional<eastl::string_view>(
+                                argv[i + 1])))
                             ++i;
-                    }
-                    else
-                        atts.parse_short_option(arg[1], eastl::string_view());
+                    } else
+                        atts.parse_short_option(
+                          arg[1], eastl::optional<eastl::string_view>());
                 }
+            } else {
+                fmt::print(stderr,
+                           "Missing short option {} (position {})\n",
+                           argv[i],
+                           i);
             }
-            else {
-                fmt::print(stderr, "Missing short option {} (position {})\n", argv[i], i);
-            }
-        }
-        else {
+        } else {
             atts.optind.emplace_back(argv[i]);
         }
+
+        ++i;
     }
 
     eastl::string dexifile1;
@@ -438,11 +459,10 @@ main(int argc, char* argv[])
                 dexifile1 = str;
             else
                 dexifile2 = str;
-        } 
-        else
+        } else
             fmt::print(stderr, "unknown file type {}.\n", argv[i]);
     }
-        
+
     auto ctx = efyj::make_context(7);
 
     if (atts.show_help)
@@ -452,13 +472,17 @@ main(int argc, char* argv[])
         ::version();
 
     switch (atts.type) {
+    case operation_type::none:
+        break;
     case operation_type::extract:
         if (dexifile1.empty())
             fmt::print(stderr, "[extract] missing dexi.\n");
         else if (csvfile.empty())
             fmt::print(stderr, "[extract] missing csv file.\n");
         else {
-            fmt::print("Extract options from file `{}' into file `{}'\n", dexifile1.c_str(), csvfile.c_str());
+            fmt::print("Extract options from file `{}' into file `{}'\n",
+                       dexifile1.c_str(),
+                       csvfile.c_str());
             ::extract(ctx, dexifile1, csvfile);
         }
         break;
@@ -470,8 +494,11 @@ main(int argc, char* argv[])
         else if (dexifile2.empty())
             fmt::print(stderr, "[merge] missing output dexi.\n");
         else {
-            fmt::print("Merge options from csv file `{}' and DEXi file `{}' into the new DEXi file `{}'\n",
-                csvfile.c_str(), dexifile1.c_str(), dexifile2.c_str());
+            fmt::print("Merge options from csv file `{}' and DEXi file `{}' "
+                       "into the new DEXi file `{}'\n",
+                       csvfile.c_str(),
+                       dexifile1.c_str(),
+                       dexifile2.c_str());
             ::merge(ctx, dexifile1, csvfile, dexifile2);
         }
     case operation_type::evaluate:
@@ -480,7 +507,9 @@ main(int argc, char* argv[])
         else if (csvfile.empty())
             fmt::print(stderr, "[evaluate] missing csv file.\n");
         else {
-            fmt::print("Evaluate options from file `{}' into file `{}'\n", dexifile1.c_str(), csvfile.c_str());
+            fmt::print("Evaluate options from file `{}' into file `{}'\n",
+                       dexifile1.c_str(),
+                       csvfile.c_str());
             ::evaluate(ctx, dexifile1, csvfile);
         }
         break;
@@ -490,8 +519,11 @@ main(int argc, char* argv[])
         else if (csvfile.empty())
             fmt::print(stderr, "[adjustment] missing csv file.\n");
         else {
-            fmt::print("Pdjustment options from file `{}' into file `{}'\n", dexifile1.c_str(), csvfile.c_str());
-            ::prediction(ctx, dexifile1, csvfile, atts.reduce, atts.limit, atts.threads);
+            fmt::print("Pdjustment options from file `{}' into file `{}'\n",
+                       dexifile1.c_str(),
+                       csvfile.c_str());
+            ::prediction(
+              ctx, dexifile1, csvfile, atts.reduce, atts.limit, atts.threads);
         }
         break;
     case operation_type::prediction:
@@ -500,8 +532,11 @@ main(int argc, char* argv[])
         else if (csvfile.empty())
             fmt::print(stderr, "[prediction] missing csv file.\n");
         else {
-            fmt::print("Prediction options from file `{}' into file `{}'\n", dexifile1.c_str(), csvfile.c_str());
-            ::prediction(ctx, dexifile1, csvfile, atts.reduce, atts.limit, atts.threads);
+            fmt::print("Prediction options from file `{}' into file `{}'\n",
+                       dexifile1.c_str(),
+                       csvfile.c_str());
+            ::prediction(
+              ctx, dexifile1, csvfile, atts.reduce, atts.limit, atts.threads);
         }
         break;
     }

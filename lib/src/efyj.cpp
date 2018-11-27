@@ -49,7 +49,8 @@ make_context(int log_priority)
 }
 
 Model
-make_model(eastl::shared_ptr<context> ctx, const eastl::string& model_file_path)
+make_model(eastl::shared_ptr<context> ctx,
+           const eastl::string& model_file_path)
 {
     Model model;
 
