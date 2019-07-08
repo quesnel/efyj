@@ -84,7 +84,7 @@ operator new[](size_t size,
 #endif
 
 static void
-usage() noexcept
+usage()
 {
     std::puts(
       "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
@@ -107,7 +107,7 @@ usage() noexcept
 }
 
 static void
-version() noexcept
+version()
 {
     fmt::print("efyj {}.{}.{}\n",
                EFYJ_MAJOR_VERSION,
@@ -118,7 +118,7 @@ version() noexcept
 static int
 extract(eastl::shared_ptr<efyj::context> ctx,
         const eastl::string& model,
-        const eastl::string& output) noexcept
+        const eastl::string& output)
 {
     try {
         efyj::extract_options_to_file(ctx, model, output);
@@ -140,7 +140,7 @@ static int
 merge(eastl::shared_ptr<efyj::context> ctx,
       const eastl::string& model,
       const eastl::string& option,
-      const eastl::string& output) noexcept
+      const eastl::string& output)
 {
     try {
         efyj::merge_options(ctx, model, option, output);
@@ -161,7 +161,7 @@ merge(eastl::shared_ptr<efyj::context> ctx,
 static int
 evaluate(eastl::shared_ptr<efyj::context> ctx,
          const eastl::string& model,
-         const eastl::string& option) noexcept
+         const eastl::string& option)
 {
     try {
         auto result = efyj::evaluate(ctx, model, option);
@@ -184,7 +184,7 @@ adjustment(eastl::shared_ptr<efyj::context> ctx,
            const eastl::string& option,
            bool reduce,
            int limit,
-           unsigned int thread) noexcept
+           unsigned int thread)
 {
     try {
         auto result =
@@ -209,7 +209,7 @@ prediction(eastl::shared_ptr<efyj::context> ctx,
            const eastl::string& option,
            bool reduce,
            int limit,
-           unsigned int thread) noexcept
+           unsigned int thread)
 {
     try {
         auto result =
@@ -258,8 +258,6 @@ struct formatter<eastl::string_view>
 
 struct attributes
 {
-    eastl::string_view dexi_file;
-    eastl::string_view csv_file;
     eastl::vector<eastl::string_view> optind;
 
     int threads = 1;

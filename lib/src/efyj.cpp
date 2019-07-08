@@ -251,7 +251,7 @@ adjustment(eastl::shared_ptr<context> ctx,
            const eastl::string& options_file_path,
            bool reduce,
            int limit,
-           unsigned int thread)
+           unsigned int /*thread*/)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -268,6 +268,7 @@ prediction(eastl::shared_ptr<context> ctx,
            int limit,
            unsigned int thread)
 {
+    fmt::print("STAR\n");
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
 

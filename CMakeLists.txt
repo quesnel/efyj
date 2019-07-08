@@ -18,7 +18,7 @@ include_directories (${EASTL_ROOT_DIR}/test/packages/EAStdC/include)
 include_directories (${EASTL_ROOT_DIR}/test/packages/EATest/include)
 include_directories (${EASTL_ROOT_DIR}/test/packages/EAThread/include)
 
-if (WI32)
+if (WIN32)
   set(EASTL_LIBRARY debug ${EASTL_ROOT_DIR}/out/Debug/EASTL.lib
     optimized ${EASTL_ROOT_DIR}/out/Release/EASTL.lib)
   add_custom_target(NatVis SOURCES ${EASTL_ROOT_DIR}/doc/EASTL.natvis)

@@ -54,18 +54,18 @@ print(const matrix<T>& m)
 inline double
 rmsep(const eastl::vector<int>& observated,
       const eastl::vector<int>& simulated,
-      const size_t N,
-      const size_t NC)
+      const int N,
+      const int NC)
 {
     matrix<int> mat(NC, NC, 0);
 
-    for (size_t i = 0, e = observated.size(); i != e; ++i)
+    for (int i = 0, e = static_cast<int>(observated.size()); i != e; ++i)
         mat(observated[i], simulated[i])++;
 
     int sum = { 0 };
 
-    for (size_t i = 0; i != NC; ++i)
-        for (size_t j = 0; j != NC; ++j)
+    for (int i = 0; i != NC; ++i)
+        for (int j = 0; j != NC; ++j)
             sum += mat(i, j) * ((i - j) * (i - j));
 
     return sqrt((double)sum / (double)N);
@@ -112,7 +112,7 @@ mult_and_sum(const matrix<double>& m1, const matrix<double>& m2)
 class weighted_kappa_calculator
 {
 public:
-    weighted_kappa_calculator(size_t NC_)
+    weighted_kappa_calculator(int NC_)
       : observed(NC_, NC_)
       , distributions(NC_, 2)
       , expected(NC_, NC_)

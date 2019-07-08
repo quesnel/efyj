@@ -80,7 +80,7 @@ target_include_directories(testlib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<INSTALL_INTERFACE:include>)
 
-target_compile_definitions(testlib PRIVATE 
+target_compile_definitions(testlib PRIVATE
   PRIVATE
   $<$<BOOL:${WITH_DEBUG}>:EFYJ_ENABLE_DEBUG>
   $<$<BOOL:${WITH_LOG}>:EFYJ_ENABLE_LOG>

@@ -57,7 +57,7 @@ struct aggregate_attribute
 
     inline void clear()
     {
-        stack_size = coeffs.size() - 1;
+        stack_size = static_cast<int>(coeffs.size()) - 1;
     }
 
     int result() const;
@@ -241,8 +241,8 @@ struct solver_stack
         assert(atts.size() > 0 && atts.size() < INT_MAX);
         assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].saved_functions.size() < INT_MAX);
-        assert(line >= 0 &&
-               line < static_cast<int>(atts[attribute].saved_functions.size()));
+        assert(line >= 0 && line < static_cast<int>(
+                                     atts[attribute].saved_functions.size()));
 
         return static_cast<int>(atts[attribute].saved_functions[line]);
     }
@@ -255,7 +255,8 @@ struct solver_stack
         assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
-        atts[attribute].functions[line] = atts[attribute].saved_functions[line];
+        atts[attribute].functions[line] =
+          atts[attribute].saved_functions[line];
     }
 
     inline void value_set(int attribute, int line, int scale_value) noexcept
@@ -295,7 +296,8 @@ struct solver_stack
 
     void recursive_fill(const Model& model, size_t att, int& value_id);
 
-    void set_functions(const eastl::vector<eastl::vector<scale_id>>& functions);
+    void set_functions(
+      const eastl::vector<eastl::vector<scale_id>>& functions);
 
     void get_functions(eastl::vector<eastl::vector<scale_id>>& functions);
 
