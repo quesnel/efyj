@@ -31,22 +31,22 @@
 find_path(EASTL_ROOT_DIR
   NAMES include/EASTL/version.h
   HINTS ENV EASTL_ROOTDIR
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/external/EASTL)
+  PATHS ${PROJECT_SOURCE_DIR}/external/EASTL)
 
 find_path(EASTL_INCLUDE_DIR
   NAMES EASTL/version.h
   HINTS ENV EASTL_ROOTDIR
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/external/EASTL/include)
+  PATHS ${PROJECT_SOURCE_DIR}/external/EASTL/include)
 
 find_library(EASTL_LIBRARY_DEBUG
   NAMES EASTL
   HINTS ENV EASTL_ROOTDIR
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/external/EASTL/build/Debug)
+  PATHS ${PROJECT_SOURCE_DIR}/external/EASTL/build/Debug)
 
 find_library(EASTL_LIBRARY_RELEASE
   NAMES EASTL
   HINTS ENV EASTL_ROOTDIR
-  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/external/EASTL/build/Release)
+  PATHS ${PROJECT_SOURCE_DIR}/external/EASTL/build/Release)
 
 include(SelectLibraryConfigurations)
 select_library_configurations(EASTL)
@@ -65,7 +65,7 @@ find_package_handle_standard_args(EASTL
 if (EASTL_FOUND)
   set(EASTL_INCLUDE_DIRS
     ${EASTL_INCLUDE_DIR}
-    ${EASTL_ROOT_DIR}/include/EABase)
+    ${EASTL_ROOT_DIR}/test/packages/EABase/include/Common)
 
   if (NOT EASTL_LIBRARIES)
     set(EASTL_DEBUG_LIBRARIES ${EASTL_LIBRARY_DEBUG})

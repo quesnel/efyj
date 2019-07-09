@@ -4,15 +4,15 @@ set -ex
 
 cd EASTL
 
-mkdir -p out/Release
-cd out/Release
+mkdir -p build/Release
+cd build/Release
 cmake -DCMAKE_BUILD_TYPE=Release ../..
 cmake --build . --config Release
 
 cd ../..
 
-mkdir -p out/Debug
-cd out/Debug
+mkdir -p build/Debug
+cd build/Debug
 cmake -DCMAKE_BUILD_TYPE=Debug ../..
 cmake --build . --config Debug
 
