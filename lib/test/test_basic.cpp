@@ -27,6 +27,7 @@
 #include "solver-stack.hpp"
 #include "utils.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <random>
 
@@ -36,13 +37,12 @@
 #include <cstdlib>
 #include <ctime>
 
-
 #if defined(__unix__)
 #include <unistd.h>
 #elif defined(_WIN32)
 #include <direct.h>
-#include <tchar.h>
 #include <io.h>
+#include <tchar.h>
 #endif
 
 #ifdef _WIN32
@@ -682,57 +682,57 @@ check_the_options_set_function()
 void
 check_the_efyj_set_function()
 {
-    // change_pwd();
+    change_pwd();
 
-    // auto output = make_temporary("CarXXXXXXXX.dxi");
+    auto output = make_temporary("CarXXXXXXXX.dxi");
 
-    // {
-    //     efyj::Model model;
-    //     std::ifstream ifs("Car.dxi");
-    //     model.read(ifs);
-    //     std::ofstream ofs(output);
-    //     model.write_options(ofs);
-    // }
+    {
+        efyj::Model model;
+        std::ifstream ifs("Car.dxi");
+        model.read(ifs);
+        std::ofstream ofs(output);
+        model.write_options(ofs);
+    }
 
-    // efyj::efyj e("Car.dxi", output);
+    efyj::efyj e("Car.dxi", output);
 
-    // eastl::vector<eastl::string> simulations_old;
-    // eastl::vector<eastl::string> places_old;
-    // eastl::vector<int> departments_old;
-    // eastl::vector<int> years_old;
-    // eastl::vector<int> observed_old;
-    // eastl::vector<int> options_old;
+    eastl::vector<eastl::string> simulations_old;
+    eastl::vector<eastl::string> places_old;
+    eastl::vector<int> departments_old;
+    eastl::vector<int> years_old;
+    eastl::vector<int> observed_old;
+    eastl::vector<int> options_old;
 
-    // e.extract_options(simulations_old,
-    //                   places_old,
-    //                   departments_old,
-    //                   years_old,
-    //                   observed_old,
-    //                   options_old);
+    e.extract_options(simulations_old,
+                      places_old,
+                      departments_old,
+                      years_old,
+                      observed_old,
+                      options_old);
 
-    // e.set_options(simulations_old,
-    //               places_old,
-    //               departments_old,
-    //               years_old,
-    //               observed_old,
-    //               options_old);
+    e.set_options(simulations_old,
+                  places_old,
+                  departments_old,
+                  years_old,
+                  observed_old,
+                  options_old);
 
-    // eastl::vector<eastl::string> simulations;
-    // eastl::vector<eastl::string> places;
-    // eastl::vector<int> departments;
-    // eastl::vector<int> years;
-    // eastl::vector<int> observed;
-    // eastl::vector<int> options;
+    eastl::vector<eastl::string> simulations;
+    eastl::vector<eastl::string> places;
+    eastl::vector<int> departments;
+    eastl::vector<int> years;
+    eastl::vector<int> observed;
+    eastl::vector<int> options;
 
-    // e.extract_options(
-    //     simulations, places, departments, years, observed, options);
+    e.extract_options(
+      simulations, places, departments, years, observed, options);
 
-    // Ensures(simulations_old == simulations);
-    // Ensures(places_old == places);
-    // Ensures(departments_old == departments);
-    // Ensures(years_old == years);
-    // Ensures(observed_old == observed);
-    // Ensures(options_old == options);
+    Ensures(simulations_old == simulations);
+    Ensures(places_old == places);
+    Ensures(departments_old == departments);
+    Ensures(years_old == years);
+    Ensures(observed_old == observed);
+    Ensures(options_old == options);
 }
 
 void
