@@ -32,19 +32,19 @@ aggregate_attribute::aggregate_attribute(const Model& model,
                                          size_t att_,
                                          int id_)
   : stack_size(0)
-  , att(att_)
+  , att(static_cast<int>(att_))
   , id(id_)
 {
-    eastl::transform(
+    std::transform(
       model.attributes[att].children.cbegin(),
       model.attributes[att].children.cend(),
-      eastl::back_inserter(m_scale_size),
+      std::back_inserter(m_scale_size),
       [&model](size_t child) { return model.attributes[child].scale_size(); });
 
-    eastl::transform(model.attributes[att].functions.low.cbegin(),
-                     model.attributes[att].functions.low.cend(),
-                     eastl::back_inserter(functions),
-                     [](const char id) { return id - '0'; });
+    std::transform(model.attributes[att].functions.low.cbegin(),
+                   model.attributes[att].functions.low.cend(),
+                   std::back_inserter(functions),
+                   [](const char id) { return id - '0'; });
 
     saved_functions = functions;
 
@@ -52,12 +52,12 @@ aggregate_attribute::aggregate_attribute(const Model& model,
     coeffs[m_scale_size.size() - 1] = 1;
 
     assert(m_scale_size.size() <
-           eastl::numeric_limits<decltype(m_scale_size)::value_type>::max());
+           std::numeric_limits<decltype(m_scale_size)::value_type>::max());
     assert(m_scale_size.size() >= 1);
 
     if (m_scale_size.size() >= 2) {
         for (int i = (int)m_scale_size.size() - 2; i >= 0; --i)
-            coeffs[i] = m_scale_size[i + 1] * coeffs[i + 1];
+            coeffs[i] = static_cast<int>(m_scale_size[i + 1]) * coeffs[i + 1];
     }
 
     stack.resize(m_scale_size.size(), 0);
@@ -105,7 +105,7 @@ aggregate_attribute::result() const
  * opt1 opt2  1 opt3  2
  */
 void
-aggregate_attribute::reduce(eastl::set<int>& whitelist)
+aggregate_attribute::reduce(std::set<int>& whitelist)
 {
 #ifndef NDEBUG
     for (size_t i = 0; i < coeffs.size(); ++i) {
@@ -124,7 +124,7 @@ aggregate_attribute::reduce(eastl::set<int>& whitelist)
         int column, current, max;
     };
 
-    eastl::vector<walker> walker;
+    std::vector<walker> walker;
     for (size_t i = 0, e = stack.size(); i != e; ++i) {
         if (stack[i] == -1) {
             walker.emplace_back(static_cast<int>(i), 0, m_scale_size[i]);
@@ -204,7 +204,7 @@ solver_stack::recursive_fill(const Model& model, size_t att, int& value_id)
 
 void
 solver_stack::set_functions(
-  const eastl::vector<eastl::vector<scale_id>>& functions)
+  const std::vector<std::vector<scale_id>>& functions)
 {
     assert(functions.size() == atts.size() && "incoherent: internal error");
 
@@ -218,25 +218,25 @@ solver_stack::set_functions(
 }
 
 void
-solver_stack::get_functions(eastl::vector<eastl::vector<scale_id>>& functions)
+solver_stack::get_functions(std::vector<std::vector<scale_id>>& functions)
 {
     functions.resize(atts.size());
 
-    eastl::transform(
+    std::transform(
       atts.cbegin(),
       atts.cend(),
       functions.begin(),
       [](const aggregate_attribute& att) { return att.functions; });
 }
 
-eastl::string
+std::string
 solver_stack::string_functions() const
 {
-    eastl::string ret;
+    std::string ret;
 
     for (const auto& att : atts)
         for (auto id : att.functions)
-            ret += id + '0';
+            ret += static_cast<char>(id + '0');
 
     return ret;
 }
@@ -249,8 +249,10 @@ for_each_model_solver::full()
     m_whitelist.clear();
     m_whitelist.resize(m_solver.attribute_size());
 
-    for (int i = 0ul, e = m_whitelist.size(); i != e; ++i)
-        for (int j = 0ul, endj = m_solver.function_size(i); j != endj; ++j)
+    for (std::size_t i = { 0 }, e = m_whitelist.size(); i != e; ++i)
+        for (int j = { 0 }, endj = m_solver.function_size(static_cast<int>(i));
+             j != endj;
+             ++j)
             m_whitelist[i].emplace_back(j);
 }
 
@@ -263,20 +265,21 @@ for_each_model_solver::detect_missing_scale_value()
     for (size_t i = 0, e = m_whitelist.size(); i != e; ++i) {
         info(m_context,
              "{} ^ {}\n",
-             m_solver.scale_size(i),
+             m_solver.scale_size(static_cast<int>(i)),
              m_whitelist[i].size());
         if (i + 1 != e)
             info(m_context, " * ");
 
-        model_number *= std::pow(m_solver.scale_size(i), m_whitelist[i].size());
+        model_number *= std::pow(m_solver.scale_size(static_cast<int>(i)),
+                                 m_whitelist[i].size());
     }
 
     info(m_context, " = {}\n", model_number);
 
     info(m_context, "[Detect unused scale value]\n");
 
-    for (int i = 0ul, e = m_whitelist.size(); i != e; ++i) {
-        int sv = m_solver.scale_size(i);
+    for (std::size_t i{ 0 }, e = m_whitelist.size(); i != e; ++i) {
+        int sv = m_solver.scale_size(static_cast<int>(i));
 
         info(m_context,
              "Attribute {}\n"
@@ -289,15 +292,20 @@ for_each_model_solver::detect_missing_scale_value()
             info(m_context, "{} ", m_whitelist[i][x]);
 
         info(m_context, "\n- function.......... : ");
-        for (size_t x = 0, endx = m_solver.function_size(i); x != endx; ++x)
-            info(m_context, "{} ", m_solver.value(i, x));
+        for (size_t x = 0, endx = m_solver.function_size(static_cast<int>(i));
+             x != endx;
+             ++x)
+            info(m_context,
+                 "{} ",
+                 m_solver.value(static_cast<int>(i), static_cast<int>(x)));
 
         info(m_context, "\n- unused scale value : ");
         for (int j = 0, endj = sv; j != endj; ++j) {
             size_t x, endx;
 
             for (x = 0, endx = m_whitelist[i].size(); x != endx; ++x) {
-                if (m_solver.value(i, m_whitelist[i][x]) == j)
+                if (m_solver.value(static_cast<int>(i), m_whitelist[i][x]) ==
+                    j)
                     break;
             }
 
@@ -308,7 +316,7 @@ for_each_model_solver::detect_missing_scale_value()
     }
 }
 
-for_each_model_solver::for_each_model_solver(eastl::shared_ptr<context> context,
+for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
                                              const Model& model)
   : m_context(context)
   , m_solver(model)
@@ -327,7 +335,7 @@ for_each_model_solver::for_each_model_solver(eastl::shared_ptr<context> context,
              model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
-for_each_model_solver::for_each_model_solver(eastl::shared_ptr<context> context,
+for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
                                              const Model& model,
                                              int walker_number)
   : m_context(context)
@@ -356,7 +364,7 @@ for_each_model_solver::reduce(const Options& options)
     m_whitelist.clear();
     m_whitelist.resize(m_solver.attribute_size());
 
-    eastl::vector<eastl::set<int>> whitelist;
+    std::vector<std::set<int>> whitelist;
     whitelist.resize(m_solver.attribute_size());
 
     for (size_t i = 0, e = options.options.rows(); i != e; ++i)
@@ -367,14 +375,14 @@ for_each_model_solver::reduce(const Options& options)
         for (const auto v : whitelist[i])
             info(m_context, "{} ", v);
 
-        info(m_context, "({})\n", m_solver.function_size(i));
+        info(m_context, "({})\n", m_solver.function_size(static_cast<int>(i)));
     }
 
     /* convert the set into vector of vector. */
     for (size_t i = 0, e = whitelist.size(); i != e; ++i) {
         m_whitelist[i].resize(whitelist[i].size());
 
-        eastl::copy(
+        std::copy(
           whitelist[i].begin(), whitelist[i].end(), m_whitelist[i].begin());
     }
 }
@@ -518,14 +526,14 @@ for_each_model_solver::next_line()
     }
 }
 
-eastl::vector<eastl::tuple<int, int, int>>
+std::vector<std::tuple<int, int, int>>
 for_each_model_solver::updaters() const
 {
     /* if mode with reduce, we recompute attributes/lines otherwise,
      * we can return m_updaters directly.
      */
 
-    eastl::vector<eastl::tuple<int, int, int>> ret;
+    std::vector<std::tuple<int, int, int>> ret;
     ret.reserve(m_updaters.size());
 
     for (size_t i = 0, e = m_updaters.size(); i != e; ++i) {
@@ -550,15 +558,15 @@ for_each_model_solver::get_attribute_line_tuple_limit() const
 }
 
 void
-print(eastl::shared_ptr<context> ctx,
-      const eastl::vector<eastl::tuple<int, int, int>>& updaters) noexcept
+print(std::shared_ptr<context> ctx,
+      const std::vector<std::tuple<int, int, int>>& updaters) noexcept
 {
     for (const auto& elem : updaters)
         info(ctx,
              "[{} {} {}] ",
-             eastl::get<0>(elem),
-             eastl::get<1>(elem),
-             eastl::get<2>(elem));
+             std::get<0>(elem),
+             std::get<1>(elem),
+             std::get<2>(elem));
 }
 
 } // namespace efyj

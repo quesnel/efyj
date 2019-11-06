@@ -24,7 +24,7 @@
 
 namespace efyj {
 
-prediction_evaluator::prediction_evaluator(eastl::shared_ptr<context> context,
+prediction_evaluator::prediction_evaluator(std::shared_ptr<context> context,
                                            const Model& model,
                                            const Options& options)
   : m_context(context)
@@ -41,12 +41,12 @@ prediction_evaluator::prediction_evaluator(eastl::shared_ptr<context> context,
           "options does not have enough data to build the training set");
 }
 
-eastl::vector<result>
+std::vector<result>
 prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 {
     (void)time_limit;
 
-    eastl::vector<result> ret;
+    std::vector<result> ret;
 
     info(m_context, "[Computation starts]\n");
 
@@ -98,14 +98,14 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         m_start = std::chrono::system_clock::now();
         long int loop = 0;
 
-        eastl::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
+        std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
         // This cache stores best function found for the same
         // subdataset. This cache drastically improves computation time if
         // their is few subdataset.
-        eastl::map<size_t, eastl::vector<eastl::vector<scale_id>>> cache;
+        std::map<size_t, std::vector<std::vector<scale_id>>> cache;
 
-        for (size_t opt = 0; opt != max_opt; ++opt) {
+        for (int opt = 0, e = static_cast<int>(max_opt); opt != e; ++opt) {
 
             {
                 auto it = cache.find(m_options.identifier(opt));

@@ -34,10 +34,10 @@
 
 namespace efyj {
 
-eastl::shared_ptr<context>
+std::shared_ptr<context>
 make_context(int log_priority)
 {
-    auto ret = eastl::make_shared<context>();
+    auto ret = std::make_shared<context>();
 
     ret->log_priority = log_priority < 0
                           ? log_level::emerg
@@ -49,8 +49,7 @@ make_context(int log_priority)
 }
 
 Model
-make_model(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path)
+make_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
 {
     Model model;
 
@@ -68,9 +67,9 @@ make_model(eastl::shared_ptr<context> ctx,
 }
 
 Options
-make_options(eastl::shared_ptr<context> ctx,
+make_options(std::shared_ptr<context> ctx,
              Model& model,
-             const eastl::string& options_file_path)
+             const std::string& options_file_path)
 {
     Options options;
 
@@ -88,8 +87,7 @@ make_options(eastl::shared_ptr<context> ctx,
 }
 
 model_data
-extract_model(eastl::shared_ptr<context> ctx,
-              const eastl::string& model_file_path)
+extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     model_data ret;
@@ -98,7 +96,7 @@ extract_model(eastl::shared_ptr<context> ctx,
 
     for (size_t i = 0, e = model.attributes.size(); i != e; ++i) {
         auto key = ret.attributes.emplace(model.attributes[i].name,
-                                          eastl::vector<eastl::string>());
+                                          std::vector<std::string>());
 
         for (auto& scale : model.attributes[i].scale.scale)
             key.first->second.emplace_back(scale.name);
@@ -111,9 +109,9 @@ extract_model(eastl::shared_ptr<context> ctx,
 }
 
 simulation_results
-simulate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
-         const eastl::string& options_file_path)
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -137,8 +135,8 @@ simulate(eastl::shared_ptr<context> ctx,
 }
 
 simulation_results
-simulate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
          const options_data& opts)
 {
     auto model = make_model(ctx, model_file_path);
@@ -164,9 +162,9 @@ simulate(eastl::shared_ptr<context> ctx,
     return ret;
 }
 evaluation_results
-evaluate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
-         const eastl::string& options_file_path)
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -206,8 +204,8 @@ evaluate(eastl::shared_ptr<context> ctx,
 }
 
 evaluation_results
-evaluate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
          const options_data& opts)
 {
     auto model = make_model(ctx, model_file_path);
@@ -245,10 +243,10 @@ evaluate(eastl::shared_ptr<context> ctx,
     return ret;
 }
 
-eastl::vector<result>
-adjustment(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path,
-           const eastl::string& options_file_path,
+std::vector<result>
+adjustment(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
            bool reduce,
            int limit,
            unsigned int /*thread*/)
@@ -260,15 +258,14 @@ adjustment(eastl::shared_ptr<context> ctx,
     return adj.run(limit, 0.0, reduce);
 }
 
-eastl::vector<result>
-prediction(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path,
-           const eastl::string& options_file_path,
+std::vector<result>
+prediction(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
            bool reduce,
            int limit,
            unsigned int thread)
 {
-    fmt::print("STAR\n");
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
 
@@ -282,8 +279,8 @@ prediction(eastl::shared_ptr<context> ctx,
 }
 
 options_data
-extract_options(eastl::shared_ptr<context> ctx,
-                const eastl::string& model_file_path)
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
 
@@ -291,9 +288,9 @@ extract_options(eastl::shared_ptr<context> ctx,
 }
 
 options_data
-extract_options(eastl::shared_ptr<context> ctx,
-                const eastl::string& model_file_path,
-                const eastl::string& options_file_path)
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
@@ -349,9 +346,9 @@ struct c_file
 };
 
 void
-extract_options_to_file(eastl::shared_ptr<context> ctx,
-                        const eastl::string& model_file_path,
-                        const eastl::string& output_file_path)
+extract_options_to_file(std::shared_ptr<context> ctx,
+                        const std::string& model_file_path,
+                        const std::string& output_file_path)
 {
     auto model = make_model(ctx, model_file_path);
 
@@ -359,16 +356,14 @@ extract_options_to_file(eastl::shared_ptr<context> ctx,
     if (file.is_open())
         model.write_options(file.get());
     else
-        fmt::print(fmt::color::red,
-                   "Fail to open csv file `{}'\n",
-                   output_file_path.c_str());
+        fmt::print("Fail to open csv file `{}'\n", output_file_path.c_str());
 }
 
 void
-merge_options(eastl::shared_ptr<context> ctx,
-              const eastl::string& model_file_path,
-              const eastl::string& options_file_path,
-              const eastl::string& output_file_path)
+merge_options(std::shared_ptr<context> ctx,
+              const std::string& model_file_path,
+              const std::string& options_file_path,
+              const std::string& output_file_path)
 {
     debug(ctx,
           "[efyj] make DEXi file {} from the DEXi {}/ csv {}",

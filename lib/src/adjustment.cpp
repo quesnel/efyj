@@ -24,7 +24,7 @@
 
 namespace efyj {
 
-adjustment_evaluator::adjustment_evaluator(eastl::shared_ptr<context> context,
+adjustment_evaluator::adjustment_evaluator(std::shared_ptr<context> context,
                                            const Model& model,
                                            const Options& options)
   : m_context(context)
@@ -36,12 +36,12 @@ adjustment_evaluator::adjustment_evaluator(eastl::shared_ptr<context> context,
   , kappa_c(model.attributes[0].scale.size())
 {}
 
-eastl::vector<result>
+std::vector<result>
 adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
 {
     (void)time_limit;
 
-    eastl::vector<result> ret;
+    std::vector<result> ret;
 
     info(m_context, "[Computation starts]\n");
 
@@ -61,13 +61,13 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
     info(m_context, "[Computation starts 1/{}\n", max_step);
 
     {
-        m_start = eastl::chrono::system_clock::now();
+        m_start = std::chrono::system_clock::now();
         for (size_t opt = 0; opt != m_options.size(); ++opt)
             simulated[opt] = solver.solve(m_options.options.row(opt));
 
         auto kappa = kappa_c.squared(m_options.observed, simulated);
 
-        m_end = eastl::chrono::system_clock::now();
+        m_end = std::chrono::system_clock::now();
 
         info(m_context,
              "| line updated | kappa | kappa computed "
@@ -78,19 +78,19 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
              0,
              kappa,
              1,
-             eastl::chrono::duration<double>(m_end - m_start).count());
+             std::chrono::duration<double>(m_end - m_start).count());
 
         ret.emplace_back();
 
         ret.back().kappa = kappa;
         ret.back().time =
-          eastl::chrono::duration<double>(m_end - m_start).count();
+          std::chrono::duration<double>(m_end - m_start).count();
         ret.back().kappa_computed = 1;
         ret.back().function_computed = m_options.size();
     }
 
     for (size_t step = 1; step <= max_step; ++step) {
-        m_start = eastl::chrono::system_clock::now();
+        m_start = std::chrono::system_clock::now();
         long int loop = 0;
 
         solver.set_functions(m_globalfunctions);
@@ -118,8 +118,8 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
             } while (solver.next_value() == true);
         } while (solver.next_line() == true);
 
-        m_end = eastl::chrono::system_clock::now();
-        auto time = eastl::chrono::duration<double>(m_end - m_start).count();
+        m_end = std::chrono::system_clock::now();
+        auto time = std::chrono::duration<double>(m_end - m_start).count();
 
         ret.emplace_back();
         ret.back().kappa = kappa;
@@ -132,7 +132,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
              step,
              kappa,
              loop,
-             eastl::chrono::duration<double>(m_end - m_start).count());
+             std::chrono::duration<double>(m_end - m_start).count());
 
         print(m_context, m_updaters);
         info(m_context, "\n");

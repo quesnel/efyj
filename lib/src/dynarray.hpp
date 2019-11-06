@@ -22,24 +22,24 @@
 #ifndef ORG_VLEPROJECT_EFYj_DYNARRAY_HPP
 #define ORG_VLEPROJECT_EFYj_DYNARRAY_HPP
 
-#include <EASTL/vector.h>
+#include <vector>
 
 namespace efyj {
 
-constexpr eastl::vector<int>::value_type size_max = { 512 };
+constexpr std::vector<int>::value_type size_max = { 512 };
 
 class DynArrayView;
 
 class DynArray
 {
 public:
-    using iterator = eastl::vector<int>::iterator;
-    using const_iterator = eastl::vector<int>::const_iterator;
-    using value_type = eastl::vector<int>::value_type;
-    using size_type = eastl::vector<int>::size_type;
+    using iterator = std::vector<int>::iterator;
+    using const_iterator = std::vector<int>::const_iterator;
+    using value_type = std::vector<int>::value_type;
+    using size_type = std::vector<int>::size_type;
 
 private:
-    eastl::vector<int> m_data;
+    std::vector<int> m_data;
     size_type m_line_size = { 0 };
     size_type m_capacity = { 0 };
     size_type m_size = { 0 };
@@ -102,7 +102,7 @@ public:
 
     void swap(DynArray& other)
     {
-        using eastl::swap;
+        using std::swap;
 
         swap(m_data, other.m_data);
         swap(m_line_size, other.m_line_size);
@@ -160,16 +160,16 @@ template<typename Integer>
 inline DynArrayView
 DynArray::row(Integer row)
 {
-    return DynArrayView(m_data.data() + (row * m_line_size),
-                        m_data.data() + ((row + 1) * m_line_size));
+    return DynArrayView(m_data.begin() + (row * m_line_size),
+                        m_data.begin() + ((row + 1) * m_line_size));
 }
 
 template<typename Integer>
 inline DynArrayView
 DynArray::row(Integer row) const
 {
-    return DynArrayView(m_data.data() + (row * m_line_size),
-                        m_data.data() + ((row + 1) * m_line_size));
+    return DynArrayView(m_data.begin() + (row * m_line_size),
+                        m_data.begin() + ((row + 1) * m_line_size));
 }
 
 } // namespace efyj

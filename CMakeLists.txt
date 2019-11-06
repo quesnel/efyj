@@ -7,9 +7,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(EXPAT REQUIRED)
 find_package(Threads REQUIRED)
-find_package(EASTL REQUIRED)
-
-add_subdirectory(external/EASTL)
 
 add_definitions(-DFMT_HEADER_ONLY)
 include_directories(${CMAKE_SOURCE_DIR}/external/fmt/include)

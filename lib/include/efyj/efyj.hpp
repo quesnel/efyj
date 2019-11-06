@@ -26,11 +26,10 @@
 #define EFYJ_MINOR_VERSION 6
 #define EFYJ_PATCH_VERSION 0
 
-#include <EASTL/map.h>
-#include <EASTL/shared_ptr.h>
-#include <EASTL/string.h>
-#include <EASTL/unique_ptr.h>
-#include <EASTL/vector.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <stdexcept>
 
@@ -74,18 +73,18 @@ using value = int; // std::int8_t;
 
 struct model_data
 {
-    eastl::map<eastl::string, eastl::vector<eastl::string>> attributes;
-    eastl::vector<int> basic_attributes;
+    std::map<std::string, std::vector<std::string>> attributes;
+    std::vector<int> basic_attributes;
     int number;
 };
 
 struct options_data
 {
-    eastl::vector<eastl::string> simulations;
-    eastl::vector<eastl::string> places;
-    eastl::vector<int> departments;
-    eastl::vector<int> years;
-    eastl::vector<int> observed;
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
     matrix<value> options;
 };
 
@@ -93,15 +92,15 @@ struct simulation_results
 {
     matrix<value> options;
     matrix<value> attributes;
-    eastl::vector<value> simulations;
+    std::vector<value> simulations;
 };
 
 struct evaluation_results
 {
     matrix<value> options;
     matrix<value> attributes;
-    eastl::vector<value> simulations;
-    eastl::vector<value> observations;
+    std::vector<value> simulations;
+    std::vector<value> observations;
     matrix<value> confusion;
     double linear_weighted_kappa;
     double squared_weighted_kappa;
@@ -116,7 +115,7 @@ struct modifier
 
 struct result
 {
-    eastl::vector<modifier> modifiers;
+    std::vector<modifier> modifiers;
     double kappa;
     double time;
     unsigned long int kappa_computed;
@@ -139,11 +138,11 @@ struct numeric_cast_error : public std::exception
 
 struct internal_error
 {
-    eastl::string pp_file, pp_function;
+    std::string pp_file, pp_function;
     int pp_line;
 
-    internal_error(const eastl::string& file,
-                   const eastl::string& function,
+    internal_error(const std::string& file,
+                   const std::string& function,
                    int line)
       : pp_file(file)
       , pp_function(function)
@@ -153,18 +152,18 @@ struct internal_error
 
 struct file_error
 {
-    eastl::string pp_file;
+    std::string pp_file;
 
-    file_error(const eastl::string& file)
+    file_error(const std::string& file)
       : pp_file(file)
     {}
 };
 
 struct solver_error
 {
-    eastl::string pp_file;
+    std::string pp_file;
 
-    solver_error(const eastl::string& file)
+    solver_error(const std::string& file)
       : pp_file(file)
     {}
 };
@@ -220,84 +219,84 @@ struct csv_parser_status
 class context;
 
 EFYJ_API
-eastl::shared_ptr<context>
+std::shared_ptr<context>
 make_context(int log_priority = 6);
 
 EFYJ_API
 void
-set_logger_callback(eastl::shared_ptr<context> ctx,
-                    eastl::function<void(int, const eastl::string&)> cb);
+set_logger_callback(std::shared_ptr<context> ctx,
+                    std::function<void(int, const std::string&)> cb);
 
 EFYJ_API
 model_data
-extract_model(eastl::shared_ptr<context> ctx,
-              const eastl::string& model_file_path);
+extract_model(std::shared_ptr<context> ctx,
+              const std::string& model_file_path);
 
 EFYJ_API
 simulation_results
-simulate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
-         const eastl::string& options_file_path);
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path);
 
 EFYJ_API
 simulation_results
-simulate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
+simulate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
          const options_data& opts);
 
 EFYJ_API
 evaluation_results
-evaluate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
-         const eastl::string& options_file_path);
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path);
 
 EFYJ_API
 evaluation_results
-evaluate(eastl::shared_ptr<context> ctx,
-         const eastl::string& model_file_path,
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
          const options_data& opts);
 
 EFYJ_API
-eastl::vector<result>
-adjustment(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path,
-           const eastl::string& options_file_path,
+std::vector<result>
+adjustment(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
            bool reduce,
            int limit,
            unsigned int thread);
 
 EFYJ_API
-eastl::vector<result>
-prediction(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path,
-           const eastl::string& options_file_path,
+std::vector<result>
+prediction(std::shared_ptr<context> ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
            bool reduce,
            int limit,
            unsigned int thread);
 
 EFYJ_API
 void
-extract_options_to_file(eastl::shared_ptr<context> ctx,
-                        const eastl::string& model_file_path,
-                        const eastl::string& output_file_path);
+extract_options_to_file(std::shared_ptr<context> ctx,
+                        const std::string& model_file_path,
+                        const std::string& output_file_path);
 
 EFYJ_API
 options_data
-extract_options(eastl::shared_ptr<context> ctx,
-                const eastl::string& model_file_path);
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path);
 
 EFYJ_API
 options_data
-extract_options(eastl::shared_ptr<context> ctx,
-                const eastl::string& model_file_path,
-                const eastl::string& options_file_path);
+extract_options(std::shared_ptr<context> ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path);
 
 EFYJ_API
 void
-merge_options(eastl::shared_ptr<context> ctx,
-              const eastl::string& model,
-              const eastl::string& options,
-              const eastl::string& output_file_path);
+merge_options(std::shared_ptr<context> ctx,
+              const std::string& model,
+              const std::string& options,
+              const std::string& output_file_path);
 
 } // namespace efyj
 

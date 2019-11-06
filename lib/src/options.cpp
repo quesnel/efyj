@@ -19,8 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <EASTL/algorithm.h>
-#include <EASTL/string.h>
+#include <algorithm>
+#include <string>
 
 #include "options.hpp"
 #include "private.hpp"
@@ -31,10 +31,10 @@
 
 namespace efyj {
 
-static eastl::vector<const attribute*>
+static std::vector<const attribute*>
 get_basic_attribute(const Model& model)
 {
-    eastl::vector<const attribute*> ret;
+    std::vector<const attribute*> ret;
     ret.reserve(model.attributes.size());
 
     for (const auto& att : model.attributes)
@@ -44,20 +44,20 @@ get_basic_attribute(const Model& model)
     return ret;
 }
 
-static eastl::optional<long int>
-get_basic_attribute_id(const eastl::vector<const attribute*>& att,
-                       const eastl::string& name)
+static std::optional<int>
+get_basic_attribute_id(const std::vector<const attribute*>& att,
+                       const std::string& name)
 {
     auto it =
-      eastl::find_if(att.begin(), att.end(), [&name](const attribute* att) {
+      std::find_if(att.begin(), att.end(), [&name](const attribute* att) {
           return att->name == name;
       });
 
-    // return it == att.end() ? eastl::nullopt
-    //    : eastl::make_optional(it - att.begin());
-    return it == att.end() ? eastl::nullopt
-                           : eastl::make_optional(static_cast<long int>(
-                               eastl::distance(att.begin(), it)));
+    // return it == att.end() ? std::nullopt
+    //    : std::make_optional(it - att.begin());
+    return it == att.end() ? std::nullopt
+                           : std::make_optional(static_cast<int>(
+                               std::distance(att.begin(), it)));
 }
 
 struct line_reader
@@ -71,22 +71,21 @@ struct line_reader
         return feof(is) || ferror(is);
     }
 
-    eastl::optional<eastl::string> getline()
+    std::optional<std::string> getline()
     {
         // If the next line is already available in the m_buffer, we return a
         // substring of the m_buffer and update the m_buffer.
 
         auto newline_pos = m_buffer.find_first_of('\n');
-        if (newline_pos != eastl::string::npos) {
+        if (newline_pos != std::string::npos) {
             auto ret = m_buffer.substr(0, newline_pos);
 
             if (newline_pos >= m_buffer.size())
                 m_buffer.clear();
             else
-                m_buffer =
-                  m_buffer.substr(newline_pos + 1, eastl::string::npos);
+                m_buffer = m_buffer.substr(newline_pos + 1, std::string::npos);
 
-            return eastl::make_optional(ret);
+            return std::make_optional(ret);
         }
 
         // We need to append data to the buffer.
@@ -103,43 +102,42 @@ struct line_reader
             buffer[len] = '\0';
 
             if (len == 0) {
-                auto ret = eastl::move(m_buffer);
+                auto ret = std::move(m_buffer);
                 ret += '\n';
 
-                return eastl::make_optional(ret);
+                return std::make_optional(ret);
             } else {
                 auto* newline = strchr(buffer, '\n');
                 if (newline == nullptr) {
                     m_buffer.append(buffer);
                 } else {
                     m_buffer.append(buffer, newline);
-                    auto ret = eastl::move(m_buffer);
+                    auto ret = std::move(m_buffer);
                     m_buffer.assign(newline + 1);
 
-                    return eastl::make_optional(ret);
+                    return std::make_optional(ret);
                 }
             }
         } while (!is_end());
 
-        auto ret = eastl::move(m_buffer);
+        auto ret = std::move(m_buffer);
         ret += '\n';
 
-        return eastl::make_optional(ret);
+        return std::make_optional(ret);
     }
 
     FILE* is;
-    eastl::string m_buffer;
+    std::string m_buffer;
 };
 
-eastl::optional<csv_parser_status>
-Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
+void Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
 {
     clear();
 
-    eastl::vector<const attribute*> atts = get_basic_attribute(model);
-    eastl::vector<int> convertheader(atts.size(), 0);
-    eastl::vector<eastl::string> columns;
-    eastl::string line;
+    std::vector<const attribute*> atts = get_basic_attribute(model);
+    std::vector<int> convertheader(atts.size(), 0);
+    std::vector<std::string> columns;
+    std::string line;
     int id = -1;
 
     line_reader ls(is);
@@ -148,8 +146,8 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
         auto opt_line = ls.getline();
         if (!opt_line) {
             info(context, "Fail to read header\n");
-            return eastl::make_optional<csv_parser_status>(
-              csv_parser_status::tag::file_error, size_t(0), columns.size());
+            throw csv_parser_status(csv_parser_status::tag::file_error,
+                                    size_t(0), columns.size());
         }
 
         line = *opt_line;
@@ -161,10 +159,9 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
         else if (columns.size() == atts.size() + 5)
             id = 4;
         else
-            return eastl::make_optional<csv_parser_status>(
-              csv_parser_status::tag::column_number_incorrect,
-              size_t(0),
-              columns.size());
+            throw
+                csv_parser_status(csv_parser_status::tag::column_number_incorrect,
+                                  size_t(0), columns.size());
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
@@ -178,10 +175,9 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
-            return eastl::make_optional<csv_parser_status>(
-              csv_parser_status::tag::basic_attribute_unknown,
-              size_t(0),
-              columns.size());
+            throw
+                csv_parser_status(csv_parser_status::tag::basic_attribute_unknown,
+                                  size_t(0), columns.size());
         }
 
         convertheader[i - id] = *opt_att_id;
@@ -217,7 +213,7 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
           model.attributes[0].scale.find_scale_value(columns.back());
 
         if (!opt_obs) {
-            return eastl::make_optional<csv_parser_status>(
+            throw csv_parser_status(
               csv_parser_status::tag::scale_value_unknown,
               static_cast<size_t>(line_number),
               static_cast<size_t>(columns.size()));
@@ -278,8 +274,6 @@ Options::read(eastl::shared_ptr<context> context, FILE* is, const Model& model)
 
     init_dataset();
     check();
-
-    return {};
 }
 
 void
@@ -320,19 +314,18 @@ Options::init_dataset()
     // }
 
     {
-        eastl::vector<eastl::vector<int>> reduced;
+        std::vector<std::vector<int>> reduced;
         id_subdataset_reduced.resize(subdataset.size());
 
         for (size_t i = 0, e = subdataset.size(); i != e; ++i) {
             auto it =
-              eastl::find(reduced.cbegin(), reduced.cend(), subdataset[i]);
+              std::find(reduced.cbegin(), reduced.cend(), subdataset[i]);
 
             if (it == reduced.cend()) {
                 id_subdataset_reduced[i] = (int)reduced.size();
                 reduced.push_back(subdataset[i]);
             } else {
-                id_subdataset_reduced[i] =
-                  eastl::distance(reduced.cbegin(), it);
+                id_subdataset_reduced[i] = numeric_cast<int>(std::distance(reduced.cbegin(), it));
             }
         }
     }
@@ -380,14 +373,14 @@ Options::set(const options_data& opts)
 void
 Options::clear() noexcept
 {
-    eastl::vector<eastl::string>().swap(simulations);
-    eastl::vector<eastl::string>().swap(places);
-    eastl::vector<int>().swap(departments);
-    eastl::vector<int>().swap(years);
-    eastl::vector<int>().swap(observed);
+    std::vector<std::string>().swap(simulations);
+    std::vector<std::string>().swap(places);
+    std::vector<int>().swap(departments);
+    std::vector<int>().swap(years);
+    std::vector<int>().swap(observed);
 
     DynArray().swap(options);
-    eastl::vector<eastl::vector<int>>().swap(subdataset);
-    eastl::vector<int>().swap(id_subdataset_reduced);
+    std::vector<std::vector<int>>().swap(subdataset);
+    std::vector<int>().swap(id_subdataset_reduced);
 }
 } // namespace efyj

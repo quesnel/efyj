@@ -22,9 +22,9 @@
 #ifndef ORG_VLEPROJECT_EFYJ_MATRIX_HPP
 #define ORG_VLEPROJECT_EFYJ_MATRIX_HPP
 
-#include <EASTL/algorithm.h>
-#include <EASTL/initializer_list.h>
-#include <EASTL/vector.h>
+#include <algorithm>
+#include <initializer_list>
+#include <vector>
 
 #include <cassert>
 
@@ -32,12 +32,12 @@ namespace efyj {
 
 /**
  * An \e matrix defined a two-dimensional template array. Informations are
- * stored into a \e eastl::vector<T> by default.
+ * stored into a \e std::vector<T> by default.
  *
  * \tparam T Type of element
  * \tparam Containre Type of container to store two-dimensional array.
  */
-template<typename T, class Container = eastl::vector<T>>
+template<typename T, class Container = std::vector<T>>
 class matrix
 {
 public:
@@ -147,8 +147,8 @@ matrix<T, Container>::resize(size_type rows, size_type cols)
 {
     container_type new_c(rows * cols);
 
-    size_type rmin = eastl::min(rows, m_rows);
-    size_type cmin = eastl::min(cols, m_columns);
+    size_type rmin = std::min(rows, m_rows);
+    size_type cmin = std::min(cols, m_columns);
 
     for (size_type r = 0; r != rmin; ++r)
         for (size_type c = 0; c != cmin; ++c)
@@ -157,7 +157,7 @@ matrix<T, Container>::resize(size_type rows, size_type cols)
     m_columns = cols;
     m_rows = rows;
 
-    eastl::swap(new_c, m_c);
+    std::swap(new_c, m_c);
 }
 
 template<typename T, class Container>
@@ -170,7 +170,7 @@ matrix<T, Container>::resize(size_type rows,
     m_rows = rows;
     m_columns = cols;
 
-    eastl::fill(m_c.begin(), m_c.end(), value);
+    std::fill(m_c.begin(), m_c.end(), value);
 }
 
 template<typename T, class Container>
@@ -298,7 +298,7 @@ void
 matrix<T, Container>::set(size_type row, size_type column, value_type&& x)
 {
     m_check_index(row, column);
-    m_c.emplace(m_c.begin() + (row * m_columns + column), eastl::move(x));
+    m_c.emplace(m_c.begin() + (row * m_columns + column), std::move(x));
 }
 
 template<typename T, class Container>
@@ -308,7 +308,7 @@ matrix<T, Container>::emplace(size_type row, size_type column, Args&&... args)
 {
     m_check_index(row, column);
     m_c.emplace(m_c.begin() + (row * m_columns + column),
-                eastl::forward<Args>(args)...);
+                std::forward<Args>(args)...);
 }
 
 template<typename T, class Container>
@@ -331,14 +331,15 @@ template<typename T, class Container>
 void
 matrix<T, Container>::swap(matrix& c) noexcept(noexcept(m_c.swap(c.m_c)))
 {
-    eastl::swap(m_c, c.m_c);
-    eastl::swap(m_columns, c.m_columns);
-    eastl::swap(m_rows, c.m_rows);
+    std::swap(m_c, c.m_c);
+    std::swap(m_columns, c.m_columns);
+    std::swap(m_rows, c.m_rows);
 }
 
 template<typename T, class Container>
 void
-matrix<T, Container>::m_check_index(size_type row, size_type column) const
+matrix<T, Container>::m_check_index([[maybe_unused]] size_type row,
+                                    [[maybe_unused]] size_type column) const
 {
     assert(column < m_columns || row < m_rows);
 }

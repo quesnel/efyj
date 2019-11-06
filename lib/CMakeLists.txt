@@ -36,9 +36,8 @@ target_include_directories(libefyj PUBLIC
   PRIVATE src ${CMAKE_BINARY_DIR})
 
 target_link_libraries(libefyj
-  Threads::Threads EXPAT::EXPAT ${EASTL_LIBRARY}
-  $<$<BOOL:${NLOPT_FOUND}>:nlopt>
-  EASTL::EASTL)
+  Threads::Threads EXPAT::EXPAT
+  $<$<BOOL:${NLOPT_FOUND}>:nlopt>)
 
 set_target_properties(libefyj PROPERTIES
   OUTPUT_NAME "efyj-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
@@ -69,7 +68,7 @@ export(TARGETS libefyj FILE LibEFYjConfig.cmake)
 
 add_executable(testlib test/test_basic.cpp)
 
-target_link_libraries(testlib libefyj Threads::Threads EXPAT::EXPAT EASTL::EASTL)
+target_link_libraries(testlib libefyj Threads::Threads EXPAT::EXPAT)
 
 set_property(TARGET testlib PROPERTY CXX_STANDARD 17)
 
@@ -79,8 +78,7 @@ set_target_properties(testlib PROPERTIES
 target_include_directories(testlib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-  $<INSTALL_INTERFACE:include>
-  ${EASTL_INCLUDE_DIR})
+  $<INSTALL_INTERFACE:include>)
 
 target_compile_definitions(testlib PRIVATE
   PRIVATE
@@ -91,8 +89,7 @@ target_compile_definitions(testlib PRIVATE
   VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
   VERSION_MINOR=${PROJECT_VERSION_MINOR}
   VERSION_PATCH=${PROJECT_VERSION_PATCH}
-  VERSION_TWEAK=${PROJECT_VERSION_TWEAK}
-  EASTL_EASTDC_VSNPRINTF=1)
+  VERSION_TWEAK=${PROJECT_VERSION_TWEAK})
 
 configure_file(efyj.pc.in ${CMAKE_BINARY_DIR}/efyj.pc @ONLY)
 install(FILES

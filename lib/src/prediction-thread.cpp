@@ -19,9 +19,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <EASTL/chrono.h>
-#include <EASTL/iterator.h>
-#include <EASTL/map.h>
+#include <chrono>
+#include <iterator>
+#include <map>
 
 #include "model.hpp"
 #include "options.hpp"
@@ -49,7 +49,7 @@ init_worker(Solver& solver, const int thread_id)
 }
 
 static void
-parallel_prediction_worker(eastl::shared_ptr<context> context,
+parallel_prediction_worker(std::shared_ptr<context> context,
                            const Model& model,
                            const Options& options,
                            const unsigned int thread_id,
@@ -57,10 +57,10 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
                            const bool& stop,
                            Results& results)
 {
-    eastl::vector<int> m_globalsimulated(options.observed.size());
-    eastl::vector<int> m_simulated(options.observed.size());
-    eastl::vector<eastl::vector<scale_id>> m_globalfunctions, m_functions;
-    eastl::vector<eastl::tuple<int, int, int>> m_globalupdaters, m_updaters;
+    std::vector<int> m_globalsimulated(options.observed.size());
+    std::vector<int> m_simulated(options.observed.size());
+    std::vector<std::vector<scale_id>> m_globalfunctions, m_functions;
+    std::vector<std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
     for_each_model_solver solver(context, model);
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
@@ -87,7 +87,7 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
             if (stop)
                 return;
 
-            eastl::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
+            std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
             for (size_t opt = 0, endopt = options.size(); opt != endopt;
                  ++opt) {
@@ -96,7 +96,7 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
                 solver.init_next_value();
 
                 do {
-                    eastl::fill(m_simulated.begin(), m_simulated.end(), 0.);
+                    std::fill(m_simulated.begin(), m_simulated.end(), 0.);
 
                     for (auto x : options.get_subdataset(opt))
                         m_simulated[x] = solver.solve(options.options.row(x));
@@ -112,7 +112,8 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] = solver.solve(options.options.row(opt));
+                m_globalsimulated[opt] =
+                  solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -140,7 +141,7 @@ parallel_prediction_worker(eastl::shared_ptr<context> context,
 }
 
 prediction_thread_evaluator::prediction_thread_evaluator(
-  eastl::shared_ptr<context> context,
+  std::shared_ptr<context> context,
   const Model& model,
   const Options& options)
   : m_context(context)
@@ -157,7 +158,7 @@ prediction_thread_evaluator::prediction_thread_evaluator(
           "options does not have enough data to build the training set");
 }
 
-eastl::vector<result>
+std::vector<result>
 prediction_thread_evaluator::run(int line_limit,
                                  double time_limit,
                                  int reduce_mode,
@@ -170,7 +171,7 @@ prediction_thread_evaluator::run(int line_limit,
     Results results(m_context, threads);
     bool stop = false;
 
-    eastl::vector<std::thread> workers{ threads };
+    std::vector<std::thread> workers{ threads };
 
     for (auto i = 0u; i != threads; ++i) {
         auto newctx = copy_context(m_context);
@@ -197,7 +198,7 @@ prediction_thread_evaluator::run(int line_limit,
     return {};
 }
 
-Results::Results(eastl::shared_ptr<context> context, unsigned int threads)
+Results::Results(std::shared_ptr<context> context, unsigned int threads)
   : m_context(context)
   , m_threads(threads)
   , m_start(std::chrono::system_clock::now())
@@ -211,11 +212,10 @@ Results::Results(eastl::shared_ptr<context> context, unsigned int threads)
 }
 
 void
-Results::emplace_result(
-  int i,
-  double kappa,
-  unsigned long loop,
-  const eastl::vector<eastl::tuple<int, int, int>>& updaters)
+Results::emplace_result(int i,
+                        double kappa,
+                        unsigned long loop,
+                        const std::vector<std::tuple<int, int, int>>& updaters)
 {
     assert(static_cast<size_t>(i) < m_level.size() &&
            static_cast<size_t>(i) < m_results.size());
@@ -229,7 +229,7 @@ void
 Results::push(int step,
               double kappa,
               unsigned long loop,
-              const eastl::vector<eastl::tuple<int, int, int>>& updaters)
+              const std::vector<std::tuple<int, int, int>>& updaters)
 {
     std::lock_guard<std::mutex> locker(m_container_mutex);
 

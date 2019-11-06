@@ -21,7 +21,7 @@
 
 #include <efyj/efyj.hpp>
 
-#include <EASTL/optional.h>
+#include <optional>
 
 #include <charconv>
 #include <cstdio>
@@ -31,56 +31,6 @@
 
 #ifdef __unix__
 #include <unistd.h>
-#endif
-
-#ifdef _WIN32
-void* __cdecl
-operator new[](size_t size,
-               const char* name,
-               int flags,
-               unsigned debugFlags,
-               const char* file,
-               int line)
-{
-    return new uint8_t[size];
-}
-
-void* __cdecl
-operator new[](size_t size,
-               size_t alignment,
-               size_t alignmentOffset,
-               const char* name,
-               int flags,
-               unsigned debugFlags,
-               const char* file,
-               int line)
-{
-    return new uint8_t[size];
-}
-#else
-void*
-operator new[](size_t size,
-               const char* name,
-               int flags,
-               unsigned debugFlags,
-               const char* file,
-               int line)
-{
-    return new uint8_t[size];
-}
-
-void*
-operator new[](size_t size,
-               size_t alignment,
-               size_t alignmentOffset,
-               const char* name,
-               int flags,
-               unsigned debugFlags,
-               const char* file,
-               int line)
-{
-    return new uint8_t[size];
-}
 #endif
 
 static void
@@ -115,10 +65,25 @@ version()
                EFYJ_PATCH_VERSION);
 }
 
+static bool
+ends_with(const std::string_view str, const std::string_view suffix) noexcept
+{
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+// static bool
+// starts_with(const std::string_view str, const std::string_view prefix)
+// noexcept
+// {
+//     return str.size() >= prefix.size() &&
+//            str.compare(0, prefix.size(), prefix) == 0;
+// }
+
 static int
-extract(eastl::shared_ptr<efyj::context> ctx,
-        const eastl::string& model,
-        const eastl::string& output)
+extract(std::shared_ptr<efyj::context> ctx,
+        const std::string& model,
+        const std::string& output)
 {
     try {
         efyj::extract_options_to_file(ctx, model, output);
@@ -137,10 +102,10 @@ extract(eastl::shared_ptr<efyj::context> ctx,
 }
 
 static int
-merge(eastl::shared_ptr<efyj::context> ctx,
-      const eastl::string& model,
-      const eastl::string& option,
-      const eastl::string& output)
+merge(std::shared_ptr<efyj::context> ctx,
+      const std::string& model,
+      const std::string& option,
+      const std::string& output)
 {
     try {
         efyj::merge_options(ctx, model, option, output);
@@ -159,9 +124,9 @@ merge(eastl::shared_ptr<efyj::context> ctx,
 }
 
 static int
-evaluate(eastl::shared_ptr<efyj::context> ctx,
-         const eastl::string& model,
-         const eastl::string& option)
+evaluate(std::shared_ptr<efyj::context> ctx,
+         const std::string& model,
+         const std::string& option)
 {
     try {
         auto result = efyj::evaluate(ctx, model, option);
@@ -178,10 +143,11 @@ evaluate(eastl::shared_ptr<efyj::context> ctx,
 
     return EXIT_SUCCESS;
 }
+
 static int
-adjustment(eastl::shared_ptr<efyj::context> ctx,
-           const eastl::string& model,
-           const eastl::string& option,
+adjustment(std::shared_ptr<efyj::context> ctx,
+           const std::string& model,
+           const std::string& option,
            bool reduce,
            int limit,
            unsigned int thread)
@@ -204,9 +170,9 @@ adjustment(eastl::shared_ptr<efyj::context> ctx,
 }
 
 static int
-prediction(eastl::shared_ptr<efyj::context> ctx,
-           const eastl::string& model,
-           const eastl::string& option,
+prediction(std::shared_ptr<efyj::context> ctx,
+           const std::string& model,
+           const std::string& option,
            bool reduce,
            int limit,
            unsigned int thread)
@@ -240,7 +206,7 @@ enum class operation_type
 
 namespace fmt {
 template<>
-struct formatter<eastl::string_view>
+struct formatter<std::string_view>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx)
@@ -249,37 +215,35 @@ struct formatter<eastl::string_view>
     }
 
     template<typename FormatContext>
-    auto format(const eastl::string_view& p, FormatContext& ctx)
+    auto format(const std::string_view& p, FormatContext& ctx)
     {
-        return format_to(ctx.begin(), "{:{}}", p.data(), p.size());
+        return format_to(ctx.out(), "{:{}}", p.data(), p.size());
     }
 };
 }
 
 struct attributes
 {
-    eastl::vector<eastl::string_view> optind;
+    std::vector<std::string_view> optind;
 
     int threads = 1;
 
     operation_type type = operation_type::none;
 
-    int limit = eastl::numeric_limits<int>::max();
+    int limit = std::numeric_limits<int>::max();
     int thread = 1;
     bool reduce = true;
 
     bool show_version = false;
     bool show_help = false;
 
-    bool parse_long_option(eastl::string_view opt,
-                           eastl::optional<eastl::string_view> arg)
+    bool parse_long_option(std::string_view opt,
+                           std::optional<std::string_view> arg)
     {
         if (arg)
-            fmt::print(
-              fmt::color::gray, "parse long option {} arg {}\n", opt, *arg);
+            fmt::print("parse long option {} arg {}\n", opt, *arg);
         else
-            fmt::print(
-              fmt::color::gray, "parse long option {} without arg\n", opt);
+            fmt::print("parse long option {} without arg\n", opt);
 
         bool consume_arg = false;
 
@@ -309,14 +273,12 @@ struct attributes
         return consume_arg;
     }
 
-    bool parse_short_option(char opt, eastl::optional<eastl::string_view> arg)
+    bool parse_short_option(char opt, std::optional<std::string_view> arg)
     {
         if (arg)
-            fmt::print(
-              fmt::color::beige, "parse short option {} arg {}\n", opt, *arg);
+            fmt::print("parse short option {} arg {}\n", opt, *arg);
         else
-            fmt::print(
-              fmt::color::beige, "parse short option {} without arg\n", opt);
+            fmt::print("parse short option {} without arg\n", opt);
 
         bool consume_arg = false;
 
@@ -342,7 +304,7 @@ struct attributes
         return consume_arg;
     }
 
-    bool parse_jobs(eastl::string_view arg)
+    bool parse_jobs(std::string_view arg)
     {
         if (arg.empty()) {
             fmt::print(stderr, "Missing argument for -j[threads]\n");
@@ -368,7 +330,7 @@ struct attributes
         return true;
     }
 
-    bool parse_limit(eastl::string_view arg)
+    bool parse_limit(std::string_view arg)
     {
         if (arg.empty()) {
             fmt::print(stderr, "Missing argument for --limit [int]\n");
@@ -386,7 +348,7 @@ struct attributes
             fmt::print(stderr,
                        "Negative or zero argument for --limit [int]. Assume "
                        "limit = {}\n",
-                       eastl::numeric_limits<int>::max());
+                       std::numeric_limits<int>::max());
             return true;
         }
 
@@ -403,7 +365,7 @@ main(int argc, char* argv[])
     int i = 1;
 
     while (i < argc) {
-        const eastl::string_view arg(argv[i]);
+        const std::string_view arg(argv[i]);
 
         fmt::print("Param `{}`\n", arg);
 
@@ -412,34 +374,30 @@ main(int argc, char* argv[])
                 if (arg[1] == '-') {
                     auto pos = arg.find_first_of(":=", 2U);
 
-                    if (pos == eastl::string_view::npos && i + 1 < argc) {
+                    if (pos == std::string_view::npos && i + 1 < argc) {
                         if (atts.parse_long_option(
                               arg.substr(2),
-                              eastl::optional<eastl::string_view>(
-                                argv[i + 1])))
+                              std::optional<std::string_view>(argv[i + 1])))
                             ++i;
                     } else if (pos + 1 < arg.size())
-                        atts.parse_long_option(
-                          arg.substr(2),
-                          eastl::optional<eastl::string_view>(
-                            arg.substr(pos + 1)));
+                        atts.parse_long_option(arg.substr(2),
+                                               std::optional<std::string_view>(
+                                                 arg.substr(pos + 1)));
                     else
                         atts.parse_long_option(
-                          arg.substr(2),
-                          eastl::optional<eastl::string_view>());
+                          arg.substr(2), std::optional<std::string_view>());
                 } else {
                     if (arg.size() > 2U)
                         atts.parse_short_option(
-                          arg[1], eastl::make_optional(arg.substr(3)));
+                          arg[1], std::make_optional(arg.substr(3)));
                     else if (i + 1 < argc) {
                         if (atts.parse_short_option(
                               arg[1],
-                              eastl::optional<eastl::string_view>(
-                                argv[i + 1])))
+                              std::optional<std::string_view>(argv[i + 1])))
                             ++i;
                     } else
                         atts.parse_short_option(
-                          arg[1], eastl::optional<eastl::string_view>());
+                          arg[1], std::optional<std::string_view>());
                 }
             } else {
                 fmt::print(stderr,
@@ -454,14 +412,14 @@ main(int argc, char* argv[])
         ++i;
     }
 
-    eastl::string dexifile1;
-    eastl::string dexifile2;
-    eastl::string csvfile;
+    std::string dexifile1;
+    std::string dexifile2;
+    std::string csvfile;
 
     for (const auto& str : atts.optind) {
-        if (str.ends_with(".csv"))
+        if (ends_with(str, ".csv"))
             csvfile = str;
-        else if (str.ends_with(".dxi")) {
+        else if (ends_with(str, ".dxi")) {
             if (dexifile1.empty())
                 dexifile1 = str;
             else
@@ -508,6 +466,7 @@ main(int argc, char* argv[])
                        dexifile2.c_str());
             ::merge(ctx, dexifile1, csvfile, dexifile2);
         }
+        break;
     case operation_type::evaluate:
         if (dexifile1.empty())
             fmt::print(stderr, "[evaluate] missing dexi.\n");
@@ -529,7 +488,7 @@ main(int argc, char* argv[])
             fmt::print("Pdjustment options from file `{}' into file `{}'\n",
                        dexifile1.c_str(),
                        csvfile.c_str());
-            ::prediction(
+            ::adjustment(
               ctx, dexifile1, csvfile, atts.reduce, atts.limit, atts.threads);
         }
         break;

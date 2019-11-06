@@ -19,15 +19,15 @@
  * IN THE SOFTWARE.
  */
 
-#include <EASTL/algorithm.h>
-#include <EASTL/deque.h>
-#include <EASTL/initializer_list.h>
-#include <EASTL/numeric_limits.h>
-#include <EASTL/optional.h>
-#include <EASTL/stack.h>
-#include <EASTL/string.h>
-#include <EASTL/unordered_map.h>
-#include <EASTL/vector.h>
+#include <algorithm>
+#include <deque>
+#include <initializer_list>
+#include <limits>
+#include <optional>
+#include <stack>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "model.hpp"
 #include "private.hpp"
@@ -50,7 +50,7 @@ struct Model_reader
       , m_status(dexi_parser_status::tag::done)
     {}
 
-    eastl::optional<dexi_parser_status> read(int buffer_size)
+    void read(int buffer_size)
     {
         XML_Parser parser = XML_ParserCreate(NULL);
         scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
@@ -86,12 +86,10 @@ struct Model_reader
             }
         } while (!done);
 
-        if (m_status == dexi_parser_status::tag::done)
-            return {};
-
-        return dexi_parser_status(m_status,
-                                  static_cast<unsigned long int>(line),
-                                  static_cast<unsigned long int>(column));
+        if (m_status != dexi_parser_status::tag::done)
+            throw dexi_parser_status(m_status,
+                                     static_cast<unsigned long int>(line),
+                                     static_cast<unsigned long int>(column));
     }
 
 private:
@@ -126,10 +124,10 @@ private:
         NORMLOCWEIGHTS
     };
 
-    static eastl::optional<stack_identifier> str_to_stack_identifier(
+    static std::optional<stack_identifier> str_to_stack_identifier(
       const char* name)
     {
-        static const eastl::
+        static const std::
           unordered_map<const char*, stack_identifier, str_hash, str_compare>
             stack_identifier_map(
               { { "DEXi", stack_identifier::DEXi },
@@ -159,8 +157,8 @@ private:
         auto it = stack_identifier_map.find(name);
 
         return it == stack_identifier_map.end()
-                 ? eastl::nullopt
-                 : eastl::make_optional(it->second);
+                 ? std::nullopt
+                 : std::make_optional(it->second);
     }
 
     struct parser_data
@@ -172,15 +170,16 @@ private:
         {}
 
         XML_Parser parser;
-        eastl::string error_message;
+        std::string error_message;
         Model& model;
-        eastl::stack<stack_identifier> stack;
-        eastl::stack<attribute*> attributes_stack;
-        eastl::string char_data;
+        std::stack<stack_identifier> stack;
+        std::stack<attribute*> attributes_stack;
+        std::string char_data;
         dexi_parser_status::tag m_status;
 
         void stop_parser(dexi_parser_status::tag t)
         {
+            abort();
             XML_StopParser(parser, XML_FALSE);
             m_status = t;
         }
@@ -215,6 +214,7 @@ private:
 
         switch (id) {
         case stack_identifier::DEXi:
+            fmt::print(stderr, "stack_identifier::DEXi\n");
             if (!pd->stack.empty()) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -224,6 +224,7 @@ private:
             break;
 
         case stack_identifier::TAG_VERSION:
+            fmt::print(stderr, "stack_identifier::TAG_VERSION\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -231,6 +232,7 @@ private:
             break;
 
         case stack_identifier::CREATED:
+            fmt::print(stderr, "stack_identifier::CREATED\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -238,6 +240,7 @@ private:
             break;
 
         case stack_identifier::LINE:
+            fmt::print(stderr, "stack_identifier::LINE\n");
             if (!pd->is_parent({ stack_identifier::DESCRIPTION })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -245,6 +248,7 @@ private:
             break;
 
         case stack_identifier::OPTION:
+            fmt::print(stderr, "stack_identifier::OPTION\n");
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
@@ -253,6 +257,7 @@ private:
             break;
 
         case stack_identifier::SETTINGS:
+            fmt::print(stderr, "stack_identifier::SETTINGS\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -261,6 +266,7 @@ private:
             break;
 
         case stack_identifier::FONTSIZE:
+            fmt::print(stderr, "stack_identifier::FONTSIZE\n");
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -269,6 +275,7 @@ private:
             break;
 
         case stack_identifier::REPORTS:
+            fmt::print(stderr, "stack_identifier::REPORTS\n");
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -277,6 +284,7 @@ private:
             break;
 
         case stack_identifier::ATTRIBUTE:
+            fmt::print(stderr, "stack_identifier::ATTRIBUTE\n");
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
@@ -293,6 +301,7 @@ private:
             break;
 
         case stack_identifier::NAME:
+            fmt::print(stderr, "stack_identifier::NAME\n");
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
@@ -303,6 +312,7 @@ private:
             break;
 
         case stack_identifier::DESCRIPTION:
+            fmt::print(stderr, "stack_identifier::DESCRIPTION\n");
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
@@ -314,6 +324,7 @@ private:
             break;
 
         case stack_identifier::SCALE:
+            fmt::print(stderr, "stack_identifier::SCALE\n");
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -322,6 +333,7 @@ private:
             break;
 
         case stack_identifier::ORDER:
+            fmt::print(stderr, "stack_identifier::ORDER\n");
             if (!pd->is_parent({ stack_identifier::SCALE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -329,6 +341,7 @@ private:
             break;
 
         case stack_identifier::SCALEVALUE:
+            fmt::print(stderr, "stack_identifier::SCALEVALUE\n");
             if (!pd->is_parent({ stack_identifier::SCALE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -345,6 +358,7 @@ private:
             break;
 
         case stack_identifier::GROUP:
+            fmt::print(stderr, "stack_identifier::GROUP\n");
             if (!pd->is_parent({ stack_identifier::SCALEVALUE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -352,6 +366,7 @@ private:
             break;
 
         case stack_identifier::FUNCTION:
+            fmt::print(stderr, "stack_identifier::FUNCTION\n");
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -414,11 +429,15 @@ private:
                 auto ret = sscanf(pd->char_data.c_str(), "%d", &att);
 #endif
 
-                if (ret != 1) {
-                    pd->stop_parser(
-                      dexi_parser_status::tag::option_conversion_error);
-                    break;
-                }
+                if (ret != 1)
+                    fmt::print(
+                      stderr,
+                      "Option with unreadable string `{}'. Use `0' instead\n",
+                      pd->char_data);
+                //     pd->stop_parser(
+                //       dexi_parser_status::tag::option_conversion_error);
+                //     break;
+                // }
 
                 pd->model.attributes.back().options.emplace_back(att);
             } else {
@@ -553,7 +572,7 @@ private:
 struct to_xml
 {
 
-    to_xml(const eastl::string& str)
+    to_xml(const std::string& str)
     {
         m_str.reserve(str.size() * 2);
 
@@ -586,7 +605,7 @@ struct to_xml
         }
     }
 
-    eastl::string m_str;
+    std::string m_str;
 };
 
 struct Model_writer
@@ -652,7 +671,7 @@ private:
         fprintf(os, "%*c", space + adding, ' ');
     }
 
-    void write_Model_option(const eastl::vector<eastl::string>& opts)
+    void write_Model_option(const std::vector<std::string>& opts)
     {
         for (const auto& opt : opts) {
             make_space();
@@ -660,7 +679,7 @@ private:
         }
     }
 
-    void write_Model_option(const eastl::vector<int>& opts)
+    void write_Model_option(const std::vector<int>& opts)
     {
         for (const auto& opt : opts) {
             make_space();
@@ -681,7 +700,8 @@ private:
         make_space();
         fprintf(os, "<NAME>%s</NAME>\n", att.name.c_str());
         make_space();
-        fprintf(os, "<DESCRIPTION>%s</DESCRIPTION>\n", att.description.c_str());
+        fprintf(
+          os, "<DESCRIPTION>%s</DESCRIPTION>\n", att.description.c_str());
         make_space();
         fputs("<SCALE>\n", os);
 
@@ -707,7 +727,8 @@ private:
 
             if (sv.group >= 0) {
                 make_space(2);
-                fprintf(os, "<GROUP>%s</GROUP>\n", dex.group[sv.group].c_str());
+                fprintf(
+                  os, "<GROUP>%s</GROUP>\n", dex.group[sv.group].c_str());
             }
 
             make_space();
@@ -729,14 +750,16 @@ private:
 
             if (!att.functions.entered.empty()) {
                 make_space(2);
-                fprintf(
-                  os, "<ENTERED>%s</ENTERED>\n", att.functions.entered.c_str());
+                fprintf(os,
+                        "<ENTERED>%s</ENTERED>\n",
+                        att.functions.entered.c_str());
             }
 
             if (!att.functions.consist.empty()) {
                 make_space(2);
-                fprintf(
-                  os, "<CONSIST>%s</CONSIST>\n", att.functions.consist.c_str());
+                fprintf(os,
+                        "<CONSIST>%s</CONSIST>\n",
+                        att.functions.consist.c_str());
             }
 
             make_space();
@@ -758,7 +781,7 @@ private:
 static void
 reorder_basic_attribute(const Model& model,
                         size_t att,
-                        eastl::vector<size_t>& out)
+                        std::vector<size_t>& out)
 {
     if (model.attributes[att].is_basic())
         out.push_back(att);
@@ -772,7 +795,7 @@ Model::write_options(FILE* os) const
 {
     assert(os);
 
-    eastl::vector<size_t> ordered_att;
+    std::vector<size_t> ordered_att;
     reorder_basic_attribute(*this, 0, ordered_att);
     fputs("simulation;place;department;year;", os);
 
@@ -781,8 +804,7 @@ Model::write_options(FILE* os) const
 
     fprintf(os, "%s\n", attributes[0].name.c_str());
 
-    for (eastl::vector<eastl::string>::size_type opt{ 0 };
-         opt != options.size();
+    for (std::vector<std::string>::size_type opt{ 0 }; opt != options.size();
          ++opt) {
         fprintf(os, "%s../;-;0;0;", options[opt].c_str());
 
@@ -804,7 +826,7 @@ options_data
 Model::write_options() const
 {
     options_data ret;
-    eastl::vector<size_t> ordered_att;
+    std::vector<size_t> ordered_att;
     reorder_basic_attribute(*this, 0, ordered_att);
 
     for (size_t opt = 0; opt != options.size(); ++opt) {
@@ -826,7 +848,7 @@ Model::write_options() const
 void
 Model::set_options(const options_data& options)
 {
-    eastl::vector<size_t> ordered_att;
+    std::vector<size_t> ordered_att;
     reorder_basic_attribute(*this, 0, ordered_att);
 
     for (size_t opt = 0; opt != options.options.rows(); ++opt) {
@@ -859,15 +881,15 @@ Model::write(FILE* os)
 void
 Model::clear()
 {
-    eastl::string().swap(name);
-    eastl::string().swap(version);
-    eastl::string().swap(created);
-    eastl::string().swap(created);
-    eastl::vector<eastl::string>().swap(description);
-    eastl::vector<eastl::string>().swap(options);
-    eastl::vector<scale_id>().swap(basic_attribute_scale_size);
-    eastl::vector<eastl::string>().swap(group);
-    eastl::deque<attribute>().swap(attributes);
+    std::string().swap(name);
+    std::string().swap(version);
+    std::string().swap(created);
+    std::string().swap(created);
+    std::vector<std::string>().swap(description);
+    std::vector<std::string>().swap(options);
+    std::vector<scale_id>().swap(basic_attribute_scale_size);
+    std::vector<std::string>().swap(group);
+    std::deque<attribute>().swap(attributes);
 }
 
 } // namespace efyj

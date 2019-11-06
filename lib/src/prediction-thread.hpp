@@ -22,9 +22,9 @@
 #ifndef ORG_VLEPROJECT_EFYJ_DETAILS_PREDICTION_THREAD_HPP
 #define ORG_VLEPROJECT_EFYJ_DETAILS_PREDICTION_THREAD_HPP
 
-#include <EASTL/chrono.h>
-#include <EASTL/iterator.h>
-#include <EASTL/map.h>
+#include <chrono>
+#include <iterator>
+#include <map>
 
 #include "model.hpp"
 #include "options.hpp"
@@ -39,60 +39,60 @@ namespace efyj {
 
 struct prediction_thread_evaluator
 {
-    eastl::shared_ptr<context> m_context;
+    std::shared_ptr<context> m_context;
     const Model& m_model;
     const Options& m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
-    eastl::vector<int> m_globalsimulated;
-    eastl::vector<eastl::tuple<int, int, int>> m_updaters;
-    eastl::vector<eastl::vector<int>> m_globalfunctions, m_functions;
-    eastl::vector<int> simulated;
-    eastl::vector<int> observed;
+    std::vector<int> m_globalsimulated;
+    std::vector<std::tuple<int, int, int>> m_updaters;
+    std::vector<std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
     for_each_model_solver solver;
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    prediction_thread_evaluator(eastl::shared_ptr<context> context,
+    prediction_thread_evaluator(std::shared_ptr<context> context,
                                 const Model& model,
                                 const Options& options);
 
-    eastl::vector<result> run(int line_limit,
-                              double time_limit,
-                              int reduce_mode,
-                              unsigned int threads);
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode,
+                            unsigned int threads);
 };
 
 class Results
 {
-    eastl::shared_ptr<context> m_context;
+    std::shared_ptr<context> m_context;
     std::mutex m_container_mutex;
 
     struct Result
     {
         double kappa;
         unsigned long loop;
-        eastl::vector<eastl::tuple<int, int, int>> updaters;
+        std::vector<std::tuple<int, int, int>> updaters;
     };
 
-    eastl::vector<Result> m_results;
-    eastl::vector<int> m_level;
+    std::vector<Result> m_results;
+    std::vector<int> m_level;
     const unsigned int m_threads;
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(eastl::shared_ptr<context> context, unsigned int threads);
+    Results(std::shared_ptr<context> context, unsigned int threads);
 
     void emplace_result(
       int i,
       double kappa,
       unsigned long loop,
-      const eastl::vector<eastl::tuple<int, int, int>>& updaters);
+      const std::vector<std::tuple<int, int, int>>& updaters);
 
     void push(int step,
               double kappa,
               unsigned long loop,
-              const eastl::vector<eastl::tuple<int, int, int>>& updaters);
+              const std::vector<std::tuple<int, int, int>>& updaters);
 };
 
 } // namespace efyj

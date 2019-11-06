@@ -22,10 +22,8 @@
 #ifndef ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
 #define ORG_VLEPROJECT_EFYj_INTERNAL_PREDICTION_HPP
 
-#include <EASTL/chrono.h>
-#include <EASTL/map.h>
-
 #include <chrono>
+#include <map>
 
 #include "model.hpp"
 #include "options.hpp"
@@ -37,27 +35,27 @@ namespace efyj {
 
 struct prediction_evaluator
 {
-    eastl::shared_ptr<context> m_context;
+    std::shared_ptr<context> m_context;
     const Model& m_model;
     const Options& m_options;
 
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
-    eastl::vector<int> m_globalsimulated;
-    eastl::vector<eastl::tuple<int, int, int>> m_updaters;
-    eastl::vector<eastl::vector<int>> m_globalfunctions, m_functions;
-    eastl::vector<int> simulated;
-    eastl::vector<int> observed;
+    std::vector<int> m_globalsimulated;
+    std::vector<std::tuple<int, int, int>> m_updaters;
+    std::vector<std::vector<int>> m_globalfunctions, m_functions;
+    std::vector<int> simulated;
+    std::vector<int> observed;
     for_each_model_solver solver;
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    prediction_evaluator(eastl::shared_ptr<context> context,
+    prediction_evaluator(std::shared_ptr<context> context,
                          const Model& model,
                          const Options& options);
 
-    eastl::vector<result> run(int line_limit,
-                              double time_limit,
-                              int reduce_mode);
+    std::vector<result> run(int line_limit,
+                            double time_limit,
+                            int reduce_mode);
 };
 
 } // namespace efyj

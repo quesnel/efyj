@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_SOLVER_STACK_HPP
 #define INRA_EFYj_SOLVER_STACK_HPP
 
-#include <EASTL/set.h>
+#include <set>
 
 #include "model.hpp"
 #include "options.hpp"
@@ -33,7 +33,7 @@
 
 namespace efyj {
 
-using Vector = eastl::vector<int>;
+using Vector = std::vector<int>;
 
 struct aggregate_attribute
 {
@@ -79,7 +79,7 @@ struct aggregate_attribute
      * opt1 opt2  1 opt3  1
      * opt1 opt2  1 opt3  2
      */
-    void reduce(eastl::set<int>& whitelist);
+    void reduce(std::set<int>& whitelist);
 
     inline void function_restore() noexcept
     {
@@ -87,9 +87,9 @@ struct aggregate_attribute
     }
 
     Vector coeffs;
-    eastl::vector<scale_id> functions;
-    eastl::vector<scale_id> saved_functions;
-    eastl::vector<size_t> m_scale_size;
+    std::vector<scale_id> functions;
+    std::vector<scale_id> saved_functions;
+    std::vector<size_t> m_scale_size;
     Vector stack;
     scale_id scale;
     int stack_size;
@@ -178,7 +178,7 @@ struct solver_stack
     }
 
     template<typename V>
-    void reduce(const V& options, eastl::vector<eastl::set<int>>& whitelist)
+    void reduce(const V& options, std::vector<std::set<int>>& whitelist)
     {
         result.clear();
 
@@ -296,29 +296,28 @@ struct solver_stack
 
     void recursive_fill(const Model& model, size_t att, int& value_id);
 
-    void set_functions(
-      const eastl::vector<eastl::vector<scale_id>>& functions);
+    void set_functions(const std::vector<std::vector<scale_id>>& functions);
 
-    void get_functions(eastl::vector<eastl::vector<scale_id>>& functions);
+    void get_functions(std::vector<std::vector<scale_id>>& functions);
 
-    eastl::string string_functions() const;
+    std::string string_functions() const;
 
-    eastl::vector<aggregate_attribute> atts;
+    std::vector<aggregate_attribute> atts;
 
     // @e function is a Reverse Polish notation.
-    eastl::vector<Block> function;
+    std::vector<Block> function;
 
     // To avoid reallocation each solve(), we store the stack into the solver.
-    eastl::vector<int> result;
+    std::vector<int> result;
 };
 
 class for_each_model_solver
 {
 public:
-    eastl::shared_ptr<context> m_context;
+    std::shared_ptr<context> m_context;
     solver_stack m_solver;
-    eastl::vector<line_updater> m_updaters;
-    eastl::vector<eastl::vector<int>> m_whitelist;
+    std::vector<line_updater> m_updaters;
+    std::vector<std::vector<int>> m_whitelist;
     int m_walker_number;
 
     /** @e full is used to enable all lines for all aggregate
@@ -329,10 +328,10 @@ public:
     void detect_missing_scale_value();
 
 public:
-    for_each_model_solver(eastl::shared_ptr<context> context,
+    for_each_model_solver(std::shared_ptr<context> context,
                           const Model& model);
 
-    for_each_model_solver(eastl::shared_ptr<context> context,
+    for_each_model_solver(std::shared_ptr<context> context,
                           const Model& model,
                           int walker_number);
 
@@ -355,29 +354,29 @@ public:
         return m_solver.solve(options);
     }
 
-    void set_functions(const eastl::vector<eastl::vector<scale_id>>& functions)
+    void set_functions(const std::vector<std::vector<scale_id>>& functions)
     {
         return m_solver.set_functions(functions);
     }
 
-    void get_functions(eastl::vector<eastl::vector<scale_id>>& functions)
+    void get_functions(std::vector<std::vector<scale_id>>& functions)
     {
         return m_solver.get_functions(functions);
     }
 
-    eastl::vector<eastl::tuple<int, int, int>> updaters() const;
+    std::vector<std::tuple<int, int, int>> updaters() const;
 
     size_t get_attribute_line_tuple_limit() const;
 
-    eastl::string string_functions() const
+    std::string string_functions() const
     {
         return m_solver.string_functions();
     }
 };
 
 void
-print(eastl::shared_ptr<context> ctx,
-      const eastl::vector<eastl::tuple<int, int, int>>& updaters) noexcept;
+print(std::shared_ptr<context> ctx,
+      const std::vector<std::tuple<int, int, int>>& updaters) noexcept;
 
 } // namespace efyj
 

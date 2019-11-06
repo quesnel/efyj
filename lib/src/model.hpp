@@ -22,15 +22,15 @@
 #ifndef ORG_VLEPROJECT_EFYJ_MODEL_HPP
 #define ORG_VLEPROJECT_EFYJ_MODEL_HPP
 
-#include <EASTL/algorithm.h>
-#include <EASTL/deque.h>
-#include <EASTL/initializer_list.h>
-#include <EASTL/numeric_limits.h>
-#include <EASTL/optional.h>
-#include <EASTL/stack.h>
-#include <EASTL/string.h>
-#include <EASTL/unordered_map.h>
-#include <EASTL/vector.h>
+#include <algorithm>
+#include <deque>
+#include <initializer_list>
+#include <limits>
+#include <optional>
+#include <stack>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <efyj/efyj.hpp>
 
@@ -45,7 +45,7 @@ using scale_id = int;
 
 template<typename T>
 void
-is_valid_scale_id(T n) noexcept
+is_valid_scale_id([[maybe_unused]] T n) noexcept
 {
     assert(n >= 0 && n <= 127);
 }
@@ -53,26 +53,26 @@ is_valid_scale_id(T n) noexcept
 constexpr scale_id
 scale_id_unknown() noexcept
 {
-    return eastl::numeric_limits<scale_id>::max();
+    return std::numeric_limits<scale_id>::max();
 }
 
 struct scalevalue
 {
-    scalevalue(const eastl::string& name_)
+    scalevalue(const std::string& name_)
       : name(name_)
       , group(-1)
     {}
 
-    eastl::string name;
-    eastl::string description;
+    std::string name;
+    std::string description;
     int group;
 };
 
 struct function
 {
-    eastl::string low;
-    eastl::string entered;
-    eastl::string consist;
+    std::string low;
+    std::string entered;
+    std::string consist;
 
     bool empty() const noexcept
     {
@@ -87,9 +87,9 @@ struct scales
     {}
 
     bool order;
-    eastl::vector<scalevalue> scale;
+    std::vector<scalevalue> scale;
 
-    eastl::optional<scale_id> find_scale_value(const eastl::string& name) const
+    std::optional<scale_id> find_scale_value(const std::string& name) const
     {
         for (size_t i = 0, e = scale.size(); i != e; ++i) {
             if (scale[i].name == name) {
@@ -112,7 +112,7 @@ struct scales
 
 struct attribute
 {
-    attribute(const eastl::string& name_)
+    attribute(const std::string& name_)
       : name(name_)
     {}
 
@@ -141,25 +141,25 @@ struct attribute
         children.emplace_back(child);
     }
 
-    eastl::string name;
-    eastl::string description;
+    std::string name;
+    std::string description;
     scales scale;
     function functions;
-    eastl::vector<int> options;
-    eastl::vector<size_t> children;
+    std::vector<int> options;
+    std::vector<size_t> children;
 };
 
 struct Model
 {
-    eastl::string name;
-    eastl::string version;
-    eastl::string created;
-    eastl::string reports;
-    eastl::vector<eastl::string> description;
-    eastl::vector<eastl::string> options;
-    eastl::vector<scale_id> basic_attribute_scale_size;
-    eastl::vector<eastl::string> group;
-    eastl::deque<attribute> attributes;
+    std::string name;
+    std::string version;
+    std::string created;
+    std::string reports;
+    std::vector<std::string> description;
+    std::vector<std::string> options;
+    std::vector<scale_id> basic_attribute_scale_size;
+    std::vector<std::string> group;
+    std::deque<attribute> attributes;
 
     void read(FILE* is);
 
@@ -173,14 +173,14 @@ struct Model
         return attributes.empty();
     }
 
-    int group_id(const eastl::string& name) const
+    int group_id(const std::string& name) const
     {
-        auto it = eastl::find(group.cbegin(), group.cend(), name);
+        auto it = std::find(group.cbegin(), group.cend(), name);
 
         if (it == group.cend())
             return -1;
 
-        return static_cast<int>(eastl::distance(group.cbegin(), it));
+        return static_cast<int>(std::distance(group.cbegin(), it));
     }
 
     void write_options(FILE* os) const;

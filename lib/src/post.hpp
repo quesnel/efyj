@@ -22,7 +22,7 @@
 #ifndef INRA_EFYj_POST_HPP
 #define INRA_EFYj_POST_HPP
 
-#include <EASTL/vector.h>
+#include <vector>
 
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -52,8 +52,8 @@ print(const matrix<T>& m)
 }
 
 inline double
-rmsep(const eastl::vector<int>& observated,
-      const eastl::vector<int>& simulated,
+rmsep(const std::vector<int>& observated,
+      const std::vector<int>& simulated,
       const int N,
       const int NC)
 {
@@ -122,8 +122,8 @@ public:
         assert(NC_ > 0 && "weighted_kappa_calculator bad parameter");
     }
 
-    double linear(const eastl::vector<int>& observated,
-                  const eastl::vector<int>& simulated) noexcept
+    double linear(const std::vector<int>& observated,
+                  const std::vector<int>& simulated) noexcept
     {
         pre(observated, simulated);
 
@@ -134,8 +134,8 @@ public:
         return post();
     }
 
-    double squared(const eastl::vector<int>& observated,
-                   const eastl::vector<int>& simulated) noexcept
+    double squared(const std::vector<int>& observated,
+                   const std::vector<int>& simulated) noexcept
     {
         pre(observated, simulated);
 
@@ -153,15 +153,15 @@ private:
     matrix<double> weighted;
     const int NC;
 
-    void pre(const eastl::vector<int>& observated,
-             const eastl::vector<int>& simulated) noexcept
+    void pre(const std::vector<int>& observated,
+             const std::vector<int>& simulated) noexcept
     {
         assert(observated.size() == simulated.size() &&
                "weighted_kappa_calculator observated and simulated sizes "
                "are different");
 
-        eastl::fill(observed.begin(), observed.end(), 0.0);
-        eastl::fill(distributions.begin(), distributions.end(), 0.0);
+        std::fill(observed.begin(), observed.end(), 0.0);
+        std::fill(distributions.begin(), distributions.end(), 0.0);
 
         for (int i = 0; i != (int)simulated.size(); ++i) {
             ++observed(observated[i], simulated[i]);

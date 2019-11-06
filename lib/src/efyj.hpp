@@ -28,13 +28,12 @@
 namespace efyj {
 
 Model
-make_model(eastl::shared_ptr<context> ctx,
-           const eastl::string& model_file_path);
+make_model(std::shared_ptr<context> ctx, const std::string& model_file_path);
 
 Options
-make_options(eastl::shared_ptr<context> ctx,
+make_options(std::shared_ptr<context> ctx,
              Model& model,
-             const eastl::string& options_file_path);
+             const std::string& options_file_path);
 
 } // namespace efyj
 

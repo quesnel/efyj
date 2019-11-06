@@ -22,7 +22,7 @@
 #ifndef ORG_VLEPROJECT_EFYj_OPTIONS_HPP
 #define ORG_VLEPROJECT_EFYj_OPTIONS_HPP
 
-#include <EASTL/optional.h>
+#include <optional>
 
 #include <efyj/efyj.hpp>
 #include <efyj/matrix.hpp>
@@ -40,19 +40,19 @@ namespace efyj {
 class Options
 {
 public:
-    eastl::vector<eastl::string> simulations;
-    eastl::vector<eastl::string> places;
-    eastl::vector<int> departments;
-    eastl::vector<int> years;
-    eastl::vector<int> observed;
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
     DynArray options;
 
-    const eastl::vector<int>& get_subdataset(int id) const noexcept
+    const std::vector<int>& get_subdataset(int id) const noexcept
     {
         return subdataset[id];
     }
 
-    const eastl::vector<eastl::vector<int>>& get_subdataset() const noexcept
+    const std::vector<std::vector<int>>& get_subdataset() const noexcept
     {
         return subdataset;
     }
@@ -84,9 +84,7 @@ public:
      *
      * @throw std::bad_alloc or csv_parser_error.
      */
-    eastl::optional<csv_parser_status> read(eastl::shared_ptr<context> context,
-                                            FILE* is,
-                                            const Model& model);
+    void read(std::shared_ptr<context> context, FILE* is, const Model& model);
 
     bool have_subdataset() const
     {
@@ -116,11 +114,11 @@ private:
     /// \e subdataset stores a list of line that defines the learning
     /// options for each options. \e subdataset.size() equals \e
     /// simulations.size()
-    eastl::vector<eastl::vector<int>> subdataset;
+    std::vector<std::vector<int>> subdataset;
 
     /// \e id_subdataset_reduced stores indices for each options. Index
     /// may appear several times if the learning options are equals.
-    eastl::vector<int> id_subdataset_reduced;
+    std::vector<int> id_subdataset_reduced;
 };
 }
 

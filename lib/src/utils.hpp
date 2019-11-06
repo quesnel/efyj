@@ -22,11 +22,13 @@
 #ifndef INRA_EFYj_UTILS_HPP
 #define INRA_EFYj_UTILS_HPP
 
-#include <EASTL/algorithm.h>
-#include <EASTL/functional.h>
-#include <EASTL/numeric_limits.h>
-#include <EASTL/string.h>
-#include <EASTL/vector.h>
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <string>
+#include <vector>
+
+#include <fmt/format.h>
 
 namespace efyj {
 
@@ -35,7 +37,7 @@ max_value(int need, size_t real) noexcept;
 
 struct scope_exit
 {
-    scope_exit(eastl::function<void(void)> fct)
+    scope_exit(std::function<void(void)> fct)
       : fct(fct)
     {}
 
@@ -44,7 +46,7 @@ struct scope_exit
         fct();
     }
 
-    eastl::function<void(void)> fct;
+    std::function<void(void)> fct;
 };
 
 /** \e make_new_name is used to create new file path with a suffix composed
@@ -63,8 +65,8 @@ struct scope_exit
  * \endcode
  * \endexample
  */
-eastl::string
-make_new_name(const eastl::string& filepath, unsigned int id) noexcept;
+std::string
+make_new_name(const std::string& filepath, unsigned int id) noexcept;
 
 /**
  * Return number of available concurrency processor.
@@ -74,15 +76,15 @@ unsigned
 get_hardware_concurrency() noexcept;
 
 void
-tokenize(const eastl::string& str,
-         eastl::vector<eastl::string>& tokens,
-         const eastl::string& delim,
+tokenize(const std::string& str,
+         std::vector<std::string>& tokens,
+         const std::string& delim,
          bool trimEmpty);
 
 inline constexpr size_t
 max_value(int need, size_t real) noexcept
 {
-    return need <= 0 ? real : eastl::min(static_cast<size_t>(need), real);
+    return need <= 0 ? real : std::min(static_cast<size_t>(need), real);
 }
 
 // inline unsigned
@@ -99,43 +101,40 @@ max_value(int need, size_t real) noexcept
 // #endif
 // }
 
-inline eastl::string
-make_new_name(const eastl::string& filepath, unsigned int id) noexcept
+inline std::string
+make_new_name(const std::string& filepath, unsigned int id) noexcept
 {
     if (filepath.empty())
-        return eastl::string("worker-%u.log", id);
+        return fmt::format("worker-{}.log", id);
 
     auto dotposition = filepath.find_last_of('.');
     if (dotposition == 0u)
-        return eastl::string("worker-%u.log", id);
+        return fmt::format("worker-{}.log", id);
 
-    eastl::string ret = filepath.substr(0, dotposition);
+    if (dotposition == filepath.size() - 1)
+        return fmt::format("{}-{}.log", filepath.substr(0, dotposition), id);
 
-    if (dotposition == filepath.size() - 1) {
-        ret.append_sprintf("-%u.log");
-    } else {
-        ret.append_sprintf("-%u.", id);
-        ret.append(filepath.substr(dotposition + 1));
-    }
-
-    return ret;
+    return fmt::format("{}-{}{}.log",
+                       filepath.substr(0, dotposition),
+                       id,
+                       filepath.substr(dotposition + 1));
 }
 
 inline void
-tokenize(const eastl::string& str,
-         eastl::vector<eastl::string>& tokens,
-         const eastl::string& delim,
+tokenize(const std::string& str,
+         std::vector<std::string>& tokens,
+         const std::string& delim,
          bool trimEmpty)
 {
     tokens.clear();
-    eastl::string::size_type pos, lastPos = 0, length = str.length();
+    std::string::size_type pos, lastPos = 0, length = str.length();
 
-    using value_type = typename eastl::vector<eastl::string>::value_type;
-    using size_type = typename eastl::vector<eastl::string>::size_type;
+    using value_type = typename std::vector<std::string>::value_type;
+    using size_type = typename std::vector<std::string>::size_type;
 
     while (lastPos < length + 1) {
         pos = str.find_first_of(delim, lastPos);
-        if (pos == eastl::string::npos) {
+        if (pos == std::string::npos) {
             pos = length;
         }
         if (pos != lastPos || !trimEmpty)
@@ -158,11 +157,11 @@ template<typename Target, typename Source>
 inline bool
 is_numeric_castable(Source arg)
 {
-    static_assert(eastl::is_integral<Source>::value, "Integer required.");
-    static_assert(eastl::is_integral<Target>::value, "Integer required.");
+    static_assert(std::is_integral<Source>::value, "Integer required.");
+    static_assert(std::is_integral<Target>::value, "Integer required.");
 
-    using arg_traits = eastl::numeric_limits<Source>;
-    using result_traits = eastl::numeric_limits<Target>;
+    using arg_traits = std::numeric_limits<Source>;
+    using result_traits = std::numeric_limits<Target>;
 
     if (result_traits::digits == arg_traits::digits &&
         result_traits::is_signed == arg_traits::is_signed)
@@ -181,7 +180,7 @@ is_numeric_castable(Source arg)
 /**
  * @brief Tries to convert @c Source into @c Target integer.
  * @code
- * eastl::vector<int> v(1000, 5);
+ * std::vector<int> v(1000, 5);
  *
  * // No exception.
  * int i = efyj::numeric_cast<int>(v.size());

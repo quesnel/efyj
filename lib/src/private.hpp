@@ -41,7 +41,7 @@ enum class log_level
 class context
 {
 public:
-    eastl::function<void(int, const eastl::string&)> log_cb;
+    std::function<void(int, const std::string&)> log_cb;
 
     log_level log_priority;
 
@@ -56,7 +56,7 @@ is_loggable(log_level current_level, log_level level) noexcept
 
 template<typename... Args>
 void
-log(const eastl::shared_ptr<context>& ctx,
+log(const std::shared_ptr<context>& ctx,
     FILE* stream,
     log_level level,
     const char* fmt,
@@ -69,12 +69,13 @@ log(const eastl::shared_ptr<context>& ctx,
         fmt::print(stream, fmt, args...);
 
     if (ctx->log_cb)
-        ctx->log_cb(static_cast<int>(level), fmt::format(fmt, args...).c_str());
+        ctx->log_cb(static_cast<int>(level),
+                    fmt::format(fmt, args...).c_str());
 }
 
 template<typename... Args>
 void
-log(const eastl::shared_ptr<context>& ctx,
+log(const std::shared_ptr<context>& ctx,
     FILE* stream,
     log_level level,
     const char* msg)
@@ -104,7 +105,8 @@ log(context* ctx,
         fmt::print(stream, fmt, args...);
 
     if (ctx->log_cb)
-        ctx->log_cb(static_cast<int>(level), fmt::format(fmt, args...).c_str());
+        ctx->log_cb(static_cast<int>(level),
+                    fmt::format(fmt, args...).c_str());
 }
 
 template<typename... Args>
@@ -130,7 +132,7 @@ struct sink_arguments
 
 template<typename... Args>
 void
-emerg(const eastl::shared_ptr<context>& ctx,
+emerg(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Args&... args)
 {
@@ -143,7 +145,7 @@ emerg(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-alert(const eastl::shared_ptr<context>& ctx,
+alert(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Args&... args)
 {
@@ -156,9 +158,7 @@ alert(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-crit(const eastl::shared_ptr<context>& ctx,
-     const char* fmt,
-     const Args&... args)
+crit(const std::shared_ptr<context>& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::crit, fmt, args...);
@@ -169,7 +169,7 @@ crit(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-error(const eastl::shared_ptr<context>& ctx,
+error(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Args&... args)
 {
@@ -182,7 +182,7 @@ error(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-warning(const eastl::shared_ptr<context>& ctx,
+warning(const std::shared_ptr<context>& ctx,
         const char* fmt,
         const Args&... args)
 {
@@ -195,7 +195,7 @@ warning(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-notice(const eastl::shared_ptr<context>& ctx,
+notice(const std::shared_ptr<context>& ctx,
        const char* fmt,
        const Args&... args)
 {
@@ -208,9 +208,7 @@ notice(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-info(const eastl::shared_ptr<context>& ctx,
-     const char* fmt,
-     const Args&... args)
+info(const std::shared_ptr<context>& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stdout, log_level::info, fmt, args...);
@@ -221,7 +219,7 @@ info(const eastl::shared_ptr<context>& ctx,
 
 template<typename... Args>
 void
-debug(const eastl::shared_ptr<context>& ctx,
+debug(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Args&... args)
 {
@@ -236,7 +234,7 @@ debug(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-emerg(const eastl::shared_ptr<context>& ctx,
+emerg(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
@@ -250,7 +248,7 @@ emerg(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-alert(const eastl::shared_ptr<context>& ctx,
+alert(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
@@ -264,7 +262,7 @@ alert(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-crit(const eastl::shared_ptr<context>& ctx,
+crit(const std::shared_ptr<context>& ctx,
      const char* fmt,
      const Arg1& arg1,
      const Args&... args)
@@ -278,7 +276,7 @@ crit(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-error(const eastl::shared_ptr<context>& ctx,
+error(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
@@ -292,7 +290,7 @@ error(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-warning(const eastl::shared_ptr<context>& ctx,
+warning(const std::shared_ptr<context>& ctx,
         const char* fmt,
         const Arg1& arg1,
         const Args&... args)
@@ -306,7 +304,7 @@ warning(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-notice(const eastl::shared_ptr<context>& ctx,
+notice(const std::shared_ptr<context>& ctx,
        const char* fmt,
        const Arg1& arg1,
        const Args&... args)
@@ -320,7 +318,7 @@ notice(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-info(const eastl::shared_ptr<context>& ctx,
+info(const std::shared_ptr<context>& ctx,
      const char* fmt,
      const Arg1& arg1,
      const Args&... args)
@@ -334,7 +332,7 @@ info(const eastl::shared_ptr<context>& ctx,
 
 template<typename Arg1, typename... Args>
 void
-debug(const eastl::shared_ptr<context>& ctx,
+debug(const std::shared_ptr<context>& ctx,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
@@ -350,7 +348,7 @@ debug(const eastl::shared_ptr<context>& ctx,
 
 template<typename T>
 void
-log(const eastl::shared_ptr<context>& ctx,
+log(const std::shared_ptr<context>& ctx,
     FILE* stream,
     log_level level,
     const T& msg)
@@ -383,7 +381,7 @@ log(context* ctx, FILE* stream, log_level level, const T& msg)
 
 template<typename T>
 void
-emerg(const eastl::shared_ptr<context>& ctx, const T& msg)
+emerg(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::emerg, msg);
@@ -394,7 +392,7 @@ emerg(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-alert(const eastl::shared_ptr<context>& ctx, const T& msg)
+alert(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::alert, msg);
@@ -405,7 +403,7 @@ alert(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-crit(const eastl::shared_ptr<context>& ctx, const T& msg)
+crit(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::crit, msg);
@@ -416,7 +414,7 @@ crit(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-error(const eastl::shared_ptr<context>& ctx, const T& msg)
+error(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::err, msg);
@@ -427,7 +425,7 @@ error(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-warning(const eastl::shared_ptr<context>& ctx, const T& msg)
+warning(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::warning, msg);
@@ -438,7 +436,7 @@ warning(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-notice(const eastl::shared_ptr<context>& ctx, const T& msg)
+notice(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stdout, log_level::notice, msg);
@@ -449,7 +447,7 @@ notice(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-info(const eastl::shared_ptr<context>& ctx, const T& msg)
+info(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stdout, log_level::info, msg);
@@ -460,7 +458,7 @@ info(const eastl::shared_ptr<context>& ctx, const T& msg)
 
 template<typename T>
 void
-debug(const eastl::shared_ptr<context>& ctx, const T& msg)
+debug(const std::shared_ptr<context>& ctx, const T& msg)
 {
 #ifdef EFYJ_ENABLE_LOG
 #ifndef EFYJ_ENABLE_DEBUG
@@ -471,8 +469,8 @@ debug(const eastl::shared_ptr<context>& ctx, const T& msg)
 #endif
 }
 
-inline eastl::shared_ptr<context>
-copy_context(const eastl::shared_ptr<context>& ctx)
+inline std::shared_ptr<context>
+copy_context(const std::shared_ptr<context>& ctx)
 {
     auto ret = make_context();
 
@@ -483,8 +481,8 @@ copy_context(const eastl::shared_ptr<context>& ctx)
 }
 
 inline void
-set_logger_callback(eastl::shared_ptr<context> ctx,
-                    eastl::function<void(int, const eastl::string& message)> cb)
+set_logger_callback(std::shared_ptr<context> ctx,
+                    std::function<void(int, const std::string& message)> cb)
 {
     debug(ctx, "efyj: change logger callback function.\n");
 
