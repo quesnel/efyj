@@ -28,9 +28,169 @@
 #include <string>
 #include <vector>
 
+#include <fmt/color.h>
 #include <fmt/format.h>
 
 namespace efyj {
+
+template<typename... Args>
+void to_log([[maybe_unused]] std::FILE* os,
+            [[maybe_unused]] const std::string_view fmt,
+            [[maybe_unused]] const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    fmt::print(os, fmt, args...);
+#endif
+#endif
+}
+
+template<typename... Args>
+void to_log([[maybe_unused]] std::FILE* os,
+            [[maybe_unused]] unsigned indent,
+            [[maybe_unused]] const std::string_view fmt,
+            [[maybe_unused]] const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    fmt::print(os, "{:{}}", "", indent);
+    fmt::print(os, fmt, args...);
+#endif
+#endif
+}
+
+template<typename... Args>
+void debug([[maybe_unused]] const std::string_view fmt,
+           [[maybe_unused]] const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    fmt::print(stderr, fg(fmt::color::yellow), fmt, args...);
+#endif
+#endif
+}
+
+template<typename... Args>
+void debug([[maybe_unused]] unsigned indent,
+           [[maybe_unused]] const std::string_view fmt,
+           [[maybe_unused]] const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    fmt::print(stderr, "{:{}}", "", indent);
+    fmt::print(stderr, fmt::fg(fmt::color::yellow), fmt, args...);
+#endif
+#endif
+}
+
+/** Casts nonnegative integer to unsigned.
+ */
+template<typename Integer>
+constexpr typename std::make_unsigned<Integer>::type
+to_unsigned(Integer value)
+{
+    assert(value >= 0);
+
+    return static_cast<typename std::make_unsigned<Integer>::type>(value);
+}
+
+/**
+ * @brief Get a sub-string without any @c std::isspace characters at left.
+ *
+ * @param s The string-view to clean up.
+ *
+ * @return An update sub-string or the same string-view.
+ */
+inline std::string_view
+left_trim(std::string_view s) noexcept
+{
+    auto found = s.find_first_not_of(" \t\n\v\f\r");
+
+    if (found == std::string::npos)
+        return {};
+
+    return s.substr(found, std::string::npos);
+}
+
+/**
+ * @brief Get a sub-string without any @c std::isspace characters at right.
+ *
+ * @param s The string-view to clean up.
+ *
+ * @return An update sub-string or the same string-view.
+ */
+inline std::string_view
+right_trim(std::string_view s) noexcept
+{
+    auto found = s.find_last_not_of(" \t\n\v\f\r");
+
+    if (found == std::string::npos)
+        return {};
+
+    return s.substr(0, found + 1);
+}
+
+/**
+ * @brief Get a sub-string without any @c std::isspace characters at left and
+ * right
+ *
+ * @param s The string-view to clean up.
+ *
+ * @return An update sub-string or the same string-view.
+ */
+inline std::string_view
+trim(std::string_view s) noexcept
+{
+    return left_trim(right_trim(s));
+}
+
+/**
+ * @brief Compute the length of the @c container.
+ * @details Return the @c size provided by the @c C::size() but cast it into a
+ *     @c int. This is a specific baryonyx function, we know that number of
+ *         variables and constraints are lower than the @c INT_MAX value.
+ *
+ * @code
+ * std::vector<int> v(z);
+ *
+ * for (int i = 0, e = length(v); i != e; ++i)
+ *     ...
+ * @endcode
+ *
+ * @param c The container to request to size.
+ * @tparam T The of container value (must provide a @c size() member).
+ */
+template<class C>
+constexpr int
+length(const C& c) noexcept
+{
+    return static_cast<int>(c.size());
+}
+
+/**
+ * @brief Compute the length of the C array.
+ * @details Return the size of the C array but cast it into a @c int. This
+ * is a specific baryonyx function, we know that number of variables and
+ *     constraints are lower than the  @c int max value (INT_MAX).
+ *
+ * @code
+ * int v[150];
+ * for (int i = 0, e = length(v); i != e; ++i)
+ *     ...
+ * @endcode
+ *
+ * @param v The container to return size.
+ * @tparam T The type of the C array.
+ * @tparam N The size of the C array.
+ */
+template<class T, size_t N>
+constexpr int
+length(const T (&array)[N]) noexcept
+{
+    (void)array;
+
+    return static_cast<int>(N);
+}
 
 inline constexpr std::size_t
 max_value(int need, size_t real) noexcept;

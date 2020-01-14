@@ -266,16 +266,21 @@ prediction(std::shared_ptr<context> ctx,
            int limit,
            unsigned int thread)
 {
+    fmt::print("Start prediction: reduce {} limit {} thread {}\n",
+               reduce,
+               limit,
+               thread);
+
     auto model = make_model(ctx, model_file_path);
     auto options = make_options(ctx, model, options_file_path);
 
     if (thread <= 1) {
         efyj::prediction_evaluator pre(ctx, model, options);
         return pre.run(limit, 0.0, reduce);
+    } else {
+        efyj::prediction_thread_evaluator pre(ctx, model, options);
+        return pre.run(limit, 0.0, reduce, thread);
     }
-
-    efyj::prediction_thread_evaluator pre(ctx, model, options);
-    return pre.run(limit, 0.0, reduce, thread);
 }
 
 options_data

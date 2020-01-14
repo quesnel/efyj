@@ -89,7 +89,7 @@ parallel_prediction_worker(std::shared_ptr<context> context,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
 
-            for (size_t opt = 0, endopt = options.size(); opt != endopt;
+            for (auto opt = 0, endopt = length(options); opt != endopt;
                  ++opt) {
                 double kappa = 0.;
 
@@ -129,7 +129,7 @@ parallel_prediction_worker(std::shared_ptr<context> context,
 
             for (unsigned int i = 0; i < thread_number; ++i) {
                 if (solver.next_line() == false) {
-                    results.push(step, m_kappa, m_loop, m_globalupdaters);
+                    results.push(static_cast<int>(step), m_kappa, m_loop, m_globalupdaters);
                     isend = true;
                     break;
                 }
@@ -159,9 +159,9 @@ prediction_thread_evaluator::prediction_thread_evaluator(
 }
 
 std::vector<result>
-prediction_thread_evaluator::run(int line_limit,
-                                 double time_limit,
-                                 int reduce_mode,
+prediction_thread_evaluator::run([[maybe_unused]] int line_limit,
+                                 [[maybe_unused]] double time_limit,
+                                 [[maybe_unused]] int reduce_mode,
                                  unsigned int threads)
 {
     (void)time_limit;
@@ -241,7 +241,7 @@ Results::push(int step,
         m_level.emplace_back(static_cast<int>(m_threads - 1));
         m_results.emplace_back();
 
-        emplace_result(m_results.size() - 1, kappa, loop, updaters);
+        emplace_result(static_cast<int>(m_results.size()) - 1, kappa, loop, updaters);
     } else {
         if (m_results[step - 1].kappa < kappa)
             emplace_result(step - 1, kappa, loop, updaters);

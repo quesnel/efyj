@@ -26,6 +26,7 @@
 #define EFYJ_MINOR_VERSION 6
 #define EFYJ_PATCH_VERSION 0
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>

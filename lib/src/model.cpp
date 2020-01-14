@@ -214,7 +214,6 @@ private:
 
         switch (id) {
         case stack_identifier::DEXi:
-            fmt::print(stderr, "stack_identifier::DEXi\n");
             if (!pd->stack.empty()) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -224,7 +223,6 @@ private:
             break;
 
         case stack_identifier::TAG_VERSION:
-            fmt::print(stderr, "stack_identifier::TAG_VERSION\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -232,7 +230,6 @@ private:
             break;
 
         case stack_identifier::CREATED:
-            fmt::print(stderr, "stack_identifier::CREATED\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -240,7 +237,6 @@ private:
             break;
 
         case stack_identifier::LINE:
-            fmt::print(stderr, "stack_identifier::LINE\n");
             if (!pd->is_parent({ stack_identifier::DESCRIPTION })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -248,7 +244,6 @@ private:
             break;
 
         case stack_identifier::OPTION:
-            fmt::print(stderr, "stack_identifier::OPTION\n");
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
@@ -257,7 +252,6 @@ private:
             break;
 
         case stack_identifier::SETTINGS:
-            fmt::print(stderr, "stack_identifier::SETTINGS\n");
             if (!pd->is_parent({ stack_identifier::DEXi })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -266,7 +260,6 @@ private:
             break;
 
         case stack_identifier::FONTSIZE:
-            fmt::print(stderr, "stack_identifier::FONTSIZE\n");
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -275,7 +268,6 @@ private:
             break;
 
         case stack_identifier::REPORTS:
-            fmt::print(stderr, "stack_identifier::REPORTS\n");
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -284,7 +276,6 @@ private:
             break;
 
         case stack_identifier::ATTRIBUTE:
-            fmt::print(stderr, "stack_identifier::ATTRIBUTE\n");
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
@@ -301,7 +292,6 @@ private:
             break;
 
         case stack_identifier::NAME:
-            fmt::print(stderr, "stack_identifier::NAME\n");
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
@@ -312,7 +302,6 @@ private:
             break;
 
         case stack_identifier::DESCRIPTION:
-            fmt::print(stderr, "stack_identifier::DESCRIPTION\n");
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
@@ -324,7 +313,6 @@ private:
             break;
 
         case stack_identifier::SCALE:
-            fmt::print(stderr, "stack_identifier::SCALE\n");
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -333,7 +321,6 @@ private:
             break;
 
         case stack_identifier::ORDER:
-            fmt::print(stderr, "stack_identifier::ORDER\n");
             if (!pd->is_parent({ stack_identifier::SCALE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -341,7 +328,6 @@ private:
             break;
 
         case stack_identifier::SCALEVALUE:
-            fmt::print(stderr, "stack_identifier::SCALEVALUE\n");
             if (!pd->is_parent({ stack_identifier::SCALE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -358,7 +344,6 @@ private:
             break;
 
         case stack_identifier::GROUP:
-            fmt::print(stderr, "stack_identifier::GROUP\n");
             if (!pd->is_parent({ stack_identifier::SCALEVALUE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -366,7 +351,6 @@ private:
             break;
 
         case stack_identifier::FUNCTION:
-            fmt::print(stderr, "stack_identifier::FUNCTION\n");
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -430,8 +414,7 @@ private:
 #endif
 
                 if (ret != 1)
-                    fmt::print(
-                      stderr,
+                    debug(
                       "Option with unreadable string `{}'. Use `0' instead\n",
                       pd->char_data);
                 //     pd->stop_parser(
@@ -563,6 +546,7 @@ private:
         try {
             pd->char_data.append(s, len);
         } catch (...) {
+            debug("dexi: bad alloc ({} + {})\n", pd->char_data.size(), len);
             pd->error_message = "Bad alloc";
             XML_StopParser(pd->parser, XML_FALSE);
         }

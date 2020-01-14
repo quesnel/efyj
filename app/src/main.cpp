@@ -231,7 +231,6 @@ struct attributes
     operation_type type = operation_type::none;
 
     int limit = std::numeric_limits<int>::max();
-    int thread = 1;
     bool reduce = true;
 
     bool show_version = false;
@@ -325,7 +324,7 @@ struct attributes
             return true;
         }
 
-        thread = var;
+        threads = var;
 
         return true;
     }
