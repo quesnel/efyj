@@ -121,7 +121,8 @@ private:
         ROUNDING,
         WEIGHTS,
         LOCWEIGHTS,
-        NORMLOCWEIGHTS
+        NORMLOCWEIGHTS,
+        HIGH
     };
 
     static std::optional<stack_identifier> str_to_stack_identifier(
@@ -152,7 +153,8 @@ private:
                 { "ROUNDING", stack_identifier::ROUNDING },
                 { "WEIGHTS", stack_identifier::WEIGHTS },
                 { "LOCWEIGHTS", stack_identifier::LOCWEIGHTS },
-                { "NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS } });
+                { "NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS },
+                { "HIGH", stack_identifier::HIGH}});
 
         auto it = stack_identifier_map.find(name);
 
@@ -364,6 +366,7 @@ private:
         case stack_identifier::WEIGHTS:
         case stack_identifier::LOCWEIGHTS:
         case stack_identifier::NORMLOCWEIGHTS:
+        case stack_identifier::HIGH:
         case stack_identifier::ROUNDING:
             if (!pd->is_parent({ stack_identifier::FUNCTION })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
@@ -535,6 +538,7 @@ private:
         case stack_identifier::LOCWEIGHTS:
         case stack_identifier::NORMLOCWEIGHTS:
         case stack_identifier::ROUNDING:
+        case stack_identifier::HIGH:
             break;
         }
     }
