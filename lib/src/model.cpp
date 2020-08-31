@@ -128,6 +128,9 @@ private:
     static std::optional<stack_identifier> str_to_stack_identifier(
       const char* name)
     {
+        // TODO replace with a sorted C const char* array to perform O(log(n))
+        // search without using unordered_map.
+
         static const std::
           unordered_map<const char*, stack_identifier, str_hash, str_compare>
             stack_identifier_map(
