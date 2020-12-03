@@ -122,7 +122,9 @@ private:
         WEIGHTS,
         LOCWEIGHTS,
         NORMLOCWEIGHTS,
-        HIGH
+        HIGH,
+        OPTDATATYPE,
+        OPTLEVELS
     };
 
     static std::optional<stack_identifier> str_to_stack_identifier(
@@ -157,7 +159,9 @@ private:
                 { "WEIGHTS", stack_identifier::WEIGHTS },
                 { "LOCWEIGHTS", stack_identifier::LOCWEIGHTS },
                 { "NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS },
-                { "HIGH", stack_identifier::HIGH}});
+                { "HIGH", stack_identifier::HIGH },
+                { "OPTDATATYPE", stack_identifier::OPTDATATYPE },
+                { "OPTLEVELS", stack_identifier::OPTLEVELS } });
 
         auto it = stack_identifier_map.find(name);
 
@@ -273,6 +277,22 @@ private:
             break;
 
         case stack_identifier::REPORTS:
+            if (!pd->is_parent({ stack_identifier::SETTINGS })) {
+                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                break;
+            }
+            pd->stack.push(id);
+            break;
+
+        case stack_identifier::OPTDATATYPE:
+            if (!pd->is_parent({ stack_identifier::SETTINGS })) {
+                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                break;
+            }
+            pd->stack.push(id);
+            break;
+
+        case stack_identifier::OPTLEVELS:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -445,6 +465,16 @@ private:
             break;
 
         case stack_identifier::REPORTS:
+            pd->model.reports.assign(pd->char_data);
+            pd->stack.pop();
+            break;
+
+        case stack_identifier::OPTDATATYPE:
+            pd->model.reports.assign(pd->char_data);
+            pd->stack.pop();
+            break;
+
+        case stack_identifier::OPTLEVELS:
             pd->model.reports.assign(pd->char_data);
             pd->stack.pop();
             break;
