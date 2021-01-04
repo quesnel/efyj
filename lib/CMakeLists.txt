@@ -36,7 +36,7 @@ target_include_directories(libefyj PUBLIC
   PRIVATE src ${CMAKE_BINARY_DIR})
 
 target_link_libraries(libefyj
-  Threads::Threads EXPAT::EXPAT
+  Threads::Threads expat::expat
   $<$<BOOL:${NLOPT_FOUND}>:nlopt>)
 
 set_target_properties(libefyj PROPERTIES
@@ -68,7 +68,7 @@ export(TARGETS libefyj FILE LibEFYjConfig.cmake)
 
 add_executable(testlib test/test_basic.cpp)
 
-target_link_libraries(testlib libefyj Threads::Threads EXPAT::EXPAT)
+target_link_libraries(testlib libefyj Threads::Threads expat::expat)
 
 set_property(TARGET testlib PROPERTY CXX_STANDARD 17)
 

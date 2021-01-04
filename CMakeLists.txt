@@ -5,7 +5,7 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-find_package(EXPAT REQUIRED)
+find_package(expat CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 add_definitions(-DFMT_HEADER_ONLY)
