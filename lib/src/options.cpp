@@ -290,7 +290,7 @@ Options::init_dataset()
             for (size_t j = 0; j != size; ++j) {
                 if (i != j && departments[i] != departments[j] &&
                     years[i] != years[j]) {
-                    subdataset[i].emplace_back(j);
+                    subdataset[i].emplace_back(static_cast<int>(j));
                 }
             }
         }
@@ -299,7 +299,7 @@ Options::init_dataset()
             for (size_t j = 0; j != size; ++j) {
                 if (i != j && departments[i] != departments[j] &&
                     places[i] != places[j] && years[i] != years[j]) {
-                    subdataset[i].emplace_back(j);
+                    subdataset[i].emplace_back(static_cast<int>(j));
                 }
             }
         }

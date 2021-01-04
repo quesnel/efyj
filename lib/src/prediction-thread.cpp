@@ -87,7 +87,7 @@ parallel_prediction_worker(std::shared_ptr<context> context,
             if (stop)
                 return;
 
-            std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0.);
+            std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
             for (auto opt = 0, endopt = length(options); opt != endopt;
                  ++opt) {
@@ -96,7 +96,7 @@ parallel_prediction_worker(std::shared_ptr<context> context,
                 solver.init_next_value();
 
                 do {
-                    std::fill(m_simulated.begin(), m_simulated.end(), 0.);
+                    std::fill(m_simulated.begin(), m_simulated.end(), 0);
 
                     for (auto x : options.get_subdataset(opt))
                         m_simulated[x] = solver.solve(options.options.row(x));

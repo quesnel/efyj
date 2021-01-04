@@ -86,7 +86,7 @@ adjustment_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         ret.back().time =
           std::chrono::duration<double>(m_end - m_start).count();
         ret.back().kappa_computed = 1;
-        ret.back().function_computed = m_options.size();
+        ret.back().function_computed = numeric_cast<unsigned long>(m_options.size());
     }
 
     for (size_t step = 1; step <= max_step; ++step) {

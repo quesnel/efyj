@@ -485,7 +485,7 @@ private:
             if (pd->attributes_stack.top()->children.empty()) {
                 auto scale_size =
                   pd->attributes_stack.top()->scale.scale.size();
-                pd->model.basic_attribute_scale_size.emplace_back(scale_size);
+                pd->model.basic_attribute_scale_size.emplace_back(numeric_cast<scale_id>(scale_size));
             }
 
             pd->attributes_stack.pop();

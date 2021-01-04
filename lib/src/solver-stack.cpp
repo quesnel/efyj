@@ -127,7 +127,7 @@ aggregate_attribute::reduce(std::set<int>& whitelist)
     std::vector<walker> walker;
     for (size_t i = 0, e = stack.size(); i != e; ++i) {
         if (stack[i] == -1) {
-            walker.emplace_back(static_cast<int>(i), 0, m_scale_size[i]);
+            walker.emplace_back(static_cast<int>(i), 0, static_cast<int>(m_scale_size[i]));
             stack[i] = 0;
         }
     }

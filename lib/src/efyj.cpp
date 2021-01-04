@@ -102,7 +102,7 @@ extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
             key.first->second.emplace_back(scale.name);
 
         if (model.attributes[i].is_basic())
-            ret.basic_attributes.emplace_back(i);
+            ret.basic_attributes.emplace_back(static_cast<int>(i));
     }
 
     return ret;
@@ -127,8 +127,8 @@ simulate(std::shared_ptr<context> ctx,
     for (size_t opt = 0; opt != max_opt; ++opt)
         ret.simulations[opt] = solver.solve(options.options.row(opt));
 
-    for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
+    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
+        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
             ret.options(c, r) = options.options(c, r);
 
     return ret;
@@ -155,8 +155,8 @@ simulate(std::shared_ptr<context> ctx,
     for (size_t opt = 0; opt != max_opt; ++opt)
         ret.simulations[opt] = solver.solve(options.options.row(opt));
 
-    for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
+    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
+        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
             ret.options(c, r) = options.options(c, r);
 
     return ret;
@@ -196,8 +196,8 @@ evaluate(std::shared_ptr<context> ctx,
     ret.linear_weighted_kappa =
       kappa_c.linear(ret.observations, ret.simulations);
 
-    for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
+    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
+        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
             ret.options(c, r) = options.options(r, c);
 
     return ret;
@@ -236,8 +236,8 @@ evaluate(std::shared_ptr<context> ctx,
     ret.linear_weighted_kappa =
       kappa_c.linear(ret.observations, ret.simulations);
 
-    for (long int r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (long int c = 0, end_c = options.options.cols(); c != end_c; ++c)
+    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
+        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
             ret.options(c, r) = options.options(r, c);
 
     return ret;
@@ -312,8 +312,8 @@ extract_options(std::shared_ptr<context> ctx,
 
     ret.options.resize(columns, rows);
 
-    for (long int r = 0, end_r = rows; r != end_r; ++r)
-        for (long int c = 0, end_c = columns; c != end_c; ++c)
+    for (size_t r = 0, end_r = rows; r != end_r; ++r)
+        for (size_t c = 0, end_c = columns; c != end_c; ++c)
             ret.options(c, r) = options.options(r, c);
 
     return ret;
