@@ -5,7 +5,12 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-find_package(expat CONFIG REQUIRED)
+if (WIN32)
+	find_package(EXPAT CONFIG REQUIRED)
+else ()
+	find_package(EXPAT REQUIRED)
+endif ()
+
 find_package(Threads REQUIRED)
 
 add_definitions(-DFMT_HEADER_ONLY)
