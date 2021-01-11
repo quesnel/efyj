@@ -211,11 +211,17 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
         auto opt_obs =
           model.attributes[0].scale.find_scale_value(columns.back());
 
-        if (!opt_obs)
+        if (!opt_obs) {
+            error(context,
+                  "Options: error in csv file line {}: unknown scale value `{}'\n",
+                  line_number,
+                  columns.back());
+
             throw csv_parser_status(
               csv_parser_status::tag::scale_value_unknown,
               static_cast<size_t>(line_number),
               static_cast<size_t>(columns.size()));
+        }
 
         int obs = *opt_obs;
         int department, year;
