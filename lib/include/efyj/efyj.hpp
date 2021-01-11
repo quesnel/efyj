@@ -30,6 +30,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <stdexcept>
@@ -186,6 +187,22 @@ struct dexi_parser_status
     unsigned long int m_line, m_column;
     tag m_tag;
 
+    std::string_view tag_name() const noexcept
+    {
+        static std::string_view name[] = {
+            "done",
+            "scale_definition_error",
+            "scale_not_found",
+            "scale_too_big",
+            "file_format_error",
+            "not_enough_memory",
+            "element_unknown",
+            "option_conversion_error",
+        };
+
+        return name[static_cast<int>(m_tag)];
+    }
+
     dexi_parser_status(dexi_parser_status::tag t,
                        unsigned long int line,
                        unsigned long int column)
@@ -211,6 +228,17 @@ struct csv_parser_status
       , m_column(column)
       , m_tag(tag)
     {}
+
+    std::string_view tag_name() const noexcept
+    {
+        static std::string_view name[] = { "file_error",
+                                           "column_number_incorrect",
+                                           "scale_value_unknown",
+                                           "column_conversion_failure",
+                                           "basic_attribute_unknown" };
+
+        return name[static_cast<int>(m_tag)];
+    }
 
     size_t m_line;
     size_t m_column;

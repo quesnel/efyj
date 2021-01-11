@@ -96,8 +96,21 @@ extract(std::shared_ptr<efyj::context> ctx,
     } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
         return EXIT_FAILURE;
+    } catch (const efyj::csv_parser_status& e) {
+        fmt::print(stderr,
+                   "fail to read csv file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
+    } catch (const efyj::dexi_parser_status& e) {
+        fmt::print(stderr,
+                   "Fail to parse DEXi file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }
 
@@ -118,8 +131,21 @@ merge(std::shared_ptr<efyj::context> ctx,
     } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
         return EXIT_FAILURE;
+    } catch (const efyj::csv_parser_status& e) {
+        fmt::print(stderr,
+                   "fail to read csv file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
+    } catch (const efyj::dexi_parser_status& e) {
+        fmt::print(stderr,
+                   "Fail to parse DEXi file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }
 
@@ -139,8 +165,21 @@ evaluate(std::shared_ptr<efyj::context> ctx,
     } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
         return EXIT_FAILURE;
+    } catch (const efyj::csv_parser_status& e) {
+        fmt::print(stderr,
+                   "fail to read csv file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
+    } catch (const efyj::dexi_parser_status& e) {
+        fmt::print(stderr,
+                   "Fail to parse DEXi file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }
 
@@ -163,6 +202,20 @@ adjustment(std::shared_ptr<efyj::context> ctx,
         return EXIT_FAILURE;
     } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const efyj::csv_parser_status& e) {
+        fmt::print(stderr,
+                   "fail to read csv file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
+    } catch (const efyj::dexi_parser_status& e) {
+        fmt::print(stderr,
+                   "Fail to parse DEXi file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
         return EXIT_FAILURE;
     }
 
@@ -188,6 +241,20 @@ prediction(std::shared_ptr<efyj::context> ctx,
         return EXIT_FAILURE;
     } catch (const std::runtime_error& e) {
         fmt::print(stderr, "failure: {}\n", e.what());
+        return EXIT_FAILURE;
+    } catch (const efyj::csv_parser_status& e) {
+        fmt::print(stderr,
+                   "fail to read csv file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
+        return EXIT_FAILURE;
+    } catch (const efyj::dexi_parser_status& e) {
+        fmt::print(stderr,
+                   "Fail to parse DEXi file at line {} column {}: {}\n",
+                   e.m_line,
+                   e.m_column,
+                   e.tag_name());
         return EXIT_FAILURE;
     }
 

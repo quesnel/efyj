@@ -48,16 +48,11 @@ static std::optional<int>
 get_basic_attribute_id(const std::vector<const attribute*>& att,
                        const std::string& name)
 {
-    auto it =
-      std::find_if(att.begin(), att.end(), [&name](const attribute* att) {
-          return att->name == name;
-      });
+    for (size_t i = 0, e = att.size(); i != e; ++i)
+        if (att[i]->name == name)
+            return std::make_optional(static_cast<int>(i));
 
-    // return it == att.end() ? std::nullopt
-    //    : std::make_optional(it - att.begin());
-    return it == att.end() ? std::nullopt
-                           : std::make_optional(static_cast<int>(
-                               std::distance(att.begin(), it)));
+    return std::nullopt;
 }
 
 struct line_reader
@@ -130,7 +125,8 @@ struct line_reader
     std::string m_buffer;
 };
 
-void Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
+void
+Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
 {
     clear();
 
@@ -146,8 +142,8 @@ void Options::read(std::shared_ptr<context> context, FILE* is, const Model& mode
         auto opt_line = ls.getline();
         if (!opt_line) {
             info(context, "Fail to read header\n");
-            throw csv_parser_status(csv_parser_status::tag::file_error,
-                                    size_t(0), columns.size());
+            throw csv_parser_status(
+              csv_parser_status::tag::file_error, size_t(0), columns.size());
         }
 
         line = *opt_line;
@@ -159,9 +155,10 @@ void Options::read(std::shared_ptr<context> context, FILE* is, const Model& mode
         else if (columns.size() == atts.size() + 5)
             id = 4;
         else
-            throw
-                csv_parser_status(csv_parser_status::tag::column_number_incorrect,
-                                  size_t(0), columns.size());
+            throw csv_parser_status(
+              csv_parser_status::tag::column_number_incorrect,
+              size_t(0),
+              columns.size());
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
@@ -175,9 +172,11 @@ void Options::read(std::shared_ptr<context> context, FILE* is, const Model& mode
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
-            throw
-                csv_parser_status(csv_parser_status::tag::basic_attribute_unknown,
-                                  size_t(0), columns.size());
+            error(context, "Fail to found attribute for `{}'\n", columns[i]);
+            throw csv_parser_status(
+              csv_parser_status::tag::basic_attribute_unknown,
+              size_t(0),
+              columns.size());
         }
 
         convertheader[i - id] = *opt_att_id;
@@ -212,12 +211,11 @@ void Options::read(std::shared_ptr<context> context, FILE* is, const Model& mode
         auto opt_obs =
           model.attributes[0].scale.find_scale_value(columns.back());
 
-        if (!opt_obs) {
+        if (!opt_obs)
             throw csv_parser_status(
               csv_parser_status::tag::scale_value_unknown,
               static_cast<size_t>(line_number),
               static_cast<size_t>(columns.size()));
-        }
 
         int obs = *opt_obs;
         int department, year;
@@ -250,21 +248,18 @@ void Options::read(std::shared_ptr<context> context, FILE* is, const Model& mode
             if (!opt_option) {
                 error(context,
                       "Options: error in csv file line {}: "
-                      "unknown scale value `{}' for attribute `{}'",
+                      "unknown scale value `{}' for attribute `{}'\n",
                       line_number,
                       columns[i].c_str(),
                       atts[attid]->name.c_str());
-                simulations.pop_back();
-                if (id == 4)
-                    places.pop_back();
-                departments.pop_back();
-                years.pop_back();
-                observed.pop_back();
 
-                options.pop_line();
-            } else {
-                options(options.rows() - 1, attid) = *opt_option;
+                throw csv_parser_status{
+                    csv_parser_status::tag::scale_value_unknown,
+                        static_cast<size_t>(line_number),
+                        static_cast<size_t>(columns.size()) };
             }
+
+            options(options.rows() - 1, attid) = *opt_option;
         }
 
         options.push_line();
@@ -325,7 +320,8 @@ Options::init_dataset()
                 id_subdataset_reduced[i] = (int)reduced.size();
                 reduced.push_back(subdataset[i]);
             } else {
-                id_subdataset_reduced[i] = numeric_cast<int>(std::distance(reduced.cbegin(), it));
+                id_subdataset_reduced[i] =
+                  numeric_cast<int>(std::distance(reduced.cbegin(), it));
             }
         }
     }
