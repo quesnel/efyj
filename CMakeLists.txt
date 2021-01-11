@@ -6,9 +6,11 @@ include(GNUInstallDirs)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if (WIN32)
-	find_package(EXPAT CONFIG REQUIRED)
+  find_package(expat CONFIG REQUIRED)
 else ()
-	find_package(EXPAT REQUIRED)
+  find_package(EXPAT REQUIRED)
+  add_library(expat::expat INTERFACE IMPORTED)
+  target_link_libraries(expat::expat INTERFACE EXPAT::EXPAT)
 endif ()
 
 find_package(Threads REQUIRED)
