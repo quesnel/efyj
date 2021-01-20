@@ -310,7 +310,7 @@ extract_options(std::shared_ptr<context> ctx,
     const auto rows = options.options.rows();
     const auto columns = options.options.cols();
 
-    ret.options.resize(columns, rows);
+    ret.options.resize(rows, columns);
 
     for (size_t r = 0, end_r = rows; r != end_r; ++r)
         for (size_t c = 0, end_c = columns; c != end_c; ++c)
