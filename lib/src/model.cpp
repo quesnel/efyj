@@ -485,7 +485,8 @@ private:
             if (pd->attributes_stack.top()->children.empty()) {
                 auto scale_size =
                   pd->attributes_stack.top()->scale.scale.size();
-                pd->model.basic_attribute_scale_size.emplace_back(numeric_cast<scale_id>(scale_size));
+                pd->model.basic_attribute_scale_size.emplace_back(
+                  numeric_cast<scale_id>(scale_size));
             }
 
             pd->attributes_stack.pop();
@@ -800,9 +801,7 @@ private:
 };
 
 static void
-reorder_basic_attribute(const Model& model,
-                        size_t att,
-                        std::vector<size_t>& out)
+reorder_basic_attribute(const Model& model, size_t att, std::vector<size_t>& out)
 {
     if (model.attributes[att].is_basic())
         out.push_back(att);
@@ -817,7 +816,7 @@ Model::write_options(FILE* os) const
     assert(os);
 
     std::vector<size_t> ordered_att;
-    reorder_basic_attribute(*this, 0, ordered_att);
+    reorder_basic_attribute(*this, (size_t)0, ordered_att);
     fputs("simulation;place;department;year;", os);
 
     for (auto child : ordered_att)

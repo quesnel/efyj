@@ -29,6 +29,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -70,59 +71,6 @@
 /** Comments about efyj's API.
  */
 namespace efyj {
-
-using value = int; // std::int8_t;
-
-struct model_data
-{
-    std::map<std::string, std::vector<std::string>> attributes;
-    std::vector<int> basic_attributes;
-    int number;
-};
-
-struct options_data
-{
-    std::vector<std::string> simulations;
-    std::vector<std::string> places;
-    std::vector<int> departments;
-    std::vector<int> years;
-    std::vector<int> observed;
-    matrix<value> options;
-};
-
-struct simulation_results
-{
-    matrix<value> options;
-    matrix<value> attributes;
-    std::vector<value> simulations;
-};
-
-struct evaluation_results
-{
-    matrix<value> options;
-    matrix<value> attributes;
-    std::vector<value> simulations;
-    std::vector<value> observations;
-    matrix<value> confusion;
-    double linear_weighted_kappa;
-    double squared_weighted_kappa;
-};
-
-struct modifier
-{
-    int attribute;
-    int line;
-    int value;
-};
-
-struct result
-{
-    std::vector<modifier> modifiers;
-    double kappa;
-    double time;
-    unsigned long int kappa_computed;
-    unsigned long int function_computed;
-};
 
 /**
  * @brief An internal exception when an integer cast fail.
@@ -184,8 +132,8 @@ struct dexi_parser_status
         option_conversion_error,
     };
 
-    unsigned long int m_line, m_column;
-    tag m_tag;
+    unsigned long int m_line = 0u, m_column = 0u;
+    tag m_tag = tag::done;
 
     std::string_view tag_name() const noexcept
     {
@@ -202,6 +150,8 @@ struct dexi_parser_status
 
         return name[static_cast<int>(m_tag)];
     }
+
+    dexi_parser_status() = default;
 
     dexi_parser_status(dexi_parser_status::tag t,
                        unsigned long int line,
@@ -245,6 +195,89 @@ struct csv_parser_status
     tag m_tag;
 };
 
+using value = int; // std::int8_t;
+
+struct model_data
+{
+    std::map<std::string, std::vector<std::string>> attributes;
+    std::vector<int> basic_attributes;
+    int number;
+};
+
+struct options_data
+{
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    matrix<value> options;
+};
+
+struct information_results
+{
+    information_results() = default;
+
+    information_results(const dexi_parser_status status_) noexcept
+      : status(status_)
+    {}
+
+    std::vector<std::string> basic_attribute_names;
+    std::vector<int> basic_attribute_scale_value_numbers;
+
+    dexi_parser_status status;
+};
+
+struct simulation_results
+{
+    matrix<value> options;
+    matrix<value> attributes;
+    std::vector<value> simulations;
+};
+
+struct evaluation_results
+{
+    matrix<value> options;
+    matrix<value> attributes;
+    std::vector<value> simulations;
+    std::vector<value> observations;
+    matrix<value> confusion;
+    double linear_weighted_kappa;
+    double squared_weighted_kappa;
+};
+
+struct static_evaluation_results
+{
+    static_evaluation_results() = default;
+
+    static_evaluation_results(const dexi_parser_status& status)
+      : parser_status{ status }
+    {}
+
+    static_evaluation_results(evaluation_results&& results_)
+      : results(std::move(results_))
+    {}
+
+    evaluation_results results;
+    std::optional<dexi_parser_status> parser_status;
+};
+
+struct modifier
+{
+    int attribute;
+    int line;
+    int value;
+};
+
+struct result
+{
+    std::vector<modifier> modifiers;
+    double kappa;
+    double time;
+    unsigned long int kappa_computed;
+    unsigned long int function_computed;
+};
+
 class context;
 
 EFYJ_API
@@ -284,6 +317,20 @@ evaluation_results
 evaluate(std::shared_ptr<context> ctx,
          const std::string& model_file_path,
          const options_data& opts);
+
+EFYJ_API
+information_results
+static_information(const std::string& model_file_path) noexcept;
+
+EFYJ_API
+static_evaluation_results
+static_evaluate(const std::string& model_file_path,
+                const std::vector<std::string>& simulations,
+                const std::vector<std::string>& places,
+                const std::vector<int> departments,
+                const std::vector<int> years,
+                const std::vector<int> observed,
+                const std::vector<int>& scale_values) noexcept;
 
 EFYJ_API
 std::vector<result>

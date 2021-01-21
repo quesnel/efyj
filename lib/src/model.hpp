@@ -183,6 +183,19 @@ struct Model
         return static_cast<int>(std::distance(group.cbegin(), it));
     }
 
+
+    std::vector<const attribute*> get_basic_attribute() const
+    {
+        std::vector<const attribute*> ret;
+        ret.reserve(attributes.size());
+
+        for (const auto& att : attributes)
+            if (att.is_basic())
+                ret.emplace_back(&att);
+
+        return ret;
+    }
+
     void write_options(FILE* os) const;
     options_data write_options() const;
     void set_options(const options_data& options);

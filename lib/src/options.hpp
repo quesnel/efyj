@@ -105,7 +105,6 @@ public:
     /// \execption \e internal_error or \e options_error.
     void check();
 
-private:
     /// \e init_dataset is called after \e read(...) or \e set(...)
     /// functions to initialize the \e subdataset and \e
     /// id_subdataset_reduced variables.

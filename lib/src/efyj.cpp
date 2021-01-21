@@ -161,16 +161,38 @@ simulate(std::shared_ptr<context> ctx,
 
     return ret;
 }
-evaluation_results
-evaluate(std::shared_ptr<context> ctx,
-         const std::string& model_file_path,
-         const std::string& options_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
 
+information_results
+static_information(const std::string& model_file_path) noexcept
+{
+    try {
+        auto ctx = make_context(6);
+        const auto model = make_model(ctx, model_file_path);
+
+        information_results ret;
+
+        ret.status.m_tag = dexi_parser_status::tag::done;
+
+        for (const auto& att : model.attributes) {
+            if (att.is_basic()) {
+                ret.basic_attribute_names.emplace_back(att.name);
+                ret.basic_attribute_scale_value_numbers.emplace_back(
+                  att.scale_size());
+            }
+        }
+
+        return ret;
+    } catch (const dexi_parser_status& e) {
+        return information_results{ e };
+    }
+}
+
+static evaluation_results
+evaluate(std::shared_ptr<context> ctx, Model& model, Options& options)
+{
     solver_stack solver(model);
-    const size_t max_opt = options.simulations.size();
+    const auto max_opt = options.simulations.size();
+
     evaluation_results ret;
     ret.options.resize(options.options.cols(), max_opt);
     // TODO ret.attributes.resize(COL, max_opt);
@@ -179,28 +201,94 @@ evaluate(std::shared_ptr<context> ctx,
     ret.confusion.resize(
       model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
 
-    fmt::print("observation | simulation\n");
+    fmt::print("situation;observation;simulation\n");
     for (size_t opt = 0; opt != max_opt; ++opt) {
         ret.observations[opt] = options.observed[opt];
         ret.simulations[opt] = solver.solve(options.options.row(opt));
         ret.confusion(ret.observations[opt], ret.simulations[opt])++;
 
         fmt::print(
-          "{}: {} / {}\n", opt, ret.observations[opt], ret.simulations[opt]);
+          "{};{};{}\n", opt, ret.observations[opt], ret.simulations[opt]);
     }
 
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
     ret.squared_weighted_kappa =
       kappa_c.squared(ret.observations, ret.simulations);
+    fmt::print("kappa squared: {}\n", ret.squared_weighted_kappa);
 
     ret.linear_weighted_kappa =
       kappa_c.linear(ret.observations, ret.simulations);
+    fmt::print("kappa linear: {}\n", ret.linear_weighted_kappa);
 
     for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
         for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
             ret.options(c, r) = options.options(r, c);
 
     return ret;
+}
+
+static_evaluation_results
+static_evaluate(const std::string& model_file_path,
+                const std::vector<std::string>& simulations,
+                const std::vector<std::string>& places,
+                const std::vector<int>& departments,
+                const std::vector<int>& years,
+                const std::vector<int>& observed,
+                const std::vector<int>& scale_values) noexcept
+{
+    try {
+        const auto rows = simulations.size();
+
+        if (rows != places.size() || rows != departments.size() ||
+            rows != years.size() || rows != observed.size())
+            return {};
+
+        auto ctx = make_context(6);
+        auto model = make_model(ctx, model_file_path);
+
+        Options opt;
+        opt.simulations = simulations;
+        opt.places = places;
+        opt.departments = departments;
+        opt.years = years;
+        opt.observed = observed;
+
+        const auto atts = model.get_basic_attribute();
+        const auto cols = atts.size();
+
+        if (cols * rows != scale_values.size())
+            return {};
+
+        opt.options.init(atts.size(), simulations.size());
+        for (size_t i = 0, elem = 0; i != rows; ++i) {
+            for (size_t j = 0; j != cols; ++i, ++elem) {
+                const auto limit = atts[j]->scale_size();
+
+                if (scale_values[elem] < 0u || scale_values[elem] > limit)
+                    return {};
+
+                opt.options(i, j) = scale_values[elem];
+            }
+        }
+
+        opt.init_dataset();
+        opt.check();
+
+        return static_evaluation_results{ evaluate(ctx, model, opt) };
+    } catch (const dexi_parser_status& e) {
+        return static_evaluation_results{ e };
+    }
+}
+
+evaluation_results
+evaluate(std::shared_ptr<context> ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path)
+{
+    auto model = make_model(ctx, model_file_path);
+    auto options = make_options(ctx, model, options_file_path);
+
+    return evaluate(ctx, model, options);
 }
 
 evaluation_results
@@ -213,34 +301,7 @@ evaluate(std::shared_ptr<context> ctx,
 
     options.set(opts);
 
-    solver_stack solver(model);
-    const size_t max_opt = options.simulations.size();
-    evaluation_results ret;
-    ret.options.resize(options.options.cols(), max_opt);
-    // TODO ret.attributes.resize(COL, max_opt);
-    ret.simulations.resize(max_opt);
-    ret.observations.resize(max_opt);
-    ret.confusion.resize(
-      model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
-
-    for (size_t opt = 0; opt != max_opt; ++opt) {
-        ret.observations[opt] = options.observed[opt];
-        ret.simulations[opt] = solver.solve(options.options.row(opt));
-        ret.confusion(ret.observations[opt], ret.simulations[opt])++;
-    }
-
-    weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
-    ret.squared_weighted_kappa =
-      kappa_c.squared(ret.observations, ret.simulations);
-
-    ret.linear_weighted_kappa =
-      kappa_c.linear(ret.observations, ret.simulations);
-
-    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
-            ret.options(c, r) = options.options(r, c);
-
-    return ret;
+    return evaluate(ctx, model, options);
 }
 
 std::vector<result>
