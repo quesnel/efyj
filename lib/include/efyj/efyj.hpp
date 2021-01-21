@@ -228,13 +228,6 @@ struct information_results
     dexi_parser_status status;
 };
 
-struct simulation_results
-{
-    matrix<value> options;
-    matrix<value> attributes;
-    std::vector<value> simulations;
-};
-
 struct evaluation_results
 {
     matrix<value> options;
@@ -293,18 +286,6 @@ EFYJ_API
 model_data
 extract_model(std::shared_ptr<context> ctx,
               const std::string& model_file_path);
-
-EFYJ_API
-simulation_results
-simulate(std::shared_ptr<context> ctx,
-         const std::string& model_file_path,
-         const std::string& options_file_path);
-
-EFYJ_API
-simulation_results
-simulate(std::shared_ptr<context> ctx,
-         const std::string& model_file_path,
-         const options_data& opts);
 
 EFYJ_API
 evaluation_results

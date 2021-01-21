@@ -108,60 +108,6 @@ extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
     return ret;
 }
 
-simulation_results
-simulate(std::shared_ptr<context> ctx,
-         const std::string& model_file_path,
-         const std::string& options_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
-
-    const size_t max_opt = options.simulations.size();
-    simulation_results ret;
-    ret.options.resize(options.options.cols(), max_opt);
-    // TODO ret.attributes.resize(COL, max_opt);
-    ret.simulations.resize(max_opt);
-
-    solver_stack solver(model);
-
-    for (size_t opt = 0; opt != max_opt; ++opt)
-        ret.simulations[opt] = solver.solve(options.options.row(opt));
-
-    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
-            ret.options(c, r) = options.options(c, r);
-
-    return ret;
-}
-
-simulation_results
-simulate(std::shared_ptr<context> ctx,
-         const std::string& model_file_path,
-         const options_data& opts)
-{
-    auto model = make_model(ctx, model_file_path);
-    Options options;
-
-    options.set(opts);
-
-    const size_t max_opt = options.simulations.size();
-    simulation_results ret;
-    ret.options.resize(options.options.cols(), max_opt);
-    // TODO ret.attributes.resize(COL, max_opt);
-    ret.simulations.resize(max_opt);
-
-    solver_stack solver(model);
-
-    for (size_t opt = 0; opt != max_opt; ++opt)
-        ret.simulations[opt] = solver.solve(options.options.row(opt));
-
-    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
-            ret.options(c, r) = options.options(c, r);
-
-    return ret;
-}
-
 information_results
 static_information(const std::string& model_file_path) noexcept
 {
