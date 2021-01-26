@@ -211,6 +211,7 @@ struct options_data
     std::vector<int> departments;
     std::vector<int> years;
     std::vector<int> observed;
+    std::vector<std::string> basic_attribute_names;
     matrix<value> options;
 };
 

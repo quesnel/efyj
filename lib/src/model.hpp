@@ -183,7 +183,6 @@ struct Model
         return static_cast<int>(std::distance(group.cbegin(), it));
     }
 
-
     std::vector<const attribute*> get_basic_attribute() const
     {
         std::vector<const attribute*> ret;

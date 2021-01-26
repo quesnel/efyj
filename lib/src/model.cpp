@@ -517,7 +517,6 @@ private:
                 pd->model.attributes.back()
                   .scale.scale.back()
                   .description.assign(pd->char_data);
-
             break;
 
         case stack_identifier::SCALE:
@@ -812,7 +811,9 @@ private:
 };
 
 static void
-reorder_basic_attribute(const Model& model, size_t att, std::vector<size_t>& out)
+reorder_basic_attribute(const Model& model,
+                        size_t att,
+                        std::vector<size_t>& out)
 {
     if (model.attributes[att].is_basic())
         out.push_back(att);
@@ -877,17 +878,46 @@ Model::write_options() const
 }
 
 void
-Model::set_options(const options_data& options)
+Model::set_options(const options_data& opts)
 {
     std::vector<size_t> ordered_att;
     reorder_basic_attribute(*this, 0, ordered_att);
 
-    for (size_t opt = 0; opt != options.options.rows(); ++opt) {
-        for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c) {
-            attributes[ordered_att[c]].options.emplace_back(
-              options.options(c, opt));
+#if 0
+    {
+        for (size_t c = 0, end_c = ordered_att.size(); c != end_c; ++c) {
+            auto filename = fmt::format("output-{}.txt", c);
+            if (auto file = std::fopen(filename.c_str(), "w"); file) {
+                for (size_t r = 0, end_r = opts.options.rows(); r != end_r;
+                     ++r)
+                    fmt::print(file, "{} ", opts.options(r, c));
+                fmt::print("\n");
+                std::fclose(file);
+            }
         }
     }
+
+    fmt::print("set_options table:\n");
+    for (size_t i = 0, e = ordered_att.size(); i != e; ++i)
+        fmt::print("{} -> {} ({} is-basic: {})\n",
+                   i,
+                   ordered_att[i],
+                   attributes[ordered_att[i]].name,
+                   attributes[ordered_att[i]].is_basic());
+#endif
+
+    for (size_t i = 0, e = attributes.size(); i != e; ++i)
+        attributes[i].options.clear();
+
+    for (size_t i = 0, end_i = ordered_att.size(); i != end_i; ++i) {
+        const auto att = ordered_att[i];
+
+        for (size_t opt = 0, end_opt = opts.options.rows(); opt != end_opt;
+             ++opt)
+            attributes[att].options.emplace_back(opts.options(opt, i));
+    }
+
+    options = opts.simulations;
 }
 
 void
