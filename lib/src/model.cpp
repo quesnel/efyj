@@ -710,6 +710,14 @@ private:
         }
     }
 
+    void write_Null_Model_option()
+    {
+        for (size_t i = 0, e = dex.options.size(); i != e; ++i) {
+            make_space();
+            fprintf(os, "<OPTION>0</OPTION>\n");
+        }
+    }
+
     void write_Model_attribute(size_t child)
     {
         assert(child <= dex.attributes.size());
@@ -789,7 +797,9 @@ private:
             fputs("</FUNCTION>\n", os);
         }
 
-        if (!att.options.empty())
+        if (!att.is_basic() || att.options.size() < dex.options.size())
+            write_Null_Model_option();
+        else
             write_Model_option(att.options);
 
         for (const auto& child : att.children)
