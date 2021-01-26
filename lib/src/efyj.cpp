@@ -355,6 +355,17 @@ struct c_file
         if (file)
             fclose(file);
     }
+
+    void vprint(std::string_view format, fmt::format_args args)
+    {
+        fmt::vprint(file, format, args);
+    }
+
+    template <typename... Args>
+    void print(std::string_view format, const Args&... args)
+    {
+        vprint(format, fmt::make_format_args(args...));
+    }
 };
 
 void
