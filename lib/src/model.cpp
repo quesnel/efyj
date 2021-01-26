@@ -667,9 +667,10 @@ struct Model_writer
         if (!dex.reports.empty()) {
             fprintf(os,
                     "  <SETTINGS>\n"
-                    "    <REPORTS>%s</REPORTS>\n"
-                    "  </SETTINGS>\n",
-                    dex.reports.c_str());
+                    "    <REPORTS>6</REPORTS>\n"
+                    "    <OPTDATATYPE>Zero</OPTDATATYPE>\n"
+                    "    <OPTLEVELS>False</OPTLEVELS>\n"
+                    "  </SETTINGS>\n");
         }
 
         if (!dex.attributes.empty())
