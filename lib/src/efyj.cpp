@@ -172,13 +172,13 @@ static_information(const std::string& model_file_path,
         }
 
         return status::success;
-    } catch (const numeric_cast_error& e) {
+    } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
-    } catch (const internal_error& e) {
+    } catch (const internal_error& /*e*/) {
         return status::internal_error;
-    } catch (const file_error& e) {
+    } catch (const file_error& /*e*/) {
         return status::file_error;
-    } catch (const solver_error& e) {
+    } catch (const solver_error& /*e*/) {
         return status::solver_error;
     } catch (const dexi_parser_status& e) {
         return dexi_parser_status_convert(e.m_tag);
@@ -292,13 +292,13 @@ static_evaluate(const std::string& model_file_path,
         ret = evaluate(ctx, model, opt);
 
         return status::success;
-    } catch (const numeric_cast_error& e) {
+    } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
-    } catch (const internal_error& e) {
+    } catch (const internal_error& /*e*/) {
         return status::internal_error;
-    } catch (const file_error& e) {
+    } catch (const file_error& /*e*/) {
         return status::file_error;
-    } catch (const solver_error& e) {
+    } catch (const solver_error& /*e*/) {
         return status::solver_error;
     } catch (const dexi_parser_status& e) {
         return dexi_parser_status_convert(e.m_tag);
@@ -400,13 +400,13 @@ static_adjustment(const std::string& model_file_path,
         efyj::adjustment_evaluator adj(ctx, model, options);
         const auto ret = adj.run(limit, 0.0, reduce);
         return callback(ret);
-    } catch (const numeric_cast_error& e) {
+    } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
-    } catch (const internal_error& e) {
+    } catch (const internal_error& /*e*/) {
         return status::internal_error;
-    } catch (const file_error& e) {
+    } catch (const file_error& /*e*/) {
         return status::file_error;
-    } catch (const solver_error& e) {
+    } catch (const solver_error& /*e*/) {
         return status::solver_error;
     } catch (const dexi_parser_status& e) {
         return dexi_parser_status_convert(e.m_tag);
@@ -453,13 +453,13 @@ static_prediction(const std::string& model_file_path,
             auto ret = pre.run(limit, 0.0, reduce, thread);
             return callback(ret);
         }
-    } catch (const numeric_cast_error& e) {
+    } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
-    } catch (const internal_error& e) {
+    } catch (const internal_error& /*e*/) {
         return status::internal_error;
-    } catch (const file_error& e) {
+    } catch (const file_error& /*e*/) {
         return status::file_error;
-    } catch (const solver_error& e) {
+    } catch (const solver_error& /*e*/) {
         return status::solver_error;
     } catch (const dexi_parser_status& e) {
         return dexi_parser_status_convert(e.m_tag);
