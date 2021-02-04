@@ -108,16 +108,60 @@ extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
     return ret;
 }
 
-information_results
-static_information(const std::string& model_file_path) noexcept
+static constexpr status
+csv_parser_status_convert(const csv_parser_status::tag s) noexcept
+{
+    switch (s) {
+    case csv_parser_status::tag::file_error:
+        return status::csv_parser_file_error;
+    case csv_parser_status::tag::column_number_incorrect:
+        return status::csv_parser_column_number_incorrect;
+    case csv_parser_status::tag::scale_value_unknown:
+        return status::csv_parser_scale_value_unknown;
+    case csv_parser_status::tag::column_conversion_failure:
+        return status::csv_parser_column_conversion_failure;
+    case csv_parser_status::tag::basic_attribute_unknown:
+        return status::csv_parser_basic_attribute_unknown;
+    }
+
+    std::abort();
+}
+
+static constexpr status
+dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
+{
+    switch (s) {
+    case dexi_parser_status::tag::done:
+        return status::success;
+    case dexi_parser_status::tag::scale_definition_error:
+        return status::dexi_parser_scale_definition_error;
+    case dexi_parser_status::tag::scale_not_found:
+        return status::dexi_parser_scale_not_found;
+    case dexi_parser_status::tag::scale_too_big:
+        return status::dexi_parser_scale_too_big;
+    case dexi_parser_status::tag::file_format_error:
+        return status::dexi_parser_file_format_error;
+    case dexi_parser_status::tag::not_enough_memory:
+        return status::dexi_parser_not_enough_memory;
+    case dexi_parser_status::tag::element_unknown:
+        return status::dexi_parser_element_unknown;
+    case dexi_parser_status::tag::option_conversion_error:
+        return status::dexi_parser_option_conversion_error;
+    }
+
+    std::abort();
+}
+
+status
+static_information(const std::string& model_file_path,
+                   information_results& ret) noexcept
 {
     try {
         auto ctx = make_context(6);
         const auto model = make_model(ctx, model_file_path);
 
-        information_results ret;
-
-        ret.status.m_tag = dexi_parser_status::tag::done;
+        ret.basic_attribute_names.clear();
+        ret.basic_attribute_scale_value_numbers.clear();
 
         for (const auto& att : model.attributes) {
             if (att.is_basic()) {
@@ -127,9 +171,19 @@ static_information(const std::string& model_file_path) noexcept
             }
         }
 
-        return ret;
+        return status::success;
+    } catch (const numeric_cast_error& e) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& e) {
+        return status::internal_error;
+    } catch (const file_error& e) {
+        return status::file_error;
+    } catch (const solver_error& e) {
+        return status::solver_error;
     } catch (const dexi_parser_status& e) {
-        return information_results{ e };
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
     }
 }
 
@@ -173,20 +227,35 @@ evaluate(std::shared_ptr<context> ctx, Model& model, Options& options)
     return ret;
 }
 
-static_evaluation_results
+static bool
+is_valid_input_size(const size_t simulation,
+                    const size_t places,
+                    const size_t departments,
+                    const size_t year,
+                    const size_t observed) noexcept
+{
+    return simulation == places && simulation == departments &&
+           simulation == year && simulation == observed;
+}
+
+status
 static_evaluate(const std::string& model_file_path,
                 const std::vector<std::string>& simulations,
                 const std::vector<std::string>& places,
                 const std::vector<int>& departments,
                 const std::vector<int>& years,
                 const std::vector<int>& observed,
-                const std::vector<int>& scale_values) noexcept
+                const std::vector<int>& scale_values,
+                evaluation_results& ret) noexcept
 {
     try {
         const auto rows = simulations.size();
 
-        if (rows != places.size() || rows != departments.size() ||
-            rows != years.size() || rows != observed.size())
+        if (!is_valid_input_size(rows,
+                                 places.size(),
+                                 departments.size(),
+                                 years.size(),
+                                 observed.size()))
             return {};
 
         auto ctx = make_context(6);
@@ -220,9 +289,21 @@ static_evaluate(const std::string& model_file_path,
         opt.init_dataset();
         opt.check();
 
-        return static_evaluation_results{ evaluate(ctx, model, opt) };
+        ret = evaluate(ctx, model, opt);
+
+        return status::success;
+    } catch (const numeric_cast_error& e) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& e) {
+        return status::internal_error;
+    } catch (const file_error& e) {
+        return status::file_error;
+    } catch (const solver_error& e) {
+        return status::solver_error;
     } catch (const dexi_parser_status& e) {
-        return static_evaluation_results{ e };
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
     }
 }
 
@@ -288,6 +369,105 @@ prediction(std::shared_ptr<context> ctx,
         efyj::prediction_thread_evaluator pre(ctx, model, options);
         return pre.run(limit, 0.0, reduce, thread);
     }
+}
+
+status
+static_adjustment(const std::string& model_file_path,
+                  const std::vector<std::string>& simulations,
+                  const std::vector<std::string>& places,
+                  const std::vector<int> departments,
+                  const std::vector<int> years,
+                  const std::vector<int> observed,
+                  const std::vector<int>& scale_values,
+                  result_callback callback,
+                  bool reduce,
+                  int limit,
+                  unsigned int thread) noexcept
+{
+    try {
+        if (!is_valid_input_size(simulations.size(),
+                                 places.size(),
+                                 departments.size(),
+                                 years.size(),
+                                 observed.size()))
+            return status::unconsistent_input_vector;
+
+        auto ctx = make_context(6);
+        auto model = make_model(ctx, model_file_path);
+        Options options(
+          simulations, places, departments, years, observed, scale_values);
+
+        efyj::adjustment_evaluator adj(ctx, model, options);
+        const auto ret = adj.run(limit, 0.0, reduce);
+        return callback(ret);
+    } catch (const numeric_cast_error& e) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& e) {
+        return status::internal_error;
+    } catch (const file_error& e) {
+        return status::file_error;
+    } catch (const solver_error& e) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
+static_prediction(const std::string& model_file_path,
+                  const std::vector<std::string>& simulations,
+                  const std::vector<std::string>& places,
+                  const std::vector<int> departments,
+                  const std::vector<int> years,
+                  const std::vector<int> observed,
+                  const std::vector<int>& scale_values,
+                  result_callback callback,
+                  bool reduce,
+                  int limit,
+                  unsigned int thread) noexcept
+{
+    try {
+        if (!is_valid_input_size(simulations.size(),
+                                 places.size(),
+                                 departments.size(),
+                                 years.size(),
+                                 observed.size()))
+            return status::unconsistent_input_vector;
+
+        auto ctx = make_context(6);
+        auto model = make_model(ctx, model_file_path);
+
+        Options options(
+          simulations, places, departments, years, observed, scale_values);
+
+        if (thread <= 1) {
+            efyj::prediction_evaluator pre(ctx, model, options);
+            auto ret = pre.run(limit, 0.0, reduce);
+            return callback(ret);
+        } else {
+            efyj::prediction_thread_evaluator pre(ctx, model, options);
+            auto ret = pre.run(limit, 0.0, reduce, thread);
+            return callback(ret);
+        }
+    } catch (const numeric_cast_error& e) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& e) {
+        return status::internal_error;
+    } catch (const file_error& e) {
+        return status::file_error;
+    } catch (const solver_error& e) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
 }
 
 options_data
@@ -361,7 +541,7 @@ struct c_file
         fmt::vprint(file, format, args);
     }
 
-    template <typename... Args>
+    template<typename... Args>
     void print(std::string_view format, const Args&... args)
     {
         vprint(format, fmt::make_format_args(args...));

@@ -215,19 +215,52 @@ struct options_data
     matrix<value> options;
 };
 
+enum class status
+{
+    success,
+    numeric_cast_error,
+    internal_error,
+    file_error,
+    solver_error,
+
+    unconsistent_input_vector,
+
+    dexi_parser_scale_definition_error,
+    dexi_parser_scale_not_found,
+    dexi_parser_scale_too_big,
+    dexi_parser_file_format_error,
+    dexi_parser_not_enough_memory,
+    dexi_parser_element_unknown,
+    dexi_parser_option_conversion_error,
+
+    csv_parser_file_error,
+    csv_parser_column_number_incorrect,
+    csv_parser_scale_value_unknown,
+    csv_parser_column_conversion_failure,
+    csv_parser_basic_attribute_unknown,
+
+    unknown_error
+};
+
 struct information_results
 {
     information_results() = default;
 
-    information_results(const dexi_parser_status status_) noexcept
-      : status(status_)
+    information_results(const status st_) noexcept
+      : st(st_)
     {}
 
     std::vector<std::string> basic_attribute_names;
     std::vector<int> basic_attribute_scale_value_numbers;
 
-    dexi_parser_status status;
+    status st = { status::success };
 };
+
+inline bool
+is_success(const information_results& e) noexcept
+{
+    return e.st == status::success;
+}
 
 struct evaluation_results
 {
@@ -244,8 +277,8 @@ struct static_evaluation_results
 {
     static_evaluation_results() = default;
 
-    static_evaluation_results(const dexi_parser_status& status)
-      : parser_status{ status }
+    static_evaluation_results(const status st_)
+      : st{ st_ }
     {}
 
     static_evaluation_results(evaluation_results&& results_)
@@ -253,8 +286,14 @@ struct static_evaluation_results
     {}
 
     evaluation_results results;
-    std::optional<dexi_parser_status> parser_status;
+    status st = { status::success };
 };
+
+inline bool
+is_success(const static_evaluation_results& e) noexcept
+{
+    return e.st == status::success;
+}
 
 struct modifier
 {
@@ -271,6 +310,50 @@ struct result
     unsigned long int kappa_computed;
     unsigned long int function_computed;
 };
+
+using result_callback = status(*)(const std::vector<result>& r) noexcept;
+
+EFYJ_API
+status
+static_information(const std::string& model_file_path,
+                   information_results& ret) noexcept;
+
+EFYJ_API
+status
+static_evaluate(const std::string& model_file_path,
+                const std::vector<std::string>& simulations,
+                const std::vector<std::string>& places,
+                const std::vector<int> departments,
+                const std::vector<int> years,
+                const std::vector<int> observed,
+                const std::vector<int>& scale_values,
+                evaluation_results& ret) noexcept;
+
+EFYJ_API status
+static_adjustment(const std::string& model_file_path,
+                  const std::vector<std::string>& simulations,
+                  const std::vector<std::string>& places,
+                  const std::vector<int> departments,
+                  const std::vector<int> years,
+                  const std::vector<int> observed,
+                  const std::vector<int>& scale_values,
+                  result_callback callback,
+                  bool reduce,
+                  int limit,
+                  unsigned int thread) noexcept;
+
+EFYJ_API status
+static_prediction(const std::string& model_file_path,
+                  const std::vector<std::string>& simulations,
+                  const std::vector<std::string>& places,
+                  const std::vector<int> departments,
+                  const std::vector<int> years,
+                  const std::vector<int> observed,
+                  const std::vector<int>& scale_values,
+                  result_callback callback,
+                  bool reduce,
+                  int limit,
+                  unsigned int thread) noexcept;
 
 class context;
 
@@ -300,19 +383,7 @@ evaluate(std::shared_ptr<context> ctx,
          const std::string& model_file_path,
          const options_data& opts);
 
-EFYJ_API
-information_results
-static_information(const std::string& model_file_path) noexcept;
 
-EFYJ_API
-static_evaluation_results
-static_evaluate(const std::string& model_file_path,
-                const std::vector<std::string>& simulations,
-                const std::vector<std::string>& places,
-                const std::vector<int> departments,
-                const std::vector<int> years,
-                const std::vector<int> observed,
-                const std::vector<int>& scale_values) noexcept;
 
 EFYJ_API
 std::vector<result>
