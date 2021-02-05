@@ -399,7 +399,8 @@ static_adjustment(const std::string& model_file_path,
 
         efyj::adjustment_evaluator adj(ctx, model, options);
         const auto ret = adj.run(limit, 0.0, reduce);
-        return callback(ret);
+        (void)callback(ret);
+        return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
     } catch (const internal_error& /*e*/) {
@@ -447,11 +448,13 @@ static_prediction(const std::string& model_file_path,
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
             auto ret = pre.run(limit, 0.0, reduce);
-            return callback(ret);
+            (void)callback(ret);
+            return status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
             auto ret = pre.run(limit, 0.0, reduce, thread);
-            return callback(ret);
+            (void)callback(ret);
+            return status::success;
         }
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;

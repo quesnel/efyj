@@ -18,6 +18,9 @@ find_package(Threads REQUIRED)
 add_definitions(-DFMT_HEADER_ONLY)
 include_directories(${CMAKE_SOURCE_DIR}/external/fmt/include)
 
+add_subdirectory(external/pybind11)
+
 enable_testing()
 add_subdirectory(lib)
 add_subdirectory(app)
+

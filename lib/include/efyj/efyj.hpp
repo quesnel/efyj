@@ -311,7 +311,7 @@ struct result
     unsigned long int function_computed;
 };
 
-using result_callback = status(*)(const std::vector<result>& r) noexcept;
+using result_callback = std::function<bool(const std::vector<result>&)>;
 
 EFYJ_API
 status
