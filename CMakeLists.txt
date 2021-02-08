@@ -5,6 +5,8 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+option(DisablePython "Disable python wrapper BUILD_RPATH [OFF]" OFF)
+
 if (WIN32)
   find_package(expat CONFIG REQUIRED)
 else ()
@@ -18,7 +20,9 @@ find_package(Threads REQUIRED)
 add_definitions(-DFMT_HEADER_ONLY)
 include_directories(${CMAKE_SOURCE_DIR}/external/fmt/include)
 
-add_subdirectory(external/pybind11)
+if (NOT DisablePython)
+	add_subdirectory(external/pybind11)
+endif ()
 
 enable_testing()
 add_subdirectory(lib)

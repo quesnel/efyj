@@ -106,5 +106,8 @@ configure_file(include/efyj/version.hpp.in
 install(FILES ${CMAKE_BINARY_DIR}/version.hpp
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/efyj-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR})
 
-add_subdirectory(python)
+if (NOT DisablePython)
+	add_subdirectory(python)
+endif ()
+
 add_test(testlib testlib)
