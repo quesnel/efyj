@@ -49,7 +49,7 @@ init_worker(Solver& solver, const int thread_id)
 }
 
 static void
-parallel_prediction_worker(std::shared_ptr<context> context,
+parallel_prediction_worker(const context& ctx,
                            const Model& model,
                            const Options& options,
                            const unsigned int thread_id,
@@ -62,7 +62,7 @@ parallel_prediction_worker(std::shared_ptr<context> context,
     std::vector<std::vector<scale_id>> m_globalfunctions, m_functions;
     std::vector<std::tuple<int, int, int>> m_globalupdaters, m_updaters;
 
-    for_each_model_solver solver(context, model);
+    for_each_model_solver solver(ctx, model);
     weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
     solver.reduce(options);
 
@@ -141,16 +141,16 @@ parallel_prediction_worker(std::shared_ptr<context> context,
 }
 
 prediction_thread_evaluator::prediction_thread_evaluator(
-  std::shared_ptr<context> context,
+  const context& ctx,
   const Model& model,
   const Options& options)
-  : m_context(context)
+  : m_context(ctx)
   , m_model(model)
   , m_options(options)
   , m_globalsimulated(options.observed.size(), 0)
   , simulated(options.options.rows())
   , observed(options.options.rows())
-  , solver(context, model)
+  , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
 {
     if (!options.have_subdataset())
@@ -174,10 +174,8 @@ prediction_thread_evaluator::run([[maybe_unused]] int line_limit,
     std::vector<std::thread> workers{ threads };
 
     for (auto i = 0u; i != threads; ++i) {
-        auto newctx = copy_context(m_context);
-
         workers[i] = std::thread(parallel_prediction_worker,
-                                 newctx,
+                                 m_context,
                                  std::cref(m_model),
                                  std::cref(m_options),
                                  i,
@@ -198,8 +196,8 @@ prediction_thread_evaluator::run([[maybe_unused]] int line_limit,
     return {};
 }
 
-Results::Results(std::shared_ptr<context> context, unsigned int threads)
-  : m_context(context)
+Results::Results(const context& ctx, unsigned int threads)
+  : m_context(ctx)
   , m_threads(threads)
   , m_start(std::chrono::system_clock::now())
 {

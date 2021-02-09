@@ -126,7 +126,7 @@ struct line_reader
 };
 
 void
-Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
+Options::read(const context& ctx, FILE* is, const Model& model)
 {
     clear();
 
@@ -141,7 +141,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
     {
         auto opt_line = ls.getline();
         if (!opt_line) {
-            info(context, "Fail to read header\n");
+            info(ctx, "Fail to read header\n");
             throw csv_parser_status(
               csv_parser_status::tag::file_error, size_t(0), columns.size());
         }
@@ -162,17 +162,17 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
-        info(context, "column {} {}\n", i, columns[i].c_str());
+        info(ctx, "column {} {}\n", i, columns[i].c_str());
 
     for (size_t i = id, e = id + atts.size(); i != e; ++i) {
-        info(context,
+        info(ctx,
              "try to get_basic_atribute_id {} : {}\n",
              i,
              columns[i].c_str());
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
-            error(context, "Fail to found attribute for `{}'\n", columns[i]);
+            error(ctx, "Fail to found attribute for `{}'\n", columns[i]);
             throw csv_parser_status(
               csv_parser_status::tag::basic_attribute_unknown,
               size_t(0),
@@ -182,7 +182,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
         convertheader[i - id] = *opt_att_id;
     }
 
-    info(context, "Starts to read data (atts.size() = {}\n", atts.size());
+    info(ctx, "Starts to read data (atts.size() = {}\n", atts.size());
 
     options.init(atts.size());
     options.push_line();
@@ -198,7 +198,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
 
         tokenize(line, columns, ";", false);
         if (columns.size() != atts.size() + id + 1) {
-            error(context,
+            error(ctx,
                   "Options: error in csv file line {}:"
                   " not correct number of column {}"
                   " (expected: {})\n",
@@ -212,7 +212,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
           model.attributes[0].scale.find_scale_value(columns.back());
 
         if (!opt_obs) {
-            error(context,
+            error(ctx,
                   "Options: error in csv file line {}: unknown scale value `{}'\n",
                   line_number,
                   columns.back());
@@ -231,7 +231,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
             auto len2 = sscanf(columns[id - 1].c_str(), "%d", &department);
 
             if (len1 != 1 || len2 != 1) {
-                error(context,
+                error(ctx,
                       "Options: error in csv file line {}."
                       " Malformed year or department\n",
                       line_number);
@@ -252,7 +252,7 @@ Options::read(std::shared_ptr<context> context, FILE* is, const Model& model)
 
             auto opt_option = atts[attid]->scale.find_scale_value(columns[i]);
             if (!opt_option) {
-                error(context,
+                error(ctx,
                       "Options: error in csv file line {}: "
                       "unknown scale value `{}' for attribute `{}'\n",
                       line_number,

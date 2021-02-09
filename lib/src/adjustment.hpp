@@ -34,7 +34,7 @@ namespace efyj {
 
 struct adjustment_evaluator
 {
-    std::shared_ptr<context> m_context;
+    const context& m_context;
     const Model& m_model;
     const Options& m_options;
 
@@ -47,7 +47,7 @@ struct adjustment_evaluator
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    adjustment_evaluator(std::shared_ptr<context> context,
+    adjustment_evaluator(const context& context,
                          const Model& model,
                          const Options& options);
 

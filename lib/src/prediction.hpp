@@ -35,7 +35,7 @@ namespace efyj {
 
 struct prediction_evaluator
 {
-    std::shared_ptr<context> m_context;
+    const context& m_context;
     const Model& m_model;
     const Options& m_options;
 
@@ -49,7 +49,7 @@ struct prediction_evaluator
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    prediction_evaluator(std::shared_ptr<context> context,
+    prediction_evaluator(const context& ctx,
                          const Model& model,
                          const Options& options);
 

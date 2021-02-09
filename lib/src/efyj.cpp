@@ -34,22 +34,8 @@
 
 namespace efyj {
 
-std::shared_ptr<context>
-make_context(int log_priority)
-{
-    auto ret = std::make_shared<context>();
-
-    ret->log_priority = log_priority < 0
-                          ? log_level::emerg
-                          : log_priority > 7
-                              ? log_level::debug
-                              : static_cast<log_level>(log_priority);
-
-    return ret;
-}
-
 Model
-make_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
+make_model(const context& ctx, const std::string& model_file_path)
 {
     Model model;
 
@@ -67,7 +53,7 @@ make_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
 }
 
 Options
-make_options(std::shared_ptr<context> ctx,
+make_options(const context& ctx,
              Model& model,
              const std::string& options_file_path)
 {
@@ -87,7 +73,7 @@ make_options(std::shared_ptr<context> ctx,
 }
 
 model_data
-extract_model(std::shared_ptr<context> ctx, const std::string& model_file_path)
+extract_model(const context& ctx, const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
     model_data ret;
@@ -153,11 +139,11 @@ dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
 }
 
 status
-static_information(const std::string& model_file_path,
+static_information(const context& ctx,
+                   const std::string& model_file_path,
                    information_results& ret) noexcept
 {
     try {
-        auto ctx = make_context(6);
         const auto model = make_model(ctx, model_file_path);
 
         ret.basic_attribute_names.clear();
@@ -188,7 +174,7 @@ static_information(const std::string& model_file_path,
 }
 
 static evaluation_results
-evaluate(std::shared_ptr<context> ctx, Model& model, Options& options)
+evaluate(const context& ctx, Model& model, Options& options)
 {
     solver_stack solver(model);
     const auto max_opt = options.simulations.size();
@@ -239,7 +225,8 @@ is_valid_input_size(const size_t simulation,
 }
 
 status
-static_evaluate(const std::string& model_file_path,
+static_evaluate(const context& ctx,
+                const std::string& model_file_path,
                 const std::vector<std::string>& simulations,
                 const std::vector<std::string>& places,
                 const std::vector<int>& departments,
@@ -258,7 +245,6 @@ static_evaluate(const std::string& model_file_path,
                                  observed.size()))
             return {};
 
-        auto ctx = make_context(6);
         auto model = make_model(ctx, model_file_path);
 
         Options opt;
@@ -308,7 +294,7 @@ static_evaluate(const std::string& model_file_path,
 }
 
 evaluation_results
-evaluate(std::shared_ptr<context> ctx,
+evaluate(const context& ctx,
          const std::string& model_file_path,
          const std::string& options_file_path)
 {
@@ -319,7 +305,7 @@ evaluate(std::shared_ptr<context> ctx,
 }
 
 evaluation_results
-evaluate(std::shared_ptr<context> ctx,
+evaluate(const context& ctx,
          const std::string& model_file_path,
          const options_data& opts)
 {
@@ -332,7 +318,7 @@ evaluate(std::shared_ptr<context> ctx,
 }
 
 std::vector<result>
-adjustment(std::shared_ptr<context> ctx,
+adjustment(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            bool reduce,
@@ -347,7 +333,7 @@ adjustment(std::shared_ptr<context> ctx,
 }
 
 std::vector<result>
-prediction(std::shared_ptr<context> ctx,
+prediction(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            bool reduce,
@@ -372,7 +358,8 @@ prediction(std::shared_ptr<context> ctx,
 }
 
 status
-static_adjustment(const std::string& model_file_path,
+static_adjustment(const context& ctx,
+                  const std::string& model_file_path,
                   const std::vector<std::string>& simulations,
                   const std::vector<std::string>& places,
                   const std::vector<int> departments,
@@ -392,7 +379,6 @@ static_adjustment(const std::string& model_file_path,
                                  observed.size()))
             return status::unconsistent_input_vector;
 
-        auto ctx = make_context(6);
         auto model = make_model(ctx, model_file_path);
         Options options(
           simulations, places, departments, years, observed, scale_values);
@@ -419,7 +405,8 @@ static_adjustment(const std::string& model_file_path,
 }
 
 status
-static_prediction(const std::string& model_file_path,
+static_prediction(const context& ctx,
+                  const std::string& model_file_path,
                   const std::vector<std::string>& simulations,
                   const std::vector<std::string>& places,
                   const std::vector<int> departments,
@@ -439,7 +426,6 @@ static_prediction(const std::string& model_file_path,
                                  observed.size()))
             return status::unconsistent_input_vector;
 
-        auto ctx = make_context(6);
         auto model = make_model(ctx, model_file_path);
 
         Options options(
@@ -474,8 +460,7 @@ static_prediction(const std::string& model_file_path,
 }
 
 options_data
-extract_options(std::shared_ptr<context> ctx,
-                const std::string& model_file_path)
+extract_options(const context& ctx, const std::string& model_file_path)
 {
     auto model = make_model(ctx, model_file_path);
 
@@ -483,7 +468,7 @@ extract_options(std::shared_ptr<context> ctx,
 }
 
 options_data
-extract_options(std::shared_ptr<context> ctx,
+extract_options(const context& ctx,
                 const std::string& model_file_path,
                 const std::string& options_file_path)
 {
@@ -552,7 +537,7 @@ struct c_file
 };
 
 void
-extract_options_to_file(std::shared_ptr<context> ctx,
+extract_options_to_file(const context& ctx,
                         const std::string& model_file_path,
                         const std::string& output_file_path)
 {
@@ -566,7 +551,7 @@ extract_options_to_file(std::shared_ptr<context> ctx,
 }
 
 void
-merge_options(std::shared_ptr<context> ctx,
+merge_options(const context& ctx,
               const std::string& model_file_path,
               const std::string& options_file_path,
               const std::string& output_file_path)

@@ -107,14 +107,6 @@ change_pwd()
     return ret == 0;
 }
 
-std::shared_ptr<efyj::context>
-make_context()
-{
-    auto ret = efyj::make_context(7);
-
-    return ret;
-}
-
 std::string
 make_temporary(std::string name)
 {
@@ -623,7 +615,8 @@ test_problem_Model_file()
 
         printf("%s [%s]\n", filepath.c_str(), output.c_str());
 
-        auto results = efyj::evaluate(make_context(), filepath, output);
+        efyj::context ctx;
+        auto results = efyj::evaluate(ctx, filepath, output);
 
         printf("squared: %g linear: %g\n",
                results.squared_weighted_kappa,
@@ -658,8 +651,8 @@ check_the_options_set_function()
 
     efyj::options_data model_file, options_file, options_;
 
-    auto opt1 = efyj::extract_options(make_context(), "Car.dxi");
-    auto opt2 = efyj::extract_options(make_context(), "Car.dxi", output);
+    auto opt1 = efyj::extract_options(efyj::context{}, "Car.dxi");
+    auto opt2 = efyj::extract_options(efyj::context{}, "Car.dxi", output);
 
     Ensures(opt1.options.rows() == opt2.options.rows());
     Ensures(opt1.options.columns() == opt2.options.columns());

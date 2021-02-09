@@ -314,7 +314,7 @@ struct solver_stack
 class for_each_model_solver
 {
 public:
-    std::shared_ptr<context> m_context;
+    const context& m_context;
     solver_stack m_solver;
     std::vector<line_updater> m_updaters;
     std::vector<std::vector<int>> m_whitelist;
@@ -328,10 +328,9 @@ public:
     void detect_missing_scale_value();
 
 public:
-    for_each_model_solver(std::shared_ptr<context> context,
-                          const Model& model);
+    for_each_model_solver(const context& ctx, const Model& model);
 
-    for_each_model_solver(std::shared_ptr<context> context,
+    for_each_model_solver(const context& ctx,
                           const Model& model,
                           int walker_number);
 
@@ -375,7 +374,7 @@ public:
 };
 
 void
-print(std::shared_ptr<context> ctx,
+print(const context& ctx,
       const std::vector<std::tuple<int, int, int>>& updaters) noexcept;
 
 } // namespace efyj

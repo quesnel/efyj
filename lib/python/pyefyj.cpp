@@ -29,67 +29,38 @@
 
 namespace py = pybind11;
 
-static void
-show_error_message(const efyj::status s) noexcept
+static std::string_view
+get_error_message(const efyj::status s) noexcept
 {
-    switch (s) {
-    case efyj::status::success:
-        break;
-    case efyj::status::numeric_cast_error:
-        py::print("internal integer cast error");
-        break;
-    case efyj::status::internal_error:
-        py::print("internal error");
-        break;
-    case efyj::status::file_error:
-        py::print("file access error");
-        break;
-    case efyj::status::solver_error:
-        py::print("internal solver error");
-        break;
-    case efyj::status::unconsistent_input_vector:
-        py::print("unconsistent input vector");
-        break;
-    case efyj::status::dexi_parser_scale_definition_error:
-        py::print("dexi file parser scale definition error");
-        break;
-    case efyj::status::dexi_parser_scale_not_found:
-        py::print("dexi parser scale not found");
-        break;
-    case efyj::status::dexi_parser_scale_too_big:
-        py::print("dexi parser scale too big");
-        break;
-    case efyj::status::dexi_parser_file_format_error:
-        py::print("dexi parser file format error");
-        break;
-    case efyj::status::dexi_parser_not_enough_memory:
-        py::print("dexi parser not enough memory");
-        break;
-    case efyj::status::dexi_parser_element_unknown:
-        py::print("dexi parser element unknown");
-        break;
-    case efyj::status::dexi_parser_option_conversion_error:
-        py::print("dexi parser option conversion error");
-        break;
-    case efyj::status::csv_parser_file_error:
-        py::print("csv parser file error");
-        break;
-    case efyj::status::csv_parser_column_number_incorrect:
-        py::print("csv parser column number incorrect");
-        break;
-    case efyj::status::csv_parser_scale_value_unknown:
-        py::print("csv_parser scale value unknown");
-        break;
-    case efyj::status::csv_parser_column_conversion_failure:
-        py::print("csv parser column conversion failure");
-        break;
-    case efyj::status::csv_parser_basic_attribute_unknown:
-        py::print("csv parser basic attribute unknown");
-        break;
-    case efyj::status::unknown_error:
-        py::print("unknown error");
-        break;
-    }
+    const static std::string_view ret[] = {
+        "success",
+        "not enough memory",
+        "internal integer cast error",
+        "internal error",
+        "file access error",
+        "internal solver error",
+        "unconsistent input vector",
+        "dexi file parser scale definition error",
+        "dexi parser scale not found",
+        "dexi parser scale too big",
+        "dexi parser file format error",
+        "dexi parser not enough memory",
+        "dexi parser element unknown",
+        "dexi parser option conversion error",
+        "csv parser file error",
+        "csv parser column number incorrect",
+        "csv_parser scale value unknown",
+        "csv parser column conversion failure",
+        "csv parser basic attribute unknown",
+        "unknown error"
+    };
+
+    const auto elem = static_cast<size_t>(s);
+    const auto max_elem = std::size(ret);
+
+    assert(elem < max_elem);
+
+    return ret[elem];
 }
 
 PYBIND11_MODULE(pyefyj, m)
@@ -128,14 +99,45 @@ PYBIND11_MODULE(pyefyj, m)
       .def_readonly("kappa_computed", &efyj::result::kappa_computed)
       .def_readonly("function_computed", &efyj::result::function_computed);
 
+    efyj::context ctx;
+
+    ctx.dexi_cb = [](const efyj::status s,
+                     int line,
+                     int column,
+                     const std::string_view tag) {
+        py::print("DEXi error: ",
+                  get_error_message(s),
+                  " at line ",
+                  line,
+                  " column ",
+                  column,
+                  "with value: ",
+                  tag);
+    };
+
+    ctx.csv_cb = [](const efyj::status s, int line, int column) {
+        py::print("CSV error: ",
+                  get_error_message(s),
+                  " at line ",
+                  line,
+                  " column ",
+                  column);
+    };
+
+    ctx.eov_cb = []() { py::print("Not enough memory to continue"); };
+    ctx.cast_cb = []() { py::print("Internal error: cast failure"); };
+    ctx.solver_cb = []() { py::print("Solver error"); };
+    ctx.file_cb = [](const std::string_view file_name) {
+        py::print("Error to access file `", file_name, "`");
+    };
+
     m.def(
       "information",
-      [](const std::string& s) {
+      [&ctx](const std::string& s) -> efyj::information_results {
           efyj::information_results out;
-          const auto ret = efyj::static_information(s, out);
-          if (ret != efyj::status::success)
-              show_error_message(ret);
-          return ret;
+          if (efyj::static_information(ctx, s, out) != efyj::status::success)
+              py::print("information(...) failed");
+          return out;
       },
       R"pbdoc(
         Retrieves information from a DEXi file.
@@ -144,16 +146,17 @@ PYBIND11_MODULE(pyefyj, m)
 
     m.def(
       "adjustment",
-      [](const std::string& model_file_path,
-         const std::vector<std::string>& simulations,
-         const std::vector<std::string>& places,
-         const std::vector<int> departments,
-         const std::vector<int> years,
-         const std::vector<int> observed,
-         const std::vector<int>& scale_values) {
+      [&ctx](
+        const std::string& model_file_path,
+        const std::vector<std::string>& simulations,
+        const std::vector<std::string>& places,
+        const std::vector<int> departments,
+        const std::vector<int> years,
+        const std::vector<int> observed,
+        const std::vector<int>& scale_values) -> std::vector<efyj::result> {
           std::vector<efyj::result> out;
-
           const auto ret = efyj::static_adjustment(
+            ctx,
             model_file_path,
             simulations,
             places,
@@ -174,7 +177,7 @@ PYBIND11_MODULE(pyefyj, m)
             1u);
 
           if (ret != efyj::status::success)
-              show_error_message(ret);
+              py::print("adjustment failed");
 
           return out;
       },
@@ -184,16 +187,17 @@ PYBIND11_MODULE(pyefyj, m)
 
     m.def(
       "prediction",
-      [](const std::string& model_file_path,
-         const std::vector<std::string>& simulations,
-         const std::vector<std::string>& places,
-         const std::vector<int> departments,
-         const std::vector<int> years,
-         const std::vector<int> observed,
-         const std::vector<int>& scale_values) {
+      [&ctx](const std::string& model_file_path,
+             const std::vector<std::string>& simulations,
+             const std::vector<std::string>& places,
+             const std::vector<int> departments,
+             const std::vector<int> years,
+             const std::vector<int> observed,
+             const std::vector<int>& scale_values) {
           std::vector<efyj::result> out;
 
           const auto ret = efyj::static_prediction(
+            ctx,
             model_file_path,
             simulations,
             places,
@@ -214,7 +218,7 @@ PYBIND11_MODULE(pyefyj, m)
             1u);
 
           if (ret != efyj::status::success)
-              show_error_message(ret);
+              py::print("prediction failed");
 
           return out;
       },

@@ -24,15 +24,15 @@
 
 namespace efyj {
 
-adjustment_evaluator::adjustment_evaluator(std::shared_ptr<context> context,
+adjustment_evaluator::adjustment_evaluator(const context& ctx,
                                            const Model& model,
                                            const Options& options)
-  : m_context(context)
+  : m_context(ctx)
   , m_model(model)
   , m_options(options)
   , simulated(options.options.rows())
   , observed(options.options.rows())
-  , solver(context, model)
+  , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
 {}
 

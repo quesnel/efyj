@@ -39,7 +39,7 @@ namespace efyj {
 
 struct prediction_thread_evaluator
 {
-    std::shared_ptr<context> m_context;
+    const context& m_context;
     const Model& m_model;
     const Options& m_options;
 
@@ -53,7 +53,7 @@ struct prediction_thread_evaluator
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    prediction_thread_evaluator(std::shared_ptr<context> context,
+    prediction_thread_evaluator(const context& ctx,
                                 const Model& model,
                                 const Options& options);
 
@@ -65,7 +65,7 @@ struct prediction_thread_evaluator
 
 class Results
 {
-    std::shared_ptr<context> m_context;
+    const context& m_context;
     std::mutex m_container_mutex;
 
     struct Result
@@ -81,7 +81,7 @@ class Results
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(std::shared_ptr<context> context, unsigned int threads);
+    Results(const context& ctx, unsigned int threads);
 
     void emplace_result(
       int i,

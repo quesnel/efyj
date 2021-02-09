@@ -33,6 +33,40 @@
 #include <unistd.h>
 #endif
 
+static std::string_view
+get_error_message(const efyj::status s) noexcept
+{
+    const static std::string_view ret[] = {
+        "success",
+        "not enough memory",
+        "internal integer cast error",
+        "internal error",
+        "file access error",
+        "internal solver error",
+        "unconsistent input vector",
+        "dexi file parser scale definition error",
+        "dexi parser scale not found",
+        "dexi parser scale too big",
+        "dexi parser file format error",
+        "dexi parser not enough memory",
+        "dexi parser element unknown",
+        "dexi parser option conversion error",
+        "csv parser file error",
+        "csv parser column number incorrect",
+        "csv_parser scale value unknown",
+        "csv parser column conversion failure",
+        "csv parser basic attribute unknown",
+        "unknown error"
+    };
+
+    const auto elem = static_cast<size_t>(s);
+    const auto max_elem = std::size(ret);
+
+    assert(elem < max_elem);
+
+    return ret[elem];
+}
+
 static void
 usage()
 {
@@ -81,7 +115,7 @@ ends_with(const std::string_view str, const std::string_view suffix) noexcept
 // }
 
 static int
-extract(std::shared_ptr<efyj::context> ctx,
+extract(const efyj::context& ctx,
         const std::string& model,
         const std::string& output)
 {
@@ -115,7 +149,7 @@ extract(std::shared_ptr<efyj::context> ctx,
 }
 
 static int
-merge(std::shared_ptr<efyj::context> ctx,
+merge(const efyj::context& ctx,
       const std::string& model,
       const std::string& option,
       const std::string& output)
@@ -150,7 +184,7 @@ merge(std::shared_ptr<efyj::context> ctx,
 }
 
 static int
-evaluate(std::shared_ptr<efyj::context> ctx,
+evaluate(const efyj::context& ctx,
          const std::string& model,
          const std::string& option)
 {
@@ -184,7 +218,7 @@ evaluate(std::shared_ptr<efyj::context> ctx,
 }
 
 static int
-adjustment(std::shared_ptr<efyj::context> ctx,
+adjustment(const efyj::context& ctx,
            const std::string& model,
            const std::string& option,
            bool reduce,
@@ -223,7 +257,7 @@ adjustment(std::shared_ptr<efyj::context> ctx,
 }
 
 static int
-prediction(std::shared_ptr<efyj::context> ctx,
+prediction(const efyj::context& ctx,
            const std::string& model,
            const std::string& option,
            bool reduce,
@@ -494,7 +528,34 @@ main(int argc, char* argv[])
             fmt::print(stderr, "unknown file type {}.\n", argv[i]);
     }
 
-    auto ctx = efyj::make_context(7);
+    efyj::context ctx;
+
+    ctx.dexi_cb = [](const efyj::status s,
+                     int line,
+                     int column,
+                     const std::string_view tag) {
+        fmt::print(stderr,
+                   "DEXi error: {} at line {} column {} with tag {}",
+                   get_error_message(s),
+                   line,
+                   column,
+                   tag);
+    };
+
+    ctx.csv_cb = [](const efyj::status s, int line, int column) {
+        fmt::print(stderr,
+                   "CSV error: {} at line {} column {}",
+                   get_error_message(s),
+                   line,
+                   column);
+    };
+
+    ctx.eov_cb = []() { fmt::print(stderr, "Not enough memory to continue"); };
+    ctx.cast_cb = []() { fmt::print(stderr, "Internal error: cast failure"); };
+    ctx.solver_cb = []() { fmt::print(stderr, "Solver error"); };
+    ctx.file_cb = [](const std::string_view file_name) {
+        fmt::print(stderr, "Error to access file `{}'", file_name);
+    };
 
     if (atts.show_help)
         ::usage();

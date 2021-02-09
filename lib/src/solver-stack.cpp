@@ -316,9 +316,9 @@ for_each_model_solver::detect_missing_scale_value()
     }
 }
 
-for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
+for_each_model_solver::for_each_model_solver(const context& ctx,
                                              const Model& model)
-  : m_context(context)
+  : m_context(ctx)
   , m_solver(model)
 {
     full();
@@ -326,19 +326,19 @@ for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
 
     detect_missing_scale_value();
 
-    info(context, "[internal attribute id -> real attribute]\n");
+    info(ctx, "[internal attribute id -> real attribute]\n");
 
     for (size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
-        info(context,
+        info(ctx,
              "  {} {}\n",
              i,
              model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
-for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
+for_each_model_solver::for_each_model_solver(const context& ctx,
                                              const Model& model,
                                              int walker_number)
-  : m_context(context)
+  : m_context(ctx)
   , m_solver(model)
 {
     full();
@@ -347,7 +347,7 @@ for_each_model_solver::for_each_model_solver(std::shared_ptr<context> context,
     detect_missing_scale_value();
 
     for (size_t i = 0, e = m_solver.atts.size(); i != e; ++i)
-        info(context,
+        info(ctx,
              "  {} {}\n",
              i,
              model.attributes[m_solver.atts[i].att].name.c_str());
@@ -558,7 +558,7 @@ for_each_model_solver::get_attribute_line_tuple_limit() const
 }
 
 void
-print(std::shared_ptr<context> ctx,
+print(const context& ctx,
       const std::vector<std::tuple<int, int, int>>& updaters) noexcept
 {
     for (const auto& elem : updaters)

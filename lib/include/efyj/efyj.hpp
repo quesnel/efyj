@@ -28,7 +28,6 @@
 
 #include <functional>
 #include <map>
-#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -71,6 +70,70 @@
 /** Comments about efyj's API.
  */
 namespace efyj {
+
+enum class status
+{
+    success,
+    not_enough_memory,
+    numeric_cast_error,
+    internal_error,
+    file_error,
+    solver_error,
+
+    unconsistent_input_vector,
+
+    dexi_parser_scale_definition_error,
+    dexi_parser_scale_not_found,
+    dexi_parser_scale_too_big,
+    dexi_parser_file_format_error,
+    dexi_parser_not_enough_memory,
+    dexi_parser_element_unknown,
+    dexi_parser_option_conversion_error,
+
+    csv_parser_file_error,
+    csv_parser_column_number_incorrect,
+    csv_parser_scale_value_unknown,
+    csv_parser_column_conversion_failure,
+    csv_parser_basic_attribute_unknown,
+
+    unknown_error
+};
+
+enum class log_level
+{
+    emerg,   // system is unusable
+    alert,   // action must be taken immediately
+    crit,    // critical conditions
+    err,     // error conditions
+    warning, // warning conditions
+    notice,  // normal but significant condition
+    info,    // informational
+    debug    // debug-level messages
+};
+
+using dexi_parser_callback = std::function<
+  void(const status s, int line, int column, const std::string_view tag)>;
+
+using csv_parser_callback =
+  std::function<void(const status s, int line, int column)>;
+
+using not_enough_memory_callback = std::function<void()>;
+using numeric_cast_error_callback = std::function<void()>;
+using internal_error_callback = std::function<void()>;
+using solver_error_callback = std::function<void()>;
+using file_error_callback = std::function<void(const std::string_view file_name)>;
+
+struct context
+{
+    dexi_parser_callback dexi_cb;
+    csv_parser_callback csv_cb;
+    not_enough_memory_callback eov_cb;
+    numeric_cast_error_callback cast_cb;
+    solver_error_callback solver_cb;
+    file_error_callback file_cb;
+
+    log_level log_priority = log_level::info;
+};
 
 /**
  * @brief An internal exception when an integer cast fail.
@@ -215,33 +278,6 @@ struct options_data
     matrix<value> options;
 };
 
-enum class status
-{
-    success,
-    numeric_cast_error,
-    internal_error,
-    file_error,
-    solver_error,
-
-    unconsistent_input_vector,
-
-    dexi_parser_scale_definition_error,
-    dexi_parser_scale_not_found,
-    dexi_parser_scale_too_big,
-    dexi_parser_file_format_error,
-    dexi_parser_not_enough_memory,
-    dexi_parser_element_unknown,
-    dexi_parser_option_conversion_error,
-
-    csv_parser_file_error,
-    csv_parser_column_number_incorrect,
-    csv_parser_scale_value_unknown,
-    csv_parser_column_conversion_failure,
-    csv_parser_basic_attribute_unknown,
-
-    unknown_error
-};
-
 struct information_results
 {
     information_results() = default;
@@ -315,12 +351,14 @@ using result_callback = std::function<bool(const std::vector<result>&)>;
 
 EFYJ_API
 status
-static_information(const std::string& model_file_path,
+static_information(const context& ctx,
+                   const std::string& model_file_path,
                    information_results& ret) noexcept;
 
 EFYJ_API
 status
-static_evaluate(const std::string& model_file_path,
+static_evaluate(const context& ctx,
+                const std::string& model_file_path,
                 const std::vector<std::string>& simulations,
                 const std::vector<std::string>& places,
                 const std::vector<int> departments,
@@ -330,7 +368,8 @@ static_evaluate(const std::string& model_file_path,
                 evaluation_results& ret) noexcept;
 
 EFYJ_API status
-static_adjustment(const std::string& model_file_path,
+static_adjustment(const context& ctx,
+                  const std::string& model_file_path,
                   const std::vector<std::string>& simulations,
                   const std::vector<std::string>& places,
                   const std::vector<int> departments,
@@ -343,7 +382,8 @@ static_adjustment(const std::string& model_file_path,
                   unsigned int thread) noexcept;
 
 EFYJ_API status
-static_prediction(const std::string& model_file_path,
+static_prediction(const context& ctx,
+                  const std::string& model_file_path,
                   const std::vector<std::string>& simulations,
                   const std::vector<std::string>& places,
                   const std::vector<int> departments,
@@ -355,39 +395,25 @@ static_prediction(const std::string& model_file_path,
                   int limit,
                   unsigned int thread) noexcept;
 
-class context;
-
-EFYJ_API
-std::shared_ptr<context>
-make_context(int log_priority = 6);
-
-EFYJ_API
-void
-set_logger_callback(std::shared_ptr<context> ctx,
-                    std::function<void(int, const std::string&)> cb);
-
 EFYJ_API
 model_data
-extract_model(std::shared_ptr<context> ctx,
-              const std::string& model_file_path);
+extract_model(const context& ctx, const std::string& model_file_path);
 
 EFYJ_API
 evaluation_results
-evaluate(std::shared_ptr<context> ctx,
+evaluate(const context& ctx,
          const std::string& model_file_path,
          const std::string& options_file_path);
 
 EFYJ_API
 evaluation_results
-evaluate(std::shared_ptr<context> ctx,
+evaluate(const context& ctx,
          const std::string& model_file_path,
          const options_data& opts);
 
-
-
 EFYJ_API
 std::vector<result>
-adjustment(std::shared_ptr<context> ctx,
+adjustment(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            bool reduce,
@@ -396,7 +422,7 @@ adjustment(std::shared_ptr<context> ctx,
 
 EFYJ_API
 std::vector<result>
-prediction(std::shared_ptr<context> ctx,
+prediction(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            bool reduce,
@@ -405,24 +431,23 @@ prediction(std::shared_ptr<context> ctx,
 
 EFYJ_API
 void
-extract_options_to_file(std::shared_ptr<context> ctx,
+extract_options_to_file(const context& ctx,
                         const std::string& model_file_path,
                         const std::string& output_file_path);
 
 EFYJ_API
 options_data
-extract_options(std::shared_ptr<context> ctx,
-                const std::string& model_file_path);
+extract_options(const context& ctx, const std::string& model_file_path);
 
 EFYJ_API
 options_data
-extract_options(std::shared_ptr<context> ctx,
+extract_options(const context& ctx,
                 const std::string& model_file_path,
                 const std::string& options_file_path);
 
 EFYJ_API
 void
-merge_options(std::shared_ptr<context> ctx,
+merge_options(const context& ctx,
               const std::string& model,
               const std::string& options,
               const std::string& output_file_path);

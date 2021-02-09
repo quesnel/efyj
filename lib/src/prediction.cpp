@@ -24,16 +24,16 @@
 
 namespace efyj {
 
-prediction_evaluator::prediction_evaluator(std::shared_ptr<context> context,
+prediction_evaluator::prediction_evaluator(const context& ctx,
                                            const Model& model,
                                            const Options& options)
-  : m_context(context)
+  : m_context(ctx)
   , m_model(model)
   , m_options(options)
   , m_globalsimulated(options.observed.size(), 0)
   , simulated(options.options.rows())
   , observed(options.options.rows())
-  , solver(context, model)
+  , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
 {
     if (!options.have_subdataset())
