@@ -494,48 +494,6 @@ extract_options(const context& ctx,
     return ret;
 }
 
-struct c_file
-{
-    enum class file_mode
-    {
-        read,
-        write
-    };
-
-    FILE* file = nullptr;
-
-    c_file(const char* file_path, file_mode mode = file_mode::read)
-      : file(fopen(file_path, mode == file_mode::read ? "r" : "w"))
-    {}
-
-    FILE* get() const
-    {
-        return file;
-    }
-
-    bool is_open() const
-    {
-        return file != nullptr;
-    }
-
-    ~c_file()
-    {
-        if (file)
-            fclose(file);
-    }
-
-    void vprint(std::string_view format, fmt::format_args args)
-    {
-        fmt::vprint(file, format, args);
-    }
-
-    template<typename... Args>
-    void print(std::string_view format, const Args&... args)
-    {
-        vprint(format, fmt::make_format_args(args...));
-    }
-};
-
 void
 extract_options_to_file(const context& ctx,
                         const std::string& model_file_path,

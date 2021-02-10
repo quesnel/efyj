@@ -364,6 +364,82 @@ numeric_cast(Source s)
     return static_cast<Target>(s);
 }
 
+class c_file
+{
+public:
+    enum class file_mode
+    {
+        read,
+        write
+    };
+
+private:
+    std::FILE* file = nullptr;
+
+public:
+    c_file() noexcept = default;
+
+#ifdef _WIN32
+    c_file(const char* file_path, file_mode mode = file_mode::read) noexcept
+    {
+        if (fopen_s(&file, file_path, mode == file_mode::read ? "r" : "w"))
+            file = nullptr;
+    }
+#else
+    c_file(const char* file_path, file_mode mode = file_mode::read)
+      : file(std::fopen(file_path, mode == file_mode::read ? "r" : "w"))
+    {}
+#endif
+
+    c_file(c_file&& other) noexcept
+        : file(other.file)
+    {
+        other.file = nullptr;
+    }
+
+    c_file& operator=(c_file&& other) noexcept
+    {
+        if (file) {
+            std::fclose(file);
+            file = nullptr;
+        }
+
+        file = other.file;
+        other.file = nullptr;
+        return *this;
+    }
+
+    c_file(const c_file&) = delete;
+    c_file& operator=(const c_file&) = delete;
+
+    std::FILE* get() const noexcept
+    {
+        return file;
+    }
+
+    bool is_open() const noexcept
+    {
+        return file != nullptr;
+    }
+
+    ~c_file()
+    {
+        if (file)
+            std::fclose(file);
+    }
+
+    void vprint(const std::string_view format, const fmt::format_args args)
+    {
+        fmt::vprint(file, format, args);
+    }
+
+    template<typename... Args>
+    void print(const std::string_view format, const Args&... args)
+    {
+        vprint(format, fmt::make_format_args(args...));
+    }
+};
+
 } // namespace efyj
 
 #endif
