@@ -20,6 +20,7 @@
  */
 
 #include <efyj/efyj.hpp>
+#include "../../lib/src/utils.hpp"
 
 #include <optional>
 
@@ -33,39 +34,6 @@
 #include <unistd.h>
 #endif
 
-static std::string_view
-get_error_message(const efyj::status s) noexcept
-{
-    const static std::string_view ret[] = {
-        "success",
-        "not enough memory",
-        "internal integer cast error",
-        "internal error",
-        "file access error",
-        "internal solver error",
-        "unconsistent input vector",
-        "dexi file parser scale definition error",
-        "dexi parser scale not found",
-        "dexi parser scale too big",
-        "dexi parser file format error",
-        "dexi parser not enough memory",
-        "dexi parser element unknown",
-        "dexi parser option conversion error",
-        "csv parser file error",
-        "csv parser column number incorrect",
-        "csv_parser scale value unknown",
-        "csv parser column conversion failure",
-        "csv parser basic attribute unknown",
-        "unknown error"
-    };
-
-    const auto elem = static_cast<size_t>(s);
-    const auto max_elem = std::size(ret);
-
-    assert(elem < max_elem);
-
-    return ret[elem];
-}
 
 static void
 usage()
