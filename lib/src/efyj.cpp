@@ -45,7 +45,7 @@ make_model(const context& ctx, const std::string& model_file_path)
         throw file_error(model_file_path);
     }
 
-    model.read(ifs);
+    model.read(ctx, ifs);
 
     fclose(ifs);
 
@@ -535,7 +535,7 @@ merge_options(const context& ctx,
     }
 
     model.set_options(options);
-    model.write(ofs.get());
+    model.write(ctx, ofs.get());
 }
 
 } // namespace efyj

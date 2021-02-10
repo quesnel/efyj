@@ -44,9 +44,10 @@ namespace efyj {
 
 struct Model_reader
 {
-    Model_reader(FILE* is, Model& dex) noexcept
-      : is(is)
-      , dex(dex)
+    Model_reader(const context& ctx_, FILE* is_, Model& dex_) noexcept
+      : ctx(ctx_)
+      , is(is_)
+      , dex(dex_)
       , m_status(dexi_parser_status::tag::done)
     {}
 
@@ -54,7 +55,7 @@ struct Model_reader
     {
         XML_Parser parser = XML_ParserCreate(NULL);
         scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
-        parser_data data(parser, dex);
+        parser_data data(ctx, parser, dex);
         XML_SetElementHandler(
           parser, Model_reader::start_element, Model_reader::end_element);
         XML_SetCharacterDataHandler(parser, Model_reader::character_data);
@@ -67,6 +68,10 @@ struct Model_reader
         do {
             char* buffer = (char*)XML_GetBuffer(parser, buffer_size);
             if (buffer == nullptr) {
+                error(ctx,
+                      "DExi fail to allocate expat buffer (size: {})",
+                      buffer_size);
+
                 m_status = dexi_parser_status::tag::not_enough_memory;
                 break;
             }
@@ -93,6 +98,7 @@ struct Model_reader
     }
 
 private:
+    const context& ctx;
     FILE* is;
     Model& dex;
     dexi_parser_status::tag m_status{ dexi_parser_status::tag::done };
@@ -172,14 +178,15 @@ private:
 
     struct parser_data
     {
-        parser_data(XML_Parser parser, Model& data)
-          : parser(parser)
-          , model(data)
+        parser_data(const context& ctx_, XML_Parser parser_, Model& data_)
+          : ctx(ctx_)
+          , parser(parser_)
+          , model(data_)
           , m_status(dexi_parser_status::tag::done)
         {}
 
+        const context& ctx;
         XML_Parser parser;
-        std::string error_message;
         Model& model;
         std::stack<stack_identifier> stack;
         std::stack<attribute*> attributes_stack;
@@ -188,7 +195,7 @@ private:
 
         void stop_parser(dexi_parser_status::tag t)
         {
-            abort();
+            error(ctx, "DEXi failed to read file\n");
             XML_StopParser(parser, XML_FALSE);
             m_status = t;
         }
@@ -440,13 +447,9 @@ private:
 #endif
 
                 if (ret != 1)
-                    debug(
+                    debug(pd->ctx, 
                       "Option with unreadable string `{}'. Use `0' instead\n",
                       pd->char_data);
-                //     pd->stop_parser(
-                //       dexi_parser_status::tag::option_conversion_error);
-                //     break;
-                // }
 
                 pd->model.attributes.back().options.emplace_back(att);
             } else {
@@ -583,8 +586,7 @@ private:
         try {
             pd->char_data.append(s, len);
         } catch (...) {
-            debug("dexi: bad alloc ({} + {})\n", pd->char_data.size(), len);
-            pd->error_message = "Bad alloc";
+            error(pd->ctx, "dexi: bad alloc ({} + {})\n", pd->char_data.size(), len);
             XML_StopParser(pd->parser, XML_FALSE);
         }
     }
@@ -592,7 +594,6 @@ private:
 
 struct to_xml
 {
-
     to_xml(const std::string& str)
     {
         m_str.reserve(str.size() * 2);
@@ -631,8 +632,11 @@ struct to_xml
 
 struct Model_writer
 {
-    Model_writer(FILE* os_, const Model& Model_data_) noexcept
-      : os(os_)
+    Model_writer(const context& ctx_,
+                 FILE* os_,
+                 const Model& Model_data_) noexcept
+      : ctx(ctx_)
+      , os(os_)
       , dex(Model_data_)
       , space(0)
     {
@@ -679,6 +683,7 @@ struct Model_writer
     }
 
 private:
+    const context& ctx;
     FILE* os;
     const Model& dex;
     int space;
@@ -921,9 +926,9 @@ Model::set_options(const options_data& opts)
 }
 
 void
-Model::read(FILE* is)
+Model::read(const context& ctx, FILE* is)
 {
-    Model_reader dr(is, *this);
+    Model_reader dr(ctx, is, *this);
 
 #ifdef BUFSIZ
     dr.read(static_cast<size_t>(BUFSIZ));
@@ -933,9 +938,9 @@ Model::read(FILE* is)
 }
 
 void
-Model::write(FILE* os)
+Model::write(const context& ctx, FILE* os)
 {
-    Model_writer dw(os, *this);
+    Model_writer dw(ctx, os, *this);
     dw.write();
 }
 

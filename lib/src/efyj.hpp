@@ -28,10 +28,10 @@
 namespace efyj {
 
 Model
-make_model(std::shared_ptr<context> ctx, const std::string& model_file_path);
+make_model(const context& ctx, const std::string& model_file_path);
 
 Options
-make_options(std::shared_ptr<context> ctx,
+make_options(const context& ctx,
              Model& model,
              const std::string& options_file_path);
 

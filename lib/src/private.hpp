@@ -43,7 +43,9 @@ log(const context& ctx,
     if (!is_loggable(ctx.log_priority, level))
         return;
 
-    fmt::print(stream ? stream : stdout, fmt, args...);
+    assert(stream);
+
+    fmt::print(stream, fmt, args...);
 }
 
 template<typename... Args>
@@ -53,6 +55,43 @@ log(const context& ctx, FILE* stream, log_level level, const char* msg)
     if (!is_loggable(ctx.log_priority, level))
         return;
 
+    assert(stream);
+
+    fmt::print(stream, msg);
+}
+
+template<typename... Args>
+void
+log_indent(const context& ctx,
+           FILE* stream,
+           unsigned indent,
+           log_level level,
+           const char* fmt,
+           const Args&... args)
+{
+    if (!is_loggable(ctx.log_priority, level))
+        return;
+
+    assert(stream);
+
+    fmt::print(stream, "{:{}}", "", indent);
+    fmt::print(stream, fmt, args...);
+}
+
+template<typename... Args>
+void
+log_indent(const context& ctx,
+           FILE* stream,
+           unsigned indent,
+           log_level level,
+           const char* msg)
+{
+    if (!is_loggable(ctx.log_priority, level))
+        return;
+
+    assert(stream);
+
+    fmt::print(stream, "{:{}}", "", indent);
     fmt::print(stream ? stream : stdout, msg);
 }
 
@@ -261,6 +300,246 @@ debug(const context& ctx,
 #ifdef EFYJ_ENABLE_LOG
 #ifdef EFYJ_ENABLE_DEBUG
     log(ctx, stdout, log_level::debug, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+#endif
+}
+
+//
+// The same with indent parameters
+//
+
+template<typename... Args>
+void
+emerg(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::emerg, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+alert(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::alert, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+crit(const context& ctx,
+     [[maybe_unused]] unsigned indent,
+     const char* fmt,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::crit, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+error(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::err, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+warning(const context& ctx,
+        [[maybe_unused]] unsigned indent,
+        const char* fmt,
+        const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::warning, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+notice(const context& ctx,
+       [[maybe_unused]] unsigned indent,
+       const char* fmt,
+       const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::notice, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+info(const context& ctx,
+     [[maybe_unused]] unsigned indent,
+     const char* fmt,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stdout, indent, log_level::info, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+}
+
+template<typename... Args>
+void
+debug(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    log_indent(ctx, stdout, indent, log_level::debug, fmt, args...);
+#else
+    sink_arguments(ctx, fmt, args...);
+#endif
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+emerg(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::emerg, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+alert(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::alert, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+crit(const context& ctx,
+     [[maybe_unused]] unsigned indent,
+     const char* fmt,
+     const Arg1& arg1,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::crit, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+error(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::err, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+warning(const context& ctx,
+        [[maybe_unused]] unsigned indent,
+        const char* fmt,
+        const Arg1& arg1,
+        const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stderr, indent, log_level::warning, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+notice(const context& ctx,
+       [[maybe_unused]] unsigned indent,
+       const char* fmt,
+       const Arg1& arg1,
+       const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stdout, indent, log_level::notice, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+info(const context& ctx,
+     [[maybe_unused]] unsigned indent,
+     const char* fmt,
+     const Arg1& arg1,
+     const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+    log_indent(ctx, stdout, indent, log_level::info, fmt, arg1, args...);
+#else
+    sink_arguments(ctx, fmt, arg1, args...);
+#endif
+}
+
+template<typename Arg1, typename... Args>
+void
+debug(const context& ctx,
+      [[maybe_unused]] unsigned indent,
+      const char* fmt,
+      const Arg1& arg1,
+      const Args&... args)
+{
+#ifdef EFYJ_ENABLE_LOG
+#ifdef EFYJ_ENABLE_DEBUG
+    log_indent(ctx, stdout, indent, log_level::debug, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif

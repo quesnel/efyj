@@ -161,9 +161,9 @@ struct Model
     std::vector<std::string> group;
     std::deque<attribute> attributes;
 
-    void read(FILE* is);
+    void read(const context& ctx, FILE* is);
 
-    void write(FILE* os);
+    void write(const context& ctx, FILE* os);
 
     /** Release all dynamically allocated memory. */
     void clear();

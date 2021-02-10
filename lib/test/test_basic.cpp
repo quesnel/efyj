@@ -281,6 +281,7 @@ void
 test_classic_Model_file()
 {
     change_pwd();
+    efyj::context ctx;
 
     std::vector<std::string> filepaths = {
         "Car.dxi",        "Employ.dxi",
@@ -302,13 +303,13 @@ test_classic_Model_file()
 
             efyj::scope_exit se_is([is]() { fclose(is); });
 
-            EnsuresNotThrow(dex1.read(is), std::exception);
+            EnsuresNotThrow(dex1.read(ctx, is), std::exception);
 
             auto* os = fopen(output.c_str(), "w");
             Ensures(os);
 
             efyj::scope_exit se_os([os]() { fclose(os); });
-            dex1.write(os);
+            dex1.write(ctx, os);
         }
 
         {
@@ -316,7 +317,7 @@ test_classic_Model_file()
             Ensures(is);
             efyj::scope_exit se_is([is]() { fclose(is); });
 
-            EnsuresNotThrow(dex2.read(is), std::exception);
+            EnsuresNotThrow(dex2.read(ctx, is), std::exception);
         }
 
         Ensures(dex1 == dex2);
@@ -366,7 +367,7 @@ void
 test_car_dxi_load_save_load_via_file()
 {
     change_pwd();
-
+    efyj::context ctx;
     efyj::Model car;
     std::string outputfile("CarXXXXXXXX.dxi");
     auto tmp = make_temporary(outputfile);
@@ -376,13 +377,13 @@ test_car_dxi_load_save_load_via_file()
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
 
-        EnsuresNotThrow(car.read(is), std::exception);
+        EnsuresNotThrow(car.read(ctx, is), std::exception);
 
         auto* os = fopen(tmp.c_str(), "w");
         Ensures(os);
         efyj::scope_exit se_os([os]() { fclose(os); });
 
-        EnsuresNotThrow(car.write(os), std::exception);
+        EnsuresNotThrow(car.write(ctx, os), std::exception);
     }
 
     efyj::Model car2;
@@ -391,7 +392,7 @@ test_car_dxi_load_save_load_via_file()
         auto* is = fopen(tmp.c_str(), "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(car2.read(is), std::exception);
+        EnsuresNotThrow(car2.read(ctx, is), std::exception);
     }
 
 #if defined(__unix__)
@@ -407,6 +408,7 @@ void
 test_Car_dxi()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model car;
     {
@@ -414,7 +416,7 @@ test_Car_dxi()
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
 
-        EnsuresNotThrow(car.read(is), std::exception);
+        EnsuresNotThrow(car.read(ctx, is), std::exception);
     }
 
     Ensures(car.attributes.size() == 10u);
@@ -449,19 +451,20 @@ void
 test_multiple_Car_Model()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model src, dst;
     {
         auto* is = fopen("Car.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(src.read(is), std::exception);
+        EnsuresNotThrow(src.read(ctx, is), std::exception);
     }
     {
         auto* is = fopen("Car.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(dst.read(is), std::exception);
+        EnsuresNotThrow(dst.read(ctx, is), std::exception);
     }
     Ensures(src == dst);
     efyj::Model dst2;
@@ -469,7 +472,7 @@ test_multiple_Car_Model()
         auto* is = fopen("Car.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(dst2.read(is), std::exception);
+        EnsuresNotThrow(dst2.read(ctx, is), std::exception);
     }
     Ensures(dst2 == dst);
     dst2.attributes[0].name = "change";
@@ -480,13 +483,14 @@ void
 test_solver_Car()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model model;
     {
         auto* is = fopen("Car.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(model.read(is), std::exception);
+        EnsuresNotThrow(model.read(ctx, is), std::exception);
     }
     std::size_t problem_size = 1;
     std::size_t basic_scale_number = 0;
@@ -513,13 +517,14 @@ void
 test_basic_solver_for_Car()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model model;
     {
         auto* is = fopen("Car.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(model.read(is), std::exception);
+        EnsuresNotThrow(model.read(ctx, is), std::exception);
     }
 
     std::vector<int> opt_v3{ 1, 2, 2, 2, 2, 2 };
@@ -540,13 +545,14 @@ void
 test_basic_solver_for_Enterprise()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model model;
     {
         auto* is = fopen("Enterprise.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(model.read(is), std::exception);
+        EnsuresNotThrow(model.read(ctx, is), std::exception);
     }
     std::vector<int> opt_v{ 2, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 1 };
     efyj::solver_stack ss(model);
@@ -557,13 +563,14 @@ void
 test_basic_solver_for_IPSIM_PV_simulation1_1()
 {
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model* model = new efyj::Model;
     {
         auto* is = fopen("IPSIM_PV_simulation1-1.dxi", "r");
         Ensures(is);
         efyj::scope_exit se_is([is]() { fclose(is); });
-        EnsuresNotThrow(model->read(is), std::exception);
+        EnsuresNotThrow(model->read(ctx, is), std::exception);
     }
     {
         std::vector<int> opt_v{ 2, 0, 0, 1, 0, 1, 1, 0, 0, 0, 2, 0, 0, 1 };
@@ -585,6 +592,7 @@ void
 test_problem_Model_file()
 {
     change_pwd();
+    efyj::context ctx;
 
     std::vector<std::string> filepaths = {
         "Car.dxi", "Employ.dxi", "Enterprise.dxi", "IPSIM_PV_simulation1-1.dxi"
@@ -603,7 +611,7 @@ test_problem_Model_file()
             Ensures(ifs);
             efyj::scope_exit se_ifs([ifs]() { fclose(ifs); });
 
-            model.read(ifs);
+            model.read(ctx, ifs);
 
             printf("write %s\n", output.c_str());
             auto* ofs = fopen(output.c_str(), "w");
@@ -631,6 +639,7 @@ void
 check_the_options_set_function()
 {
     change_pwd();
+    efyj::context ctx;
 
     auto output = make_temporary("CarXXXXXXXX.dxi");
 
@@ -640,7 +649,7 @@ check_the_options_set_function()
         Ensures(ifs);
         efyj::scope_exit se_ifs([ifs]() { fclose(ifs); });
 
-        model.read(ifs);
+        model.read(ctx, ifs);
 
         auto* ofs = fopen(output.c_str(), "w");
         Ensures(ofs);

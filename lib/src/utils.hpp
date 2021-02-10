@@ -28,62 +28,11 @@
 #include <string>
 #include <vector>
 
-#include <fmt/color.h>
 #include <fmt/format.h>
 
 #include <efyj/efyj.hpp>
 
 namespace efyj {
-
-template<typename... Args>
-void to_log([[maybe_unused]] std::FILE* os,
-            [[maybe_unused]] const std::string_view fmt,
-            [[maybe_unused]] const Args&... args)
-{
-#ifdef EFYJ_ENABLE_LOG
-#ifdef EFYJ_ENABLE_DEBUG
-    fmt::print(os, fmt, args...);
-#endif
-#endif
-}
-
-template<typename... Args>
-void to_log([[maybe_unused]] std::FILE* os,
-            [[maybe_unused]] unsigned indent,
-            [[maybe_unused]] const std::string_view fmt,
-            [[maybe_unused]] const Args&... args)
-{
-#ifdef EFYJ_ENABLE_LOG
-#ifdef EFYJ_ENABLE_DEBUG
-    fmt::print(os, "{:{}}", "", indent);
-    fmt::print(os, fmt, args...);
-#endif
-#endif
-}
-
-template<typename... Args>
-void debug([[maybe_unused]] const std::string_view fmt,
-           [[maybe_unused]] const Args&... args)
-{
-#ifdef EFYJ_ENABLE_LOG
-#ifdef EFYJ_ENABLE_DEBUG
-    fmt::print(stderr, fg(fmt::color::yellow), fmt, args...);
-#endif
-#endif
-}
-
-template<typename... Args>
-void debug([[maybe_unused]] unsigned indent,
-           [[maybe_unused]] const std::string_view fmt,
-           [[maybe_unused]] const Args&... args)
-{
-#ifdef EFYJ_ENABLE_LOG
-#ifdef EFYJ_ENABLE_DEBUG
-    fmt::print(stderr, "{:{}}", "", indent);
-    fmt::print(stderr, fmt::fg(fmt::color::yellow), fmt, args...);
-#endif
-#endif
-}
 
 /** Casts nonnegative integer to unsigned.
  */
