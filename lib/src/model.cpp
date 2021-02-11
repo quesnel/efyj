@@ -44,7 +44,9 @@ namespace efyj {
 
 struct Model_reader
 {
-    Model_reader(const context& ctx_, const input_file& is_, Model& dex_) noexcept
+    Model_reader(const context& ctx_,
+                 const input_file& is_,
+                 Model& dex_) noexcept
       : ctx(ctx_)
       , is(is_)
       , dex(dex_)
@@ -474,12 +476,12 @@ private:
             break;
 
         case stack_identifier::OPTDATATYPE:
-            pd->model.reports.assign(pd->char_data);
+            pd->model.optdatatype.assign(pd->char_data);
             pd->stack.pop();
             break;
 
         case stack_identifier::OPTLEVELS:
-            pd->model.reports.assign(pd->char_data);
+            pd->model.optlevels.assign(pd->char_data);
             pd->stack.pop();
             break;
 
@@ -655,28 +657,35 @@ struct Model_writer
                  "  <CREATED>{}</CREATED>\n"
                  "  <NAME>{}</NAME>\n"
                  "  <DESCRIPTION>\n",
-                 dex.version,
-                 dex.created,
-                 dex.name);
+                 escape(dex.version),
+                 escape(dex.created),
+                 escape(dex.name));
 
         for (const auto& desc : dex.description) {
             if (desc.empty())
                 os.print("    <LINE/>\n");
             else
-                os.print("    <LINE>{}</LINE>\n", desc);
+                os.print("    <LINE>{}</LINE>\n", escape(desc));
         }
 
         os.print("  </DESCRIPTION>\n");
         space = 2;
         write_Model_option(dex.options);
 
-        if (!dex.reports.empty()) {
-            os.print("  <SETTINGS>\n"
-                     "    <REPORTS>6</REPORTS>\n"
-                     "    <OPTDATATYPE>Zero</OPTDATATYPE>\n"
-                     "    <OPTLEVELS>False</OPTLEVELS>\n"
-                     "  </SETTINGS>\n");
-        }
+        os.print("  <SETTINGS>\n");
+        if (!dex.reports.empty())
+            os.print("    <REPORTS>{}</REPORTS>\n", escape(dex.reports));
+        else
+            os.print("    <REPORTS>6</REPORTS>\n", escape(dex.reports));
+
+        if (!dex.optdatatype.empty())
+            os.print("    <OPTDATATYPE>{}</OPTDATATYPE>\n",
+                     escape(dex.optdatatype));
+
+        if (!dex.optlevels.empty())
+            os.print("    <OPTLEVELS>{}</OPTLEVELS>\n", escape(dex.optlevels));
+
+        os.print("  </SETTINGS>\n", escape(dex.reports));
 
         if (!dex.attributes.empty())
             write_Model_attribute(0);
@@ -689,6 +698,36 @@ private:
     const output_file& os;
     const Model& dex;
     int space;
+
+    std::string escape(const std::string& orig)
+    {
+        std::string ret;
+
+        for (char ch : orig) {
+            switch (ch) {
+            case '&':
+                ret += "&amp;";
+                break;
+            case '\'':
+                ret += "&apos;";
+                break;
+            case '"':
+                ret += "&quot;";
+                break;
+            case '<':
+                ret += "&lt;";
+                break;
+            case '>':
+                ret += "&gt;";
+                break;
+            default:
+                ret += ch;
+                break;
+            }
+        }
+
+        return ret;
+    }
 
     void make_space() const
     {
@@ -704,7 +743,7 @@ private:
     {
         for (const auto& opt : opts) {
             make_space();
-            os.print("<OPTION>{}</OPTION>\n", opt);
+            os.print("<OPTION>{}</OPTION>\n", escape(opt));
         }
     }
 
@@ -730,14 +769,14 @@ private:
         const attribute& att(dex.attributes[child]);
 
         make_space();
-        os.print(" <ATTRIBUTE>\n");
+        os.print("<ATTRIBUTE>\n");
 
         space += 2;
 
         make_space();
-        os.print("<NAME>{}</NAME>\n", att.name);
+        os.print("<NAME>{}</NAME>\n", escape(att.name));
         make_space();
-        os.print("<DESCRIPTION>{}</DESCRIPTION>\n", att.description);
+        os.print("<DESCRIPTION>{}</DESCRIPTION>\n", escape(att.description));
         make_space();
         os.print("<SCALE>\n");
 
@@ -752,16 +791,17 @@ private:
             make_space();
             os.print("<SCALEVALUE>\n");
             make_space(2);
-            os.print("<NAME>{}</NAME>\n", sv.name);
+            os.print("<NAME>{}</NAME>\n", escape(sv.name));
 
             if (!sv.description.empty()) {
                 make_space(2);
-                os.print("<DESCRIPTION>{}</DESCRIPTION>\n", sv.description);
+                os.print("<DESCRIPTION>{}</DESCRIPTION>\n",
+                         escape(sv.description));
             }
 
             if (sv.group >= 0) {
                 make_space(2);
-                os.print("<GROUP>{}</GROUP>\n", dex.group[sv.group]);
+                os.print("<GROUP>{}</GROUP>\n", escape(dex.group[sv.group]));
             }
 
             make_space();
@@ -795,7 +835,7 @@ private:
             os.print("</FUNCTION>\n");
         }
 
-        if (!att.is_basic() || att.options.size() < dex.options.size())
+        if (att.options.size() < dex.options.size())
             write_Null_Model_option();
         else
             write_Model_option(att.options);
@@ -937,7 +977,6 @@ Model::clear()
 {
     std::string().swap(name);
     std::string().swap(version);
-    std::string().swap(created);
     std::string().swap(created);
     std::vector<std::string>().swap(description);
     std::vector<std::string>().swap(options);

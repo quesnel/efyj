@@ -155,6 +155,8 @@ struct Model
     std::string version;
     std::string created;
     std::string reports;
+    std::string optdatatype;
+    std::string optlevels;
     std::vector<std::string> description;
     std::vector<std::string> options;
     std::vector<scale_id> basic_attribute_scale_size;
