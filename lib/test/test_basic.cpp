@@ -640,8 +640,8 @@ check_the_options_set_function()
 
     efyj::options_data model_file, options_file, options_;
 
-    auto opt1 = efyj::extract_options(efyj::context{}, "Car.dxi");
-    auto opt2 = efyj::extract_options(efyj::context{}, "Car.dxi", output);
+    auto opt1 = efyj::extract_options(ctx, "Car.dxi");
+    auto opt2 = efyj::extract_options(ctx, "Car.dxi", output);
 
     Ensures(opt1.options.rows() == opt2.options.rows());
     Ensures(opt1.options.columns() == opt2.options.columns());
