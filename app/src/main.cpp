@@ -34,7 +34,6 @@
 #include <unistd.h>
 #endif
 
-
 static void
 usage()
 {
@@ -272,24 +271,6 @@ enum class operation_type
     adjustment,
     prediction
 };
-
-namespace fmt {
-template<>
-struct formatter<std::string_view>
-{
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx)
-    {
-        return ctx.begin();
-    }
-
-    template<typename FormatContext>
-    auto format(const std::string_view& p, FormatContext& ctx)
-    {
-        return format_to(ctx.out(), "{:{}}", p.data(), p.size());
-    }
-};
-}
 
 struct attributes
 {
