@@ -902,7 +902,7 @@ Model::write_options() const
         ret.options.resize(ordered_att.size(), options.size());
 
         for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c)
-            ret.options(c, opt) = attributes[ordered_att[c]].options[opt];
+            ret.options(opt, c) = attributes[ordered_att[c]].options[opt];
 
         ret.observed.emplace_back(attributes[0].options[opt]);
     }
