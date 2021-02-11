@@ -19,8 +19,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <efyj/efyj.hpp>
 #include "../../lib/src/utils.hpp"
+#include <efyj/efyj.hpp>
 
 #include <optional>
 

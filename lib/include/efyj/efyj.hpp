@@ -96,6 +96,9 @@ enum class status
     csv_parser_column_conversion_failure,
     csv_parser_basic_attribute_unknown,
 
+    extract_option_same_input_files,
+    extract_option_fail_open_file,
+
     merge_option_same_inputoutput,
     merge_option_fail_open_file,
 
@@ -407,6 +410,22 @@ static_prediction(const context& ctx,
                   bool reduce,
                   int limit,
                   unsigned int thread) noexcept;
+
+EFYJ_API status
+static_extract_options(const context& ctx,
+                       const std::string& model_file_path,
+                       const std::string& output_file_path) noexcept;
+
+EFYJ_API status
+static_extract_options(const context& ctx,
+                       const std::string& model_file_path,
+                       std::vector<std::string>& simulations,
+                       std::vector<std::string>& places,
+                       std::vector<int> departments,
+                       std::vector<int> years,
+                       std::vector<int> observed,
+                       std::vector<int>& scale_values) noexcept;
+
 
 EFYJ_API status
 static_merge_options(const context& ctx,

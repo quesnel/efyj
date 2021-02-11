@@ -515,6 +515,98 @@ static_prediction(const context& ctx,
 }
 
 status
+static_extract_options(const context& ctx,
+                       const std::string& model_file_path,
+                       const std::string& output_file_path) noexcept
+{
+    try {
+        debug(ctx,
+              "[efyj] extract options from DEXi file {} to csv file {}",
+              model_file_path,
+              output_file_path);
+
+        if (model_file_path == output_file_path) {
+            if (ctx.file_cb)
+                ctx.file_cb(model_file_path);
+
+            return status::extract_option_same_input_files;
+        }
+
+        auto model = make_model(ctx, model_file_path);
+
+        const auto ofs = output_file(output_file_path.c_str());
+        if (!ofs.is_open()) {
+            if (ctx.file_cb)
+                ctx.file_cb(output_file_path);
+
+            return status::merge_option_fail_open_file;
+        }
+
+        model.write_options(ofs);
+        return status::success;
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
+static_extract_options(const context& ctx,
+                       const std::string& model_file_path,
+                       std::vector<std::string>& simulations,
+                       std::vector<std::string>& places,
+                       std::vector<int> departments,
+                       std::vector<int> years,
+                       std::vector<int> observed,
+                       std::vector<int>& scale_values) noexcept
+{
+    try {
+        debug(
+          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+
+        auto model = make_model(ctx, model_file_path);
+        auto data = model.write_options();
+
+        simulations = std::move(data.simulations);
+        places = std::move(data.places);
+        departments = std::move(data.departments);
+        years = std::move(data.years);
+        observed = std::move(data.observed);
+
+        std::copy(data.options.begin(),
+                  data.options.end(),
+                  std::back_inserter(scale_values));
+
+        return status::success;
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
 static_merge_options(const context& ctx,
                      const std::string& model_file_path,
                      const std::string& options_file_path,

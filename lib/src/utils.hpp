@@ -338,6 +338,8 @@ get_error_message(const efyj::status s) noexcept
         "csv_parser scale value unknown",
         "csv parser column conversion failure",
         "csv parser basic attribute unknown",
+        "extract option same input files",
+        "extract option fail open file",
         "merge option same input/output dexi file",
         "merge option fail to open file",
         "option input vector inconsistent",

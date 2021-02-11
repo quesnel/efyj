@@ -134,7 +134,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
     std::vector<int> convertheader(atts.size(), 0);
     std::vector<std::string> columns;
     std::string line;
-    int id = -1;
+    size_t id;
 
     line_reader ls(is.get());
 
