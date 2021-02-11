@@ -24,6 +24,8 @@
 
 #include <fmt/format.h>
 
+#include <cassert>
+
 namespace efyj {
 
 inline bool

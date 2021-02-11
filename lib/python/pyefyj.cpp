@@ -192,4 +192,35 @@ PYBIND11_MODULE(pyefyj, m)
       R"pbdoc(
         Compute prediction of a DEXi file.
     )pbdoc");
+
+    m.def(
+      "merge",
+      [&ctx](const std::string& model_file_path,
+             const std::string& output_file_path,
+             const std::vector<std::string>& simulations,
+             const std::vector<std::string>& places,
+             const std::vector<int> departments,
+             const std::vector<int> years,
+             const std::vector<int> observed,
+             const std::vector<int>& scale_values) -> bool {
+          const auto ret = efyj::static_merge_options(ctx,
+                                                      model_file_path,
+                                                      output_file_path,
+                                                      simulations,
+                                                      places,
+                                                      departments,
+                                                      years,
+                                                      observed,
+                                                      scale_values);
+
+          if (ret != efyj::status::success) {
+              py::print("merge failed");
+              return false;
+          }
+
+          return true;
+      },
+      R"pbdoc(
+        Merge options data into existing DEXi file.
+    )pbdoc");
 }

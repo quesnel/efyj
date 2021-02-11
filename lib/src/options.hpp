@@ -111,7 +111,7 @@ public:
      *
      * @throw std::bad_alloc or csv_parser_error.
      */
-    void read(const context& ctx, FILE* is, const Model& model);
+    void read(const context& ctx, const input_file& is, const Model& model);
 
     bool have_subdataset() const
     {

@@ -352,40 +352,31 @@ get_error_message(const efyj::status s) noexcept
     return ret[elem];
 }
 
-class c_file
+class output_file
 {
-public:
-    enum class file_mode
-    {
-        read,
-        write
-    };
-
 private:
     std::FILE* file = nullptr;
 
 public:
-    c_file() noexcept = default;
+    output_file() noexcept = default;
 
-#ifdef _WIN32
-    c_file(const char* file_path, file_mode mode = file_mode::read) noexcept
+    output_file(const char* file_path) noexcept
     {
-        if (fopen_s(&file, file_path, mode == file_mode::read ? "r" : "w"))
+#ifdef _WIN32
+        if (fopen_s(&file, file_path, "w"))
             file = nullptr;
-    }
 #else
-    c_file(const char* file_path, file_mode mode = file_mode::read)
-      : file(std::fopen(file_path, mode == file_mode::read ? "r" : "w"))
-    {}
+            file = std::fopen(file_path, "w"));
 #endif
+    }
 
-    c_file(c_file&& other) noexcept
-        : file(other.file)
+    output_file(output_file&& other) noexcept
+      : file(other.file)
     {
         other.file = nullptr;
     }
 
-    c_file& operator=(c_file&& other) noexcept
+    output_file& operator=(output_file&& other) noexcept
     {
         if (file) {
             std::fclose(file);
@@ -397,8 +388,8 @@ public:
         return *this;
     }
 
-    c_file(const c_file&) = delete;
-    c_file& operator=(const c_file&) = delete;
+    output_file(const output_file&) = delete;
+    output_file& operator=(const output_file&) = delete;
 
     std::FILE* get() const noexcept
     {
@@ -410,21 +401,78 @@ public:
         return file != nullptr;
     }
 
-    ~c_file()
+    ~output_file()
     {
         if (file)
             std::fclose(file);
     }
 
-    void vprint(const std::string_view format, const fmt::format_args args)
+    void vprint(const std::string_view format,
+                const fmt::format_args args) const
     {
         fmt::vprint(file, format, args);
     }
 
     template<typename... Args>
-    void print(const std::string_view format, const Args&... args)
+    void print(const std::string_view format, const Args&... args) const
     {
         vprint(format, fmt::make_format_args(args...));
+    }
+};
+
+class input_file
+{
+private:
+    std::FILE* file = nullptr;
+
+public:
+    input_file() noexcept = default;
+
+    input_file(const char* file_path) noexcept
+    {
+#ifdef _WIN32
+        if (fopen_s(&file, file_path, "r"))
+            file = nullptr;
+#else
+            file = std::fopen(file_path, "r"));
+#endif
+    }
+
+    input_file(input_file&& other) noexcept
+      : file(other.file)
+    {
+        other.file = nullptr;
+    }
+
+    input_file& operator=(input_file&& other) noexcept
+    {
+        if (file) {
+            std::fclose(file);
+            file = nullptr;
+        }
+
+        file = other.file;
+        other.file = nullptr;
+        return *this;
+    }
+
+    input_file(const input_file&) = delete;
+    input_file& operator=(const input_file&) = delete;
+
+    std::FILE* get() const noexcept
+    {
+        return file;
+    }
+
+    bool is_open() const noexcept
+    {
+        return file != nullptr;
+    }
+
+    ~input_file()
+    {
+        if (file)
+            std::fclose(file);
     }
 };
 

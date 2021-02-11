@@ -126,7 +126,7 @@ struct line_reader
 };
 
 void
-Options::read(const context& ctx, FILE* is, const Model& model)
+Options::read(const context& ctx, const input_file& is, const Model& model)
 {
     clear();
 
@@ -136,7 +136,7 @@ Options::read(const context& ctx, FILE* is, const Model& model)
     std::string line;
     int id = -1;
 
-    line_reader ls(is);
+    line_reader ls(is.get());
 
     {
         auto opt_line = ls.getline();

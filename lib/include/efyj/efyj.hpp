@@ -96,6 +96,11 @@ enum class status
     csv_parser_column_conversion_failure,
     csv_parser_basic_attribute_unknown,
 
+    merge_option_same_inputoutput,
+    merge_option_fail_open_file,
+
+    option_input_inconsistent,
+
     unknown_error
 };
 
@@ -121,7 +126,8 @@ using not_enough_memory_callback = std::function<void()>;
 using numeric_cast_error_callback = std::function<void()>;
 using internal_error_callback = std::function<void()>;
 using solver_error_callback = std::function<void()>;
-using file_error_callback = std::function<void(const std::string_view file_name)>;
+using file_error_callback =
+  std::function<void(const std::string_view file_name)>;
 
 struct context
 {
@@ -367,6 +373,13 @@ static_evaluate(const context& ctx,
                 const std::vector<int>& scale_values,
                 evaluation_results& ret) noexcept;
 
+EFYJ_API
+status
+static_evaluate(const context& ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path,
+                evaluation_results& ret) noexcept;
+
 EFYJ_API status
 static_adjustment(const context& ctx,
                   const std::string& model_file_path,
@@ -394,6 +407,23 @@ static_prediction(const context& ctx,
                   bool reduce,
                   int limit,
                   unsigned int thread) noexcept;
+
+EFYJ_API status
+static_merge_options(const context& ctx,
+                     const std::string& model,
+                     const std::string& options,
+                     const std::string& output_file_path) noexcept;
+
+EFYJ_API status
+static_merge_options(const context& ctx,
+                     const std::string& model_file_path,
+                     const std::string& output_file_path,
+                     const std::vector<std::string>& simulations,
+                     const std::vector<std::string>& places,
+                     const std::vector<int> departments,
+                     const std::vector<int> years,
+                     const std::vector<int> observed,
+                     const std::vector<int>& scale_values) noexcept;
 
 EFYJ_API
 model_data

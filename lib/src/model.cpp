@@ -44,7 +44,7 @@ namespace efyj {
 
 struct Model_reader
 {
-    Model_reader(const context& ctx_, FILE* is_, Model& dex_) noexcept
+    Model_reader(const context& ctx_, const input_file& is_, Model& dex_) noexcept
       : ctx(ctx_)
       , is(is_)
       , dex(dex_)
@@ -77,7 +77,7 @@ struct Model_reader
             }
 
             size_t szlen =
-              fread(buffer, 1, static_cast<size_t>(buffer_size), is);
+              fread(buffer, 1, static_cast<size_t>(buffer_size), is.get());
             int len = static_cast<int>(szlen);
             done = len < buffer_size;
 
@@ -99,7 +99,7 @@ struct Model_reader
 
 private:
     const context& ctx;
-    FILE* is;
+    const input_file& is;
     Model& dex;
     dexi_parser_status::tag m_status{ dexi_parser_status::tag::done };
 
@@ -447,7 +447,8 @@ private:
 #endif
 
                 if (ret != 1)
-                    debug(pd->ctx, 
+                    debug(
+                      pd->ctx,
                       "Option with unreadable string `{}'. Use `0' instead\n",
                       pd->char_data);
 
@@ -586,7 +587,10 @@ private:
         try {
             pd->char_data.append(s, len);
         } catch (...) {
-            error(pd->ctx, "dexi: bad alloc ({} + {})\n", pd->char_data.size(), len);
+            error(pd->ctx,
+                  "dexi: bad alloc ({} + {})\n",
+                  pd->char_data.size(),
+                  len);
             XML_StopParser(pd->parser, XML_FALSE);
         }
     }
@@ -633,76 +637,74 @@ struct to_xml
 struct Model_writer
 {
     Model_writer(const context& ctx_,
-                 FILE* os_,
+                 const output_file& os_,
                  const Model& Model_data_) noexcept
       : ctx(ctx_)
       , os(os_)
       , dex(Model_data_)
       , space(0)
     {
-        assert(os_);
+        assert(os_.is_open());
     }
 
     void write()
     {
-        fprintf(os,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<DEXi>\n"
-                "  <VERSION>%s</VERSION>\n"
-                "  <CREATED>%s</CREATED>\n"
-                "  <NAME>%s</NAME>\n"
-                "  <DESCRIPTION>\n",
-                dex.version.c_str(),
-                dex.created.c_str(),
-                dex.name.c_str());
+        os.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                 "<DEXi>\n"
+                 "  <VERSION>{}</VERSION>\n"
+                 "  <CREATED>{}</CREATED>\n"
+                 "  <NAME>{}</NAME>\n"
+                 "  <DESCRIPTION>\n",
+                 dex.version,
+                 dex.created,
+                 dex.name);
 
         for (const auto& desc : dex.description) {
             if (desc.empty())
-                fprintf(os, "    <LINE/>\n");
+                os.print("    <LINE/>\n");
             else
-                fprintf(os, "    <LINE>%s</LINE>\n", desc.c_str());
+                os.print("    <LINE>{}</LINE>\n", desc);
         }
 
-        fputs("  </DESCRIPTION>\n", os);
+        os.print("  </DESCRIPTION>\n");
         space = 2;
         write_Model_option(dex.options);
 
         if (!dex.reports.empty()) {
-            fprintf(os,
-                    "  <SETTINGS>\n"
-                    "    <REPORTS>6</REPORTS>\n"
-                    "    <OPTDATATYPE>Zero</OPTDATATYPE>\n"
-                    "    <OPTLEVELS>False</OPTLEVELS>\n"
-                    "  </SETTINGS>\n");
+            os.print("  <SETTINGS>\n"
+                     "    <REPORTS>6</REPORTS>\n"
+                     "    <OPTDATATYPE>Zero</OPTDATATYPE>\n"
+                     "    <OPTLEVELS>False</OPTLEVELS>\n"
+                     "  </SETTINGS>\n");
         }
 
         if (!dex.attributes.empty())
             write_Model_attribute(0);
 
-        fputs("</DEXi>\n", os);
+        os.print("</DEXi>\n");
     }
 
 private:
     const context& ctx;
-    FILE* os;
+    const output_file& os;
     const Model& dex;
     int space;
 
     void make_space() const
     {
-        fprintf(os, "%*c", space, ' ');
+        os.print("{:{}}", "", space);
     }
 
     void make_space(int adding) const
     {
-        fprintf(os, "%*c", space + adding, ' ');
+        os.print("{:{}}", "", space + adding);
     }
 
     void write_Model_option(const std::vector<std::string>& opts)
     {
         for (const auto& opt : opts) {
             make_space();
-            fprintf(os, "<OPTION>%s</OPTION>\n", opt.c_str());
+            os.print("<OPTION>{}</OPTION>\n", opt);
         }
     }
 
@@ -710,7 +712,7 @@ private:
     {
         for (const auto& opt : opts) {
             make_space();
-            fprintf(os, "<OPTION>%d</OPTION>\n", opt);
+            os.print("<OPTION>{}</OPTION>\n", opt);
         }
     }
 
@@ -718,7 +720,7 @@ private:
     {
         for (size_t i = 0, e = dex.options.size(); i != e; ++i) {
             make_space();
-            fprintf(os, "<OPTION>0</OPTION>\n");
+            os.print("<OPTION>0</OPTION>\n");
         }
     }
 
@@ -728,77 +730,69 @@ private:
         const attribute& att(dex.attributes[child]);
 
         make_space();
-        fputs(" <ATTRIBUTE>\n", os);
+        os.print(" <ATTRIBUTE>\n");
 
         space += 2;
 
         make_space();
-        fprintf(os, "<NAME>%s</NAME>\n", att.name.c_str());
+        os.print("<NAME>{}</NAME>\n", att.name);
         make_space();
-        fprintf(
-          os, "<DESCRIPTION>%s</DESCRIPTION>\n", att.description.c_str());
+        os.print("<DESCRIPTION>{}</DESCRIPTION>\n", att.description);
         make_space();
-        fputs("<SCALE>\n", os);
+        os.print("<SCALE>\n");
 
         space += 2;
 
         if (!att.scale.scale.empty() && !att.scale.order) {
             make_space();
-            fputs("<ORDER>NONE</ORDER>\n", os);
+            os.print("<ORDER>NONE</ORDER>\n");
         }
 
         for (const auto& sv : att.scale.scale) {
             make_space();
-            fputs("<SCALEVALUE>\n", os);
+            os.print("<SCALEVALUE>\n");
             make_space(2);
-            fprintf(os, "<NAME>%s</NAME>\n", sv.name.c_str());
+            os.print("<NAME>{}</NAME>\n", sv.name);
 
             if (!sv.description.empty()) {
                 make_space(2);
-                fprintf(os,
-                        "<DESCRIPTION>%s</DESCRIPTION>\n",
-                        sv.description.c_str());
+                os.print("<DESCRIPTION>{}</DESCRIPTION>\n", sv.description);
             }
 
             if (sv.group >= 0) {
                 make_space(2);
-                fprintf(
-                  os, "<GROUP>%s</GROUP>\n", dex.group[sv.group].c_str());
+                os.print("<GROUP>{}</GROUP>\n", dex.group[sv.group]);
             }
 
             make_space();
-            fputs("</SCALEVALUE>\n", os);
+            os.print("</SCALEVALUE>\n");
         }
 
         space -= 2;
         make_space();
-        fputs("</SCALE>\n", os);
+        os.print("</SCALE>\n");
 
         if (!att.functions.empty()) {
             make_space();
-            fputs("<FUNCTION>\n", os);
+            os.print("<FUNCTION>\n");
 
             if (!att.functions.low.empty()) {
                 make_space(2);
-                fprintf(os, "<LOW>%s</LOW>\n", att.functions.low.c_str());
+                os.print("<LOW>{}</LOW>\n", att.functions.low);
             }
 
             if (!att.functions.entered.empty()) {
                 make_space(2);
-                fprintf(os,
-                        "<ENTERED>%s</ENTERED>\n",
-                        att.functions.entered.c_str());
+                os.print("<ENTERED>{}</ENTERED>\n", att.functions.entered);
             }
 
             if (!att.functions.consist.empty()) {
                 make_space(2);
-                fprintf(os,
-                        "<CONSIST>%s</CONSIST>\n",
-                        att.functions.consist.c_str());
+                os.print("<CONSIST>{}</CONSIST>\n", att.functions.consist);
             }
 
             make_space();
-            fputs("</FUNCTION>\n", os);
+            os.print("</FUNCTION>\n");
         }
 
         if (!att.is_basic() || att.options.size() < dex.options.size())
@@ -811,7 +805,7 @@ private:
 
         space -= 2;
         make_space();
-        fputs("</ATTRIBUTE>\n", os);
+        os.print("</ATTRIBUTE>\n");
     }
 };
 
@@ -828,34 +822,28 @@ reorder_basic_attribute(const Model& model,
 }
 
 void
-Model::write_options(FILE* os) const
+Model::write_options(const output_file& os) const
 {
-    assert(os);
-
     std::vector<size_t> ordered_att;
     reorder_basic_attribute(*this, (size_t)0, ordered_att);
-    fputs("simulation;place;department;year;", os);
+    os.print("simulation;place;department;year;");
 
     for (auto child : ordered_att)
-        fprintf(os, "%s;", attributes[child].name.c_str());
+        os.print("{};", attributes[child].name);
 
-    fprintf(os, "%s\n", attributes[0].name.c_str());
+    os.print("{}\n", attributes[0].name);
 
-    for (std::vector<std::string>::size_type opt{ 0 }; opt != options.size();
-         ++opt) {
-        fprintf(os, "%s../;-;0;0;", options[opt].c_str());
+    for (size_t opt{ 0 }; opt != options.size(); ++opt) {
+        os.print("{}../;-;0;0;", options[opt]);
 
         for (auto child : ordered_att)
-            fprintf(os,
-                    "%s;",
-                    attributes[child]
-                      .scale.scale[attributes[child].options[opt]]
-                      .name.c_str());
+            os.print("{};",
+                     attributes[child]
+                       .scale.scale[attributes[child].options[opt]]
+                       .name);
 
-        fprintf(
-          os,
-          "%s\n",
-          attributes[0].scale.scale[attributes[0].options[opt]].name.c_str());
+        os.print("{}\n",
+                 attributes[0].scale.scale[attributes[0].options[opt]].name);
     }
 }
 
@@ -926,7 +914,7 @@ Model::set_options(const options_data& opts)
 }
 
 void
-Model::read(const context& ctx, FILE* is)
+Model::read(const context& ctx, const input_file& is)
 {
     Model_reader dr(ctx, is, *this);
 
@@ -938,7 +926,7 @@ Model::read(const context& ctx, FILE* is)
 }
 
 void
-Model::write(const context& ctx, FILE* os)
+Model::write(const context& ctx, const output_file& os)
 {
     Model_writer dw(ctx, os, *this);
     dw.write();

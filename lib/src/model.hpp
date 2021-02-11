@@ -33,7 +33,7 @@
 #include <vector>
 
 #include <efyj/efyj.hpp>
-
+#include "utils.hpp"
 #include "model.hpp"
 
 #include <cassert>
@@ -161,9 +161,9 @@ struct Model
     std::vector<std::string> group;
     std::deque<attribute> attributes;
 
-    void read(const context& ctx, FILE* is);
+    void read(const context& ctx, const input_file& is);
 
-    void write(const context& ctx, FILE* os);
+    void write(const context& ctx, const output_file& os);
 
     /** Release all dynamically allocated memory. */
     void clear();
@@ -195,7 +195,7 @@ struct Model
         return ret;
     }
 
-    void write_options(FILE* os) const;
+    void write_options(const output_file& os) const;
     options_data write_options() const;
     void set_options(const options_data& options);
 };
