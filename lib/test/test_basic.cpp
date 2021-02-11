@@ -316,6 +316,7 @@ test_classic_Model_file()
             EnsuresNotThrow(dex2.read(ctx, is), std::exception);
         }
 
+        fmt::print("Compare `{}' with `{}'\n", filepath, output);
         Ensures(dex1 == dex2);
     }
 }

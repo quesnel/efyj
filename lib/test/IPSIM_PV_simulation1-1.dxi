@@ -2,6 +2,10 @@
 <DEXi>
   <VERSION>4.01</VERSION>
   <CREATED>2015-04-21T11:35:35</CREATED>
+  <NAME>CAR</NAME>
+  <DESCRIPTION>
+    <LINE>test</LINE>
+  </DESCRIPTION>
   <OPTION>1</OPTION>
   <OPTION>2</OPTION>
   <OPTION>3</OPTION>
@@ -109,7 +113,9 @@
   <OPTION>105</OPTION>
   <OPTION>106</OPTION>
   <OPTION>107</OPTION>
-  <SETTINGS/>
+  <SETTINGS>
+    <REPORTS>6</REPORTS>
+  </SETTINGS>
   <ATTRIBUTE>
     <NAME>Dynamique du piétin-verse</NAME>
     <DESCRIPTION>Evolution de l&apos;incidence (% de talles infectées) en fonction des stades de développement du blé.Les dynamiques ne dépendent que du niveau d&apos;incidence finale .Elles sont décrites par le modèle de Gilligan dont les paramètres sont fixés par l&apos;échelle de stade de développement.</DESCRIPTION>
