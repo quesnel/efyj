@@ -49,30 +49,7 @@ public:
 
     Options() = default;
 
-    Options(const std::vector<std::string>& simulations_,
-            const std::vector<std::string>& places_,
-            const std::vector<int> departments_,
-            const std::vector<int> years_,
-            const std::vector<int> observed_,
-            const std::vector<int>& scale_values)
-      : simulations(simulations_)
-      , places(places_)
-      , departments(departments_)
-      , years(years_)
-      , observed(observed_)
-    {
-        const auto rows = simulations.size();
-        const auto nb_basic_attributes = scale_values.size() / rows;
-
-        options.init(rows, nb_basic_attributes);
-
-        for (size_t r = 0, i = 0; r < rows; ++r)
-            for (size_t c = 0; c < nb_basic_attributes; ++c, ++i)
-                options(r, c) = scale_values[i];
-
-        init_dataset();
-        check();
-    }
+    Options(const data& d);
 
     const std::vector<int>& get_subdataset(int id) const noexcept
     {

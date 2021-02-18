@@ -27,12 +27,8 @@
 #include <charconv>
 #include <cstdio>
 
-#include <fmt/color.h>
 #include <fmt/format.h>
-
-#ifdef __unix__
-#include <unistd.h>
-#endif
+#include <fmt/ranges.h>
 
 static void
 usage()
@@ -73,43 +69,37 @@ ends_with(const std::string_view str, const std::string_view suffix) noexcept
            str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-// static bool
-// starts_with(const std::string_view str, const std::string_view prefix)
-// noexcept
-// {
-//     return str.size() >= prefix.size() &&
-//            str.compare(0, prefix.size(), prefix) == 0;
-// }
+static int
+information(const efyj::context& ctx, const std::string& model_file_path)
+{
+    efyj::information_results out;
+    if (const auto ret = efyj::information(ctx, model_file_path, out);
+        is_bad(ret)) {
+        fmt::print(stderr,
+                   "Fail to extract information from file {}\n",
+                   model_file_path);
+
+        return EXIT_FAILURE;
+    }
+
+    fmt::print("attributes;max-scale-value;\n");
+    for (size_t i = 0, e = out.basic_attribute_names.size(); i != e; ++i)
+        fmt::print("{};{}\n",
+                   out.basic_attribute_names[i],
+                   out.basic_attribute_scale_value_numbers);
+
+    return EXIT_SUCCESS;
+}
 
 static int
 extract(const efyj::context& ctx,
         const std::string& model,
         const std::string& output)
 {
-    try {
-        efyj::extract_options_to_file(ctx, model, output);
-    } catch (const std::bad_alloc&) {
-        fmt::print(stderr, "not enough memory\n");
-        return EXIT_FAILURE;
-    } catch (const std::logic_error& e) {
-        fmt::print(stderr, "internal error: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
-        fmt::print(stderr, "failure: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const efyj::csv_parser_status& e) {
-        fmt::print(stderr,
-                   "fail to read csv file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
-        return EXIT_FAILURE;
-    } catch (const efyj::dexi_parser_status& e) {
-        fmt::print(stderr,
-                   "Fail to parse DEXi file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
+    if (const auto ret = efyj::extract_options(ctx, model, output);
+        is_bad(ret)) {
+        fmt::print(
+          stderr, "Fail to extract data trom file {} to {}\n", model, output);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -121,32 +111,13 @@ merge(const efyj::context& ctx,
       const std::string& option,
       const std::string& output)
 {
-    try {
-        efyj::merge_options(ctx, model, option, output);
-    } catch (const std::bad_alloc&) {
-        fmt::print(stderr, "not enough memory\n");
-        return EXIT_FAILURE;
-    } catch (const std::logic_error& e) {
-        fmt::print(stderr, "internal error: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
-        fmt::print(stderr, "failure: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const efyj::csv_parser_status& e) {
-        fmt::print(stderr,
-                   "fail to read csv file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
-        return EXIT_FAILURE;
-    } catch (const efyj::dexi_parser_status& e) {
-        fmt::print(stderr,
-                   "Fail to parse DEXi file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
+    if (const auto ret = merge_options(ctx, model, option, output);
+        is_bad(ret)) {
+        fmt::print(
+          stderr, "Fail to merge {} with {} into {}\n", model, option, output);
         return EXIT_FAILURE;
     }
+
     return EXIT_SUCCESS;
 }
 
@@ -155,34 +126,40 @@ evaluate(const efyj::context& ctx,
          const std::string& model,
          const std::string& option)
 {
-    try {
-        auto result = efyj::evaluate(ctx, model, option);
-    } catch (const std::bad_alloc&) {
-        fmt::print(stderr, "not enough memory\n");
-        return EXIT_FAILURE;
-    } catch (const std::logic_error& e) {
-        fmt::print(stderr, "internal error: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
-        fmt::print(stderr, "failure: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const efyj::csv_parser_status& e) {
-        fmt::print(stderr,
-                   "fail to read csv file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
-        return EXIT_FAILURE;
-    } catch (const efyj::dexi_parser_status& e) {
-        fmt::print(stderr,
-                   "Fail to parse DEXi file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
+    efyj::evaluation_results out;
+    if (const auto ret = efyj::evaluate(ctx, model, option, out);
+        is_bad(ret)) {
+        fmt::print(stderr, "Fail to evaluate {} with {}\n", model, option);
         return EXIT_FAILURE;
     }
+
+    assert(out.simulations.size() == out.observations.size());
+
+    fmt::print("observation;simulation\n");
+    for (size_t i = 0, e = out.simulations.size(); i != e; ++i)
+        fmt::print("{};{}\n", out.observations[i], out.simulations[i]);
+
+    fmt::print("linear-kappa: {}\n", out.linear_weighted_kappa);
+    fmt::print("squared-kappa: {}\n", out.squared_weighted_kappa);
+
     return EXIT_SUCCESS;
 }
+
+template<>
+struct fmt::formatter<efyj::modifier>
+{
+    constexpr auto parse(format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const efyj::modifier& p, FormatContext& ctx)
+    {
+        return format_to(
+          ctx.out(), "({}, {}, {})", p.attribute, p.line, p.value);
+    }
+};
 
 static int
 adjustment(const efyj::context& ctx,
@@ -192,31 +169,28 @@ adjustment(const efyj::context& ctx,
            int limit,
            unsigned int thread)
 {
-    try {
-        auto result =
-          efyj::adjustment(ctx, model, option, reduce, limit, thread);
-    } catch (const std::bad_alloc&) {
-        fmt::print(stderr, "not enough memory\n");
-        return EXIT_FAILURE;
-    } catch (const std::logic_error& e) {
-        fmt::print(stderr, "internal error: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
-        fmt::print(stderr, "failure: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const efyj::csv_parser_status& e) {
-        fmt::print(stderr,
-                   "fail to read csv file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
-        return EXIT_FAILURE;
-    } catch (const efyj::dexi_parser_status& e) {
-        fmt::print(stderr,
-                   "Fail to parse DEXi file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
+    const auto ret = efyj::adjustment(
+      ctx,
+      model,
+      option,
+      [](const auto& r) {
+          fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
+                      r.kappa,
+                      r.time,
+                      r.kappa_computed,
+                      r.function_computed,
+                      r.modifiers);
+
+          return true;
+      },
+      reduce,
+      limit,
+      thread);
+
+    if (!efyj::is_success(ret)) {
+        fmt::print(
+          stderr, "Fail to adjust: {}\n", efyj::get_error_message(ret));
+
         return EXIT_FAILURE;
     }
 
@@ -231,31 +205,28 @@ prediction(const efyj::context& ctx,
            int limit,
            unsigned int thread)
 {
-    try {
-        auto result =
-          efyj::prediction(ctx, model, option, reduce, limit, thread);
-    } catch (const std::bad_alloc&) {
-        fmt::print(stderr, "not enough memory\n");
-        return EXIT_FAILURE;
-    } catch (const std::logic_error& e) {
-        fmt::print(stderr, "internal error: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const std::runtime_error& e) {
-        fmt::print(stderr, "failure: {}\n", e.what());
-        return EXIT_FAILURE;
-    } catch (const efyj::csv_parser_status& e) {
-        fmt::print(stderr,
-                   "fail to read csv file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
-        return EXIT_FAILURE;
-    } catch (const efyj::dexi_parser_status& e) {
-        fmt::print(stderr,
-                   "Fail to parse DEXi file at line {} column {}: {}\n",
-                   e.m_line,
-                   e.m_column,
-                   e.tag_name());
+    const auto ret = efyj::prediction(
+      ctx,
+      model,
+      option,
+      [](const auto& r) {
+          fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
+                      r.kappa,
+                      r.time,
+                      r.kappa_computed,
+                      r.function_computed,
+                      r.modifiers);
+
+          return true;
+      },
+      reduce,
+      limit,
+      thread);
+
+    if (!efyj::is_success(ret)) {
+        fmt::print(
+          stderr, "Fail to prediction: {}\n", efyj::get_error_message(ret));
+
         return EXIT_FAILURE;
     }
 
@@ -265,6 +236,7 @@ prediction(const efyj::context& ctx,
 enum class operation_type
 {
     none,
+    info,
     extract,
     merge,
     evaluate,
@@ -302,6 +274,8 @@ struct attributes
             show_version = true;
         else if (opt.compare("jobs") == 0 && arg)
             consume_arg = parse_jobs(*arg);
+        else if (opt.compare("information") == 0)
+            type = operation_type::info;
         else if (opt.compare("extract") == 0)
             type = operation_type::extract;
         else if (opt.compare("merge") == 0)
@@ -337,6 +311,8 @@ struct attributes
             show_version = true;
         else if (opt == 'j' && arg)
             consume_arg = parse_jobs(*arg);
+        else if (opt == 'i')
+            type = operation_type::info;
         else if (opt == 'x')
             type = operation_type::extract;
         else if (opt == 'm')
@@ -514,6 +490,14 @@ main(int argc, char* argv[])
 
     switch (atts.type) {
     case operation_type::none:
+        break;
+    case operation_type::info:
+        if (dexifile1.empty())
+            fmt::print(stderr, "[inforation] missing dexi.\n");
+        else {
+            fmt::print("Extract information from file `{}'\n", dexifile1);
+            ::information(ctx, dexifile1);
+        }
         break;
     case operation_type::extract:
         if (dexifile1.empty())

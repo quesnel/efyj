@@ -66,6 +66,15 @@ PYBIND11_MODULE(pyefyj, m)
       .def_readonly("kappa_computed", &efyj::result::kappa_computed)
       .def_readonly("function_computed", &efyj::result::function_computed);
 
+    py::class_<efyj::data>(m, "data")
+      .def(py::init<>())
+      .def_readwrite("simulations", &efyj::data::simulations)
+      .def_readwrite("places", &efyj::data::places)
+      .def_readwrite("departments", &efyj::data::departments)
+      .def_readwrite("years", &efyj::data::years)
+      .def_readwrite("observed", &efyj::data::observed)
+      .def_readwrite("scale_values", &efyj::data::scale_values);
+
     efyj::context ctx;
 
     ctx.dexi_cb = [](const efyj::status s,
@@ -102,8 +111,10 @@ PYBIND11_MODULE(pyefyj, m)
       "information",
       [&ctx](const std::string& s) -> efyj::information_results {
           efyj::information_results out;
-          if (efyj::static_information(ctx, s, out) != efyj::status::success)
+
+          if (const auto ret = efyj::information(ctx, s, out); is_bad(ret))
               py::print("information(...) failed");
+
           return out;
       },
       R"pbdoc(
@@ -112,26 +123,31 @@ PYBIND11_MODULE(pyefyj, m)
     )pbdoc");
 
     m.def(
+      "evaluate",
+      [&ctx](const std::string& s,
+             const efyj::data& d) -> efyj::evaluation_results {
+          efyj::evaluation_results out;
+
+          if (const auto ret = efyj::evaluate(ctx, s, d, out); is_bad(ret)) {
+              py::print("evaluation(...) failed");
+          }
+
+          return out;
+      },
+      R"pbdoc(
+        Evaluation of DEXi file with data.
+    )pbdoc");
+
+    m.def(
       "adjustment",
-      [&ctx](
-        const std::string& model_file_path,
-        const std::vector<std::string>& simulations,
-        const std::vector<std::string>& places,
-        const std::vector<int> departments,
-        const std::vector<int> years,
-        const std::vector<int> observed,
-        const std::vector<int>& scale_values) -> std::vector<efyj::result> {
-          std::vector<efyj::result> out;
-          const auto ret = efyj::static_adjustment(
+      [&ctx](const std::string& model_file_path,
+             const efyj::data& d) -> efyj::result {
+          efyj::result out;
+          const auto ret = efyj::adjustment(
             ctx,
             model_file_path,
-            simulations,
-            places,
-            departments,
-            years,
-            observed,
-            scale_values,
-            [&out](const std::vector<efyj::result>& r) {
+            d,
+            [&out](const efyj::result& r) {
                 try {
                     out = r;
                     return true;
@@ -143,7 +159,7 @@ PYBIND11_MODULE(pyefyj, m)
             0,
             1u);
 
-          if (ret != efyj::status::success)
+          if (is_bad(ret))
               py::print("adjustment failed");
 
           return out;
@@ -155,24 +171,13 @@ PYBIND11_MODULE(pyefyj, m)
     m.def(
       "prediction",
       [&ctx](const std::string& model_file_path,
-             const std::vector<std::string>& simulations,
-             const std::vector<std::string>& places,
-             const std::vector<int> departments,
-             const std::vector<int> years,
-             const std::vector<int> observed,
-             const std::vector<int>& scale_values) {
-          std::vector<efyj::result> out;
-
-          const auto ret = efyj::static_prediction(
+             const efyj::data& d) -> efyj::result {
+          efyj::result out;
+          const auto ret = efyj::prediction(
             ctx,
             model_file_path,
-            simulations,
-            places,
-            departments,
-            years,
-            observed,
-            scale_values,
-            [&out](const std::vector<efyj::result>& r) {
+            d,
+            [&out](const efyj::result& r) {
                 try {
                     out = r;
                     return true;
@@ -184,8 +189,8 @@ PYBIND11_MODULE(pyefyj, m)
             0,
             1u);
 
-          if (ret != efyj::status::success)
-              py::print("prediction failed");
+          if (is_bad(ret))
+              py::print("adjustment failed");
 
           return out;
       },
@@ -197,24 +202,11 @@ PYBIND11_MODULE(pyefyj, m)
       "merge",
       [&ctx](const std::string& model_file_path,
              const std::string& output_file_path,
-             const std::vector<std::string>& simulations,
-             const std::vector<std::string>& places,
-             const std::vector<int> departments,
-             const std::vector<int> years,
-             const std::vector<int> observed,
-             const std::vector<int>& scale_values) -> bool {
-          const auto ret = efyj::static_merge_options(ctx,
-                                                      model_file_path,
-                                                      output_file_path,
-                                                      simulations,
-                                                      places,
-                                                      departments,
-                                                      years,
-                                                      observed,
-                                                      scale_values);
-
-          if (ret != efyj::status::success) {
-              py::print("merge failed");
+             const efyj::data& d) -> bool {
+          if (const auto ret =
+                efyj::merge_options(ctx, model_file_path, output_file_path, d);
+              efyj::is_bad(ret)) {
+              py::print("merge failed\n");
               return false;
           }
 

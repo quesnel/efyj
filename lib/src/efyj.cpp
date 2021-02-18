@@ -90,6 +90,92 @@ extract_model(const context& ctx, const std::string& model_file_path)
     return ret;
 }
 
+static void
+reorder_basic_attribute(const Model& model,
+                        size_t att,
+                        std::vector<size_t>& out)
+{
+    if (model.attributes[att].is_basic())
+        out.push_back(att);
+    else
+        for (auto child : model.attributes[att].children)
+            reorder_basic_attribute(model, child, out);
+}
+
+static status
+get_options_model(const context& ctx, const Model& mdl, const output_file& os)
+{
+    std::vector<size_t> ordered_att;
+    reorder_basic_attribute(mdl, (size_t)0, ordered_att);
+    os.print("simulation;place;department;year;");
+
+    for (auto child : ordered_att)
+        os.print("{};", mdl.attributes[child].name);
+
+    os.print("{}\n", mdl.attributes[0].name);
+
+    for (size_t opt{ 0 }; opt != mdl.options.size(); ++opt) {
+        os.print("{}../;-;0;0;", mdl.options[opt]);
+
+        for (auto child : ordered_att)
+            os.print("{};",
+                     mdl.attributes[child]
+                       .scale.scale[mdl.attributes[child].options[opt]]
+                       .name);
+
+        os.print(
+          "{}\n",
+          mdl.attributes[0].scale.scale[mdl.attributes[0].options[opt]].name);
+    }
+
+    return status::success;
+}
+
+static status
+get_options_model(const context& ctx, const Model& mdl, Options& opts)
+{
+    std::vector<size_t> ordered_att;
+    reorder_basic_attribute(mdl, (size_t)0, ordered_att);
+
+    opts.options.init(ordered_att.size(), mdl.options.size());
+
+    for (size_t opt = 0; opt != mdl.options.size(); ++opt) {
+        opts.simulations.emplace_back(mdl.options[opt] + "../");
+        opts.places.emplace_back("-");
+        opts.departments.emplace_back(0);
+        opts.years.emplace_back(0);
+
+        for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c)
+            opts.options(opt, c) = mdl.attributes[ordered_att[c]].options[opt];
+
+        opts.observed.emplace_back(mdl.attributes[0].options[opt]);
+    }
+
+    return status::success;
+}
+
+static status
+set_options_model(const context& ctx, Model& mdl, const Options& opts)
+{
+    std::vector<size_t> ordered_att;
+    reorder_basic_attribute(mdl, 0, ordered_att);
+
+    for (size_t i = 0, e = mdl.attributes.size(); i != e; ++i)
+        mdl.attributes[i].options.clear();
+
+    for (size_t i = 0, end_i = ordered_att.size(); i != end_i; ++i) {
+        const auto att = ordered_att[i];
+
+        for (size_t opt = 0, end_opt = opts.options.rows(); opt != end_opt;
+             ++opt)
+            mdl.attributes[att].options.emplace_back(opts.options(opt, i));
+    }
+
+    mdl.options = opts.simulations;
+
+    return status::success;
+}
+
 static constexpr status
 csv_parser_status_convert(const csv_parser_status::tag s) noexcept
 {
@@ -135,9 +221,9 @@ dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
 }
 
 status
-static_information(const context& ctx,
-                   const std::string& model_file_path,
-                   information_results& ret) noexcept
+information(const context& ctx,
+            const std::string& model_file_path,
+            information_results& ret) noexcept
 {
     try {
         const auto model = make_model(ctx, model_file_path);
@@ -167,46 +253,6 @@ static_information(const context& ctx,
     } catch (...) {
         return status::unknown_error;
     }
-}
-
-static evaluation_results
-evaluate(const context& ctx, Model& model, Options& options)
-{
-    solver_stack solver(model);
-    const auto max_opt = options.simulations.size();
-
-    evaluation_results ret;
-    ret.options.resize(options.options.cols(), max_opt);
-    // TODO ret.attributes.resize(COL, max_opt);
-    ret.simulations.resize(max_opt, 0);
-    ret.observations.resize(max_opt, 0);
-    ret.confusion.resize(
-      model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
-
-    fmt::print("situation;observation;simulation\n");
-    for (size_t opt = 0; opt != max_opt; ++opt) {
-        ret.observations[opt] = options.observed[opt];
-        ret.simulations[opt] = solver.solve(options.options.row(opt));
-        ret.confusion(ret.observations[opt], ret.simulations[opt])++;
-
-        fmt::print(
-          "{};{};{}\n", opt, ret.observations[opt], ret.simulations[opt]);
-    }
-
-    weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
-    ret.squared_weighted_kappa =
-      kappa_c.squared(ret.observations, ret.simulations);
-    fmt::print("kappa squared: {}\n", ret.squared_weighted_kappa);
-
-    ret.linear_weighted_kappa =
-      kappa_c.linear(ret.observations, ret.simulations);
-    fmt::print("kappa linear: {}\n", ret.linear_weighted_kappa);
-
-    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
-        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
-            ret.options(c, r) = options.options(r, c);
-
-    return ret;
 }
 
 static bool
@@ -277,33 +323,48 @@ make_options(const context& ctx,
     }
 }
 
+static void
+evaluate(const context& ctx,
+         Model& model,
+         Options& options,
+         evaluation_results& out)
+{
+    solver_stack solver(model);
+    const auto max_opt = options.simulations.size();
+    out.options.resize(options.options.cols(), max_opt);
+    out.simulations.resize(max_opt, 0);
+    out.observations.resize(max_opt, 0);
+    out.confusion.resize(
+      model.attributes[0].scale.size(), model.attributes[0].scale.size(), 0);
+
+    for (size_t opt = 0; opt != max_opt; ++opt) {
+        out.observations[opt] = options.observed[opt];
+        out.simulations[opt] = solver.solve(options.options.row(opt));
+        out.confusion(out.observations[opt], out.simulations[opt])++;
+    }
+
+    weighted_kappa_calculator kappa_c(model.attributes[0].scale.size());
+    out.squared_weighted_kappa =
+      kappa_c.squared(out.observations, out.simulations);
+    out.linear_weighted_kappa =
+      kappa_c.linear(out.observations, out.simulations);
+
+    for (size_t r = 0, end_r = options.options.rows(); r != end_r; ++r)
+        for (size_t c = 0, end_c = options.options.cols(); c != end_c; ++c)
+            out.options(c, r) = options.options(r, c);
+}
+
 status
-static_evaluate(const context& ctx,
-                const std::string& model_file_path,
-                const std::vector<std::string>& simulations,
-                const std::vector<std::string>& places,
-                const std::vector<int>& departments,
-                const std::vector<int>& years,
-                const std::vector<int>& observed,
-                const std::vector<int>& scale_values,
-                evaluation_results& out) noexcept
+evaluate(const context& ctx,
+         const std::string& model_file_path,
+         const data& d,
+         evaluation_results& out) noexcept
 {
     try {
         auto model = make_model(ctx, model_file_path);
-        Options options;
-        if (const auto ret = make_options(ctx,
-                                          model,
-                                          simulations,
-                                          places,
-                                          departments,
-                                          years,
-                                          observed,
-                                          scale_values,
-                                          options);
-            ret != status::success)
-            return ret;
+        Options options(d);
 
-        out = evaluate(ctx, model, options);
+        evaluate(ctx, model, options, out);
 
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
@@ -322,16 +383,16 @@ static_evaluate(const context& ctx,
 }
 
 status
-static_evaluate(const context& ctx,
-                const std::string& model_file_path,
-                const std::string& options_file_path,
-                evaluation_results& ret) noexcept
+evaluate(const context& ctx,
+         const std::string& model_file_path,
+         const std::string& options_file_path,
+         evaluation_results& ret) noexcept
 {
     try {
         auto model = make_model(ctx, model_file_path);
         auto options = make_options(ctx, model, options_file_path);
 
-        ret = evaluate(ctx, model, options);
+        evaluate(ctx, model, options, ret);
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
@@ -348,99 +409,51 @@ static_evaluate(const context& ctx,
     }
 }
 
-evaluation_results
-evaluate(const context& ctx,
-         const std::string& model_file_path,
-         const std::string& options_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
-
-    return evaluate(ctx, model, options);
-}
-
-evaluation_results
-evaluate(const context& ctx,
-         const std::string& model_file_path,
-         const options_data& opts)
-{
-    auto model = make_model(ctx, model_file_path);
-    Options options;
-
-    options.set(opts);
-
-    return evaluate(ctx, model, options);
-}
-
-std::vector<result>
+status
 adjustment(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
+           const result_callback& callback,
            bool reduce,
            int limit,
-           unsigned int /*thread*/)
+           unsigned int thread) noexcept
 {
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
-
-    efyj::adjustment_evaluator adj(ctx, model, options);
-    return adj.run(limit, 0.0, reduce);
-}
-
-std::vector<result>
-prediction(const context& ctx,
-           const std::string& model_file_path,
-           const std::string& options_file_path,
-           bool reduce,
-           int limit,
-           unsigned int thread)
-{
-    fmt::print("Start prediction: reduce {} limit {} thread {}\n",
-               reduce,
-               limit,
-               thread);
-
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
-
-    if (thread <= 1) {
-        efyj::prediction_evaluator pre(ctx, model, options);
-        return pre.run(limit, 0.0, reduce);
-    } else {
-        efyj::prediction_thread_evaluator pre(ctx, model, options);
-        return pre.run(limit, 0.0, reduce, thread);
+    try {
+        auto model = make_model(ctx, model_file_path);
+        auto options = make_options(ctx, model, options_file_path);
+        efyj::adjustment_evaluator adj(ctx, model, options);
+        adj.run(callback, limit, 0.0, reduce);
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
     }
+
+    return status::success;
 }
 
 status
-static_adjustment(const context& ctx,
-                  const std::string& model_file_path,
-                  const std::vector<std::string>& simulations,
-                  const std::vector<std::string>& places,
-                  const std::vector<int> departments,
-                  const std::vector<int> years,
-                  const std::vector<int> observed,
-                  const std::vector<int>& scale_values,
-                  result_callback callback,
-                  bool reduce,
-                  int limit,
-                  unsigned int thread) noexcept
+adjustment(const context& ctx,
+           const std::string& model_file_path,
+           const data& d,
+           const result_callback& callback,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept
 {
     try {
-        if (!is_valid_input_size(simulations.size(),
-                                 places.size(),
-                                 departments.size(),
-                                 years.size(),
-                                 observed.size()))
-            return status::unconsistent_input_vector;
-
         auto model = make_model(ctx, model_file_path);
-        Options options(
-          simulations, places, departments, years, observed, scale_values);
-
+        Options options(d);
         efyj::adjustment_evaluator adj(ctx, model, options);
-        const auto ret = adj.run(limit, 0.0, reduce);
-        (void)callback(ret);
+        adj.run(callback, limit, 0.0, reduce);
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
@@ -460,41 +473,25 @@ static_adjustment(const context& ctx,
 }
 
 status
-static_prediction(const context& ctx,
-                  const std::string& model_file_path,
-                  const std::vector<std::string>& simulations,
-                  const std::vector<std::string>& places,
-                  const std::vector<int> departments,
-                  const std::vector<int> years,
-                  const std::vector<int> observed,
-                  const std::vector<int>& scale_values,
-                  result_callback callback,
-                  bool reduce,
-                  int limit,
-                  unsigned int thread) noexcept
+prediction(const context& ctx,
+           const std::string& model_file_path,
+           const std::string& options_file_path,
+           const result_callback& callback,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept
 {
     try {
-        if (!is_valid_input_size(simulations.size(),
-                                 places.size(),
-                                 departments.size(),
-                                 years.size(),
-                                 observed.size()))
-            return status::unconsistent_input_vector;
-
         auto model = make_model(ctx, model_file_path);
-
-        Options options(
-          simulations, places, departments, years, observed, scale_values);
+        auto options = make_options(ctx, model, options_file_path);
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
-            auto ret = pre.run(limit, 0.0, reduce);
-            (void)callback(ret);
+            pre.run(callback, limit, 0.0, reduce);
             return status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
-            auto ret = pre.run(limit, 0.0, reduce, thread);
-            (void)callback(ret);
+            pre.run(callback, limit, 0.0, reduce, thread);
             return status::success;
         }
     } catch (const numeric_cast_error& /*e*/) {
@@ -515,9 +512,48 @@ static_prediction(const context& ctx,
 }
 
 status
-static_extract_options(const context& ctx,
-                       const std::string& model_file_path,
-                       const std::string& output_file_path) noexcept
+prediction(const context& ctx,
+           const std::string& model_file_path,
+           const data& d,
+           const result_callback& callback,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept
+{
+    try {
+        auto model = make_model(ctx, model_file_path);
+        Options options(d);
+
+        if (thread <= 1) {
+            efyj::prediction_evaluator pre(ctx, model, options);
+            pre.run(callback, limit, 0.0, reduce);
+            return status::success;
+        } else {
+            efyj::prediction_thread_evaluator pre(ctx, model, options);
+            pre.run(callback, limit, 0.0, reduce, thread);
+            return status::success;
+        }
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                const std::string& output_file_path) noexcept
 {
     try {
         debug(ctx,
@@ -542,8 +578,7 @@ static_extract_options(const context& ctx,
             return status::merge_option_fail_open_file;
         }
 
-        model.write_options(ofs);
-        return status::success;
+        return get_options_model(ctx, model, ofs);
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
     } catch (const internal_error& /*e*/) {
@@ -562,84 +597,31 @@ static_extract_options(const context& ctx,
 }
 
 status
-static_extract_options(const context& ctx,
-                       const std::string& model_file_path,
-                       std::vector<std::string>& simulations,
-                       std::vector<std::string>& places,
-                       std::vector<int> departments,
-                       std::vector<int> years,
-                       std::vector<int> observed,
-                       std::vector<int>& scale_values) noexcept
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                data& out) noexcept
 {
     try {
         debug(
           ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
         auto model = make_model(ctx, model_file_path);
-        auto data = model.write_options();
+        Options opts;
 
-        simulations = std::move(data.simulations);
-        places = std::move(data.places);
-        departments = std::move(data.departments);
-        years = std::move(data.years);
-        observed = std::move(data.observed);
+        if (auto ret = get_options_model(ctx, model, opts); !is_success(ret))
+            return ret;
 
-        std::copy(data.options.begin(),
-                  data.options.end(),
-                  std::back_inserter(scale_values));
+        out.simulations = std::move(opts.simulations);
+        out.places = std::move(opts.places);
+        out.departments = std::move(opts.departments);
+        out.years = std::move(opts.years);
+        out.observed = std::move(opts.observed);
 
-        return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
-    } catch (...) {
-        return status::unknown_error;
-    }
+        out.scale_values.clear();
+        std::copy_n(opts.options.data(),
+                    opts.options.size(),
+                    std::back_inserter(out.scale_values));
 
-    return status::success;
-}
-
-status
-static_merge_options(const context& ctx,
-                     const std::string& model_file_path,
-                     const std::string& options_file_path,
-                     const std::string& output_file_path) noexcept
-{
-    try {
-        debug(ctx,
-              "[efyj] make DEXi file {} from the DEXi {}/ csv {}",
-              output_file_path,
-              model_file_path,
-              options_file_path);
-
-        if (model_file_path == output_file_path) {
-            if (ctx.file_cb)
-                ctx.file_cb(model_file_path);
-
-            return status::merge_option_same_inputoutput;
-        }
-
-        auto model = make_model(ctx, model_file_path);
-        auto options =
-          extract_options(ctx, model_file_path, options_file_path);
-
-        const auto ofs = output_file(output_file_path.c_str());
-        if (!ofs.is_open()) {
-            if (ctx.file_cb)
-                ctx.file_cb(output_file_path);
-
-            return status::merge_option_fail_open_file;
-        }
-
-        model.set_options(options);
-        model.write(ctx, ofs);
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
@@ -659,27 +641,75 @@ static_merge_options(const context& ctx,
 }
 
 static void
-reorder_basic_attribute(const Model& model,
-                        size_t att,
-                        std::vector<size_t>& out)
+extract_options_to_file(const context& ctx,
+                        const std::string& model_file_path,
+                        const std::string& output_file_path)
 {
-    if (model.attributes[att].is_basic())
-        out.push_back(att);
+    auto model = make_model(ctx, model_file_path);
+
+    const auto file = output_file(output_file_path.c_str());
+    if (file.is_open())
+        get_options_model(ctx, model, file);
     else
-        for (auto child : model.attributes[att].children)
-            reorder_basic_attribute(model, child, out);
+        fmt::print("Fail to open csv file `{}'\n", output_file_path.c_str());
 }
 
-EFYJ_API status
-static_merge_options(const context& ctx,
-                     const std::string& model_file_path,
-                     const std::string& output_file_path,
-                     const std::vector<std::string>& simulations,
-                     const std::vector<std::string>& places,
-                     const std::vector<int> departments,
-                     const std::vector<int> years,
-                     const std::vector<int> observed,
-                     const std::vector<int>& scale_values) noexcept
+status
+merge_options(const context& ctx,
+              const std::string& model_file_path,
+              const std::string& options_file_path,
+              const std::string& output_file_path) noexcept
+{
+    try {
+        debug(ctx,
+              "[efyj] make DEXi file {} from the DEXi {}/ csv {}",
+              output_file_path,
+              model_file_path,
+              options_file_path);
+
+        if (model_file_path == output_file_path) {
+            if (ctx.file_cb)
+                ctx.file_cb(model_file_path);
+
+            return status::merge_option_same_inputoutput;
+        }
+
+        auto model = make_model(ctx, model_file_path);
+        auto options = make_options(ctx, model, options_file_path);
+
+        const auto ofs = output_file(output_file_path.c_str());
+        if (!ofs.is_open()) {
+            if (ctx.file_cb)
+                ctx.file_cb(output_file_path);
+
+            return status::merge_option_fail_open_file;
+        }
+
+        set_options_model(ctx, model, options);
+        model.write(ctx, ofs);
+        return status::success;
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
+merge_options(const context& ctx,
+              const std::string& model_file_path,
+              const std::string& output_file_path,
+              const data& d) noexcept
 {
     try {
         notice(ctx,
@@ -695,19 +725,7 @@ static_merge_options(const context& ctx,
         }
 
         auto model = make_model(ctx, model_file_path);
-        Options options;
-        auto ret = make_options(ctx,
-                                model,
-                                simulations,
-                                places,
-                                departments,
-                                years,
-                                observed,
-                                scale_values,
-                                options);
-
-        if (ret != status::success)
-            return ret;
+        Options options(d);
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
@@ -752,85 +770,6 @@ static_merge_options(const context& ctx,
     }
 
     return status::success;
-}
-
-options_data
-extract_options(const context& ctx, const std::string& model_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-
-    return model.write_options();
-}
-
-options_data
-extract_options(const context& ctx,
-                const std::string& model_file_path,
-                const std::string& options_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-    auto options = make_options(ctx, model, options_file_path);
-
-    options_data ret;
-    ret.simulations = options.simulations;
-    ret.places = options.places;
-    ret.departments = options.departments;
-    ret.years = options.years;
-    ret.observed = options.observed;
-
-    const auto rows = options.options.rows();
-    const auto columns = options.options.cols();
-
-    ret.options.resize(rows, columns);
-
-    for (size_t r = 0, end_r = rows; r != end_r; ++r)
-        for (size_t c = 0, end_c = columns; c != end_c; ++c)
-            ret.options(r, c) = options.options(r, c);
-
-    return ret;
-}
-
-void
-extract_options_to_file(const context& ctx,
-                        const std::string& model_file_path,
-                        const std::string& output_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-
-    const auto file = output_file(output_file_path.c_str());
-    if (file.is_open())
-        model.write_options(file);
-    else
-        fmt::print("Fail to open csv file `{}'\n", output_file_path.c_str());
-}
-
-void
-merge_options(const context& ctx,
-              const std::string& model_file_path,
-              const std::string& options_file_path,
-              const std::string& output_file_path)
-{
-    debug(ctx,
-          "[efyj] make DEXi file {} from the DEXi {}/ csv {}",
-          output_file_path.c_str(),
-          model_file_path.c_str(),
-          options_file_path.c_str());
-
-    if (model_file_path == output_file_path) {
-        warning(ctx, "Can not merge into the same file\n");
-        return;
-    }
-
-    auto model = make_model(ctx, model_file_path);
-    auto options = extract_options(ctx, model_file_path, options_file_path);
-
-    const auto ofs = output_file(output_file_path.c_str());
-    if (!ofs.is_open()) {
-        warning(ctx, "Fail to open DEXi file {}.\n", output_file_path.c_str());
-        return;
-    }
-
-    model.set_options(options);
-    model.write(ctx, ofs);
 }
 
 } // namespace efyj

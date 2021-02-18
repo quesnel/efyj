@@ -32,9 +32,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <efyj/efyj.hpp>
-#include "utils.hpp"
 #include "model.hpp"
+#include "utils.hpp"
+#include <efyj/efyj.hpp>
 
 #include <cassert>
 #include <cstring>
@@ -196,10 +196,6 @@ struct Model
 
         return ret;
     }
-
-    void write_options(const output_file& os) const;
-    options_data write_options() const;
-    void set_options(const options_data& options);
 };
 
 bool

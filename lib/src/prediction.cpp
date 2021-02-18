@@ -41,12 +41,15 @@ prediction_evaluator::prediction_evaluator(const context& ctx,
           "options does not have enough data to build the training set");
 }
 
-std::vector<result>
-prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
+void
+prediction_evaluator::run(const result_callback& cb,
+                          int line_limit,
+                          double time_limit,
+                          int reduce_mode)
 {
     (void)time_limit;
 
-    std::vector<result> ret;
+    result ret;
 
     info(m_context, "[Computation starts]\n");
 
@@ -85,13 +88,13 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
              1,
              std::chrono::duration<double>(m_end - m_start).count());
 
-        ret.emplace_back();
-
-        ret.back().kappa = kappa;
-        ret.back().time =
-          std::chrono::duration<double>(m_end - m_start).count();
-        ret.back().kappa_computed = 1;
-        ret.back().function_computed = numeric_cast<unsigned long>(m_options.size());
+        ret.kappa = kappa;
+        ret.time = std::chrono::duration<double>(m_end - m_start).count();
+        ret.kappa_computed = 1;
+        ret.function_computed = numeric_cast<unsigned long>(m_options.size());
+        
+        if (!cb(ret))
+            return;
     }
 
     for (size_t step = 1; step <= max_step; ++step) {
@@ -161,24 +164,19 @@ prediction_evaluator::run(int line_limit, double time_limit, int reduce_mode)
         auto time = std::chrono::duration<double>(m_end - m_start).count();
         loop++;
 
-        ret.emplace_back();
-        ret.back().kappa = line_kappa;
-        ret.back().time = time;
-        ret.back().kappa_computed = static_cast<unsigned long int>(loop);
-        ret.back().function_computed = static_cast<unsigned long int>(0);
+        ret.kappa = line_kappa;
+        ret.time = time;
+        ret.kappa_computed = static_cast<unsigned long int>(loop);
+        ret.function_computed = static_cast<unsigned long int>(0);
+        ret.modifiers.clear();
 
-        info(m_context,
-             "| {} | {:13.10f} | {} | {} | ",
-             step,
-             line_kappa,
-             loop,
-             std::chrono::duration<double>(m_end - m_start).count());
+        for (const auto elem : m_updaters)
+            ret.modifiers.emplace_back(
+              std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
 
-        print(m_context, m_updaters);
-        info(m_context, "\n");
+        if (!cb(ret))
+            return;
     }
-
-    return ret;
 }
 
 } // namespace efyj

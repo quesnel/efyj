@@ -125,6 +125,26 @@ struct line_reader
     std::string m_buffer;
 };
 
+Options::Options(const data& d)
+  : simulations(d.simulations)
+  , places(d.places)
+  , departments(d.departments)
+  , years(d.years)
+  , observed(d.observed)
+{
+    const auto rows = simulations.size();
+    const auto nb_basic_attributes = d.scale_values.size() / rows;
+
+    options.init(rows, nb_basic_attributes);
+
+    for (size_t r = 0, i = 0; r < rows; ++r)
+        for (size_t c = 0; c < nb_basic_attributes; ++c, ++i)
+            options(r, c) = d.scale_values[i];
+
+    init_dataset();
+    check();
+}
+
 void
 Options::read(const context& ctx, const input_file& is, const Model& model)
 {
@@ -212,10 +232,11 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
           model.attributes[0].scale.find_scale_value(columns.back());
 
         if (!opt_obs) {
-            error(ctx,
-                  "Options: error in csv file line {}: unknown scale value `{}'\n",
-                  line_number,
-                  columns.back());
+            error(
+              ctx,
+              "Options: error in csv file line {}: unknown scale value `{}'\n",
+              line_number,
+              columns.back());
 
             throw csv_parser_status(
               csv_parser_status::tag::scale_value_unknown,
@@ -261,8 +282,9 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
 
                 throw csv_parser_status{
                     csv_parser_status::tag::scale_value_unknown,
-                        static_cast<size_t>(line_number),
-                        static_cast<size_t>(columns.size()) };
+                    static_cast<size_t>(line_number),
+                    static_cast<size_t>(columns.size())
+                };
             }
 
             options(options.rows() - 1, attid) = *opt_option;

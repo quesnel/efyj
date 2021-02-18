@@ -51,9 +51,10 @@ struct adjustment_evaluator
                          const Model& model,
                          const Options& options);
 
-    std::vector<result> run(int line_limit,
-                            double time_limit,
-                            int reduce_mode);
+    void run(const result_callback& cb,
+             int line_limit,
+             double time_limit,
+             int reduce_mode);
 };
 
 } // namespace efyj

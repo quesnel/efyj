@@ -62,6 +62,16 @@ public:
         m_data.resize(m_capacity * m_line_size);
     }
 
+    const int* data() const noexcept
+    {
+        return m_data.data();
+    }
+
+    size_t size() const noexcept
+    {
+        return cols() * rows();
+    }
+
     void init(size_type rows, size_type cols)
     {
         m_capacity = compute_capacity(rows);

@@ -289,23 +289,9 @@ struct options_data
 
 struct information_results
 {
-    information_results() = default;
-
-    information_results(const status st_) noexcept
-      : st(st_)
-    {}
-
     std::vector<std::string> basic_attribute_names;
     std::vector<int> basic_attribute_scale_value_numbers;
-
-    status st = { status::success };
 };
-
-inline bool
-is_success(const information_results& e) noexcept
-{
-    return e.st == status::success;
-}
 
 struct evaluation_results
 {
@@ -318,30 +304,28 @@ struct evaluation_results
     double squared_weighted_kappa;
 };
 
-struct static_evaluation_results
+inline bool
+is_success(const status& st) noexcept
 {
-    static_evaluation_results() = default;
-
-    static_evaluation_results(const status st_)
-      : st{ st_ }
-    {}
-
-    static_evaluation_results(evaluation_results&& results_)
-      : results(std::move(results_))
-    {}
-
-    evaluation_results results;
-    status st = { status::success };
-};
+    return st == status::success;
+}
 
 inline bool
-is_success(const static_evaluation_results& e) noexcept
+is_bad(const status& st) noexcept
 {
-    return e.st == status::success;
+    return st != status::success;
 }
 
 struct modifier
 {
+    modifier() noexcept = default;
+
+    modifier(const int attribute_, const int line_, const int value_) noexcept
+      : attribute(attribute_)
+      , line(line_)
+      , value(value_)
+    {}
+
     int attribute;
     int line;
     int value;
@@ -356,150 +340,126 @@ struct result
     unsigned long int function_computed;
 };
 
-using result_callback = std::function<bool(const std::vector<result>&)>;
+struct data
+{
+    std::vector<std::string> simulations;
+    std::vector<std::string> places;
+    std::vector<int> departments;
+    std::vector<int> years;
+    std::vector<int> observed;
+    std::vector<int> scale_values;
+
+    size_t rows() const noexcept
+    {
+        return simulations.size();
+    }
+
+    size_t cols() const noexcept
+    {
+        const auto r = rows();
+        return r ? scale_values.size() / r : (size_t)0;
+    }
+
+    bool is_size_valid() const noexcept
+    {
+        const auto r = rows();
+        return r == places.size() && r == departments.size() &&
+               r == years.size() && r == observed.size() &&
+               scale_values.size() % r == 0;
+    }
+};
+
+/**
+ * @brief Use during the @c adjustment or @c prediction function call to show
+ * compuation results.
+ *
+ * This function can return false to stop the computation of the next line
+ * modifier.
+ */
+using result_callback = std::function<bool(const result&)>;
 
 EFYJ_API
 status
-static_information(const context& ctx,
-                   const std::string& model_file_path,
-                   information_results& ret) noexcept;
+information(const context& ctx,
+            const std::string& model_file_path,
+            information_results& ret) noexcept;
 
 EFYJ_API
 status
-static_evaluate(const context& ctx,
-                const std::string& model_file_path,
-                const std::vector<std::string>& simulations,
-                const std::vector<std::string>& places,
-                const std::vector<int> departments,
-                const std::vector<int> years,
-                const std::vector<int> observed,
-                const std::vector<int>& scale_values,
-                evaluation_results& ret) noexcept;
-
-EFYJ_API
-status
-static_evaluate(const context& ctx,
-                const std::string& model_file_path,
-                const std::string& options_file_path,
-                evaluation_results& ret) noexcept;
-
-EFYJ_API status
-static_adjustment(const context& ctx,
-                  const std::string& model_file_path,
-                  const std::vector<std::string>& simulations,
-                  const std::vector<std::string>& places,
-                  const std::vector<int> departments,
-                  const std::vector<int> years,
-                  const std::vector<int> observed,
-                  const std::vector<int>& scale_values,
-                  result_callback callback,
-                  bool reduce,
-                  int limit,
-                  unsigned int thread) noexcept;
-
-EFYJ_API status
-static_prediction(const context& ctx,
-                  const std::string& model_file_path,
-                  const std::vector<std::string>& simulations,
-                  const std::vector<std::string>& places,
-                  const std::vector<int> departments,
-                  const std::vector<int> years,
-                  const std::vector<int> observed,
-                  const std::vector<int>& scale_values,
-                  result_callback callback,
-                  bool reduce,
-                  int limit,
-                  unsigned int thread) noexcept;
-
-EFYJ_API status
-static_extract_options(const context& ctx,
-                       const std::string& model_file_path,
-                       const std::string& output_file_path) noexcept;
-
-EFYJ_API status
-static_extract_options(const context& ctx,
-                       const std::string& model_file_path,
-                       std::vector<std::string>& simulations,
-                       std::vector<std::string>& places,
-                       std::vector<int> departments,
-                       std::vector<int> years,
-                       std::vector<int> observed,
-                       std::vector<int>& scale_values) noexcept;
-
-
-EFYJ_API status
-static_merge_options(const context& ctx,
-                     const std::string& model,
-                     const std::string& options,
-                     const std::string& output_file_path) noexcept;
-
-EFYJ_API status
-static_merge_options(const context& ctx,
-                     const std::string& model_file_path,
-                     const std::string& output_file_path,
-                     const std::vector<std::string>& simulations,
-                     const std::vector<std::string>& places,
-                     const std::vector<int> departments,
-                     const std::vector<int> years,
-                     const std::vector<int> observed,
-                     const std::vector<int>& scale_values) noexcept;
-
-EFYJ_API
-model_data
-extract_model(const context& ctx, const std::string& model_file_path);
-
-EFYJ_API
-evaluation_results
 evaluate(const context& ctx,
          const std::string& model_file_path,
-         const std::string& options_file_path);
+         const data& d,
+         evaluation_results& ret) noexcept;
 
 EFYJ_API
-evaluation_results
+status
 evaluate(const context& ctx,
          const std::string& model_file_path,
-         const options_data& opts);
+         const std::string& options_file_path,
+         evaluation_results& ret) noexcept;
 
-EFYJ_API
-std::vector<result>
+EFYJ_API status
 adjustment(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
+           const result_callback& callback,
            bool reduce,
            int limit,
-           unsigned int thread);
+           unsigned int thread) noexcept;
 
-EFYJ_API
-std::vector<result>
+EFYJ_API status
+adjustment(const context& ctx,
+           const std::string& model_file_path,
+           const data& d,
+           const result_callback& callback,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept;
+
+EFYJ_API status
+prediction(const context& ctx,
+           const std::string& model_file_path,
+           const data& d,
+           const result_callback& callback,
+           bool reduce,
+           int limit,
+           unsigned int thread) noexcept;
+
+EFYJ_API status
 prediction(const context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
+           const result_callback& callback,
            bool reduce,
            int limit,
-           unsigned int thread);
+           unsigned int thread) noexcept;
 
-EFYJ_API
-void
-extract_options_to_file(const context& ctx,
-                        const std::string& model_file_path,
-                        const std::string& output_file_path);
-
-EFYJ_API
-options_data
-extract_options(const context& ctx, const std::string& model_file_path);
-
-EFYJ_API
-options_data
+EFYJ_API status
 extract_options(const context& ctx,
                 const std::string& model_file_path,
-                const std::string& options_file_path);
+                const std::string& output_file_path) noexcept;
 
-EFYJ_API
-void
+EFYJ_API status
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                data& out) noexcept;
+
+EFYJ_API status
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                const data& d) noexcept;
+
+EFYJ_API status
 merge_options(const context& ctx,
               const std::string& model,
               const std::string& options,
-              const std::string& output_file_path);
+              const std::string& output_file_path) noexcept;
+
+EFYJ_API status
+merge_options(const context& ctx,
+              const std::string& model_file_path,
+              const std::string& output_file_path,
+              const data& d) noexcept;
 
 } // namespace efyj
 

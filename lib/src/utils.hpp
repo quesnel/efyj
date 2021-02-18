@@ -198,20 +198,6 @@ max_value(int need, size_t real) noexcept
     return need <= 0 ? real : std::min(static_cast<size_t>(need), real);
 }
 
-// inline unsigned
-// get_hardware_concurrency() noexcept
-// {
-// #ifdef __unix__
-//     long nb_procs = ::sysconf(_SC_NPROCESSORS_ONLN);
-//     if (nb_procs == -1)
-//         return hardware_concurrency_from_std();
-
-//     return static_cast<unsigned>(nb_procs);
-// #else
-//     return hardware_concurrency_from_std();
-// #endif
-// }
-
 inline std::string
 make_new_name(const std::string& filepath, unsigned int id) noexcept
 {

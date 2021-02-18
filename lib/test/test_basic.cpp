@@ -316,7 +316,6 @@ test_classic_Model_file()
             EnsuresNotThrow(dex2.read(ctx, is), std::exception);
         }
 
-        fmt::print("Compare `{}' with `{}'\n", filepath, output);
         Ensures(dex1 == dex2);
     }
 }
@@ -585,36 +584,20 @@ test_problem_Model_file()
     };
 
     std::string outputfilename("outputXXXXX.csv");
-    auto output = make_temporary(outputfilename);
 
     for (const auto& filepath : filepaths) {
-        {
-            fmt::print("read {}\n", filepath);
-            efyj::Model model;
+        efyj::status ret;
+        auto output = make_temporary(outputfilename);
 
-            const auto ifs = efyj::input_file(filepath.c_str());
-            Ensures(ifs.is_open());
+        ret = efyj::extract_options(ctx, filepath, output);
+        Ensures(efyj::is_success(ret));
 
-            model.read(ctx, ifs);
+        efyj::evaluation_results eval;
+        ret = efyj::evaluate(ctx, filepath, output, eval);
+        Ensures(efyj::is_success(ret));
 
-            fmt::print("write {}\n", output);
-            const auto ofs = efyj::output_file(output.c_str());
-            Ensures(ofs.is_open());
-
-            model.write_options(ofs);
-        }
-
-        fmt::print("{} [{}]\n", filepath, output);
-
-        efyj::context ctx;
-        auto results = efyj::evaluate(ctx, filepath, output);
-
-        fmt::print("squared: {} linear: {}\n",
-                   results.squared_weighted_kappa,
-                   results.linear_weighted_kappa);
-
-        Ensures(results.linear_weighted_kappa == 1.0);
-        Ensures(results.squared_weighted_kappa == 1.0);
+        Ensures(eval.linear_weighted_kappa == 1.0);
+        Ensures(eval.squared_weighted_kappa == 1.0);
     }
 }
 
@@ -623,39 +606,39 @@ check_the_options_set_function()
 {
     change_pwd();
     efyj::context ctx;
+    efyj::status ret;
 
     auto output = make_temporary("CarXXXXXXXX.dxi");
 
-    {
-        efyj::Model model;
-        const auto ifs = efyj::input_file("Car.dxi");
-        Ensures(ifs.is_open());
+    ret = efyj::extract_options(ctx, "Car.dxi", output);
+    Ensures(efyj::is_success(ret));
 
-        model.read(ctx, ifs);
+    efyj::data opt1;
 
-        const auto ofs = efyj::output_file(output.c_str());
-        Ensures(ofs.is_open());
+    ret = efyj::extract_options(ctx, "Car.dxi", opt1);
+    Ensures(efyj::is_success(ret));
 
-        model.write_options(ofs);
-    }
+    efyj::data opt2 = opt1;
+    Ensures(opt1.rows() == opt2.rows());
+    Ensures(opt1.cols() == opt2.cols());
 
-    efyj::options_data model_file, options_file, options_;
-
-    auto opt1 = efyj::extract_options(ctx, "Car.dxi");
-    auto opt2 = efyj::extract_options(ctx, "Car.dxi", output);
-
-    Ensures(opt1.options.rows() == opt2.options.rows());
-    Ensures(opt1.options.columns() == opt2.options.columns());
-
+    ret = efyj::merge_options(ctx, "Car.dxi", output, opt2);
+    Ensures(efyj::is_success(ret));
     Ensures(opt1.simulations == opt2.simulations);
     Ensures(opt1.places == opt2.places);
     Ensures(opt1.departments == opt2.departments);
     Ensures(opt1.years == opt2.years);
     Ensures(opt1.observed == opt2.observed);
+    Ensures(opt1.scale_values == opt2.scale_values);
 
-    for (std::size_t row = 0; row != opt1.options.rows(); ++row)
-        for (std::size_t col = 0; col != opt1.options.columns(); ++col)
-            Ensures(opt1.options(row, col) == opt2.options(row, col));
+    ret = efyj::extract_options(ctx, "Car.dxi", opt2);
+    Ensures(efyj::is_success(ret));
+    Ensures(opt1.simulations == opt2.simulations);
+    Ensures(opt1.places == opt2.places);
+    Ensures(opt1.departments == opt2.departments);
+    Ensures(opt1.years == opt2.years);
+    Ensures(opt1.observed == opt2.observed);
+    Ensures(opt1.scale_values == opt2.scale_values);
 }
 
 void
