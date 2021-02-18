@@ -160,13 +160,6 @@ struct scope_exit
     std::function<void(void)> fct;
 };
 
-/**
- * Return number of available concurrency processor.
- * @return An integer greater or equal to 1.
- */
-unsigned
-get_hardware_concurrency() noexcept;
-
 void
 tokenize(const std::string& str,
          std::vector<std::string>& tokens,
