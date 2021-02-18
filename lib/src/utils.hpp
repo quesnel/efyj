@@ -160,25 +160,6 @@ struct scope_exit
     std::function<void(void)> fct;
 };
 
-/** \e make_new_name is used to create new file path with a suffix composed
- * with an identifier.
- * \param filepath Original filepath to be updated.  \e filepath can be empty *
- * or have and extension.
- * \param id Identifier to be attached to the origin filepath.
- * \return A new string represents modified \e filepath with the \e identifier.
- *
- * \example
- * \code
- * assert(make_new_name("example.dat", 0) == "example-0.dat");
- * assert(make_new_name("", 0) == "worker-0.dat");
- * assert(make_new_name("x.y.example.dat", 0) == "x.y.example-0.dat");
- * assert(make_new_name(".zozo", 0) == "worker-0.dat");
- * \endcode
- * \endexample
- */
-std::string
-make_new_name(const std::string& filepath, unsigned int id) noexcept;
-
 /**
  * Return number of available concurrency processor.
  * @return An integer greater or equal to 1.
@@ -196,25 +177,6 @@ inline constexpr size_t
 max_value(int need, size_t real) noexcept
 {
     return need <= 0 ? real : std::min(static_cast<size_t>(need), real);
-}
-
-inline std::string
-make_new_name(const std::string& filepath, unsigned int id) noexcept
-{
-    if (filepath.empty())
-        return fmt::format("worker-{}.log", id);
-
-    auto dotposition = filepath.find_last_of('.');
-    if (dotposition == 0u)
-        return fmt::format("worker-{}.log", id);
-
-    if (dotposition == filepath.size() - 1)
-        return fmt::format("{}-{}.log", filepath.substr(0, dotposition), id);
-
-    return fmt::format("{}-{}{}.log",
-                       filepath.substr(0, dotposition),
-                       id,
-                       filepath.substr(dotposition + 1));
 }
 
 inline void
