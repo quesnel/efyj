@@ -68,28 +68,6 @@ make_options(const context& ctx,
     return options;
 }
 
-model_data
-extract_model(const context& ctx, const std::string& model_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-    model_data ret;
-
-    ret.number = numeric_cast<int>(model.attributes.size());
-
-    for (size_t i = 0, e = model.attributes.size(); i != e; ++i) {
-        auto key = ret.attributes.emplace(model.attributes[i].name,
-                                          std::vector<std::string>());
-
-        for (auto& scale : model.attributes[i].scale.scale)
-            key.first->second.emplace_back(scale.name);
-
-        if (model.attributes[i].is_basic())
-            ret.basic_attributes.emplace_back(static_cast<int>(i));
-    }
-
-    return ret;
-}
-
 static void
 reorder_basic_attribute(const Model& model,
                         size_t att,

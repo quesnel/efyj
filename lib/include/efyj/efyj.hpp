@@ -269,24 +269,6 @@ struct csv_parser_status
 
 using value = int; // std::int8_t;
 
-struct model_data
-{
-    std::map<std::string, std::vector<std::string>> attributes;
-    std::vector<int> basic_attributes;
-    int number;
-};
-
-struct options_data
-{
-    std::vector<std::string> simulations;
-    std::vector<std::string> places;
-    std::vector<int> departments;
-    std::vector<int> years;
-    std::vector<int> observed;
-    std::vector<std::string> basic_attribute_names;
-    matrix<value> options;
-};
-
 struct information_results
 {
     std::vector<std::string> basic_attribute_names;

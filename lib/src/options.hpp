@@ -77,8 +77,6 @@ public:
                observed.empty();
     }
 
-    void set(const options_data& options);
-
     /** Reads CSV from the input stream and ensures correspondence between
      * the readed data and the model.
      *

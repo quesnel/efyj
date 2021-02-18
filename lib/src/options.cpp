@@ -374,27 +374,6 @@ Options::check()
 }
 
 void
-Options::set(const options_data& opts)
-{
-    simulations = opts.simulations;
-    places = opts.places;
-    departments = opts.departments;
-    years = opts.years;
-    observed = opts.observed;
-
-    const auto rows = opts.options.rows();
-    const auto columns = opts.options.columns();
-    options.init(rows, columns);
-
-    for (size_t r = 0; r != rows; ++r)
-        for (size_t c = 0; c != columns; ++c)
-            options(r, c) = opts.options(c, r);
-
-    init_dataset();
-    check();
-}
-
-void
 Options::clear() noexcept
 {
     std::vector<std::string>().swap(simulations);
