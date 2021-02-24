@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 INRA
+/* Copyright (C) 2016-2021 INRAE
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -19,64 +19,52 @@
  * IN THE SOFTWARE.
  */
 
-#include <Rcpp.h>
+#include "../../lib/src/utils.hpp"
 #include <efyj/efyj.hpp>
 
-class Rcontext : public efyj::logger
+#include <Rcpp.h>
+
+static void
+init_context(efyj::context& ctx) noexcept
 {
-public:
-    Rcontext()
-      : efyj::logger()
-    {
-    }
+    ctx.dexi_cb = [](const efyj::status s,
+                     int line,
+                     int column,
+                     const std::string_view tag) {
+        const auto s_str = efyj::get_error_message(s);
 
-    virtual ~Rcontext() noexcept {}
+        Rprintf("DEXi error: %.*s at line %d column %d with tag %.*s\n",
+                static_cast<int>(s_str.size()),
+                s_str.data(),
+                line,
+                column,
+                static_cast<int>(tag.size()),
+                tag.data());
+    };
 
-    virtual void write(int priority,
-                       const char* file,
-                       int line,
-                       const char* fn,
-                       const char* format,
-                       va_list ap) noexcept
-    {
-        if (priority <= 3) {
-            Rprintf("efyj %d at %d in function %s form file %s: ",
-                    priority,
-                    line,
-                    fn,
-                    file);
+    ctx.csv_cb = [](const efyj::status s, int line, int column) {
+        const auto s_str = efyj::get_error_message(s);
 
-            try {
-                std::string buffer(256, '\0');
-                int sz;
+        Rprintf("CSV error: %.*s at line %d column %d\n",
+                static_cast<int>(s_str.size()),
+                s_str.data(),
+                line,
+                column);
+    };
 
-                for (;;) {
-                    sz = std::vsnprintf(&buffer[0], buffer.size(), format, ap);
+    ctx.eov_cb = []() { Rprintf("Not enough memory to continue\n"); };
 
-                    if (sz < 0)
-                        return;
+    ctx.cast_cb = []() { Rprintf("Internal error: cast failure\n"); };
 
-                    if (static_cast<std::size_t>(sz) < buffer.size()) {
-                        Rprintf("%s", buffer.c_str());
-                        return;
-                    }
+    ctx.solver_cb = []() { Rprintf("Solver error\n"); };
 
-                    buffer.resize(sz + 1);
-                }
-            } catch (const std::exception& /*e*/) {
-            }
-        }
-    }
-
-    virtual void write(efyj::message_type m,
-                       const char* format,
-                       va_list args) noexcept
-    {
-        (void)m;
-        (void)format;
-        (void)args;
-    }
-};
+    ctx.file_cb = [](const std::string_view file_name) {
+        Rprintf("Error to access file `%.*s\n",
+                static_cast<int>(file_name.size()),
+                file_name.data());
+        ;
+    };
+}
 
 //' Extract information from DEXi file.
 //'
@@ -85,8 +73,8 @@ public:
 //'
 //' @param model The file path of the DEXi model
 //'
-//' @return A List with a list of scale value names for each attributes, a
-//' list of basic attributes and the number of attributes.
+//' @return A List of two List: a list of basic attribute names and a list of
+//' basic attribute max scale value number.
 //'
 //' @useDynLib refyj
 //' @importFrom Rcpp sourceCpp
@@ -94,24 +82,30 @@ public:
 //' @export
 // [[Rcpp::export]]
 Rcpp::List
-extract_model(const std::string& model)
+information(const std::string& model)
 {
     try {
-        auto ctx = std::make_shared<efyj::context>();
-        ctx->set_logger(std::unique_ptr<efyj::logger>(new Rcontext));
+        efyj::context ctx;
+        efyj::information_results out;
 
-        const auto x = efyj::extract_model(ctx, model);
+        init_context(ctx);
+
+        if (const auto ret = efyj::information(ctx, model, out); is_bad(ret)) {
+            Rprintf("refyj::information(...) failed\n");
+            return Rcpp::List();
+        }
 
         return Rcpp::List::create(
-          Rcpp::Named("attributes") = Rcpp::wrap(x.attributes),
-          Rcpp::Named("basic attributes") = Rcpp::wrap(x.basic_attributes),
-          Rcpp::Named("number") = x.number);
+          Rcpp::Named("basic_attribute_names") =
+            Rcpp::wrap(out.basic_attribute_names),
+          Rcpp::Named("basic_attribute_scale_values") =
+            Rcpp::wrap(out.basic_attribute_scale_value_numbers));
     } catch (const std::bad_alloc& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
+        Rprintf("refyj::information: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
+        Rprintf("refyj::information: %s\n", e.what());
     } catch (...) {
-        Rcpp::Rcout << "refyj: unknown error\n";
+        Rprintf("refyj::information: unknown error\n");
     }
 
     return Rcpp::List();
@@ -124,180 +118,59 @@ extract_model(const std::string& model)
 //' agregate attributes and simulations results.
 //'
 //' @param model The file path of the DEXi model
-//' @param options The file path of the csv options
+//' @param simulations A vector of strings
+//' @param places A vector of strings
+//' @param departments A vector of integers
+//' @param years A vector of integers
+//' @param observed A vector of integers
+//' @param scale_values A vector integers with
 //'
-//' @return A List with options (matrix of options), aggregate attributes and
-//' simulation results.
-//'
-//' @export
-// [[Rcpp::export]]
-Rcpp::List
-simulate(const std::string& model, const std::string& options)
-{
-    try {
-        auto ctx = std::make_shared<efyj::context>();
-        ctx->set_logger(std::unique_ptr<efyj::logger>(new Rcontext));
-
-        const auto x = efyj::simulate(ctx, model, options);
-
-        Rcpp::IntegerMatrix options(x.options.columns(), x.options.rows());
-        Rcpp::IntegerVector simulations(x.simulations.size());
-        Rcpp::IntegerMatrix attributes(x.attributes.columns(),
-                                       x.attributes.rows());
-
-        for (std::size_t r = 0, end_r = x.attributes.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.attributes.columns(); c != end_c;
-                 ++c)
-                attributes(c, r) = x.attributes(c, r);
-
-        for (std::size_t r = 0, end_r = x.options.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.options.columns(); c != end_c;
-                 ++c)
-                options(c, r) = x.options(c, r);
-
-        for (std::size_t i = 0, end_i = simulations.size(); i != end_i; ++i)
-            simulations(i) = x.simulations[i];
-
-        return Rcpp::List::create(Rcpp::Named("options") = options,
-                                  Rcpp::Named("attributes") = attributes,
-                                  Rcpp::Named("simulations") = simulations);
-    } catch (const std::bad_alloc& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
-    } catch (const std::exception& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
-    } catch (...) {
-        Rcpp::Rcout << "refyj: unknown error\n";
-    }
-
-    return Rcpp::List();
-}
-
-//' Evaluate all options for a dexi file.
-//'
-//' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
-//' agregate attributes and simulations results.
-//'
-//' @param model The file path of the DEXi model
-//' @param options The file path of the csv options
-//'
-//' @return A List with options (matrix of options), aggregate attributes and
-//' simulation results.
+//' @return A List with the list of observation scale value, the list of
+//' simulation scale values, and two double kappa linear and kappa squared.
 //'
 //' @export
 // [[Rcpp::export]]
 Rcpp::List
-evaluate(const std::string& model, const std::string& options)
+evaluate(const std::string& model,
+         const std::vector<std::string>& simulations,
+         const std::vector<std::string>& places,
+         const std::vector<int>& departments,
+         const std::vector<int>& years,
+         const std::vector<int>& observed,
+         const std::vector<int>& scale_values)
 {
     try {
-        auto ctx = std::make_shared<efyj::context>();
-        ctx->set_logger(std::unique_ptr<efyj::logger>(new Rcontext));
+        efyj::context ctx;
+        efyj::evaluation_results out;
 
-        const auto x = efyj::evaluate(ctx, model, options);
+        efyj::data d;
+        d.simulations = simulations;
+        d.places = places;
+        d.departments = departments;
+        d.years = years;
+        d.observed = observed;
+        d.scale_values = scale_values;
 
-        Rcpp::IntegerMatrix options(x.options.columns(), x.options.rows());
-        Rcpp::IntegerVector simulations(x.simulations.size());
-        Rcpp::IntegerVector observations(x.observations.size());
-        Rcpp::IntegerMatrix attributes(x.attributes.columns(),
-                                       x.attributes.rows());
-        Rcpp::IntegerMatrix confusion(x.confusion.columns(),
-                                      x.confusion.rows());
+        init_context(ctx);
 
-        for (std::size_t r = 0, end_r = x.attributes.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.attributes.columns(); c != end_c;
-                 ++c)
-                attributes(c, r) = x.attributes(c, r);
-
-        for (std::size_t r = 0, end_r = x.options.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.options.columns(); c != end_c;
-                 ++c)
-                options(c, r) = x.options(c, r);
-
-        for (std::size_t i = 0, end_i = simulations.size(); i != end_i; ++i) {
-            simulations(i) = x.simulations[i];
-            observations(i) = x.observations[i];
+        if (const auto ret = efyj::evaluate(ctx, model, d, out); is_bad(ret)) {
+            Rprintf("refyj::evaluate(...) failed\n");
+            return Rcpp::List();
         }
 
-        for (std::size_t r = 0, end_r = x.confusion.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.confusion.columns(); c != end_c;
-                 ++c)
-                confusion(c, r) = x.confusion(c, r);
-
         return Rcpp::List::create(
-          Rcpp::Named("options") = options,
-          Rcpp::Named("attributes") = attributes,
-          Rcpp::Named("simulations") = simulations,
-          Rcpp::Named("observations") = observations,
-          Rcpp::Named("confusion") = confusion,
-          Rcpp::Named("linear weighted kappa") = x.linear_weighted_kappa,
-          Rcpp::Named("squared weighted kappa") = x.squared_weighted_kappa);
+          Rcpp::Named("simulations") = Rcpp::wrap(out.simulations),
+          Rcpp::Named("observation") = Rcpp::wrap(out.observations),
+          Rcpp::Named("linear_weighted_kappa") =
+            Rcpp::wrap(out.linear_weighted_kappa),
+          Rcpp::Named("squared_weighted_kappa") =
+            Rcpp::wrap(out.squared_weighted_kappa));
     } catch (const std::bad_alloc& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
+        Rprintf("refyj::evaluate: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
+        Rprintf("refyj::evaluate: %s\n", e.what());
     } catch (...) {
-        Rcpp::Rcout << "refyj: unknown error\n";
-    }
-
-    return Rcpp::List();
-}
-
-//' Extract the options from a Dexi file.
-//'
-//' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
-//' agregate attributes and simulations results.
-//'
-//' @param model The file path of the DEXi model
-//'
-//' @return A List with: simulations name vector, places name vector,
-//' departments vector, years vector, observed vector and matrix of options.
-//'
-//' @export
-// [[Rcpp::export]]
-Rcpp::List
-extract_options(const std::string& model)
-{
-    try {
-        auto ctx = std::make_shared<efyj::context>();
-        ctx->set_logger(std::unique_ptr<efyj::logger>(new Rcontext));
-
-        const auto x = efyj::extract_options(ctx, model);
-
-        Rcpp::StringVector simulations(x.simulations.size());
-        Rcpp::StringVector places(x.simulations.size());
-        Rcpp::IntegerVector departments(x.simulations.size());
-        Rcpp::IntegerVector years(x.simulations.size());
-        Rcpp::IntegerMatrix options(x.options.columns(), x.options.rows());
-
-        for (std::size_t i = 0, end_i = x.simulations.size(); i != end_i; ++i)
-            simulations[i] = x.simulations[i];
-
-        for (std::size_t i = 0, end_i = x.simulations.size(); i != end_i; ++i)
-            places[i] = x.places[i];
-
-        for (std::size_t i = 0, end_i = x.simulations.size(); i != end_i; ++i)
-            departments[i] = x.departments[i];
-
-        for (std::size_t i = 0, end_i = x.simulations.size(); i != end_i; ++i)
-            years[i] = x.years[i];
-
-        for (std::size_t r = 0, end_r = x.options.rows(); r != end_r; ++r)
-            for (std::size_t c = 0, end_c = x.options.columns(); c != end_c;
-                 ++c)
-                options(c, r) = x.options(c, r);
-
-        return Rcpp::List::create(Rcpp::Named("simulations") = simulations,
-                                  Rcpp::Named("places") = places,
-                                  Rcpp::Named("departments") = departments,
-                                  Rcpp::Named("years") = years,
-                                  Rcpp::Named("options") = options);
-    } catch (const std::bad_alloc& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
-    } catch (const std::exception& e) {
-        Rcpp::Rcout << "refyj: " << e.what() << '\n';
-    } catch (...) {
-        Rcpp::Rcout << "refyj: unknown error\n";
+        Rprintf("refyj::evaluate: unknown error\n");
     }
 
     return Rcpp::List();
