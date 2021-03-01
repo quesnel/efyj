@@ -175,3 +175,237 @@ evaluate(const std::string& model,
 
     return Rcpp::List();
 }
+
+struct result_fn
+{
+    std::vector<int> all_modifiers;
+    std::vector<double> all_kappa;
+    std::vector<unsigned long int> all_kappa_computed;
+    std::vector<double> all_time;
+
+    bool operator()(const efyj::result& r)
+    {
+        try {
+            for (const auto& elem : r.modifiers) {
+                Rprintf("%d %d %d", elem.attribute, elem.line, elem.value);
+
+                all_modifiers.emplace_back(elem.attribute);
+                all_modifiers.emplace_back(elem.line);
+                all_modifiers.emplace_back(elem.value);
+            }
+
+            Rprintf("%.10g %.10gs %d %d\n",
+                    r.kappa,
+                    r.time,
+                    r.kappa_computed,
+                    r.function_computed);
+
+            all_kappa.emplace_back(r.kappa);
+            all_kappa_computed.emplace_back(r.kappa_computed);
+            all_time.emplace_back(r.time);
+
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+};
+
+//' Adjustment all options for a dexi file.
+//'
+//' This function parses the dexi and csv files and for each row of the csv
+//' file, it simulates the omdel. This function returns a list of options,
+//' agregate attributes and simulations results.
+//'
+//' @param model The file path of the DEXi model
+//' @param simulations A vector of strings
+//' @param places A vector of strings
+//' @param departments A vector of integers
+//' @param years A vector of integers
+//' @param observed A vector of integers
+//' @param scale_values A vector integers with
+//'
+//' @return A List with the list of observation scale value, the list of
+//' simulation scale values, and two double kappa linear and kappa squared.
+//'
+//' @export
+// [[Rcpp::export]]
+Rcpp::List
+adjustment(const std::string& model,
+           const std::vector<std::string>& simulations,
+           const std::vector<std::string>& places,
+           const std::vector<int>& departments,
+           const std::vector<int>& years,
+           const std::vector<int>& observed,
+           const std::vector<int>& scale_values,
+           const bool reduce,
+           const int limit,
+           const unsigned thread)
+{
+    try {
+        efyj::context ctx;
+        result_fn fn;
+
+        efyj::data d;
+        d.simulations = simulations;
+        d.places = places;
+        d.departments = departments;
+        d.years = years;
+        d.observed = observed;
+        d.scale_values = scale_values;
+
+        init_context(ctx);
+
+        if (const auto ret =
+              efyj::adjustment(ctx, model, d, fn, reduce, limit, thread);
+            is_bad(ret)) {
+            Rprintf("refyj::adjustment(...) failed\n");
+            return Rcpp::List();
+        }
+
+        return Rcpp::List::create(
+          Rcpp::Named("modifiers") = Rcpp::wrap(fn.all_modifiers),
+          Rcpp::Named("kappa") = Rcpp::wrap(fn.all_kappa),
+          Rcpp::Named("kappa-computed") = Rcpp::wrap(fn.all_kappa_computed),
+          Rcpp::Named("time") = Rcpp::wrap(fn.all_time));
+    } catch (const std::bad_alloc& e) {
+        Rprintf("refyj::evaluate: %s\n", e.what());
+    } catch (const std::exception& e) {
+        Rprintf("refyj::evaluate: %s\n", e.what());
+    } catch (...) {
+        Rprintf("refyj::evaluate: unknown error\n");
+    }
+
+    return Rcpp::List();
+}
+
+//' Prediction all options for a dexi file.
+//'
+//' This function parses the dexi and csv files and for each row of the csv
+//' file, it simulates the omdel. This function returns a list of options,
+//' agregate attributes and simulations results.
+//'
+//' @param model The file path of the DEXi model
+//' @param simulations A vector of strings
+//' @param places A vector of strings
+//' @param departments A vector of integers
+//' @param years A vector of integers
+//' @param observed A vector of integers
+//' @param scale_values A vector integers with
+//'
+//' @return A List with the list of observation scale value, the list of
+//' simulation scale values, and two double kappa linear and kappa squared.
+//'
+//' @export
+// [[Rcpp::export]]
+Rcpp::List
+prediction(const std::string& model,
+           const std::vector<std::string>& simulations,
+           const std::vector<std::string>& places,
+           const std::vector<int>& departments,
+           const std::vector<int>& years,
+           const std::vector<int>& observed,
+           const std::vector<int>& scale_values,
+           const bool reduce,
+           const int limit,
+           const unsigned thread)
+{
+    try {
+        efyj::context ctx;
+        result_fn fn;
+
+        efyj::data d;
+        d.simulations = simulations;
+        d.places = places;
+        d.departments = departments;
+        d.years = years;
+        d.observed = observed;
+        d.scale_values = scale_values;
+
+        init_context(ctx);
+
+        if (const auto ret =
+              efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
+            is_bad(ret)) {
+            Rprintf("refyj::adjustment(...) failed\n");
+            return Rcpp::List();
+        }
+
+        return Rcpp::List::create(
+          Rcpp::Named("modifiers") = Rcpp::wrap(fn.all_modifiers),
+          Rcpp::Named("kappa") = Rcpp::wrap(fn.all_kappa),
+          Rcpp::Named("kappa-computed") = Rcpp::wrap(fn.all_kappa_computed),
+          Rcpp::Named("time") = Rcpp::wrap(fn.all_time));
+    } catch (const std::bad_alloc& e) {
+        Rprintf("refyj::evaluate: %s\n", e.what());
+    } catch (const std::exception& e) {
+        Rprintf("refyj::evaluate: %s\n", e.what());
+    } catch (...) {
+        Rprintf("refyj::evaluate: unknown error\n");
+    }
+
+    return Rcpp::List();
+}
+
+//' Extract information from DEXi file.
+//'
+//' This function parses the dexi and returns some informations about DEXi
+//' file.
+//'
+//' @param model The file path of the DEXi model
+//' @param output The file path of the new DEXi model
+//' @param simulations A vector of strings
+//' @param places A vector of strings
+//' @param departments A vector of integers
+//' @param years A vector of integers
+//' @param observed A vector of integers
+//' @param scale_values A vector integers with
+//'
+//' @return A List of two List: a list of basic attribute names and a list of
+//' basic attribute max scale value number.
+//'
+//' @useDynLib refyj
+//' @importFrom Rcpp sourceCpp
+//'
+//' @export
+// [[Rcpp::export]]
+bool
+merge(const std::string& model,
+      const std::string& out,
+      const std::vector<std::string>& simulations,
+      const std::vector<std::string>& places,
+      const std::vector<int>& departments,
+      const std::vector<int>& years,
+      const std::vector<int>& observed,
+      const std::vector<int>& scale_values)
+{
+    try {
+        efyj::context ctx;
+
+        efyj::data d;
+        d.simulations = simulations;
+        d.places = places;
+        d.departments = departments;
+        d.years = years;
+        d.observed = observed;
+        d.scale_values = scale_values;
+
+        init_context(ctx);
+
+        if (const auto ret = efyj::merge_options(ctx, model, out, d);
+            is_bad(ret)) {
+            Rprintf("refyj::merge(...) failed\n");
+            return false;
+        }
+
+        return true;
+    } catch (const std::bad_alloc& e) {
+        Rprintf("refyj::information: %s\n", e.what());
+    } catch (const std::exception& e) {
+        Rprintf("refyj::information: %s\n", e.what());
+    } catch (...) {
+        Rprintf("refyj::information: unknown error\n");
+    }
+
+    return true;
+}
