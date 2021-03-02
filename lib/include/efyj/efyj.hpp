@@ -417,9 +417,9 @@ prediction(const context& ctx,
            unsigned int thread) noexcept;
 
 EFYJ_API status
-extract_options(const context& ctx,
-                const std::string& model_file_path,
-                const std::string& output_file_path) noexcept;
+extract_options_to_file(const context& ctx,
+                        const std::string& model_file_path,
+                        const std::string& output_file_path) noexcept;
 
 EFYJ_API status
 extract_options(const context& ctx,
@@ -432,10 +432,10 @@ extract_options(const context& ctx,
                 const data& d) noexcept;
 
 EFYJ_API status
-merge_options(const context& ctx,
-              const std::string& model,
-              const std::string& options,
-              const std::string& output_file_path) noexcept;
+merge_options_to_file(const context& ctx,
+                      const std::string& model,
+                      const std::string& options,
+                      const std::string& output_file_path) noexcept;
 
 EFYJ_API status
 merge_options(const context& ctx,

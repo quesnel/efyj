@@ -529,9 +529,9 @@ prediction(const context& ctx,
 }
 
 status
-extract_options(const context& ctx,
-                const std::string& model_file_path,
-                const std::string& output_file_path) noexcept
+extract_options_to_file(const context& ctx,
+                        const std::string& model_file_path,
+                        const std::string& output_file_path) noexcept
 {
     try {
         debug(ctx,
@@ -618,25 +618,11 @@ extract_options(const context& ctx,
     return status::success;
 }
 
-static void
-extract_options_to_file(const context& ctx,
-                        const std::string& model_file_path,
-                        const std::string& output_file_path)
-{
-    auto model = make_model(ctx, model_file_path);
-
-    const auto file = output_file(output_file_path.c_str());
-    if (file.is_open())
-        get_options_model(ctx, model, file);
-    else
-        fmt::print("Fail to open csv file `{}'\n", output_file_path.c_str());
-}
-
 status
-merge_options(const context& ctx,
-              const std::string& model_file_path,
-              const std::string& options_file_path,
-              const std::string& output_file_path) noexcept
+merge_options_to_file(const context& ctx,
+                      const std::string& model_file_path,
+                      const std::string& options_file_path,
+                      const std::string& output_file_path) noexcept
 {
     try {
         debug(ctx,

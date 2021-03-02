@@ -96,7 +96,7 @@ extract(const efyj::context& ctx,
         const std::string& model,
         const std::string& output)
 {
-    if (const auto ret = efyj::extract_options(ctx, model, output);
+    if (const auto ret = efyj::extract_options_to_file(ctx, model, output);
         is_bad(ret)) {
         fmt::print(
           stderr, "Fail to extract data trom file {} to {}\n", model, output);
@@ -111,7 +111,7 @@ merge(const efyj::context& ctx,
       const std::string& option,
       const std::string& output)
 {
-    if (const auto ret = merge_options(ctx, model, option, output);
+    if (const auto ret = merge_options_to_file(ctx, model, option, output);
         is_bad(ret)) {
         fmt::print(
           stderr, "Fail to merge {} with {} into {}\n", model, option, output);

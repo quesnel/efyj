@@ -589,7 +589,7 @@ test_problem_Model_file()
         efyj::status ret;
         auto output = make_temporary(outputfilename);
 
-        ret = efyj::extract_options(ctx, filepath, output);
+        ret = efyj::extract_options_to_file(ctx, filepath, output);
         Ensures(efyj::is_success(ret));
 
         efyj::evaluation_results eval;
@@ -610,7 +610,7 @@ check_the_options_set_function()
 
     auto output = make_temporary("CarXXXXXXXX.dxi");
 
-    ret = efyj::extract_options(ctx, "Car.dxi", output);
+    ret = efyj::extract_options_to_file(ctx, "Car.dxi", output);
     Ensures(efyj::is_success(ret));
 
     efyj::data opt1;
