@@ -619,6 +619,48 @@ extract_options(const context& ctx,
 }
 
 status
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path,
+                data& out) noexcept
+{
+    try {
+        debug(
+          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+
+        auto model = make_model(ctx, model_file_path);
+        auto options = make_options(ctx, model, options_file_path);
+
+        out.simulations = std::move(options.simulations);
+        out.places = std::move(options.places);
+        out.departments = std::move(options.departments);
+        out.years = std::move(options.years);
+        out.observed = std::move(options.observed);
+
+        out.scale_values.clear();
+        std::copy_n(options.options.data(),
+                    options.options.size(),
+                    std::back_inserter(out.scale_values));
+
+        return status::success;
+    } catch (const numeric_cast_error& /*e*/) {
+        return status::numeric_cast_error;
+    } catch (const internal_error& /*e*/) {
+        return status::internal_error;
+    } catch (const file_error& /*e*/) {
+        return status::file_error;
+    } catch (const solver_error& /*e*/) {
+        return status::solver_error;
+    } catch (const dexi_parser_status& e) {
+        return dexi_parser_status_convert(e.m_tag);
+    } catch (...) {
+        return status::unknown_error;
+    }
+
+    return status::success;
+}
+
+status
 merge_options_to_file(const context& ctx,
                       const std::string& model_file_path,
                       const std::string& options_file_path,

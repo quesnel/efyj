@@ -432,6 +432,12 @@ extract_options(const context& ctx,
                 const data& d) noexcept;
 
 EFYJ_API status
+extract_options(const context& ctx,
+                const std::string& model_file_path,
+                const std::string& options_file_path,
+                data& out) noexcept;
+
+EFYJ_API status
 merge_options_to_file(const context& ctx,
                       const std::string& model,
                       const std::string& options,
