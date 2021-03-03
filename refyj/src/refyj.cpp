@@ -176,6 +176,59 @@ evaluate(const std::string& model,
     return Rcpp::List();
 }
 
+//' Simulate all options for a dexi file.
+//'
+//' This function parses the dexi and csv files and for each row of the csv
+//' file, it simulates the omdel. This function returns a list of options,
+//' agregate attributes and simulations results.
+//'
+//' @param model The file path of the DEXi model
+//' @param simulations A vector of strings
+//' @param places A vector of strings
+//' @param departments A vector of integers
+//' @param years A vector of integers
+//' @param observed A vector of integers
+//' @param scale_values A vector integers with
+//'
+//' @return A List with the list of observation scale value, the list of
+//' simulation scale values, and two double kappa linear and kappa squared.
+//'
+//' @export
+// [[Rcpp::export]]
+Rcpp::List
+extract(const std::string& model, const std::string& options)
+{
+    try {
+        efyj::context ctx;
+        efyj::evaluation_results out;
+        efyj::data d;
+
+        init_context(ctx);
+
+        if (const auto ret = efyj::extract_options(ctx, model, options, d);
+            is_bad(ret)) {
+            Rprintf("refyj::extract(...) failed\n");
+            return Rcpp::List();
+        }
+
+        return Rcpp::List::create(
+          Rcpp::Named("simulations") = Rcpp::wrap(d.simulations),
+          Rcpp::Named("places") = Rcpp::wrap(d.places),
+          Rcpp::Named("departments") = Rcpp::wrap(d.departments),
+          Rcpp::Named("years") = Rcpp::wrap(d.years),
+          Rcpp::Named("observed") = Rcpp::wrap(d.observed),
+          Rcpp::Named("scale_values") = Rcpp::wrap(d.scale_values));
+    } catch (const std::bad_alloc& e) {
+        Rprintf("refyj::extract: %s\n", e.what());
+    } catch (const std::exception& e) {
+        Rprintf("refyj::extract: %s\n", e.what());
+    } catch (...) {
+        Rprintf("refyj::extract: unknown error\n");
+    }
+
+    return Rcpp::List();
+}
+
 struct result_fn
 {
     std::vector<int> all_modifiers;
