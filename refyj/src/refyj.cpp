@@ -231,16 +231,29 @@ extract(const std::string& model, const std::string& options)
 
 struct result_fn
 {
-    std::vector<int> all_modifiers;
-    std::vector<double> all_kappa;
-    std::vector<unsigned long int> all_kappa_computed;
-    std::vector<double> all_time;
+private:
+    std::vector<int>& all_modifiers;
+    std::vector<double>& all_kappa;
+    std::vector<double>& all_time;
+    const int limit = 0;
+    int current_limit = 0;
+
+public:
+    result_fn(std::vector<int>& all_modifiers_,
+              std::vector<double>& all_kappa_,
+              std::vector<double>& all_time_,
+              const int limit_)
+      : all_modifiers(all_modifiers_)
+      , all_kappa(all_kappa_)
+      , all_time(all_time_)
+      , limit(limit_)
+    {}
 
     bool operator()(const efyj::result& r)
     {
         try {
             for (const auto& elem : r.modifiers) {
-                Rprintf("%d %d %d", elem.attribute, elem.line, elem.value);
+                Rprintf("[%d %d %d] ", elem.attribute, elem.line, elem.value);
 
                 all_modifiers.emplace_back(elem.attribute);
                 all_modifiers.emplace_back(elem.line);
@@ -254,10 +267,11 @@ struct result_fn
                     r.function_computed);
 
             all_kappa.emplace_back(r.kappa);
-            all_kappa_computed.emplace_back(r.kappa_computed);
             all_time.emplace_back(r.time);
 
-            return true;
+            ++current_limit;
+
+            return current_limit < limit;
         } catch (...) {
             return false;
         }
@@ -297,7 +311,10 @@ adjustment(const std::string& model,
 {
     try {
         efyj::context ctx;
-        result_fn fn;
+        std::vector<int> all_modifiers;
+        std::vector<double> all_kappa;
+        std::vector<double> all_time;
+        result_fn fn(all_modifiers, all_kappa, all_time, limit);
 
         efyj::data d;
         d.simulations = simulations;
@@ -317,16 +334,15 @@ adjustment(const std::string& model,
         }
 
         return Rcpp::List::create(
-          Rcpp::Named("modifiers") = Rcpp::wrap(fn.all_modifiers),
-          Rcpp::Named("kappa") = Rcpp::wrap(fn.all_kappa),
-          Rcpp::Named("kappa-computed") = Rcpp::wrap(fn.all_kappa_computed),
-          Rcpp::Named("time") = Rcpp::wrap(fn.all_time));
+          Rcpp::Named("modifiers") = Rcpp::wrap(all_modifiers),
+          Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
+          Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
-        Rprintf("refyj::evaluate: %s\n", e.what());
+        Rprintf("refyj::adjustment: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rprintf("refyj::evaluate: %s\n", e.what());
+        Rprintf("refyj::adjustment: %s\n", e.what());
     } catch (...) {
-        Rprintf("refyj::evaluate: unknown error\n");
+        Rprintf("refyj::adjustment: unknown error\n");
     }
 
     return Rcpp::List();
@@ -365,7 +381,10 @@ prediction(const std::string& model,
 {
     try {
         efyj::context ctx;
-        result_fn fn;
+        std::vector<int> all_modifiers;
+        std::vector<double> all_kappa;
+        std::vector<double> all_time;
+        result_fn fn(all_modifiers, all_kappa, all_time, limit);
 
         efyj::data d;
         d.simulations = simulations;
@@ -380,21 +399,20 @@ prediction(const std::string& model,
         if (const auto ret =
               efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
-            Rprintf("refyj::adjustment(...) failed\n");
+            Rprintf("refyj::prediction(...) failed\n");
             return Rcpp::List();
         }
 
         return Rcpp::List::create(
-          Rcpp::Named("modifiers") = Rcpp::wrap(fn.all_modifiers),
-          Rcpp::Named("kappa") = Rcpp::wrap(fn.all_kappa),
-          Rcpp::Named("kappa-computed") = Rcpp::wrap(fn.all_kappa_computed),
-          Rcpp::Named("time") = Rcpp::wrap(fn.all_time));
+          Rcpp::Named("modifiers") = Rcpp::wrap(all_modifiers),
+          Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
+          Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
-        Rprintf("refyj::evaluate: %s\n", e.what());
+        Rprintf("refyj::prediction: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rprintf("refyj::evaluate: %s\n", e.what());
+        Rprintf("refyj::prediction: %s\n", e.what());
     } catch (...) {
-        Rprintf("refyj::evaluate: unknown error\n");
+        Rprintf("refyj::prediction: unknown error\n");
     }
 
     return Rcpp::List();

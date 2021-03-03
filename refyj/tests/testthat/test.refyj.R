@@ -69,3 +69,19 @@ test_that("evaluate Car.dxi and Car.csv", {
 	expect_equal(ret_eval$linear_weighted_kappa, 1.0)
 	expect_equal(ret_eval$squared_weighted_kappa, 1.0)
 })
+
+ret_adj <- refyj::adjustment("Car.dxi",
+							extracts$simulations,
+							extracts$places,
+							extracts$departments,
+							extracts$years,
+							extracts$observed,
+							extracts$scale_values,
+							TRUE,
+							4,
+							1)
+
+test_that("adjustment Car.dxi and Car.csv", {
+	expect_equal(ret_adj$modifiers, c(0,0,0,0,0,0,0,4,1,0,0,0,0,4,1,0,5,1))
+	expect_equal(ret_adj$kappa, c(1,1,1,1))
+})
