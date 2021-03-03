@@ -357,6 +357,8 @@ struct data
  *
  * This function can return false to stop the computation of the next line
  * modifier.
+ * 
+ * @todo Replace with a function_ref or function_view.
  */
 using result_callback = std::function<bool(const result&)>;
 
