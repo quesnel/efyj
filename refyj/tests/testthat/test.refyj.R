@@ -54,3 +54,18 @@ test_that("extract csv data from Car.dxi and Car.csv", {
 	to_compare <- c(1,2,2,2,2,2,1,1,2,2,2,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,2,2,2,2)
 	expect_equal(extracts$scale_values, to_compare)
 })
+
+ret_eval <- refyj::evaluate("Car.dxi", 
+							extracts$simulations,
+							extracts$places,
+							extracts$departments,
+							extracts$years,
+							extracts$observed,
+							extracts$scale_values)
+
+test_that("evaluate Car.dxi and Car.csv", {
+	expect_equal(ret_eval$simulations, ret_eval$observation)
+	expect_equal(ret_eval$observation, extracts$observed)
+	expect_equal(ret_eval$linear_weighted_kappa, 1.0)
+	expect_equal(ret_eval$squared_weighted_kappa, 1.0)
+})
