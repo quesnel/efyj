@@ -27,8 +27,6 @@
 #include "solver-stack.hpp"
 #include "utils.hpp"
 
-#include <fstream>
-#include <iostream>
 #include <random>
 
 #include "unit-test.hpp"
@@ -43,56 +41,6 @@
 #include <direct.h>
 #include <io.h>
 #include <tchar.h>
-#endif
-
-#ifdef _WIN32
-void* __cdecl
-operator new[](size_t size,
-               [[maybe_unused]] const char* name,
-               [[maybe_unused]] int flags,
-               [[maybe_unused]] unsigned debugFlags,
-               [[maybe_unused]] const char* file,
-               [[maybe_unused]] int line)
-{
-    return new uint8_t[size];
-}
-
-void* __cdecl
-operator new[](size_t size,
-               [[maybe_unused]] size_t alignment,
-               [[maybe_unused]] size_t alignmentOffset,
-               [[maybe_unused]] const char* name,
-               [[maybe_unused]] int flags,
-               [[maybe_unused]] unsigned debugFlags,
-               [[maybe_unused]] const char* file,
-               [[maybe_unused]] int line)
-{
-    return new uint8_t[size];
-}
-#else
-void*
-operator new[](size_t size,
-               [[maybe_unused]] const char* name,
-               [[maybe_unused]] int flags,
-               [[maybe_unused]] unsigned debugFlags,
-               [[maybe_unused]] const char* file,
-               [[maybe_unused]] int line)
-{
-    return new uint8_t[size];
-}
-
-void*
-operator new[](size_t size,
-               [[maybe_unused]] size_t alignment,
-               [[maybe_unused]] size_t alignmentOffset,
-               [[maybe_unused]] const char* name,
-               [[maybe_unused]] int flags,
-               [[maybe_unused]] unsigned debugFlags,
-               [[maybe_unused]] const char* file,
-               [[maybe_unused]] int line)
-{
-    return new uint8_t[size];
-}
 #endif
 
 static inline bool
@@ -697,170 +645,156 @@ check_the_efyj_set_function()
     // Ensures(options_old == options);
 }
 
+static void
+init_context(efyj::context& ctx) noexcept
+{
+    ctx.dexi_cb = [](const efyj::status s,
+                     int line,
+                     int column,
+                     const std::string_view tag) {
+        fmt::print(stderr,
+                   "DEXi error: {} at line {} column {} with tag {}\n",
+                   efyj::get_error_message(s),
+                   line,
+                   column,
+                   tag);
+    };
+
+    ctx.csv_cb = [](const efyj::status s, int line, int column) {
+        fmt::print(stderr,
+                   "CSV error: {} at line {} column {}\n",
+                   efyj::get_error_message(s),
+                   line,
+                   column);
+    };
+
+    ctx.eov_cb = []() {
+        fmt::print(stderr, "Not enough memory to continue\n");
+    };
+
+    ctx.cast_cb = []() {
+        fmt::print(stderr, "Internal error: cast failure\n");
+    };
+
+    ctx.solver_cb = []() { fmt::print(stderr, "Solver error\n"); };
+
+    ctx.file_cb = [](const std::string_view file_name) {
+        fmt::print(stderr, "Error to access file `{}'\n", file_name);
+    };
+}
+
+struct result_fn
+{
+private:
+    std::vector<int>& all_modifiers;
+    std::vector<double>& all_kappa;
+    std::vector<double>& all_time;
+    const int limit = 0;
+    int current_limit = 0;
+
+public:
+    result_fn(std::vector<int>& all_modifiers_,
+              std::vector<double>& all_kappa_,
+              std::vector<double>& all_time_,
+              const int limit_)
+      : all_modifiers(all_modifiers_)
+      , all_kappa(all_kappa_)
+      , all_time(all_time_)
+      , limit(limit_)
+    {}
+
+    bool operator()(const efyj::result& r)
+    {
+        try {
+            for (const auto& elem : r.modifiers) {
+                all_modifiers.emplace_back(elem.attribute);
+                all_modifiers.emplace_back(elem.line);
+                all_modifiers.emplace_back(elem.value);
+            }
+
+            all_kappa.emplace_back(r.kappa);
+            all_time.emplace_back(r.time);
+
+            ++current_limit;
+
+            return current_limit < limit;
+        } catch (...) {
+            return false;
+        }
+    }
+};
+
 void
 test_adjustment_solver_for_Car()
 {
-    // change_pwd();
+    efyj::context ctx;
+    init_context(ctx);
 
-    // efyj::Model model;
+    efyj::data d;
 
-    // {
-    //     std::ifstream ifs("Car.dxi");
-    //     model.read(ifs);
-    // }
+    auto ret = efyj::extract_options(ctx, "Car.dxi", d);
+    Ensures(is_success(ret));
 
-    // std::string output = make_temporary("CarXXXXXXXX.csv");
+    std::vector<int> all_modifiers;
+    std::vector<double> all_kappa;
+    std::vector<double> all_time;
+    result_fn fn(all_modifiers, all_kappa, all_time, 4);
 
-    // {
-    //     std::ofstream ofs(output);
-    //     model.write_options(ofs);
-    // }
+    ret = efyj::adjustment(ctx, "Car.dxi", d, fn, true, 4, 1u);
+    Ensures(is_success(ret));
 
-    // efyj::efyj e("Car.dxi", output);
+    const std::vector<int> to_compare = { 0, 0, 0, 0, 0, 0, 0, 4, 1,
+                                          0, 0, 0, 0, 4, 1, 0, 5, 1 };
 
-    // {
-    //     auto ret = e.compute_kappa();
-    //     Ensures(ret.kappa == 1);
-    // }
+    Ensures(to_compare.size() == all_modifiers.size());
+    for (size_t i = 0, e = to_compare.size(); i != e; ++i)
+        Ensures(to_compare[i] == all_modifiers[i]);
 
-    // std::vector<std::string> simulations;
-    // std::vector<std::string> places;
-    // std::vector<int> departments;
-    // std::vector<int> years;
-    // std::vector<int> observed;
-    // std::vector<int> options;
-
-    // e.extract_options(
-    //     simulations, places, departments, years, observed, options);
-
-    // Ensures(simulations.size() < options.size());
-    // Ensures(simulations.size() > 0);
-
-    // years[0] = 2000;
-    // years[1] = 2000;
-    // years[2] = 2001;
-    // years[3] = 2001;
-    // years[4] = 2002;
-    // years[5] = 2002;
-
-    // departments[0] = 59;
-    // departments[1] = 62;
-    // departments[2] = 59;
-    // departments[3] = 62;
-    // departments[4] = 59;
-    // departments[5] = 62;
-
-    // places[0] = "a";
-    // places[1] = "b";
-    // places[2] = "c";
-    // places[3] = "d";
-    // places[4] = "e";
-    // places[5] = "f";
-
-    // Ensures(model.attributes[0].scale.size() == 4);
-    // observed = {2, 1, 0, 0, 2, 2};
-    // e.set_options(simulations, places, departments, years, observed,
-    // options);
-    // {
-    //     auto ret = e.compute_adjustment(4, -1, 1);
-    //     Ensures(ret.size() == 5);
-
-    //     EnsuresApproximatelyEqual(ret[0].kappa, 0.78, 0.1);
-    //     EnsuresApproximatelyEqual(ret[1].kappa, 0.84, 0.1);
-    //     EnsuresApproximatelyEqual(ret[2].kappa, 0.91, 0.1);
-    //     EnsuresApproximatelyEqual(ret[3].kappa, 0.91, 0.1);
-    //     EnsuresApproximatelyEqual(ret[4].kappa, 1, 0.1);
-    // }
+    Ensures(all_kappa.size() == (size_t)4);
+    Ensures(all_kappa[0] == 1.0);
+    Ensures(all_kappa[1] == 1.0);
+    Ensures(all_kappa[2] == 1.0);
+    Ensures(all_kappa[3] == 1.0);
 }
 
 void
 test_prediction_solver_for_Car()
 {
-    // change_pwd();
+    efyj::context ctx;
+    init_context(ctx);
 
-    // efyj::Model model;
+    efyj::data d;
 
-    // {
-    //     std::ifstream ifs("Car.dxi");
-    //     Ensures(ifs.is_open());
+    auto ret = efyj::extract_options(ctx, "Car.dxi", d);
+    Ensures(is_success(ret));
 
-    //     model.read(ifs);
-    // }
+    std::vector<int> all_modifiers;
+    std::vector<double> all_kappa;
+    std::vector<double> all_time;
+    result_fn fn(all_modifiers, all_kappa, all_time, 4);
 
-    // std::string output = make_temporary("CarXXXXXXXX.csv");
+    d.years[0] = 1990;
+    d.years[1] = 1990;
+    d.departments[0] = 81;
+    d.departments[1] = 81;
+    d.places[0] = "Auzeville";
+    d.places[1] = "Auzeville";
 
-    // {
-    //     std::ofstream ofs(output);
-    //     Ensures(ofs.is_open());
+    ret = efyj::prediction(ctx, "Car.dxi", d, fn, true, 4, 1u);
+    Ensures(is_success(ret));
 
-    //     model.write_options(ofs);
-    // }
+    const std::vector<int> to_compare = { 0, 0, 0, 0, 0, 0, 0, 4, 1,
+                                          0, 0, 0, 0, 4, 1, 0, 5, 1 };
 
-    // efyj::efyj e("Car.dxi", output);
+    Ensures(to_compare.size() == all_modifiers.size());
+    for (size_t i = 0, e = to_compare.size(); i != e; ++i)
+        Ensures(to_compare[i] == all_modifiers[i]);
 
-    // {
-    //     auto ret = e.compute_kappa();
-    //     Ensures(ret.kappa == 1);
-    // }
-
-    // std::vector<std::string> simulations;
-    // std::vector<std::string> places;
-    // std::vector<int> departments;
-    // std::vector<int> years;
-    // std::vector<int> observed;
-    // std::vector<int> options;
-
-    // e.extract_options(
-    //     simulations, places, departments, years, observed, options);
-
-    // Ensures(simulations.size() < options.size());
-    // Ensures(simulations.size() > 0);
-
-    // years[0] = 2000;
-    // years[1] = 2000;
-    // years[2] = 2001;
-    // years[3] = 2001;
-    // years[4] = 2002;
-    // years[5] = 2002;
-
-    // departments[0] = 59;
-    // departments[1] = 62;
-    // departments[2] = 59;
-    // departments[3] = 62;
-    // departments[4] = 59;
-    // departments[5] = 62;
-
-    // places[0] = "a";
-    // places[1] = "b";
-    // places[2] = "c";
-    // places[3] = "d";
-    // places[4] = "e";
-    // places[5] = "f";
-
-    // Ensures(model.attributes[0].scale.size() == 4);
-    // observed = {3, 2, 0, 0, 3, 3};
-
-    // e.set_options(simulations, places, departments, years, observed,
-    // options);
-
-    // {
-    //     auto ret = e.compute_prediction(1, -1, 1);
-
-    //     Ensures(ret.size() == 2);
-    //     Ensures(ret.front().kappa == 1);
-    //     Ensures(ret.back().kappa == 1);
-    // }
-
-    // observed = {3, 2, 0, 0, 3, 2};
-    // e.set_options(simulations, places, departments, years, observed,
-    // options);
-    // {
-    //     auto ret = e.compute_prediction(1, -1, 1);
-
-    //     Ensures(ret.size() == 2);
-    //     EnsuresApproximatelyEqual(ret.front().kappa, 0.95, 0.1);
-    //     EnsuresApproximatelyEqual(ret.back().kappa, 0.89, 0.1);
-    // }
+    Ensures(all_kappa.size() == (size_t)4);
+    Ensures(all_kappa[0] <= 1.0);
+    Ensures(all_kappa[1] <= 1.0);
+    Ensures(all_kappa[2] <= 1.0);
+    Ensures(all_kappa[3] <= 1.0);
 }
 
 int
