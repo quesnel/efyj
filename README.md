@@ -13,110 +13,74 @@ On Unix (Linux, OS X)
 
 * libexpat (≥ 2)
 * cmake (≥ 3.10)
-* gcc ≥ 7.0 or clang ≥ 7.0
+* gcc ≥ 7.0 or clang ≥ 7.0 (need `c++17` support)
 * python ≥ 3.0 (optional)
 * R ≥ 4.0 (optional)
 
 For recent Debian and Ubuntu derivatives (remove clang to only use gcc):
 
-    apt-get install build-essential cmake clang libexpat1-dev
+````bash
+apt-get install build-essential cmake libexpat1-dev g++ python r-base r-base-dev
+````
 
 On Windows
 
-* Visual Studio 2017 or newer
+* [Visual Studio 2017 or newer](https://visualstudio.microsoft.com/fr/downloads/) for command line interface and python package
 * cmake (≥ 3.10)
 * [vcpkg](https://github.com/microsoft/vcpkg)
 * [vcpkg expat](https://github.com/microsoft/vcpkg/tree/master/ports/expat)
-* python ≥ 3.0 (optional)
-* R ≥ 4.0 (optional)
+* [python](https://www.python.org/downloads/windows/) ≥ 3.0 (optional)
+* [R](https://www.r-project.org/) ≥ 4.0 (optional)
+* [Rtools](https://cran.r-project.org/bin/windows/Rtools/) ≥ 4.0 (optional)
 
-    git clone https://github.com/microsoft/vcpkg
-    .\vcpkg\bootstrap-vcpkg.bat
-    .\vcpkg\vcpkg integrate install
-    .\vcpkg\vcpkg install
+````
+git clone https://github.com/microsoft/vcpkg
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg integrate install
+.\vcpkg\vcpkg install
+````
 
 ## Python package installation
 
-Clone this repository and pip install. Note the `--recursive` option
-which is needed for the pybind11 and fmt submodule:
+First, on Windows, make sure you have installed Visual Studio 2017, [vcpkg](https://github.com/microsoft/vcpkg) and [vcpkg expat](https://github.com/microsoft/vcpkg/tree/master/ports/expat). On Unix (Linux, OS X), install python and python-dev package. 
 
-    git clone --recursive https://github.com/quesnel/efyj.git
-    pip install ./efyj
+Then, clone this repository and pip install. Note the `--recursive` option which is needed for both the pybind11 and fmt submodule:
+
+````bash
+git clone --recursive https://github.com/quesnel/efyj.git
+pip install ./efyj
+````
 
 ## R package installation
 
-Clone this repository and pip install. Note the `--recursive` option
-which is needed for the pybind11 and fmt submodule:
+On Windows, make sur you have installed R, Rtools. Then starts  `rtools bash` from the start menu and type the following commands:
 
-    git clone --recursive https://github.com/quesnel/efyj.git
+````bash
+pacman -Sy
+pacman -S mingw-w64-i686-expat
+pacman -S mingw-w64-i86_64-expat
+````
 
-On Unix (Linux, OS X)
+On Unix (Linux and OS X), install R and R development files.
 
-    cd efyj/refyj
-    Rscript -e 'library(Rcpp); compileAttributes(".")'
-    Rscript -e 'library(devtools); compileAttributes(".")'
-    cd ..
-    R CMD build refyj
-    R CMD INSTALL --build refyj
+Then, for both Windows and Unix,  clone this repository and install the package. Note the `--recursive` option which is needed for both the pybind11 and fmt submodule:
 
-On Windows
+````bash
+git clone --recursive https://github.com/quesnel/efyj.git
+````
 
-First we need to install the `expat` library for both i386
-and x86_64 architecture. We use the *msys2* project to install this
-dependencies. First install *msys2*:
+Under a R terminal or Rstudio, type the following command (adapt the `setwd` command to the correct efyj clone):
 
-[msys2 (x86_64)](https://repo.msys2.org/distrib/x86_64/msys2-x86_64-20210105.exe)
-
-    pacman -Syu
-    pacman -Su
-    pacman -S expat libexpat-devel expat pkg-config cmake make
-    pacman -S mingw32/mingw-w64-i686-expat
-    pacman -S mingw64/mingw-w64-x86_64-expat
-    pacman -S pkg-config cmake make
-
-To build the R package. First under the R interface or Rstudio, we need to
-install refyj dependencies:
-
-    install.packages("stringi")
-    install.packages("devtools")
-    install.packages("roxygen2")
-    install.packages("Rcpp")
-
-And *rtools* and *R*
-
-- [rtools 4.0](https://cran.r-project.org/bin/windows/base/R-4.0.3-win.exe)
-- [R 4.0](https://cran.r-project.org/bin/windows/base/R-3.3.3-win.exe)
-
-Then, each time you want to build the package:
-
-    remove.packages("refyj")            # remove the old refyj package
-                                        # if necessary.
-    library(Rcpp)
-    library(devtools)
-    setwd("d:/natifvle/efyj/refyj")     # update the correct path
-    Rcpp::compileAttributes(".")
-    devtools::document()
-
-Then in a terminal (`cmd.exe`):
-
-    set PATH=C:\Program Files\R\R-3.3.2\bin;d:\msys64\usr\bin;C:\Rtools\bin
-    set MINGW_PATH=d:/msys64
-    d:
-    cd natifvle/efyj
-    R CMD build refyj
-    R CMD INSTALL --build refyj
-
-## Installation without python or R
-
-Compiling and installing without Python support:
-
-    git clone --recursive https://github.com/quesnel/efyj.git
-    cd efyj
-    mkdir build
-    cd build
-    cmake -DDisablePython=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-    make
-    make install
+````R
+install.packages("Rcpp")
+library(Rcpp)
+detach("package:Rcpp", unload = TRUE)
+install.packages("devtools")
+library(devtools)
+setwd("C:/Users/XXXXXXXX/efyj/refyj")
+load_all(".")
+devtools::test()
+````
 
 ## Command line usage
 
