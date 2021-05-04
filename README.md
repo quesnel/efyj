@@ -61,12 +61,21 @@ pacman -S mingw-w64-i686-expat
 pacman -S mingw-w64-i86_64-expat
 ````
 
-On Unix (Linux and OS X), install R and R development files.
+On Unix (Linux and OS X), install R and R development files from the package tools of your distribution (`apt`, `packman`, `yaourt`, `portage` etc.).
 
 Then, for both Windows and Unix,  clone this repository and install the package. Note the `--recursive` option which is needed for both the pybind11 and fmt submodule:
 
 ````bash
 git clone --recursive https://github.com/quesnel/efyj.git
+````
+
+If you have already cloned efyj, you need to update your copy. Use the following commands:
+
+````bash
+cd efyj			# move to the right directory path
+git fetch origin
+git submodule update --init
+git reset --hard origin/master
 ````
 
 Under a R terminal or Rstudio, type the following command (adapt the `setwd` command to the correct efyj clone):
@@ -77,14 +86,16 @@ library(Rcpp)
 detach("package:Rcpp", unload = TRUE)
 install.packages("devtools")
 library(devtools)
-setwd("C:/Users/XXXXXXXX/efyj/refyj")
+setwd("C:/Users/XXXXXXXX/efyj/refyj")	# use the right directory path
 load_all(".")
 devtools::test()
 ````
 
 ## Command line usage
 
-    efyj -m file.dxi -o file.csv [-p] [-a]
+````bash
+efyj -m file.dxi -o file.csv [-p] [-a]
+````
 
 The `file.csv` contains the options of the model. Four first one
 columns contains fields: site, fields, department, year. Next columns
