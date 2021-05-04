@@ -68,8 +68,7 @@ init_context(efyj::context& ctx) noexcept
 
 //' Extract information from DEXi file.
 //'
-//' This function parses the dexi and returns some informations about DEXi
-//' file.
+//' This function parses the DEXi file and returns some informations mode.
 //'
 //' @param model The file path of the DEXi model
 //'
@@ -95,7 +94,7 @@ information(const std::string& model)
             Rprintf("refyj::information(...) failed: %.*s\n",
                     msg.size(),
                     msg.data());
-            return Rcpp::List();
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -111,13 +110,13 @@ information(const std::string& model)
         Rprintf("refyj::information: unknown error\n");
     }
 
-    return Rcpp::List();
+    return R_NilValue;
 }
 
-//' Simulate all options for a dexi file.
+//' Simulate all options for a DEXi file model.
 //'
-//' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
+//' This function parses the DEXi and for each row of all vectors,
+//' it simulates the model. This function returns a list of options,
 //' agregate attributes and simulations results.
 //'
 //' @param model The file path of the DEXi model
@@ -126,10 +125,11 @@ information(const std::string& model)
 //' @param departments A vector of integers
 //' @param years A vector of integers
 //' @param observed A vector of integers
-//' @param scale_values A vector integers with
+//' @param scale_values A vector of integers with the number of aggregate
+//' table times number of row in simulations, places and other vectors.
 //'
-//' @return A List with the list of observation scale value, the list of
-//' simulation scale values, and two double kappa linear and kappa squared.
+//' @return A List with the list of simulation and observation vectors
+//' the kappa linear and the kappa squared.
 //'
 //' @export
 // [[Rcpp::export]]
@@ -160,7 +160,7 @@ evaluate(const std::string& model,
             const auto msg = efyj::get_error_message(ret);
             Rprintf(
               "refyj::evaluate(...) failed: %.*s\n", msg.size(), msg.data());
-            return Rcpp::List();
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -178,7 +178,7 @@ evaluate(const std::string& model,
         Rprintf("refyj::evaluate: unknown error\n");
     }
 
-    return Rcpp::List();
+    return R_NilValue;
 }
 
 //' Extracts options from DEXi file to a CSV file.
@@ -215,12 +215,13 @@ extract_to_file(const std::string& model, const std::string& options)
     }
 }
 
-//' Extracts options from DEXi file into data frame.
+//' Extracts options from DEXi file.
 //'
 //' @param model The file path of the DEXi model.
 //'
-//' @return A List with the list simulation identifiers, places departments,
-//' years observation and all scale values.
+//' @return A List with the list simulation identifiers, places, departments,
+//' years, observation and all scale values (the number of aggregate
+//' table times number of row in simulations, places and other vectors).
 //'
 //' @export
 // [[Rcpp::export]]
@@ -238,7 +239,7 @@ extract(const std::string& model)
             const auto msg = efyj::get_error_message(ret);
             Rprintf(
               "refyj::extract(...) failed: %.*s\n", msg.size(), msg.data());
-            return Rcpp::List();
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -256,7 +257,7 @@ extract(const std::string& model)
         Rprintf("refyj::extract: unknown error\n");
     }
 
-    return Rcpp::List();
+    return R_NilValue;
 }
 
 struct result_fn
@@ -308,10 +309,10 @@ public:
     }
 };
 
-//' Adjustment all options for a dexi file.
+//' Adjustment for all options for a DExi file.
 //'
 //' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
+//' file, it simulates the model. This function returns a list of options,
 //' agregate attributes and simulations results.
 //'
 //' @param model The file path of the DEXi model
@@ -320,10 +321,11 @@ public:
 //' @param departments A vector of integers
 //' @param years A vector of integers
 //' @param observed A vector of integers
-//' @param scale_values A vector integers with
+//' @param scale_values A vector of integers with the number of aggregate
+//' table times number of row in simulations, places and other vectors.
 //'
-//' @return A List with the list of observation scale value, the list of
-//' simulation scale values, and two double kappa linear and kappa squared.
+//' @return A List with all change in DEXi file to get the better values
+//' the vector the kappa linear and the kappa squared.
 //'
 //' @export
 // [[Rcpp::export]]
@@ -362,7 +364,7 @@ adjustment(const std::string& model,
             const auto msg = efyj::get_error_message(ret);
             Rprintf(
               "refyj::adjustment(...) failed: %.*s\n", msg.size(), msg.data());
-            return Rcpp::List();
+            return R_NilValue;
         }
 
         return Rcpp::List::create(Rcpp::Named("modifiers") =
@@ -377,13 +379,13 @@ adjustment(const std::string& model,
         Rprintf("refyj::adjustment: unknown error\n");
     }
 
-    return Rcpp::List();
+    return R_NilValue;
 }
 
-//' Prediction all options for a dexi file.
+//' Prediction for a limited options for a DExi file.
 //'
 //' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
+//' file, it simulates the model. This function returns a list of options,
 //' agregate attributes and simulations results.
 //'
 //' @param model The file path of the DEXi model
@@ -392,10 +394,11 @@ adjustment(const std::string& model,
 //' @param departments A vector of integers
 //' @param years A vector of integers
 //' @param observed A vector of integers
-//' @param scale_values A vector integers with
+//' @param scale_values A vector of integers with the number of aggregate
+//' table times number of row in simulations, places and other vectors.
 //'
-//' @return A List with the list of observation scale value, the list of
-//' simulation scale values, and two double kappa linear and kappa squared.
+//' @return A List with all change in DEXi file to get the better values
+//' the vector the kappa linear and the kappa squared.
 //'
 //' @export
 // [[Rcpp::export]]
@@ -434,7 +437,7 @@ prediction(const std::string& model,
             const auto msg = efyj::get_error_message(ret);
             Rprintf(
               "refyj::prediction(...) failed: %.*s\n", msg.size(), msg.data());
-            return Rcpp::List();
+            return R_NilValue;
         }
 
         return Rcpp::List::create(Rcpp::Named("modifiers") =
@@ -449,7 +452,7 @@ prediction(const std::string& model,
         Rprintf("refyj::prediction: unknown error\n");
     }
 
-    return Rcpp::List();
+    return R_NilValue;
 }
 
 //' Extract information from DEXi file.
