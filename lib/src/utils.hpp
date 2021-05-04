@@ -309,7 +309,7 @@ public:
         if (fopen_s(&file, file_path, "w"))
             file = nullptr;
 #else
-            file = std::fopen(file_path, "w"));
+            file = std::fopen(file_path, "w");
 #endif
     }
 
@@ -377,7 +377,7 @@ public:
         if (fopen_s(&file, file_path, "r"))
             file = nullptr;
 #else
-            file = std::fopen(file_path, "r"));
+            file = std::fopen(file_path, "r");
 #endif
     }
 

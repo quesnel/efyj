@@ -164,7 +164,6 @@ struct Model
     std::deque<attribute> attributes;
 
     void read(const context& ctx, const input_file& is);
-
     void write(const context& ctx, const output_file& os);
 
     /** Release all dynamically allocated memory. */

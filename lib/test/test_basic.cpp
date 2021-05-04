@@ -27,6 +27,7 @@
 #include "solver-stack.hpp"
 #include "utils.hpp"
 
+#include <filesystem>
 #include <random>
 
 #include "unit-test.hpp"
@@ -189,40 +190,29 @@ test_empty_object_equality()
 void
 test_empty_object_read_write()
 {
-#ifdef __unix__
+    efyj::context ctx;
     efyj::Model x1, x2;
 
     {
-        char* ptr{ nullptr };
-        size_t size{ 0 };
-
-        efyj::scope_exit se_ptr([ptr]() { free(ptr); });
+        auto name = make_temporary("efyj-XXXXXXXX.dxi");
+        auto file = std::filesystem::path(name);
 
         {
-            {
-                auto* out = open_memstream(&ptr, &size);
-                Ensures(out);
-                efyj::scope_exit se_out([out]() { fclose(out); });
-
-                x1.write(out);
-            }
-
-            Ensures(ptr);
+            efyj::output_file out(file.string().c_str());
+            x1.write(ctx, out);
         }
 
         {
-            auto* in = fmemopen(ptr, strlen(ptr), "r");
-
-            Ensures(in);
-            efyj::scope_exit se_in([in]() { fclose(in); });
-
-            x2.read(in);
+            efyj::input_file in(file.string().c_str());
+            x2.read(ctx, in);
         }
+
+        std::filesystem::remove(file);
     }
 
     bool is_equal = x1 == x2;
+
     Ensures(is_equal == true);
-#endif
 }
 
 void
@@ -271,40 +261,28 @@ test_classic_Model_file()
 void
 test_car_dxi_load_save_load_via_sstream()
 {
-#ifdef __unix__
     change_pwd();
+    efyj::context ctx;
 
     efyj::Model car;
-    char* ptr{ nullptr };
-    size_t size{ 0 };
+
+    auto name = make_temporary("efyj-XXXXXXXX.dxi");
+    auto file = std::filesystem::path(name);
 
     {
-        auto* is = fopen("Car.dxi", "r");
-        Ensures(is);
-        efyj::scope_exit se_is([is]() { fclose(is); });
+        efyj::input_file is("Car.dxi");
+        EnsuresNotThrow(car.read(ctx, is), std::exception);
 
-        EnsuresNotThrow(car.read(is), std::exception);
-
-        {
-            auto* out = open_memstream(&ptr, &size);
-            Ensures(out);
-            efyj::scope_exit se_out([out]() { fclose(out); });
-
-            EnsuresNotThrow(car.write(out), std::exception);
-        }
+        efyj::output_file out(file.string().c_str());
+        EnsuresNotThrow(car.write(ctx, out), std::exception);
     }
 
     efyj::Model car2;
 
-    Ensures(ptr);
-
-    auto* is = fmemopen(ptr, size, "r");
-    Ensures(is);
-    EnsuresNotThrow(car2.read(is), std::exception);
-    free(ptr);
+    efyj::input_file is(file.string().c_str());
+    EnsuresNotThrow(car2.read(ctx, is), std::exception);
 
     Ensures(car == car2);
-#endif
 }
 
 void
