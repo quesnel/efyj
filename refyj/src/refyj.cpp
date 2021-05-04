@@ -91,7 +91,10 @@ information(const std::string& model)
         init_context(ctx);
 
         if (const auto ret = efyj::information(ctx, model, out); is_bad(ret)) {
-            Rprintf("refyj::information(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf("refyj::information(...) failed: %.*s\n",
+                    msg.size(),
+                    msg.data());
             return Rcpp::List();
         }
 
@@ -154,7 +157,9 @@ evaluate(const std::string& model,
         init_context(ctx);
 
         if (const auto ret = efyj::evaluate(ctx, model, d, out); is_bad(ret)) {
-            Rprintf("refyj::evaluate(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf(
+              "refyj::evaluate(...) failed: %.*s\n", msg.size(), msg.data());
             return Rcpp::List();
         }
 
@@ -207,7 +212,9 @@ extract(const std::string& model, const std::string& options)
 
         if (const auto ret = efyj::extract_options(ctx, model, options, d);
             is_bad(ret)) {
-            Rprintf("refyj::extract(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf(
+              "refyj::extract(...) failed: %.*s\n", msg.size(), msg.data());
             return Rcpp::List();
         }
 
@@ -329,14 +336,16 @@ adjustment(const std::string& model,
         if (const auto ret =
               efyj::adjustment(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
-            Rprintf("refyj::adjustment(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf(
+              "refyj::adjustment(...) failed: %.*s\n", msg.size(), msg.data());
             return Rcpp::List();
         }
 
-        return Rcpp::List::create(
-          Rcpp::Named("modifiers") = Rcpp::wrap(all_modifiers),
-          Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
-          Rcpp::Named("time") = Rcpp::wrap(all_time));
+        return Rcpp::List::create(Rcpp::Named("modifiers") =
+                                    Rcpp::wrap(all_modifiers),
+                                  Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
+                                  Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
         Rprintf("refyj::adjustment: %s\n", e.what());
     } catch (const std::exception& e) {
@@ -399,14 +408,16 @@ prediction(const std::string& model,
         if (const auto ret =
               efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
-            Rprintf("refyj::prediction(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf(
+              "refyj::prediction(...) failed: %.*s\n", msg.size(), msg.data());
             return Rcpp::List();
         }
 
-        return Rcpp::List::create(
-          Rcpp::Named("modifiers") = Rcpp::wrap(all_modifiers),
-          Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
-          Rcpp::Named("time") = Rcpp::wrap(all_time));
+        return Rcpp::List::create(Rcpp::Named("modifiers") =
+                                    Rcpp::wrap(all_modifiers),
+                                  Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
+                                  Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
         Rprintf("refyj::prediction: %s\n", e.what());
     } catch (const std::exception& e) {
@@ -465,7 +476,9 @@ merge(const std::string& model,
 
         if (const auto ret = efyj::merge_options(ctx, model, out, d);
             is_bad(ret)) {
-            Rprintf("refyj::merge(...) failed\n");
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf(
+              "refyj::merge(...) failed: %.*s\n", msg.size(), msg.data());
             return false;
         }
 
