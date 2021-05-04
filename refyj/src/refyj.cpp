@@ -181,36 +181,59 @@ evaluate(const std::string& model,
     return Rcpp::List();
 }
 
-//' Simulate all options for a dexi file.
+//' Extracts options from DEXi file to a CSV file.
 //'
-//' This function parses the dexi and csv files and for each row of the csv
-//' file, it simulates the omdel. This function returns a list of options,
-//' agregate attributes and simulations results.
+//' @param model The file path of the DEXi model.
+//' @param options The output path for the CSV file.
 //'
-//' @param model The file path of the DEXi model
-//' @param simulations A vector of strings
-//' @param places A vector of strings
-//' @param departments A vector of integers
-//' @param years A vector of integers
-//' @param observed A vector of integers
-//' @param scale_values A vector integers with
+//' @return Nothing
 //'
-//' @return A List with the list of observation scale value, the list of
-//' simulation scale values, and two double kappa linear and kappa squared.
+//' @export
+// [[Rcpp::export]]
+void
+extract_to_file(const std::string& model, const std::string& options)
+{
+    try {
+        efyj::context ctx;
+
+        init_context(ctx);
+
+        if (const auto ret =
+              efyj::extract_options_to_file(ctx, model, options);
+            is_bad(ret)) {
+            const auto msg = efyj::get_error_message(ret);
+            Rprintf("refyj::extract(...) to file failed: %.*s\n",
+                    msg.size(),
+                    msg.data());
+        }
+    } catch (const std::bad_alloc& e) {
+        Rprintf("refyj::extract: %s\n", e.what());
+    } catch (const std::exception& e) {
+        Rprintf("refyj::extract: %s\n", e.what());
+    } catch (...) {
+        Rprintf("refyj::extract: unknown error\n");
+    }
+}
+
+//' Extracts options from DEXi file into data frame.
+//'
+//' @param model The file path of the DEXi model.
+//'
+//' @return A List with the list simulation identifiers, places departments,
+//' years observation and all scale values.
 //'
 //' @export
 // [[Rcpp::export]]
 Rcpp::List
-extract(const std::string& model, const std::string& options)
+extract(const std::string& model)
 {
     try {
         efyj::context ctx;
-        efyj::evaluation_results out;
         efyj::data d;
 
         init_context(ctx);
 
-        if (const auto ret = efyj::extract_options(ctx, model, options, d);
+        if (const auto ret = efyj::extract_options(ctx, model, d);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
             Rprintf(
