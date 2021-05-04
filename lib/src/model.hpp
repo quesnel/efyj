@@ -154,7 +154,7 @@ struct Model
     std::string name;
     std::string version;
     std::string created;
-    std::string reports;
+    std::string reports = "6";
     std::string optdatatype;
     std::string optlevels;
     std::vector<std::string> description;
