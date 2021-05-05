@@ -58,7 +58,7 @@ On Windows, make sur you have installed R, Rtools. Then starts  `rtools bash` fr
 ````bash
 pacman -Sy
 pacman -S mingw-w64-i686-expat
-pacman -S mingw-w64-i86_64-expat
+pacman -S mingw-w64-x86_64-expat
 ````
 
 On Unix (Linux and OS X), install R and R development files from the package tools of your distribution (`apt`, `packman`, `yaourt`, `portage` etc.).
