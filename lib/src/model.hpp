@@ -157,6 +157,7 @@ struct Model
     std::string reports = "6";
     std::string optdatatype;
     std::string optlevels;
+    std::string linking;
     std::vector<std::string> description;
     std::vector<std::string> options;
     std::vector<scale_id> basic_attribute_scale_size;

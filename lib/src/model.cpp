@@ -132,7 +132,8 @@ private:
         NORMLOCWEIGHTS,
         HIGH,
         OPTDATATYPE,
-        OPTLEVELS
+        OPTLEVELS,
+        LINKING
     };
 
     static std::optional<stack_identifier> str_to_stack_identifier(
@@ -169,7 +170,8 @@ private:
                 { "NORMLOCWEIGHTS", stack_identifier::NORMLOCWEIGHTS },
                 { "HIGH", stack_identifier::HIGH },
                 { "OPTDATATYPE", stack_identifier::OPTDATATYPE },
-                { "OPTLEVELS", stack_identifier::OPTLEVELS } });
+                { "OPTLEVELS", stack_identifier::OPTLEVELS },
+                { "LINKING", stack_identifier::LINKING } });
 
         auto it = stack_identifier_map.find(name);
 
@@ -302,6 +304,14 @@ private:
             break;
 
         case stack_identifier::OPTLEVELS:
+            if (!pd->is_parent({ stack_identifier::SETTINGS })) {
+                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                break;
+            }
+            pd->stack.push(id);
+            break;
+
+        case stack_identifier::LINKING:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(dexi_parser_status::tag::file_format_error);
                 break;
@@ -449,10 +459,10 @@ private:
 #endif
 
                 if (ret != 1)
-                    debug(
-                      pd->ctx,
-                      "Option with unreadable string `{}'. Use `0' instead\n",
-                      pd->char_data);
+                    debug(pd->ctx,
+                          "Option with unreadable string `{}'. Use `0' "
+                          "instead\n",
+                          pd->char_data);
 
                 pd->model.attributes.back().options.emplace_back(att);
             } else {
@@ -482,6 +492,11 @@ private:
 
         case stack_identifier::OPTLEVELS:
             pd->model.optlevels.assign(pd->char_data);
+            pd->stack.pop();
+            break;
+
+        case stack_identifier::LINKING:
+            pd->model.linking.assign(pd->char_data);
             pd->stack.pop();
             break;
 
@@ -684,6 +699,9 @@ struct Model_writer
 
         if (!dex.optlevels.empty())
             os.print("    <OPTLEVELS>{}</OPTLEVELS>\n", escape(dex.optlevels));
+
+        if (!dex.linking.empty())
+            os.print("    <LINKING>{}</LINKING>\n", escape(dex.linking));
 
         os.print("  </SETTINGS>\n", escape(dex.reports));
 
