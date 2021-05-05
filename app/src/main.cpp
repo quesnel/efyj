@@ -450,7 +450,7 @@ main(int argc, char* argv[])
             else
                 dexifile2 = str;
         } else
-            fmt::print(stderr, "unknown file type {}.\n", argv[i]);
+            fmt::print(stderr, "unknown file type {}.\n", str);
     }
 
     efyj::context ctx;
