@@ -158,7 +158,7 @@ struct numeric_cast_error : public std::exception
     }
 };
 
-struct internal_error
+struct internal_error : public std::exception
 {
     std::string pp_file, pp_function;
     int pp_line;
@@ -172,7 +172,7 @@ struct internal_error
     {}
 };
 
-struct file_error
+struct file_error : public std::exception
 {
     std::string pp_file;
 
@@ -181,7 +181,7 @@ struct file_error
     {}
 };
 
-struct solver_error
+struct solver_error : public std::exception
 {
     std::string pp_file;
 
@@ -190,7 +190,7 @@ struct solver_error
     {}
 };
 
-struct dexi_parser_status
+struct dexi_parser_status : public std::exception
 {
     enum class tag
     {
@@ -234,7 +234,7 @@ struct dexi_parser_status
     {}
 };
 
-struct csv_parser_status
+struct csv_parser_status : public std::exception
 {
     enum class tag
     {
