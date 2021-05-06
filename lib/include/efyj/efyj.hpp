@@ -238,6 +238,7 @@ struct csv_parser_status : public std::exception
 {
     enum class tag
     {
+        done,
         file_error,
         column_number_incorrect,
         scale_value_unknown,
@@ -253,7 +254,8 @@ struct csv_parser_status : public std::exception
 
     std::string_view tag_name() const noexcept
     {
-        static std::string_view name[] = { "file_error",
+        static std::string_view name[] = { "done",
+                                           "file_error",
                                            "column_number_incorrect",
                                            "scale_value_unknown",
                                            "column_conversion_failure",
@@ -266,6 +268,18 @@ struct csv_parser_status : public std::exception
     size_t m_column;
     tag m_tag;
 };
+
+inline bool
+is_bad(const dexi_parser_status::tag t) noexcept
+{
+    return t != dexi_parser_status::tag::done;
+}
+
+inline bool
+is_bad(const csv_parser_status::tag t) noexcept
+{
+    return t != csv_parser_status::tag::done;
+}
 
 using value = int; // std::int8_t;
 
@@ -357,7 +371,7 @@ struct data
  *
  * This function can return false to stop the computation of the next line
  * modifier.
- * 
+ *
  * @todo Replace with a function_ref or function_view.
  */
 using result_callback = std::function<bool(const result&)>;

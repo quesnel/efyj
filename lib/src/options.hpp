@@ -83,10 +83,12 @@ public:
      * @param context use to log message if necessary.
      * @param [in] is input stream where read the CSV data.
      * @param [in] model to ensure correspondence.
-     *
-     * @throw std::bad_alloc or csv_parser_error.
+     * 
+     * @return status of the read operation.
      */
-    void read(const context& ctx, const input_file& is, const Model& model);
+    csv_parser_status::tag read(const context& ctx,
+                                const input_file& is,
+                                const Model& model);
 
     bool have_subdataset() const
     {
@@ -105,7 +107,7 @@ public:
     /// data are not consistency, \e clear() is called.
     ///
     /// \execption \e internal_error or \e options_error.
-    void check();
+    bool check();
 
     /// \e init_dataset is called after \e read(...) or \e set(...)
     /// functions to initialize the \e subdataset and \e

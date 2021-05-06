@@ -53,7 +53,7 @@ struct Model_reader
       , m_status(dexi_parser_status::tag::done)
     {}
 
-    void read(int buffer_size)
+    dexi_parser_status::tag read(int buffer_size)
     {
         XML_Parser parser = XML_ParserCreate(NULL);
         scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
@@ -93,17 +93,22 @@ struct Model_reader
             }
         } while (!done);
 
-        if (m_status != dexi_parser_status::tag::done)
-            throw dexi_parser_status(m_status,
-                                     static_cast<unsigned long int>(line),
-                                     static_cast<unsigned long int>(column));
+        if (m_status != dexi_parser_status::tag::done) {
+            error_at_line = static_cast<unsigned long int>(line);
+            error_at_column = static_cast<unsigned long int>(column);
+        }
+
+        return m_status;
     }
 
 private:
     const context& ctx;
     const input_file& is;
     Model& dex;
+
     dexi_parser_status::tag m_status{ dexi_parser_status::tag::done };
+    unsigned long int error_at_line;
+    unsigned long int error_at_column;
 
     enum class stack_identifier
     {
@@ -664,7 +669,7 @@ struct Model_writer
         assert(os_.is_open());
     }
 
-    void write()
+    dexi_parser_status::tag write()
     {
         os.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                  "<DEXi>\n"
@@ -709,6 +714,8 @@ struct Model_writer
             write_Model_attribute(0);
 
         os.print("</DEXi>\n");
+
+        return dexi_parser_status::tag::done;
     }
 
 private:
@@ -879,23 +886,23 @@ reorder_basic_attribute(const Model& model,
             reorder_basic_attribute(model, child, out);
 }
 
-void
+dexi_parser_status::tag
 Model::read(const context& ctx, const input_file& is)
 {
     Model_reader dr(ctx, is, *this);
 
 #ifdef BUFSIZ
-    dr.read(static_cast<size_t>(BUFSIZ));
+    return dr.read(static_cast<size_t>(BUFSIZ));
 #else
-    dr.read(static_cast<size_t>(4096));
+    return dr.read(static_cast<size_t>(4096));
 #endif
 }
 
-void
+dexi_parser_status::tag
 Model::write(const context& ctx, const output_file& os)
 {
     Model_writer dw(ctx, os, *this);
-    dw.write();
+    return dw.write();
 }
 
 void

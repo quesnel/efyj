@@ -145,7 +145,7 @@ Options::Options(const data& d)
     check();
 }
 
-void
+csv_parser_status::tag
 Options::read(const context& ctx, const input_file& is, const Model& model)
 {
     clear();
@@ -156,29 +156,33 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
     std::string line;
     size_t id;
 
+    size_t error_at_line = 0;
+    size_t error_at_column = 0;
+
     line_reader ls(is.get());
 
     {
         auto opt_line = ls.getline();
         if (!opt_line) {
             info(ctx, "Fail to read header\n");
-            throw csv_parser_status(
-              csv_parser_status::tag::file_error, size_t(0), columns.size());
+            error_at_line = 0;
+            error_at_column = columns.size();
+            return csv_parser_status::tag::file_error;
         }
 
         line = *opt_line;
 
         tokenize(line, columns, ";", false);
 
-        if (columns.size() == atts.size() + 4)
+        if (columns.size() == atts.size() + 4) {
             id = 3;
-        else if (columns.size() == atts.size() + 5)
+        } else if (columns.size() == atts.size() + 5) {
             id = 4;
-        else
-            throw csv_parser_status(
-              csv_parser_status::tag::column_number_incorrect,
-              size_t(0),
-              columns.size());
+        } else {
+            error_at_line = 0;
+            error_at_column = columns.size();
+            return csv_parser_status::tag::column_number_incorrect;
+        }
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
@@ -193,10 +197,9 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
             error(ctx, "Fail to found attribute for `{}'\n", columns[i]);
-            throw csv_parser_status(
-              csv_parser_status::tag::basic_attribute_unknown,
-              size_t(0),
-              columns.size());
+            error_at_line = 0;
+            error_at_column = columns.size();
+            return csv_parser_status::tag::basic_attribute_unknown;
         }
 
         convertheader[i - id] = *opt_att_id;
@@ -238,10 +241,9 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
               line_number,
               columns.back());
 
-            throw csv_parser_status(
-              csv_parser_status::tag::scale_value_unknown,
-              static_cast<size_t>(line_number),
-              static_cast<size_t>(columns.size()));
+            error_at_line = line_number;
+            error_at_column = columns.size();
+            return csv_parser_status::tag::scale_value_unknown;
         }
 
         int obs = *opt_obs;
@@ -280,11 +282,9 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
                       columns[i].c_str(),
                       atts[attid]->name.c_str());
 
-                throw csv_parser_status{
-                    csv_parser_status::tag::scale_value_unknown,
-                    static_cast<size_t>(line_number),
-                    static_cast<size_t>(columns.size())
-                };
+                error_at_line = line_number;
+                error_at_column = columns.size();
+                return csv_parser_status::tag::scale_value_unknown;
             }
 
             options(options.rows() - 1, attid) = *opt_option;
@@ -297,6 +297,8 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
 
     init_dataset();
     check();
+
+    return csv_parser_status::tag::done;
 }
 
 void
@@ -360,17 +362,16 @@ Options::init_dataset()
     // printf("]\n");
 }
 
-void
+bool
 Options::check()
 {
-    if (static_cast<size_t>(options.rows()) != simulations.size() ||
-        options.cols() == 0 || simulations.size() != departments.size() ||
-        simulations.size() != years.size() ||
-        simulations.size() != observed.size() ||
-        !(simulations.size() == places.size() || places.empty()) ||
-        simulations.size() != id_subdataset_reduced.size() ||
-        subdataset.size() != simulations.size())
-        throw solver_error("Options are inconsistent");
+    return !(static_cast<size_t>(options.rows()) != simulations.size() ||
+             options.cols() == 0 || simulations.size() != departments.size() ||
+             simulations.size() != years.size() ||
+             simulations.size() != observed.size() ||
+             !(simulations.size() == places.size() || places.empty()) ||
+             simulations.size() != id_subdataset_reduced.size() ||
+             subdataset.size() != simulations.size());
 }
 
 void

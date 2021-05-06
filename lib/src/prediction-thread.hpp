@@ -57,6 +57,8 @@ struct prediction_thread_evaluator
                                 const Model& model,
                                 const Options& options);
 
+    bool is_valid() const noexcept;
+
     void run(const result_callback& cb,
              int line_limit,
              double time_limit,

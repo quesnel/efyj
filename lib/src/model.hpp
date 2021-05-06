@@ -164,8 +164,8 @@ struct Model
     std::vector<std::string> group;
     std::deque<attribute> attributes;
 
-    void read(const context& ctx, const input_file& is);
-    void write(const context& ctx, const output_file& os);
+    dexi_parser_status::tag read(const context& ctx, const input_file& is);
+    dexi_parser_status::tag write(const context& ctx, const output_file& os);
 
     /** Release all dynamically allocated memory. */
     void clear();

@@ -27,13 +27,16 @@
 
 namespace efyj {
 
-Model
-make_model(const context& ctx, const std::string& model_file_path);
+status
+make_model(const context& ctx,
+           const std::string& model_file_path,
+           Model& model);
 
-Options
+status
 make_options(const context& ctx,
              Model& model,
-             const std::string& options_file_path);
+             const std::string& options_file_path,
+             Options& options);
 
 } // namespace efyj
 

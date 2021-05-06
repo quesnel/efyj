@@ -36,9 +36,12 @@ prediction_evaluator::prediction_evaluator(const context& ctx,
   , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
 {
-    if (!options.have_subdataset())
-        throw solver_error(
-          "options does not have enough data to build the training set");
+}
+
+bool
+prediction_evaluator::is_valid() const noexcept
+{
+    return m_options.have_subdataset();
 }
 
 void

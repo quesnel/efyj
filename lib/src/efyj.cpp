@@ -34,38 +34,86 @@
 
 namespace efyj {
 
-Model
-make_model(const context& ctx, const std::string& model_file_path)
+static constexpr status
+csv_parser_status_convert(const csv_parser_status::tag s) noexcept
 {
-    Model model;
+    switch (s) {
+    case csv_parser_status::tag::done:
+        return status::success;
+    case csv_parser_status::tag::file_error:
+        return status::csv_parser_file_error;
+    case csv_parser_status::tag::column_number_incorrect:
+        return status::csv_parser_column_number_incorrect;
+    case csv_parser_status::tag::scale_value_unknown:
+        return status::csv_parser_scale_value_unknown;
+    case csv_parser_status::tag::column_conversion_failure:
+        return status::csv_parser_column_conversion_failure;
+    case csv_parser_status::tag::basic_attribute_unknown:
+        return status::csv_parser_basic_attribute_unknown;
+    }
 
+    std::abort();
+}
+
+static constexpr status
+dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
+{
+    switch (s) {
+    case dexi_parser_status::tag::done:
+        return status::success;
+    case dexi_parser_status::tag::scale_definition_error:
+        return status::dexi_parser_scale_definition_error;
+    case dexi_parser_status::tag::scale_not_found:
+        return status::dexi_parser_scale_not_found;
+    case dexi_parser_status::tag::scale_too_big:
+        return status::dexi_parser_scale_too_big;
+    case dexi_parser_status::tag::file_format_error:
+        return status::dexi_parser_file_format_error;
+    case dexi_parser_status::tag::not_enough_memory:
+        return status::dexi_parser_not_enough_memory;
+    case dexi_parser_status::tag::element_unknown:
+        return status::dexi_parser_element_unknown;
+    case dexi_parser_status::tag::option_conversion_error:
+        return status::dexi_parser_option_conversion_error;
+    }
+
+    std::abort();
+}
+
+status
+make_model(const context& ctx,
+           const std::string& model_file_path,
+           Model& model)
+{
     const auto ifs = input_file(model_file_path.c_str());
     if (!ifs.is_open()) {
         error(ctx, "fail to open `{}'\n", model_file_path.c_str());
-        throw file_error(model_file_path);
+        return status::file_error;
     }
 
-    model.read(ctx, ifs);
+    if (auto ret = model.read(ctx, ifs); is_bad(ret))
+        return dexi_parser_status_convert(ret);
 
-    return model;
+    return status::success;
 }
 
-Options
+status
 make_options(const context& ctx,
              Model& model,
-             const std::string& options_file_path)
+             const std::string& options_file_path,
+             Options& options)
 {
-    Options options;
 
     const auto ifs = input_file(options_file_path.c_str());
     if (!ifs.is_open()) {
         error(ctx, "fail to open `{}'", options_file_path.c_str());
-        throw file_error(options_file_path);
+        return status::file_error;
     }
 
-    options.read(ctx, ifs, model);
+    if (auto ret = options.read(ctx, ifs, model); is_bad(ret))
+        return csv_parser_status_convert(ret);
 
-    return options;
+    return status::success;
 }
 
 static void
@@ -154,57 +202,15 @@ set_options_model(const context& ctx, Model& mdl, const Options& opts)
     return status::success;
 }
 
-static constexpr status
-csv_parser_status_convert(const csv_parser_status::tag s) noexcept
-{
-    switch (s) {
-    case csv_parser_status::tag::file_error:
-        return status::csv_parser_file_error;
-    case csv_parser_status::tag::column_number_incorrect:
-        return status::csv_parser_column_number_incorrect;
-    case csv_parser_status::tag::scale_value_unknown:
-        return status::csv_parser_scale_value_unknown;
-    case csv_parser_status::tag::column_conversion_failure:
-        return status::csv_parser_column_conversion_failure;
-    case csv_parser_status::tag::basic_attribute_unknown:
-        return status::csv_parser_basic_attribute_unknown;
-    }
-
-    std::abort();
-}
-
-static constexpr status
-dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
-{
-    switch (s) {
-    case dexi_parser_status::tag::done:
-        return status::success;
-    case dexi_parser_status::tag::scale_definition_error:
-        return status::dexi_parser_scale_definition_error;
-    case dexi_parser_status::tag::scale_not_found:
-        return status::dexi_parser_scale_not_found;
-    case dexi_parser_status::tag::scale_too_big:
-        return status::dexi_parser_scale_too_big;
-    case dexi_parser_status::tag::file_format_error:
-        return status::dexi_parser_file_format_error;
-    case dexi_parser_status::tag::not_enough_memory:
-        return status::dexi_parser_not_enough_memory;
-    case dexi_parser_status::tag::element_unknown:
-        return status::dexi_parser_element_unknown;
-    case dexi_parser_status::tag::option_conversion_error:
-        return status::dexi_parser_option_conversion_error;
-    }
-
-    std::abort();
-}
-
 status
 information(const context& ctx,
             const std::string& model_file_path,
             information_results& ret) noexcept
 {
     try {
-        const auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
 
         ret.basic_attribute_names.clear();
         ret.basic_attribute_scale_value_numbers.clear();
@@ -339,7 +345,10 @@ evaluate(const context& ctx,
          evaluation_results& out) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
         Options options(d);
 
         evaluate(ctx, model, options, out);
@@ -367,8 +376,14 @@ evaluate(const context& ctx,
          evaluation_results& ret) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
-        auto options = make_options(ctx, model, options_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
+        Options options;
+        if (auto ret = make_options(ctx, model, options_file_path, options);
+            is_bad(ret))
+            return ret;
 
         evaluate(ctx, model, options, ret);
         return status::success;
@@ -397,8 +412,15 @@ adjustment(const context& ctx,
            unsigned int thread) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
-        auto options = make_options(ctx, model, options_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
+        Options options;
+        if (auto ret = make_options(ctx, model, options_file_path, options);
+            is_bad(ret))
+            return ret;
+
         efyj::adjustment_evaluator adj(ctx, model, options);
         adj.run(callback, limit, 0.0, reduce);
     } catch (const numeric_cast_error& /*e*/) {
@@ -428,7 +450,10 @@ adjustment(const context& ctx,
            unsigned int thread) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
         Options options(d);
         efyj::adjustment_evaluator adj(ctx, model, options);
         adj.run(callback, limit, 0.0, reduce);
@@ -460,8 +485,14 @@ prediction(const context& ctx,
            unsigned int thread) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
-        auto options = make_options(ctx, model, options_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
+        Options options;
+        if (auto ret = make_options(ctx, model, options_file_path, options);
+            is_bad(ret))
+            return ret;
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
@@ -499,7 +530,10 @@ prediction(const context& ctx,
            unsigned int thread) noexcept
 {
     try {
-        auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
         Options options(d);
 
         if (thread <= 1) {
@@ -546,7 +580,9 @@ extract_options_to_file(const context& ctx,
             return status::extract_option_same_input_files;
         }
 
-        auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
@@ -583,10 +619,12 @@ extract_options(const context& ctx,
         debug(
           ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
-        auto model = make_model(ctx, model_file_path);
-        Options opts;
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
 
-        if (auto ret = get_options_model(ctx, model, opts); !is_success(ret))
+        Options opts;
+        if (auto ret = get_options_model(ctx, model, opts); is_bad(ret))
             return ret;
 
         out.simulations = std::move(opts.simulations);
@@ -628,8 +666,14 @@ extract_options(const context& ctx,
         debug(
           ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
-        auto model = make_model(ctx, model_file_path);
-        auto options = make_options(ctx, model, options_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
+        Options options;
+        if (auto ret = make_options(ctx, model, options_file_path, options);
+            is_bad(ret))
+            return ret;
 
         out.simulations = std::move(options.simulations);
         out.places = std::move(options.places);
@@ -680,8 +724,14 @@ merge_options_to_file(const context& ctx,
             return status::merge_option_same_inputoutput;
         }
 
-        auto model = make_model(ctx, model_file_path);
-        auto options = make_options(ctx, model, options_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
+        Options options;
+        if (auto ret = make_options(ctx, model, options_file_path, options);
+            is_bad(ret))
+            return ret;
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
@@ -730,7 +780,10 @@ merge_options(const context& ctx,
             return status::merge_option_same_inputoutput;
         }
 
-        auto model = make_model(ctx, model_file_path);
+        Model model;
+        if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
+            return ret;
+
         Options options(d);
 
         const auto ofs = output_file(output_file_path.c_str());
