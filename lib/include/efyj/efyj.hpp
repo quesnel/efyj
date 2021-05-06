@@ -298,6 +298,17 @@ struct evaluation_results
     matrix<value> confusion;
     double linear_weighted_kappa;
     double squared_weighted_kappa;
+
+    void clear()
+    {
+        matrix<value>().swap(options);
+        matrix<value>().swap(attributes);
+        std::vector<value>().swap(simulations);
+        std::vector<value>().swap(observations);
+        matrix<value>().swap(confusion);
+        linear_weighted_kappa = 0.0;
+        squared_weighted_kappa = 0.0;
+    }
 };
 
 inline bool

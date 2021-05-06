@@ -74,11 +74,11 @@ public:
 
     void init(size_type rows, size_type cols)
     {
-        m_capacity = compute_capacity(rows);
+        m_capacity = rows;
         m_line_size = cols;
         m_size = rows;
 
-        m_data.resize(m_capacity * m_line_size);
+        m_data.resize(m_size * m_line_size);
     }
 
     void push_line()

@@ -125,6 +125,7 @@ struct line_reader
     std::string m_buffer;
 };
 
+#if 0
 Options::Options(const data& d)
   : simulations(d.simulations)
   , places(d.places)
@@ -132,17 +133,65 @@ Options::Options(const data& d)
   , years(d.years)
   , observed(d.observed)
 {
+    fmt::print("Options::Options(const data& d)\n");
     const auto rows = simulations.size();
     const auto nb_basic_attributes = d.scale_values.size() / rows;
 
+    fmt::print("{} {}\n", rows, nb_basic_attributes);
     options.init(rows, nb_basic_attributes);
 
-    for (size_t r = 0, i = 0; r < rows; ++r)
-        for (size_t c = 0; c < nb_basic_attributes; ++c, ++i)
+    for (size_t r = 0, i = 0; r < rows; ++r) {
+        for (size_t c = 0; c < nb_basic_attributes; ++c, ++i) {
+            fmt::print("set {},{} = {}\n", r, c, d.scale_values[i]);
             options(r, c) = d.scale_values[i];
+        }
+    }
 
+    fmt::print("init_dataset()\n");
     init_dataset();
+    fmt::print("check\n");
     check();
+    fmt::print("Options::Options finished\n");
+}
+#endif
+
+void
+Options::save(const char* filename) noexcept
+{
+    if (std::FILE* os = std::fopen(filename, "w"); os) {
+        fmt::print(os, "simulations {}\n", simulations.size());
+        for (const auto& elem : simulations)
+            fmt::print(os, "[{}]", elem);
+
+        fmt::print(os, "\nplaces {}\n", places.size());
+        for (const auto& elem : places)
+            fmt::print(os, "[{}]", elem);
+
+        fmt::print(os, "\ndepartments {}\n", departments.size());
+        for (const auto& elem : departments)
+            fmt::print(os, "[{}]", elem);
+
+        fmt::print(os, "\nyears {}\n", years.size());
+        for (const auto& elem : years)
+            fmt::print(os, "[{}]", elem);
+
+        fmt::print(os, "\nobserved {}\n", observed.size());
+        for (const auto& elem : observed)
+            fmt::print(os, "[{}]", elem);
+
+        fmt::print(os, "\noptions {}*{}\n", options.rows(), options.cols());
+        const auto rows = options.rows();
+        const auto cols = options.cols();
+
+        for (size_t r = 0; r < rows; ++r) {
+            for (size_t c = 0; c < cols; ++c)
+                fmt::print(os, "{}", options(r, c));
+            fmt::print(os, "\n");
+        }
+
+        fmt::print(os, "\n");
+        std::fclose(os);
+    }
 }
 
 csv_parser_status::tag
@@ -155,9 +204,6 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
     std::vector<std::string> columns;
     std::string line;
     size_t id;
-
-    size_t error_at_line = 0;
-    size_t error_at_column = 0;
 
     line_reader ls(is.get());
 
@@ -189,10 +235,8 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
         info(ctx, "column {} {}\n", i, columns[i].c_str());
 
     for (size_t i = id, e = id + atts.size(); i != e; ++i) {
-        info(ctx,
-             "try to get_basic_atribute_id {} : {}\n",
-             i,
-             columns[i].c_str());
+        info(
+          ctx, "try to get_basic_atribute_id {} : {}\n", i, columns[i].c_str());
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
@@ -309,6 +353,8 @@ Options::init_dataset()
     assert(!simulations.empty());
 
     subdataset.resize(size);
+    for (auto& elem : subdataset)
+        elem.clear();
 
     if (places.empty()) {
         for (size_t i = 0; i != size; ++i) {
@@ -330,17 +376,17 @@ Options::init_dataset()
         }
     }
 
-    // printf("init_dataset\n");
-    // for (size_t i = 0, e = subdataset.size(); i != e; ++i) {
-    //     printf("%ld [", i);
-    //     for (auto elem : subdataset[i])
-    //         printf("%d ", elem);
-    //     printf("]\n");
-    // }
+    fmt::print("init_dataset\n");
+    for (size_t i = 0, e = subdataset.size(); i != e; ++i) {
+        fmt::print("{} [", i);
+        for (auto elem : subdataset[i])
+            fmt::print("{} ", elem);
+        fmt::print("]\n");
+    }
 
     {
         std::vector<std::vector<int>> reduced;
-        id_subdataset_reduced.resize(subdataset.size());
+        id_subdataset_reduced.resize(subdataset.size(), 0);
 
         for (size_t i = 0, e = subdataset.size(); i != e; ++i) {
             auto it =
@@ -356,10 +402,10 @@ Options::init_dataset()
         }
     }
 
-    // printf("id_subdataset: [");
-    // for (size_t i = 0, e = subdataset.size(); i != e; ++i)
-    //     printf("%d ", id_subdataset_reduced[i]);
-    // printf("]\n");
+    fmt::print("id_subdataset: [");
+    for (size_t i = 0, e = subdataset.size(); i != e; ++i)
+        fmt::print("{} ", id_subdataset_reduced[i]);
+    fmt::print("]\n");
 }
 
 bool

@@ -1,2 +1,4 @@
-PKG_CPPFLAGS = `pkg-config --cflags efyj` -std=c++17
-PKG_LIBS = `pkg-config --libs efyj`
+PKG_CPPFLAGS = -I../../lib/include -I../../external/fmt/include -I$(MINGW_PREFIX)/include -DFMT_HEADER_ONLY -std=c++17
+PKG_LIBS = -Llibexpat -lexpat
+SOURCES = ../../lib/src/adjustment.cpp ../../lib/src/efyj.cpp ../../lib/src/model.cpp ../../lib/src/options.cpp ../../lib/src/prediction.cpp ../../lib/src/prediction-thread.cpp ../../lib/src/solver-stack.cpp refyj.cpp RcppExports.cpp
+OBJECTS = $(SOURCES:.cpp=.o)

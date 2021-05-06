@@ -47,12 +47,23 @@ public:
     std::vector<int> observed;
     DynArray options;
 
+    size_t error_at_line;   ///< when read error, these attributes store
+    size_t error_at_column; ///< line and column indices.
+
     Options() = default;
 
-    Options(const data& d);
+    Options(const Options&) = delete;
+    Options(Options&&) = delete;
+    Options& operator=(const Options&) = delete;
+    Options& operator=(Options&&) = delete;
+
+    void save(const char* filename) noexcept;
 
     const std::vector<int>& get_subdataset(int id) const noexcept
     {
+        assert(id >= 0);
+        assert(static_cast<size_t>(id) < subdataset.size());
+
         return subdataset[id];
     }
 
@@ -68,6 +79,9 @@ public:
 
     int identifier(int id) const noexcept
     {
+        assert(id >= 0);
+        assert(static_cast<size_t>(id) < id_subdataset_reduced.size());
+
         return id_subdataset_reduced[id];
     }
 
@@ -83,7 +97,7 @@ public:
      * @param context use to log message if necessary.
      * @param [in] is input stream where read the CSV data.
      * @param [in] model to ensure correspondence.
-     * 
+     *
      * @return status of the read operation.
      */
     csv_parser_status::tag read(const context& ctx,

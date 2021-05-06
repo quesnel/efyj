@@ -32,6 +32,93 @@
 
 #include <efyj/efyj.hpp>
 
+#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__) &&         \
+  __GNUC__ >= 2
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        __asm__ __volatile__("int $03");                                       \
+    } while (0)
+#elif (defined(_MSC_VER) || defined(__DMC__)) && defined(_M_IX86)
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        __asm int 3h                                                           \
+    } while (0)
+#elif defined(_MSC_VER)
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        __debugbreak();                                                        \
+    } while (0)
+#elif defined(__alpha__) && !defined(__osf__) && defined(__GNUC__) &&          \
+  __GNUC__ >= 2
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        __asm__ __volatile__("bpt");                                           \
+    } while (0)
+#elif defined(__APPLE__)
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        __builtin_trap();                                                      \
+    } while (0)
+#else /* !__i386__ && !__alpha__ */
+#define efyj_breakpoint()                                                      \
+    do {                                                                       \
+        raise(SIGTRAP);                                                        \
+    } while (0)
+#endif /* __i386__ */
+
+#ifndef NDEBUG
+#define efyj_bad_return(status__)                                              \
+    do {                                                                       \
+        efyj_breakpoint();                                                     \
+        return status__;                                                       \
+    } while (0)
+
+#define efyj_return_if_bad(expr__)                                             \
+    do {                                                                       \
+        auto status__ = (expr__);                                              \
+        if (status__ != status::success) {                                     \
+            efyj_breakpoint();                                                 \
+            return status__;                                                   \
+        }                                                                      \
+    } while (0)
+
+#define efyj_return_if_fail(expr__, status__)                                  \
+    do {                                                                       \
+        if (!(expr__)) {                                                       \
+            efyj_breakpoint();                                                 \
+            return status__;                                                   \
+        }                                                                      \
+    } while (0)
+#else
+#define efyj_bad_return(status__)                                              \
+    do {                                                                       \
+        return status__;                                                       \
+    } while (0)
+
+#define efyj_return_if_bad(expr__)                                             \
+    do {                                                                       \
+        auto status__ = (expr__);                                              \
+        if (status__ != status::success) {                                     \
+            return status__;                                                   \
+        }                                                                      \
+    } while (0)
+
+#define efyj_return_if_fail(expr__, status__)                                  \
+    do {                                                                       \
+        if (!(expr__)) {                                                       \
+            return status__;                                                   \
+        }                                                                      \
+    } while (0)
+#endif
+
+#if defined(__GNUC__)
+#define efyj_unreachable() __builtin_unreachable();
+#elif defined(_MSC_VER)
+#define efyj_unreachable() __assume(0)
+#else
+#define efyj_unreachable()
+#endif
+
 namespace efyj {
 
 /** Casts nonnegative integer to unsigned.
@@ -82,8 +169,8 @@ right_trim(std::string_view s) noexcept
 }
 
 /**
- * @brief Get a sub-string without any @c std::isspace characters at left and
- * right
+ * @brief Get a sub-string without any @c std::isspace characters at left
+ * and right
  *
  * @param s The string-view to clean up.
  *
@@ -97,7 +184,8 @@ trim(std::string_view s) noexcept
 
 /**
  * @brief Compute the length of the @c container.
- * @details Return the @c size provided by the @c C::size() but cast it into a
+ * @details Return the @c size provided by the @c C::size() but cast it into
+ * a
  *     @c int. This is a specific baryonyx function, we know that number of
  *         variables and constraints are lower than the @c INT_MAX value.
  *
@@ -197,7 +285,8 @@ tokenize(const std::string& str,
 }
 
 /**
- * @brief Return true if @c Source can be casted into @c Target integer type.
+ * @brief Return true if @c Source can be casted into @c Target integer
+ * type.
  * @details Check if the integer type @c Source is castable into @c Target.
  *
  * @param arg A value.
@@ -309,7 +398,7 @@ public:
         if (fopen_s(&file, file_path, "w"))
             file = nullptr;
 #else
-            file = std::fopen(file_path, "w");
+        file = std::fopen(file_path, "w");
 #endif
     }
 
@@ -377,7 +466,7 @@ public:
         if (fopen_s(&file, file_path, "r"))
             file = nullptr;
 #else
-            file = std::fopen(file_path, "r");
+        file = std::fopen(file_path, "r");
 #endif
     }
 

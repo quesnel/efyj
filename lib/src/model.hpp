@@ -170,6 +170,8 @@ struct Model
     /** Release all dynamically allocated memory. */
     void clear();
 
+    void clear_options();
+
     bool empty() const noexcept
     {
         return attributes.empty();

@@ -7,6 +7,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 option(DisablePython "Disable python wrapper BUILD_RPATH [OFF]" OFF)
 
+if (UNIX)
+  set(BUILD_SHARED_LIBS ON)
+endif()
+
 if (WIN32)
   find_package(expat CONFIG REQUIRED)
 else ()

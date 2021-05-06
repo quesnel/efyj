@@ -27,6 +27,8 @@
 static void
 init_context(efyj::context& ctx) noexcept
 {
+    ctx.log_priority = efyj::log_level::info;
+
     ctx.dexi_cb = [](const efyj::status s,
                      int line,
                      int column,
@@ -148,7 +150,7 @@ evaluate(const Rcpp::String& model,
             simulations.length() != years.length() ||
             simulations.length() != observed.length())
             Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.");
+                       "'observed' must have the same length.\n");
         efyj::evaluation_results out;
 
         efyj::data d;
@@ -198,8 +200,7 @@ extract_to_file(const Rcpp::String& model, const Rcpp::String& options)
         efyj::context ctx;
         init_context(ctx);
 
-        if (const auto ret =
-              efyj::extract_options_to_file(ctx, model, options);
+        if (const auto ret = efyj::extract_options_to_file(ctx, model, options);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
             Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
@@ -351,14 +352,14 @@ adjustment(const Rcpp::String& model,
             simulations.length() != years.length() ||
             simulations.length() != observed.length())
             Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.");
+                       "'observed' must have the same length.\n");
 
         if (scale_values.length() % simulations.length() > 0)
             Rcpp::stop(
-              "'scale_values' lenght must be a multiple of other vectors.");
+              "'scale_values' lenght must be a multiple of other vectors.\n");
 
         if (thread <= 0)
-            Rcpp::stop("'thread' must be a positive value");
+            Rcpp::stop("'thread' must be a positive value.\n");
 
         efyj::data d;
         d.simulations = Rcpp::as<std::vector<std::string>>(simulations);

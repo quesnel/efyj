@@ -35,8 +35,7 @@ prediction_evaluator::prediction_evaluator(const context& ctx,
   , observed(options.options.rows())
   , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
-{
-}
+{}
 
 bool
 prediction_evaluator::is_valid() const noexcept
@@ -95,7 +94,7 @@ prediction_evaluator::run(const result_callback& cb,
         ret.time = std::chrono::duration<double>(m_end - m_start).count();
         ret.kappa_computed = 1;
         ret.function_computed = numeric_cast<unsigned long>(m_options.size());
-        
+
         if (!cb(ret))
             return;
     }

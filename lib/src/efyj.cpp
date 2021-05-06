@@ -81,9 +81,7 @@ dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
 }
 
 status
-make_model(const context& ctx,
-           const std::string& model_file_path,
-           Model& model)
+make_model(const context& ctx, const std::string& model_file_path, Model& model)
 {
     const auto ifs = input_file(model_file_path.c_str());
     if (!ifs.is_open()) {
@@ -103,7 +101,6 @@ make_options(const context& ctx,
              const std::string& options_file_path,
              Options& options)
 {
-
     const auto ifs = input_file(options_file_path.c_str());
     if (!ifs.is_open()) {
         error(ctx, "fail to open `{}'", options_file_path.c_str());
@@ -129,7 +126,7 @@ reorder_basic_attribute(const Model& model,
 }
 
 static status
-get_options_model(const context& ctx, const Model& mdl, const output_file& os)
+get_options_model(const Model& mdl, const output_file& os)
 {
     std::vector<size_t> ordered_att;
     reorder_basic_attribute(mdl, (size_t)0, ordered_att);
@@ -141,7 +138,7 @@ get_options_model(const context& ctx, const Model& mdl, const output_file& os)
     os.print("{}\n", mdl.attributes[0].name);
 
     for (size_t opt{ 0 }; opt != mdl.options.size(); ++opt) {
-        os.print("{}../;-;0;0;", mdl.options[opt]);
+        os.print("{};-;0;0;", mdl.options[opt]);
 
         for (auto child : ordered_att)
             os.print("{};",
@@ -158,21 +155,23 @@ get_options_model(const context& ctx, const Model& mdl, const output_file& os)
 }
 
 static status
-get_options_model(const context& ctx, const Model& mdl, Options& opts)
+get_options_model(const Model& mdl, Options& opts)
 {
     std::vector<size_t> ordered_att;
     reorder_basic_attribute(mdl, (size_t)0, ordered_att);
 
-    opts.options.init(ordered_att.size(), mdl.options.size());
+    opts.options.init(mdl.options.size(), ordered_att.size());
 
     for (size_t opt = 0; opt != mdl.options.size(); ++opt) {
-        opts.simulations.emplace_back(mdl.options[opt] + "../");
+        opts.simulations.emplace_back(mdl.options[opt]);
         opts.places.emplace_back("-");
         opts.departments.emplace_back(0);
         opts.years.emplace_back(0);
 
-        for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c)
-            opts.options(opt, c) = mdl.attributes[ordered_att[c]].options[opt];
+        for (size_t c = 0, ec = ordered_att.size(); c != ec; ++c) {
+            const auto child = ordered_att[c];
+            opts.options(opt, c) = mdl.attributes[child].options[opt];
+        }
 
         opts.observed.emplace_back(mdl.attributes[0].options[opt]);
     }
@@ -181,20 +180,24 @@ get_options_model(const context& ctx, const Model& mdl, Options& opts)
 }
 
 static status
-set_options_model(const context& ctx, Model& mdl, const Options& opts)
+set_options_model(Model& mdl, const Options& opts)
 {
+    const auto rows = opts.simulations.size();
+
     std::vector<size_t> ordered_att;
     reorder_basic_attribute(mdl, 0, ordered_att);
 
-    for (size_t i = 0, e = mdl.attributes.size(); i != e; ++i)
-        mdl.attributes[i].options.clear();
+    for (size_t i = 0, e = mdl.attributes.size(); i != e; ++i) {
+        mdl.attributes[i].options.resize(rows);
+
+        std::fill_n(mdl.attributes[i].options.data(), rows, 0);
+    }
 
     for (size_t i = 0, end_i = ordered_att.size(); i != end_i; ++i) {
         const auto att = ordered_att[i];
 
-        for (size_t opt = 0, end_opt = opts.options.rows(); opt != end_opt;
-             ++opt)
-            mdl.attributes[att].options.emplace_back(opts.options(opt, i));
+        for (size_t row = 0; row != rows; ++row)
+            mdl.attributes[att].options[row] = opts.options(rows, i);
     }
 
     mdl.options = opts.simulations;
@@ -251,53 +254,53 @@ is_valid_input_size(const size_t simulation,
 }
 
 static status
-make_options(const context& ctx,
+make_options([[maybe_unused]] const context& ctx,
              const Model& model,
-             const std::vector<std::string>& simulations,
-             const std::vector<std::string>& places,
-             const std::vector<int>& departments,
-             const std::vector<int>& years,
-             const std::vector<int>& observed,
-             const std::vector<int>& scale_values,
+             const data& d,
              Options& opt)
 {
     try {
-        const auto rows = simulations.size();
+        const auto rows = d.simulations.size();
 
         if (!is_valid_input_size(rows,
-                                 places.size(),
-                                 departments.size(),
-                                 years.size(),
-                                 observed.size()))
+                                 d.places.size(),
+                                 d.departments.size(),
+                                 d.years.size(),
+                                 d.observed.size()))
             return status::unconsistent_input_vector;
 
         opt.clear();
-        opt.simulations = simulations;
-        opt.places = places;
-        opt.departments = departments;
-        opt.years = years;
-        opt.observed = observed;
+        opt.simulations = d.simulations;
+        opt.places = d.places;
+        opt.departments = d.departments;
+        opt.years = d.years;
+        opt.observed = d.observed;
 
-        const auto atts = model.get_basic_attribute();
-        const auto cols = atts.size();
+        const auto cols = model.get_basic_attribute().size();
 
-        if (cols * rows != scale_values.size())
+        std::vector<size_t> ordered_att;
+        reorder_basic_attribute(model, 0, ordered_att);
+
+        if (cols * rows != d.scale_values.size())
             return status::option_input_inconsistent;
 
-        opt.options.init(atts.size(), simulations.size());
+        opt.options.init(rows, cols);
         for (size_t i = 0, elem = 0; i != rows; ++i) {
-            for (size_t j = 0; j != cols; ++i, ++elem) {
-                const auto limit = atts[j]->scale_size();
+            for (size_t j = 0; j != cols; ++j, ++elem) {
+                const auto att = ordered_att[j];
+                const auto limit = model.attributes[att].scale_size();
 
-                if (scale_values[elem] < 0u || scale_values[elem] > limit)
-                    return {};
+                if (d.scale_values[elem] > limit)
+                    return status::unknown_error;
 
-                opt.options(i, j) = scale_values[elem];
+                opt.options(i, j) = d.scale_values[elem];
             }
         }
 
         opt.init_dataset();
-        opt.check();
+
+        if (!opt.check())
+            return status::option_input_inconsistent;
 
         return status::success;
     } catch (const std::bad_alloc& /*e*/) {
@@ -308,7 +311,7 @@ make_options(const context& ctx,
 }
 
 static void
-evaluate(const context& ctx,
+evaluate([[maybe_unused]] const context& ctx,
          Model& model,
          Options& options,
          evaluation_results& out)
@@ -349,10 +352,14 @@ evaluate(const context& ctx,
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
-        Options options(d);
+        model.clear_options();
 
+        Options options;
+        if (auto ret = make_options(ctx, model, d, options); is_bad(ret))
+            return ret;
+
+        out.clear();
         evaluate(ctx, model, options, out);
-
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
@@ -373,19 +380,22 @@ status
 evaluate(const context& ctx,
          const std::string& model_file_path,
          const std::string& options_file_path,
-         evaluation_results& ret) noexcept
+         evaluation_results& out) noexcept
 {
     try {
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
+        model.clear_options();
+
         Options options;
         if (auto ret = make_options(ctx, model, options_file_path, options);
             is_bad(ret))
             return ret;
 
-        evaluate(ctx, model, options, ret);
+        out.clear();
+        evaluate(ctx, model, options, out);
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
@@ -409,12 +419,14 @@ adjustment(const context& ctx,
            const result_callback& callback,
            bool reduce,
            int limit,
-           unsigned int thread) noexcept
+           [[maybe_unused]] unsigned int thread) noexcept
 {
     try {
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
+
+        model.clear_options();
 
         Options options;
         if (auto ret = make_options(ctx, model, options_file_path, options);
@@ -447,14 +459,19 @@ adjustment(const context& ctx,
            const result_callback& callback,
            bool reduce,
            int limit,
-           unsigned int thread) noexcept
+           [[maybe_unused]] unsigned int thread) noexcept
 {
     try {
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
-        Options options(d);
+        model.clear_options();
+
+        Options options;
+        if (auto ret = make_options(ctx, model, d, options); is_bad(ret))
+            return ret;
+
         efyj::adjustment_evaluator adj(ctx, model, options);
         adj.run(callback, limit, 0.0, reduce);
         return status::success;
@@ -488,6 +505,8 @@ prediction(const context& ctx,
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
+
+        model.clear_options();
 
         Options options;
         if (auto ret = make_options(ctx, model, options_file_path, options);
@@ -534,7 +553,14 @@ prediction(const context& ctx,
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
-        Options options(d);
+        model.clear_options();
+
+        Options options;
+        if (auto ret = make_options(ctx, model, d, options); is_bad(ret))
+            return ret;
+
+        if (!options.have_subdataset())
+            return status::option_input_inconsistent;
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
@@ -592,7 +618,7 @@ extract_options_to_file(const context& ctx,
             return status::merge_option_fail_open_file;
         }
 
-        return get_options_model(ctx, model, ofs);
+        return get_options_model(model, ofs);
     } catch (const numeric_cast_error& /*e*/) {
         return status::numeric_cast_error;
     } catch (const internal_error& /*e*/) {
@@ -616,27 +642,30 @@ extract_options(const context& ctx,
                 data& out) noexcept
 {
     try {
-        debug(
-          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+        debug(ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
         Options opts;
-        if (auto ret = get_options_model(ctx, model, opts); is_bad(ret))
+        if (auto ret = get_options_model(model, opts); is_bad(ret))
             return ret;
 
-        out.simulations = std::move(opts.simulations);
-        out.places = std::move(opts.places);
-        out.departments = std::move(opts.departments);
-        out.years = std::move(opts.years);
-        out.observed = std::move(opts.observed);
+        out.simulations = opts.simulations;
+        out.places = opts.places;
+        out.departments = opts.departments;
+        out.years = opts.years;
+        out.observed = opts.observed;
+
+        const auto rows = out.simulations.size();
+        const auto cols = model.get_basic_attribute().size();
 
         out.scale_values.clear();
-        std::copy_n(opts.options.data(),
-                    opts.options.size(),
-                    std::back_inserter(out.scale_values));
+        out.scale_values.reserve(rows * cols);
+        for (size_t i = 0; i != rows; ++i)
+            for (size_t j = 0; j != cols; ++j)
+                out.scale_values.emplace_back(opts.options(i, j));
 
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
@@ -663,8 +692,7 @@ extract_options(const context& ctx,
                 data& out) noexcept
 {
     try {
-        debug(
-          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+        debug(ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
@@ -680,11 +708,20 @@ extract_options(const context& ctx,
         out.departments = std::move(options.departments);
         out.years = std::move(options.years);
         out.observed = std::move(options.observed);
-
+#if 0
         out.scale_values.clear();
         std::copy_n(options.options.data(),
                     options.options.size(),
                     std::back_inserter(out.scale_values));
+#endif
+        const auto rows = out.simulations.size();
+        const auto cols = model.get_basic_attribute().size();
+
+        out.scale_values.clear();
+        out.scale_values.reserve(rows * cols);
+        for (size_t i = 0; i != rows; ++i)
+            for (size_t j = 0; j != cols; ++j)
+                out.scale_values.emplace_back(options.options(i, j));
 
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
@@ -741,7 +778,7 @@ merge_options_to_file(const context& ctx,
             return status::merge_option_fail_open_file;
         }
 
-        set_options_model(ctx, model, options);
+        set_options_model(model, options);
         model.write(ctx, ofs);
         return status::success;
     } catch (const numeric_cast_error& /*e*/) {
@@ -784,7 +821,9 @@ merge_options(const context& ctx,
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
-        Options options(d);
+        Options options;
+        if (auto ret = make_options(ctx, model, d, options); is_bad(ret))
+            return ret;
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {

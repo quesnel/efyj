@@ -918,4 +918,13 @@ Model::clear()
     std::deque<attribute>().swap(attributes);
 }
 
+void
+Model::clear_options()
+{
+    options.clear();
+
+    for (auto& att : attributes)
+        att.options.clear();
+}
+
 } // namespace efyj
