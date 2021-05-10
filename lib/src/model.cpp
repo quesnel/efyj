@@ -669,12 +669,13 @@ struct Model_writer
       , os(os_)
       , dex(Model_data_)
       , space(0)
-    {
-        assert(os_.is_open());
-    }
+    {}
 
     status write()
     {
+        if (!os.is_open())
+            return status::dexi_writer_error;
+
         os.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                  "<DEXi>\n"
                  "  <VERSION>{}</VERSION>\n"

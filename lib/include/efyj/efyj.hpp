@@ -90,6 +90,8 @@ enum class status : int
     dexi_parser_element_unknown,
     dexi_parser_option_conversion_error,
 
+    dexi_writer_error,
+
     csv_parser_file_error,
     csv_parser_column_number_incorrect,
     csv_parser_scale_value_unknown,
@@ -141,6 +143,7 @@ get_error_message(const efyj::status s) noexcept
         "dexi parser not enough memory",
         "dexi parser element unknown",
         "dexi parser option conversion error",
+        "dexi writer error",
         "csv parser file error",
         "csv parser column number incorrect",
         "csv parser scale value unknown",
