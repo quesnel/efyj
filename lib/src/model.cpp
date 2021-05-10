@@ -50,10 +50,10 @@ struct Model_reader
       : ctx(ctx_)
       , is(is_)
       , dex(dex_)
-      , m_status(dexi_parser_status::tag::done)
+      , m_status(status::success)
     {}
 
-    dexi_parser_status::tag read(int buffer_size)
+    status read(int buffer_size)
     {
         XML_Parser parser = XML_ParserCreate(NULL);
         scope_exit parser_free([&parser]() { XML_ParserFree(parser); });
@@ -74,7 +74,7 @@ struct Model_reader
                       "DExi fail to allocate expat buffer (size: {})",
                       buffer_size);
 
-                m_status = dexi_parser_status::tag::not_enough_memory;
+                m_status = status::not_enough_memory;
                 break;
             }
 
@@ -84,8 +84,8 @@ struct Model_reader
             done = len < buffer_size;
 
             if (XML_ParseBuffer(parser, len, done) == XML_STATUS_ERROR) {
-                if (m_status == dexi_parser_status::tag::done)
-                    m_status = dexi_parser_status::tag::file_format_error;
+                if (is_success(m_status))
+                    m_status = status::dexi_parser_file_format_error;
 
                 line = XML_GetCurrentLineNumber(parser);
                 column = XML_GetCurrentColumnNumber(parser);
@@ -93,9 +93,9 @@ struct Model_reader
             }
         } while (!done);
 
-        if (m_status != dexi_parser_status::tag::done) {
-            error_at_line = static_cast<unsigned long int>(line);
-            error_at_column = static_cast<unsigned long int>(column);
+        if (is_bad(m_status)) {
+            error_at_line = static_cast<size_t>(line);
+            error_at_column = static_cast<size_t>(column);
         }
 
         return m_status;
@@ -106,9 +106,9 @@ private:
     const input_file& is;
     Model& dex;
 
-    dexi_parser_status::tag m_status{ dexi_parser_status::tag::done };
-    unsigned long int error_at_line;
-    unsigned long int error_at_column;
+    status m_status{ status::success };
+    size_t error_at_line;
+    size_t error_at_column;
 
     enum class stack_identifier
     {
@@ -191,7 +191,7 @@ private:
           : ctx(ctx_)
           , parser(parser_)
           , model(data_)
-          , m_status(dexi_parser_status::tag::done)
+          , m_status(status::success)
         {}
 
         const context& ctx;
@@ -200,9 +200,9 @@ private:
         std::stack<stack_identifier> stack;
         std::stack<attribute*> attributes_stack;
         std::string char_data;
-        dexi_parser_status::tag m_status;
+        status m_status;
 
-        void stop_parser(dexi_parser_status::tag t)
+        void stop_parser(const status t)
         {
             error(ctx, "DEXi failed to read file\n");
             XML_StopParser(parser, XML_FALSE);
@@ -231,7 +231,7 @@ private:
 
         auto opt_id = str_to_stack_identifier(element);
         if (!opt_id) {
-            pd->stop_parser(dexi_parser_status::tag::element_unknown);
+            pd->stop_parser(status::dexi_parser_element_unknown);
             return;
         }
 
@@ -240,7 +240,7 @@ private:
         switch (id) {
         case stack_identifier::DEXi:
             if (!pd->stack.empty()) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
 
@@ -249,21 +249,21 @@ private:
 
         case stack_identifier::TAG_VERSION:
             if (!pd->is_parent({ stack_identifier::DEXi })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
 
         case stack_identifier::CREATED:
             if (!pd->is_parent({ stack_identifier::DEXi })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
 
         case stack_identifier::LINE:
             if (!pd->is_parent({ stack_identifier::DESCRIPTION })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
@@ -271,14 +271,14 @@ private:
         case stack_identifier::OPTION:
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
 
         case stack_identifier::SETTINGS:
             if (!pd->is_parent({ stack_identifier::DEXi })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -286,7 +286,7 @@ private:
 
         case stack_identifier::FONTSIZE:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -294,7 +294,7 @@ private:
 
         case stack_identifier::REPORTS:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -302,7 +302,7 @@ private:
 
         case stack_identifier::OPTDATATYPE:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -310,7 +310,7 @@ private:
 
         case stack_identifier::OPTLEVELS:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -318,7 +318,7 @@ private:
 
         case stack_identifier::LINKING:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -327,7 +327,7 @@ private:
         case stack_identifier::ATTRIBUTE:
             if (!pd->is_parent(
                   { stack_identifier::DEXi, stack_identifier::ATTRIBUTE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -344,7 +344,7 @@ private:
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
 
@@ -354,7 +354,7 @@ private:
             if (!pd->is_parent({ stack_identifier::DEXi,
                                  stack_identifier::ATTRIBUTE,
                                  stack_identifier::SCALEVALUE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
 
@@ -363,7 +363,7 @@ private:
 
         case stack_identifier::SCALE:
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -371,14 +371,14 @@ private:
 
         case stack_identifier::ORDER:
             if (!pd->is_parent({ stack_identifier::SCALE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
 
         case stack_identifier::SCALEVALUE:
             if (!pd->is_parent({ stack_identifier::SCALE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -386,7 +386,7 @@ private:
               "unaffected scalevalue");
 
             if (pd->model.attributes.size() > 127) {
-                pd->stop_parser(dexi_parser_status::tag::scale_too_big);
+                pd->stop_parser(status::dexi_parser_scale_too_big);
                 break;
             }
 
@@ -394,14 +394,14 @@ private:
 
         case stack_identifier::GROUP:
             if (!pd->is_parent({ stack_identifier::SCALEVALUE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
 
         case stack_identifier::FUNCTION:
             if (!pd->is_parent({ stack_identifier::ATTRIBUTE })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             pd->stack.push(id);
@@ -416,7 +416,7 @@ private:
         case stack_identifier::HIGH:
         case stack_identifier::ROUNDING:
             if (!pd->is_parent({ stack_identifier::FUNCTION })) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
             break;
@@ -429,7 +429,7 @@ private:
 
         auto opt_id = str_to_stack_identifier(element);
         if (!opt_id) {
-            pd->stop_parser(dexi_parser_status::tag::element_unknown);
+            pd->stop_parser(status::dexi_parser_element_unknown);
             return;
         }
 
@@ -471,7 +471,7 @@ private:
 
                 pd->model.attributes.back().options.emplace_back(att);
             } else {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
 
@@ -511,8 +511,12 @@ private:
             if (pd->attributes_stack.top()->children.empty()) {
                 auto scale_size =
                   pd->attributes_stack.top()->scale.scale.size();
+
+                if (!is_numeric_castable<scale_id>(scale_size))
+                    pd->stop_parser(status::dexi_parser_file_format_error);
+
                 pd->model.basic_attribute_scale_size.emplace_back(
-                  numeric_cast<scale_id>(scale_size));
+                  static_cast<scale_id>(scale_size));
             }
 
             pd->attributes_stack.pop();
@@ -531,7 +535,7 @@ private:
 
         case stack_identifier::DESCRIPTION:
             if (pd->stack.top() != stack_identifier::DESCRIPTION) {
-                pd->stop_parser(dexi_parser_status::tag::file_format_error);
+                pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
             }
 
@@ -669,7 +673,7 @@ struct Model_writer
         assert(os_.is_open());
     }
 
-    dexi_parser_status::tag write()
+    status write()
     {
         os.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                  "<DEXi>\n"
@@ -715,7 +719,7 @@ struct Model_writer
 
         os.print("</DEXi>\n");
 
-        return dexi_parser_status::tag::done;
+        return status::success;
     }
 
 private:
@@ -886,7 +890,7 @@ reorder_basic_attribute(const Model& model,
             reorder_basic_attribute(model, child, out);
 }
 
-dexi_parser_status::tag
+status
 Model::read(const context& ctx, const input_file& is)
 {
     Model_reader dr(ctx, is, *this);
@@ -898,7 +902,7 @@ Model::read(const context& ctx, const input_file& is)
 #endif
 }
 
-dexi_parser_status::tag
+status
 Model::write(const context& ctx, const output_file& os)
 {
     Model_writer dw(ctx, os, *this);

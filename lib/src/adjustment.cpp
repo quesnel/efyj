@@ -36,7 +36,7 @@ adjustment_evaluator::adjustment_evaluator(const context& ctx,
   , kappa_c(model.attributes[0].scale.size())
 {}
 
-void
+status
 adjustment_evaluator::run(const result_callback& cb,
                           int line_limit,
                           [[maybe_unused]] double time_limit,
@@ -84,10 +84,14 @@ adjustment_evaluator::run(const result_callback& cb,
         ret.kappa = kappa;
         ret.time = std::chrono::duration<double>(m_end - m_start).count();
         ret.kappa_computed = 1;
-        ret.function_computed = numeric_cast<unsigned long>(m_options.size());
+
+        if (!is_numeric_castable<unsigned long>(m_options.size()))
+            return status::option_too_many;
+
+        ret.function_computed = static_cast<unsigned long>(m_options.size());
 
         if (cb(ret) == false)
-            return;
+            return status::success;
     }
 
     for (size_t step = 1; step <= max_step; ++step) {
@@ -100,8 +104,6 @@ adjustment_evaluator::run(const result_callback& cb,
 
         do {
             solver.init_next_value();
-            printf("\r");
-            printf("%lu ", loop);
 
             do {
                 for (size_t opt = 0; opt != max_opt; ++opt) {
@@ -133,8 +135,10 @@ adjustment_evaluator::run(const result_callback& cb,
               std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
 
         if (cb(ret) == false)
-            return;
+            break;
     }
+
+    return status::success;
 }
 
 } // namespace efyj

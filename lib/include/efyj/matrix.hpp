@@ -107,6 +107,8 @@ public:
 
     void swap(matrix& c) noexcept(noexcept(m_c.swap(c.m_c)));
 
+    void clear() noexcept;
+
 private:
     void m_check_index(size_type row, size_type col) const;
 };
@@ -334,6 +336,15 @@ matrix<T, Container>::swap(matrix& c) noexcept(noexcept(m_c.swap(c.m_c)))
     std::swap(m_c, c.m_c);
     std::swap(m_columns, c.m_columns);
     std::swap(m_rows, c.m_rows);
+}
+
+template<typename T, class Container>
+void
+matrix<T, Container>::clear() noexcept
+{
+    m_c.clear();
+    m_rows = 0;
+    m_columns = 0;
 }
 
 template<typename T, class Container>

@@ -100,9 +100,7 @@ public:
      *
      * @return status of the read operation.
      */
-    csv_parser_status::tag read(const context& ctx,
-                                const input_file& is,
-                                const Model& model);
+    status read(const context& ctx, const input_file& is, const Model& model);
 
     bool have_subdataset() const
     {
@@ -126,7 +124,7 @@ public:
     /// \e init_dataset is called after \e read(...) or \e set(...)
     /// functions to initialize the \e subdataset and \e
     /// id_subdataset_reduced variables.
-    void init_dataset();
+    status init_dataset();
 
     /// \e subdataset stores a list of line that defines the learning
     /// options for each options. \e subdataset.size() equals \e

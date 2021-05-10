@@ -55,10 +55,10 @@ struct prediction_evaluator
 
     bool is_valid() const noexcept;
 
-    void run(const result_callback& cb,
-             int line_limit,
-             double time_limit,
-             int reduce_mode);
+    status run(const result_callback& cb,
+               int line_limit,
+               double time_limit,
+               int reduce_mode);
 };
 
 } // namespace efyj

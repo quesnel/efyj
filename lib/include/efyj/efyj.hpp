@@ -71,7 +71,7 @@
  */
 namespace efyj {
 
-enum class status
+enum class status : int
 {
     success,
     not_enough_memory,
@@ -95,6 +95,8 @@ enum class status
     csv_parser_scale_value_unknown,
     csv_parser_column_conversion_failure,
     csv_parser_basic_attribute_unknown,
+    csv_parser_init_dataset_simulation_empty,
+    csv_parser_init_dataset_cast_error,
 
     extract_option_same_input_files,
     extract_option_fail_open_file,
@@ -103,9 +105,66 @@ enum class status
     merge_option_fail_open_file,
 
     option_input_inconsistent,
+    scale_value_inconsistent,
+    option_too_many,
 
     unknown_error
 };
+
+inline bool
+is_bad(const status t) noexcept
+{
+    return t != status::success;
+}
+
+inline bool
+is_success(const status t) noexcept
+{
+    return t == status::success;
+}
+
+inline std::string_view
+get_error_message(const efyj::status s) noexcept
+{
+    const static std::string_view ret[] = {
+        "success",
+        "not enough memory",
+        "numeric cast error",
+        "internal error",
+        "file error",
+        "solver error",
+        "unconsistent input vector",
+        "dexi parser scale definition error",
+        "dexi parser scale not found",
+        "dexi parser scale too big",
+        "dexi parser file format error",
+        "dexi parser not enough memory",
+        "dexi parser element unknown",
+        "dexi parser option conversion error",
+        "csv parser file error",
+        "csv parser column number incorrect",
+        "csv parser scale value unknown",
+        "csv parser column conversion failure",
+        "csv parser basic attribute unknown",
+        "csv parser init dataset simulation empty",
+        "csv parser init dataset cast error",
+        "extract option same input files",
+        "extract option fail open file",
+        "merge option same inputoutput",
+        "merge option fail open file",
+        "option input inconsistent",
+        "scale value inconsistent"
+        "option toom any",
+        "unknown error"
+    };
+
+    const auto elem = static_cast<int>(s);
+    const auto max_elem = std::size(ret);
+
+    assert(static_cast<size_t>(elem) < max_elem);
+
+    return ret[elem];
+}
 
 enum class log_level
 {
@@ -144,149 +203,18 @@ struct context
     log_level log_priority = log_level::info;
 };
 
-/**
- * @brief An internal exception when an integer cast fail.
- * @details @c numeric_cast_error is used with the
- * @e \c efyj::numeric_cast<TargetT>(SourceT) function that cast
- * integer type to another.
- */
-struct numeric_cast_error : public std::exception
-{
-    virtual const char* what() const noexcept
-    {
-        return "numeric cast error: loss of range in numeric_cast";
-    }
-};
-
-struct internal_error : public std::exception
-{
-    std::string pp_file, pp_function;
-    int pp_line;
-
-    internal_error(const std::string& file,
-                   const std::string& function,
-                   int line)
-      : pp_file(file)
-      , pp_function(function)
-      , pp_line(line)
-    {}
-};
-
-struct file_error : public std::exception
-{
-    std::string pp_file;
-
-    file_error(const std::string& file)
-      : pp_file(file)
-    {}
-};
-
-struct solver_error : public std::exception
-{
-    std::string pp_file;
-
-    solver_error(const std::string& file)
-      : pp_file(file)
-    {}
-};
-
-struct dexi_parser_status : public std::exception
-{
-    enum class tag
-    {
-        done = 0,
-        scale_definition_error,
-        scale_not_found,
-        scale_too_big,
-        file_format_error,
-        not_enough_memory,
-        element_unknown,
-        option_conversion_error,
-    };
-
-    unsigned long int m_line = 0u, m_column = 0u;
-    tag m_tag = tag::done;
-
-    std::string_view tag_name() const noexcept
-    {
-        static std::string_view name[] = {
-            "done",
-            "scale_definition_error",
-            "scale_not_found",
-            "scale_too_big",
-            "file_format_error",
-            "not_enough_memory",
-            "element_unknown",
-            "option_conversion_error",
-        };
-
-        return name[static_cast<int>(m_tag)];
-    }
-
-    dexi_parser_status() = default;
-
-    dexi_parser_status(dexi_parser_status::tag t,
-                       unsigned long int line,
-                       unsigned long int column)
-      : m_line(line)
-      , m_column(column)
-      , m_tag(t)
-    {}
-};
-
-struct csv_parser_status : public std::exception
-{
-    enum class tag
-    {
-        done,
-        file_error,
-        column_number_incorrect,
-        scale_value_unknown,
-        column_conversion_failure,
-        basic_attribute_unknown
-    };
-
-    csv_parser_status(csv_parser_status::tag tag, size_t line, size_t column)
-      : m_line(line)
-      , m_column(column)
-      , m_tag(tag)
-    {}
-
-    std::string_view tag_name() const noexcept
-    {
-        static std::string_view name[] = { "done",
-                                           "file_error",
-                                           "column_number_incorrect",
-                                           "scale_value_unknown",
-                                           "column_conversion_failure",
-                                           "basic_attribute_unknown" };
-
-        return name[static_cast<int>(m_tag)];
-    }
-
-    size_t m_line;
-    size_t m_column;
-    tag m_tag;
-};
-
-inline bool
-is_bad(const dexi_parser_status::tag t) noexcept
-{
-    return t != dexi_parser_status::tag::done;
-}
-
-inline bool
-is_bad(const csv_parser_status::tag t) noexcept
-{
-    return t != csv_parser_status::tag::done;
-}
-
 using value = int; // std::int8_t;
 
 struct information_results
 {
     std::vector<std::string> basic_attribute_names;
     std::vector<int> basic_attribute_scale_value_numbers;
+
+    void clear()
+    {
+        basic_attribute_names.clear();
+        basic_attribute_scale_value_numbers.clear();
+    }
 };
 
 struct evaluation_results
@@ -301,27 +229,15 @@ struct evaluation_results
 
     void clear()
     {
-        matrix<value>().swap(options);
-        matrix<value>().swap(attributes);
-        std::vector<value>().swap(simulations);
-        std::vector<value>().swap(observations);
-        matrix<value>().swap(confusion);
+        options.clear();
+        attributes.clear();
+        simulations.clear();
+        observations.clear();
+        confusion.clear();
         linear_weighted_kappa = 0.0;
         squared_weighted_kappa = 0.0;
     }
 };
-
-inline bool
-is_success(const status& st) noexcept
-{
-    return st == status::success;
-}
-
-inline bool
-is_bad(const status& st) noexcept
-{
-    return st != status::success;
-}
 
 struct modifier
 {
@@ -345,6 +261,15 @@ struct result
     double time;
     unsigned long int kappa_computed;
     unsigned long int function_computed;
+
+    void clear()
+    {
+        modifiers.clear();
+        kappa = 0.0;
+        time = 0.0;
+        kappa_computed = 0;
+        function_computed = 0;
+    }
 };
 
 struct data

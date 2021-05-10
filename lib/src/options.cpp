@@ -194,7 +194,7 @@ Options::save(const char* filename) noexcept
     }
 }
 
-csv_parser_status::tag
+status
 Options::read(const context& ctx, const input_file& is, const Model& model)
 {
     clear();
@@ -213,7 +213,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
             info(ctx, "Fail to read header\n");
             error_at_line = 0;
             error_at_column = columns.size();
-            return csv_parser_status::tag::file_error;
+            return status::csv_parser_file_error;
         }
 
         line = *opt_line;
@@ -227,7 +227,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
         } else {
             error_at_line = 0;
             error_at_column = columns.size();
-            return csv_parser_status::tag::column_number_incorrect;
+            return status::csv_parser_column_number_incorrect;
         }
     }
 
@@ -243,7 +243,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
             error(ctx, "Fail to found attribute for `{}'\n", columns[i]);
             error_at_line = 0;
             error_at_column = columns.size();
-            return csv_parser_status::tag::basic_attribute_unknown;
+            return status::csv_parser_basic_attribute_unknown;
         }
 
         convertheader[i - id] = *opt_att_id;
@@ -287,7 +287,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
 
             error_at_line = line_number;
             error_at_column = columns.size();
-            return csv_parser_status::tag::scale_value_unknown;
+            return status::csv_parser_scale_value_unknown;
         }
 
         int obs = *opt_obs;
@@ -328,7 +328,7 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
 
                 error_at_line = line_number;
                 error_at_column = columns.size();
-                return csv_parser_status::tag::scale_value_unknown;
+                return status::csv_parser_scale_value_unknown;
             }
 
             options(options.rows() - 1, attid) = *opt_option;
@@ -342,15 +342,16 @@ Options::read(const context& ctx, const input_file& is, const Model& model)
     init_dataset();
     check();
 
-    return csv_parser_status::tag::done;
+    return status::success;
 }
 
-void
+status
 Options::init_dataset()
 {
     const size_t size = simulations.size();
 
-    assert(!simulations.empty());
+    if (size == 0)
+        return status::csv_parser_init_dataset_simulation_empty;
 
     subdataset.resize(size);
     for (auto& elem : subdataset)
@@ -376,14 +377,6 @@ Options::init_dataset()
         }
     }
 
-    fmt::print("init_dataset\n");
-    for (size_t i = 0, e = subdataset.size(); i != e; ++i) {
-        fmt::print("{} [", i);
-        for (auto elem : subdataset[i])
-            fmt::print("{} ", elem);
-        fmt::print("]\n");
-    }
-
     {
         std::vector<std::vector<int>> reduced;
         id_subdataset_reduced.resize(subdataset.size(), 0);
@@ -396,16 +389,17 @@ Options::init_dataset()
                 id_subdataset_reduced[i] = (int)reduced.size();
                 reduced.push_back(subdataset[i]);
             } else {
+                if (!is_numeric_castable<int>(
+                      std::distance(reduced.cbegin(), it)))
+                    return status::csv_parser_init_dataset_cast_error;
+
                 id_subdataset_reduced[i] =
-                  numeric_cast<int>(std::distance(reduced.cbegin(), it));
+                  static_cast<int>(std::distance(reduced.cbegin(), it));
             }
         }
     }
 
-    fmt::print("id_subdataset: [");
-    for (size_t i = 0, e = subdataset.size(); i != e; ++i)
-        fmt::print("{} ", id_subdataset_reduced[i]);
-    fmt::print("]\n");
+    return status::success;
 }
 
 bool

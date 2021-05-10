@@ -59,11 +59,11 @@ struct prediction_thread_evaluator
 
     bool is_valid() const noexcept;
 
-    void run(const result_callback& cb,
-             int line_limit,
-             double time_limit,
-             int reduce_mode,
-             unsigned int threads);
+    status run(const result_callback& cb,
+               int line_limit,
+               double time_limit,
+               int reduce_mode,
+               unsigned int threads);
 };
 
 class Results
@@ -86,11 +86,10 @@ class Results
 public:
     Results(const context& ctx, unsigned int threads);
 
-    void emplace_result(
-      int i,
-      double kappa,
-      unsigned long loop,
-      const std::vector<std::tuple<int, int, int>>& updaters);
+    void emplace_result(int i,
+                        double kappa,
+                        unsigned long loop,
+                        const std::vector<std::tuple<int, int, int>>& updaters);
 
     void push(int step,
               double kappa,

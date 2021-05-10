@@ -34,52 +34,6 @@
 
 namespace efyj {
 
-static constexpr status
-csv_parser_status_convert(const csv_parser_status::tag s) noexcept
-{
-    switch (s) {
-    case csv_parser_status::tag::done:
-        return status::success;
-    case csv_parser_status::tag::file_error:
-        return status::csv_parser_file_error;
-    case csv_parser_status::tag::column_number_incorrect:
-        return status::csv_parser_column_number_incorrect;
-    case csv_parser_status::tag::scale_value_unknown:
-        return status::csv_parser_scale_value_unknown;
-    case csv_parser_status::tag::column_conversion_failure:
-        return status::csv_parser_column_conversion_failure;
-    case csv_parser_status::tag::basic_attribute_unknown:
-        return status::csv_parser_basic_attribute_unknown;
-    }
-
-    std::abort();
-}
-
-static constexpr status
-dexi_parser_status_convert(const dexi_parser_status::tag s) noexcept
-{
-    switch (s) {
-    case dexi_parser_status::tag::done:
-        return status::success;
-    case dexi_parser_status::tag::scale_definition_error:
-        return status::dexi_parser_scale_definition_error;
-    case dexi_parser_status::tag::scale_not_found:
-        return status::dexi_parser_scale_not_found;
-    case dexi_parser_status::tag::scale_too_big:
-        return status::dexi_parser_scale_too_big;
-    case dexi_parser_status::tag::file_format_error:
-        return status::dexi_parser_file_format_error;
-    case dexi_parser_status::tag::not_enough_memory:
-        return status::dexi_parser_not_enough_memory;
-    case dexi_parser_status::tag::element_unknown:
-        return status::dexi_parser_element_unknown;
-    case dexi_parser_status::tag::option_conversion_error:
-        return status::dexi_parser_option_conversion_error;
-    }
-
-    std::abort();
-}
-
 status
 make_model(const context& ctx, const std::string& model_file_path, Model& model)
 {
@@ -90,7 +44,7 @@ make_model(const context& ctx, const std::string& model_file_path, Model& model)
     }
 
     if (auto ret = model.read(ctx, ifs); is_bad(ret))
-        return dexi_parser_status_convert(ret);
+        return ret;
 
     return status::success;
 }
@@ -107,8 +61,15 @@ make_options(const context& ctx,
         return status::file_error;
     }
 
-    if (auto ret = options.read(ctx, ifs, model); is_bad(ret))
-        return csv_parser_status_convert(ret);
+    if (auto ret = options.read(ctx, ifs, model); is_bad(ret)) {
+        error(ctx,
+              "fail to read `{}' at line {} column {}",
+              options_file_path,
+              options.error_at_line,
+              options.error_at_column);
+
+        return ret;
+    }
 
     return status::success;
 }
@@ -227,17 +188,14 @@ information(const context& ctx,
         }
 
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 }
@@ -254,7 +212,7 @@ is_valid_input_size(const size_t simulation,
 }
 
 static status
-make_options([[maybe_unused]] const context& ctx,
+make_options(const context& ctx,
              const Model& model,
              const data& d,
              Options& opt)
@@ -290,8 +248,15 @@ make_options([[maybe_unused]] const context& ctx,
                 const auto att = ordered_att[j];
                 const auto limit = model.attributes[att].scale_size();
 
-                if (d.scale_values[elem] > limit)
-                    return status::unknown_error;
+                if (d.scale_values[elem] > limit) {
+                    error(ctx,
+                          "bad scale value: {} with a limit of {} for "
+                          "attribute {}\n",
+                          d.scale_values[elem],
+                          limit,
+                          model.attributes[att].name);
+                    return status::scale_value_inconsistent;
+                }
 
                 opt.options(i, j) = d.scale_values[elem];
             }
@@ -303,9 +268,14 @@ make_options([[maybe_unused]] const context& ctx,
             return status::option_input_inconsistent;
 
         return status::success;
-    } catch (const std::bad_alloc& /*e*/) {
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
         return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 }
@@ -361,17 +331,14 @@ evaluate(const context& ctx,
         out.clear();
         evaluate(ctx, model, options, out);
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 }
@@ -397,17 +364,14 @@ evaluate(const context& ctx,
         out.clear();
         evaluate(ctx, model, options, out);
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 }
@@ -435,17 +399,14 @@ adjustment(const context& ctx,
 
         efyj::adjustment_evaluator adj(ctx, model, options);
         adj.run(callback, limit, 0.0, reduce);
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 
@@ -475,21 +436,16 @@ adjustment(const context& ctx,
         efyj::adjustment_evaluator adj(ctx, model, options);
         adj.run(callback, limit, 0.0, reduce);
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -522,21 +478,16 @@ prediction(const context& ctx,
             pre.run(callback, limit, 0.0, reduce, thread);
             return status::success;
         }
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -571,21 +522,16 @@ prediction(const context& ctx,
             pre.run(callback, limit, 0.0, reduce, thread);
             return status::success;
         }
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -619,21 +565,16 @@ extract_options_to_file(const context& ctx,
         }
 
         return get_options_model(model, ofs);
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -668,21 +609,16 @@ extract_options(const context& ctx,
                 out.scale_values.emplace_back(opts.options(i, j));
 
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -724,21 +660,16 @@ extract_options(const context& ctx,
                 out.scale_values.emplace_back(options.options(i, j));
 
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -781,21 +712,16 @@ merge_options_to_file(const context& ctx,
         set_options_model(model, options);
         model.write(ctx, ofs);
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 status
@@ -853,21 +779,16 @@ merge_options(const context& ctx,
 
         model.write(ctx, ofs);
         return status::success;
-    } catch (const numeric_cast_error& /*e*/) {
-        return status::numeric_cast_error;
-    } catch (const internal_error& /*e*/) {
-        return status::internal_error;
-    } catch (const file_error& /*e*/) {
-        return status::file_error;
-    } catch (const solver_error& /*e*/) {
-        return status::solver_error;
-    } catch (const dexi_parser_status& e) {
-        return dexi_parser_status_convert(e.m_tag);
+    } catch (const std::bad_alloc& e) {
+        error(ctx, "c++ bad alloc: {}\n", e.what());
+        return status::not_enough_memory;
+    } catch (const std::exception& e) {
+        error(ctx, "c++ exception: {}\n", e.what());
+        return status::unknown_error;
     } catch (...) {
+        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
-
-    return status::success;
 }
 
 } // namespace efyj

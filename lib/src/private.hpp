@@ -29,7 +29,7 @@
 namespace efyj {
 
 inline bool
-is_loggable(log_level current_level, log_level level) noexcept
+is_loggable(log_level level, log_level current_level) noexcept
 {
     return static_cast<int>(current_level) >= static_cast<int>(level);
 }
@@ -224,10 +224,7 @@ alert(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-crit(const context& ctx,
-     const char* fmt,
-     const Arg1& arg1,
-     const Args&... args)
+crit(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stderr, log_level::crit, fmt, arg1, args...);
@@ -280,10 +277,7 @@ notice(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-info(const context& ctx,
-     const char* fmt,
-     const Arg1& arg1,
-     const Args&... args)
+info(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
     log(ctx, stdout, log_level::info, fmt, arg1, args...);

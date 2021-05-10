@@ -89,8 +89,7 @@ parallel_prediction_worker(const context& ctx,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
-            for (auto opt = 0, endopt = length(options); opt != endopt;
-                 ++opt) {
+            for (auto opt = 0, endopt = length(options); opt != endopt; ++opt) {
                 double kappa = 0.;
 
                 solver.init_next_value();
@@ -112,8 +111,7 @@ parallel_prediction_worker(const context& ctx,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] =
-                  solver.solve(options.options.row(opt));
+                m_globalsimulated[opt] = solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -143,10 +141,9 @@ parallel_prediction_worker(const context& ctx,
     }
 }
 
-prediction_thread_evaluator::prediction_thread_evaluator(
-  const context& ctx,
-  const Model& model,
-  const Options& options)
+prediction_thread_evaluator::prediction_thread_evaluator(const context& ctx,
+                                                         const Model& model,
+                                                         const Options& options)
   : m_context(ctx)
   , m_model(model)
   , m_options(options)
@@ -155,8 +152,7 @@ prediction_thread_evaluator::prediction_thread_evaluator(
   , observed(options.options.rows())
   , solver(ctx, model)
   , kappa_c(model.attributes[0].scale.size())
-{
-}
+{}
 
 bool
 prediction_thread_evaluator::is_valid() const noexcept
@@ -164,7 +160,7 @@ prediction_thread_evaluator::is_valid() const noexcept
     return m_options.have_subdataset();
 }
 
-void
+status
 prediction_thread_evaluator::run(const result_callback& cb,
                                  [[maybe_unused]] int line_limit,
                                  [[maybe_unused]] double time_limit,
@@ -200,6 +196,8 @@ prediction_thread_evaluator::run(const result_callback& cb,
 
     for (auto& w : workers)
         w.join();
+
+    return status::success;
 }
 
 Results::Results(const context& ctx, unsigned int threads)

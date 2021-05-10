@@ -51,10 +51,10 @@ struct adjustment_evaluator
                          const Model& model,
                          const Options& options);
 
-    void run(const result_callback& cb,
-             int line_limit,
-             double time_limit,
-             int reduce_mode);
+    status run(const result_callback& cb,
+               int line_limit,
+               double time_limit,
+               int reduce_mode);
 };
 
 } // namespace efyj
