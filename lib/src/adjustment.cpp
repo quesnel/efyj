@@ -130,7 +130,7 @@ adjustment_evaluator::run(const result_callback& cb,
         ret.function_computed = static_cast<unsigned long int>(0);
         ret.modifiers.clear();
 
-        for (const auto elem : m_updaters)
+        for (const auto& elem : m_updaters)
             ret.modifiers.emplace_back(
               std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
 
