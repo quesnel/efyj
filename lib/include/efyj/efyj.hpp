@@ -125,10 +125,10 @@ is_success(const status t) noexcept
     return t == status::success;
 }
 
-inline std::string_view
+inline const char*
 get_error_message(const efyj::status s) noexcept
 {
-    const static std::string_view ret[] = {
+    const static char *ret[] = {
         "success",
         "not enough memory",
         "numeric cast error",
@@ -156,8 +156,8 @@ get_error_message(const efyj::status s) noexcept
         "merge option same inputoutput",
         "merge option fail open file",
         "option input inconsistent",
-        "scale value inconsistent"
-        "option toom any",
+        "scale value inconsistent",
+        "option too any",
         "unknown error"
     };
 

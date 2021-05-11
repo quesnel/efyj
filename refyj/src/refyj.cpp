@@ -35,23 +35,17 @@ init_context(efyj::context& ctx) noexcept
                      const std::string_view tag) {
         const auto s_str = efyj::get_error_message(s);
 
-        Rprintf("DEXi error: %.*s at line %d column %d with tag %.*s\n",
-                static_cast<int>(s_str.size()),
-                s_str.data(),
+        Rprintf("DEXi error: %s at line %d column %d with tag %s\n",
+                s_str,
                 line,
                 column,
-                static_cast<int>(tag.size()),
-                tag.data());
+                tag);
     };
 
     ctx.csv_cb = [](const efyj::status s, int line, int column) {
         const auto s_str = efyj::get_error_message(s);
 
-        Rprintf("CSV error: %.*s at line %d column %d\n",
-                static_cast<int>(s_str.size()),
-                s_str.data(),
-                line,
-                column);
+        Rprintf("CSV error: %s at line %d column %d\n", s_str, line, column);
     };
 
     ctx.eov_cb = []() { Rprintf("Not enough memory to continue\n"); };
@@ -61,10 +55,7 @@ init_context(efyj::context& ctx) noexcept
     ctx.solver_cb = []() { Rprintf("Solver error\n"); };
 
     ctx.file_cb = [](const std::string_view file_name) {
-        Rprintf("Error to access file `%.*s\n",
-                static_cast<int>(file_name.size()),
-                file_name.data());
-        ;
+        Rprintf("Error to access file `%s\n", file_name);
     };
 }
 
@@ -93,7 +84,8 @@ information(const Rcpp::String& model)
 
         if (const auto ret = efyj::information(ctx, model, out); is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("Information failed: %s\n", msg);
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -148,9 +140,11 @@ evaluate(const Rcpp::String& model,
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
             simulations.length() != years.length() ||
-            simulations.length() != observed.length())
-            Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.\n");
+            simulations.length() != observed.length()) {
+            Rprintf("'simulations', 'places', 'departments', 'years', "
+                    "'observed' must have the same length.\n");
+            return R_NilValue;
+        }
         efyj::evaluation_results out;
 
         efyj::data d;
@@ -162,8 +156,8 @@ evaluate(const Rcpp::String& model,
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
         if (const auto ret = efyj::evaluate(ctx, model, d, out); is_bad(ret)) {
-            const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("Evaluation failed: %s\n", efyj::get_error_message(ret));
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -174,11 +168,11 @@ evaluate(const Rcpp::String& model,
           Rcpp::Named("squared_weighted_kappa") =
             Rcpp::wrap(out.squared_weighted_kappa));
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 
     return R_NilValue;
@@ -200,17 +194,18 @@ extract_to_file(const Rcpp::String& model, const Rcpp::String& options)
         efyj::context ctx;
         init_context(ctx);
 
-        if (const auto ret = efyj::extract_options_to_file(ctx, model, options);
+        if (const auto ret =
+              efyj::extract_options_to_file(ctx, model, options);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("Extact-to-file failed: %s\n", msg);
         }
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 }
 
@@ -236,7 +231,8 @@ extract(const Rcpp::String& model)
         if (const auto ret = efyj::extract_options(ctx, model, d);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("Extract failed: %s\n", msg);
+            return R_NilValue;
         }
 
         return Rcpp::List::create(
@@ -247,11 +243,11 @@ extract(const Rcpp::String& model)
           Rcpp::Named("observed") = Rcpp::wrap(d.observed),
           Rcpp::Named("scale_values") = Rcpp::wrap(d.scale_values));
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 
     return R_NilValue;
@@ -350,16 +346,22 @@ adjustment(const Rcpp::String& model,
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
             simulations.length() != years.length() ||
-            simulations.length() != observed.length())
-            Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.\n");
+            simulations.length() != observed.length()) {
+            Rprintf("'simulations', 'places', 'departments', 'years', "
+                    "'observed' must have the same length.\n");
+            return R_NilValue;
+        }
 
-        if (scale_values.length() % simulations.length() > 0)
-            Rcpp::stop(
+        if (scale_values.length() % simulations.length() > 0) {
+            Rprintf(
               "'scale_values' lenght must be a multiple of other vectors.\n");
+            return R_NilValue;
+        }
 
-        if (thread <= 0)
-            Rcpp::stop("'thread' must be a positive value.\n");
+        if (thread <= 0) {
+            Rprintf("'thread' must be a positive value.\n");
+            return R_NilValue;
+        }
 
         efyj::data d;
         d.simulations = Rcpp::as<std::vector<std::string>>(simulations);
@@ -373,7 +375,8 @@ adjustment(const Rcpp::String& model,
               efyj::adjustment(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("Adjustment failed: %s\n", msg);
+            return R_NilValue;
         }
 
         return Rcpp::List::create(Rcpp::Named("modifiers") =
@@ -381,11 +384,11 @@ adjustment(const Rcpp::String& model,
                                   Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
                                   Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 
     return R_NilValue;
@@ -435,16 +438,22 @@ prediction(const Rcpp::String& model,
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
             simulations.length() != years.length() ||
-            simulations.length() != observed.length())
-            Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.");
+            simulations.length() != observed.length()) {
+            Rprintf("'simulations', 'places', 'departments', 'years', "
+                    "'observed' must have the same length.");
+            return R_NilValue;
+        }
 
-        if (scale_values.length() % simulations.length() > 0)
-            Rcpp::stop(
+        if (scale_values.length() % simulations.length() > 0) {
+            Rprintf(
               "'scale_values' lenght must be a multiple of other vectors.");
+            return R_NilValue;
+        }
 
-        if (thread <= 0)
-            Rcpp::stop("'thread' must be a positive value");
+        if (thread <= 0) {
+            Rprintf("'thread' must be a positive value");
+            return R_NilValue;
+        }
 
         efyj::data d;
         d.simulations = Rcpp::as<std::vector<std::string>>(simulations);
@@ -458,7 +467,8 @@ prediction(const Rcpp::String& model,
               efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("failed: %s\n", msg);
+            return R_NilValue;
         }
 
         return Rcpp::List::create(Rcpp::Named("modifiers") =
@@ -466,11 +476,11 @@ prediction(const Rcpp::String& model,
                                   Rcpp::Named("kappa") = Rcpp::wrap(all_kappa),
                                   Rcpp::Named("time") = Rcpp::wrap(all_time));
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 
     return R_NilValue;
@@ -515,13 +525,17 @@ merge(const Rcpp::String& model,
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
             simulations.length() != years.length() ||
-            simulations.length() != observed.length())
-            Rcpp::stop("'simulations', 'places', 'departments', 'years', "
-                       "'observed' must have the same length.");
+            simulations.length() != observed.length()) {
+            Rprintf("'simulations', 'places', 'departments', 'years', "
+                    "'observed' must have the same length.");
+            return R_NilValue;
+        }
 
-        if (scale_values.length() % simulations.length() > 0)
-            Rcpp::stop(
+        if (scale_values.length() % simulations.length() > 0) {
+            Rprintf(
               "'scale_values' lenght must be a multiple of other vectors.");
+            return R_NilValue;
+        }
 
         efyj::data d;
         d.simulations = Rcpp::as<std::vector<std::string>>(simulations);
@@ -534,17 +548,16 @@ merge(const Rcpp::String& model,
         if (const auto ret = efyj::merge_options(ctx, model, out, d);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
-            Rcpp::stop("failed: %.*s\n", msg.size(), msg.data());
+            Rprintf("failed: %s\n", msg);
+            return R_NilValue;
         }
-
-        return true;
     } catch (const std::bad_alloc& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (const std::exception& e) {
-        Rcpp::stop("failed: %s\n", e.what());
+        Rprintf("failed: %s\n", e.what());
     } catch (...) {
-        Rcpp::stop("failed: unknown error\n");
+        Rprintf("failed: unknown error\n");
     }
 
-    return true;
+    return R_NilValue;
 }
