@@ -72,10 +72,11 @@ git clone --recursive https://github.com/quesnel/efyj.git
 If you have already cloned efyj, you need to update your copy. Use the following commands:
 
 ````bash
-cd efyj			# move to the right directory path
+cd efyj                         # move to the right directory path
 git fetch origin
-git submodule update --init
-git reset --hard origin/master
+git submodule update --init     # update modules if necessary
+git reset --hard origin/master  # update source to master branch
+git clean -dqxf                 # cleanup directory tree
 ````
 
 Under a R terminal or Rstudio, type the following command (adapt the `setwd` command to the correct efyj clone):
