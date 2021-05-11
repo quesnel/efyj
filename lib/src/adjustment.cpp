@@ -40,8 +40,15 @@ status
 adjustment_evaluator::run(const result_callback& cb,
                           int line_limit,
                           [[maybe_unused]] double time_limit,
-                          int reduce_mode)
+                          int reduce_mode,
+                          const std::string& output_directory)
 {
+    model_writer writer;
+    if (auto ret = writer.init(output_directory); is_bad(ret))
+        return ret;
+
+    info(m_context, "[Output directory]\n{}\n", writer.directory.string());
+
     result ret;
 
     info(m_context, "[Computation starts]\n");
@@ -90,6 +97,8 @@ adjustment_evaluator::run(const result_callback& cb,
 
         ret.function_computed = static_cast<unsigned long>(m_options.size());
 
+        writer.store(m_context, m_model, ret);
+
         if (cb(ret) == false)
             return status::success;
     }
@@ -130,9 +139,22 @@ adjustment_evaluator::run(const result_callback& cb,
         ret.function_computed = static_cast<unsigned long int>(0);
         ret.modifiers.clear();
 
-        for (const auto& elem : m_updaters)
+        info(
+          m_context, "| {} | {:13.10f} | {} | {} | ", step, kappa, loop, time);
+
+        for (const auto& elem : m_updaters) {
             ret.modifiers.emplace_back(
               std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
+
+            info(m_context,
+                 "[{},{},{}] ",
+                 std::get<0>(elem),
+                 std::get<1>(elem),
+                 std::get<2>(elem));
+        }
+
+        info(m_context, "\n");
+        writer.store(m_context, m_model, ret);
 
         if (cb(ret) == false)
             break;

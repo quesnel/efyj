@@ -89,7 +89,8 @@ parallel_prediction_worker(const context& ctx,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
-            for (auto opt = 0, endopt = length(options); opt != endopt; ++opt) {
+            for (auto opt = 0, endopt = length(options); opt != endopt;
+                 ++opt) {
                 double kappa = 0.;
 
                 solver.init_next_value();
@@ -111,7 +112,8 @@ parallel_prediction_worker(const context& ctx,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] = solver.solve(options.options.row(opt));
+                m_globalsimulated[opt] =
+                  solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -141,9 +143,10 @@ parallel_prediction_worker(const context& ctx,
     }
 }
 
-prediction_thread_evaluator::prediction_thread_evaluator(const context& ctx,
-                                                         const Model& model,
-                                                         const Options& options)
+prediction_thread_evaluator::prediction_thread_evaluator(
+  const context& ctx,
+  const Model& model,
+  const Options& options)
   : m_context(ctx)
   , m_model(model)
   , m_options(options)
@@ -161,18 +164,20 @@ prediction_thread_evaluator::is_valid() const noexcept
 }
 
 status
-prediction_thread_evaluator::run(const result_callback& cb,
-                                 [[maybe_unused]] int line_limit,
-                                 [[maybe_unused]] double time_limit,
-                                 [[maybe_unused]] int reduce_mode,
-                                 unsigned int threads)
+prediction_thread_evaluator::run(
+  const result_callback& cb,
+  [[maybe_unused]] int line_limit,
+  [[maybe_unused]] double time_limit,
+  [[maybe_unused]] int reduce_mode,
+  unsigned int threads,
+  [[maybe_unused]] const std::string& output_directory)
 {
     (void)cb;
     (void)time_limit;
 
     info(m_context, "[Computation starts with %u thread(s)]\n", threads);
 
-    Results results(m_context, threads);
+    Results results(m_context, m_model, threads);
     bool stop = false;
 
     std::vector<std::thread> workers{ threads };
@@ -200,8 +205,9 @@ prediction_thread_evaluator::run(const result_callback& cb,
     return status::success;
 }
 
-Results::Results(const context& ctx, unsigned int threads)
+Results::Results(const context& ctx, const Model& mdl, unsigned int threads)
   : m_context(ctx)
+  , m_model(mdl)
   , m_threads(threads)
   , m_start(std::chrono::system_clock::now())
 {
@@ -211,6 +217,17 @@ Results::Results(const context& ctx, unsigned int threads)
     m_level.reserve(32);
     m_level.resize(1u);
     m_level[0] = threads;
+}
+
+status
+Results::init(const std::string& output_directory)
+{
+    if (auto ret = m_writer.init(output_directory); is_bad(ret))
+        return ret;
+
+    info(m_context, "[Output directory]\n{}\n", m_writer.directory.string());
+
+    return status::success;
 }
 
 void
@@ -262,6 +279,7 @@ Results::push(int step,
          m_results[step - 1].loop,
          duration);
 
+    m_writer.store(m_context, m_model, m_results[step - 1].updaters);
     print(m_context, m_results[step - 1].updaters);
     info(m_context, "\n");
 }

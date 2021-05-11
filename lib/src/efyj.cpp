@@ -398,7 +398,7 @@ adjustment(const context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        adj.run(callback, limit, 0.0, reduce);
+        adj.run(callback, limit, 0.0, reduce, "");
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
         return status::not_enough_memory;
@@ -434,7 +434,7 @@ adjustment(const context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        adj.run(callback, limit, 0.0, reduce);
+        adj.run(callback, limit, 0.0, reduce, "");
         return status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
@@ -471,11 +471,11 @@ prediction(const context& ctx,
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce);
+            pre.run(callback, limit, 0.0, reduce, "");
             return status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, thread);
+            pre.run(callback, limit, 0.0, reduce, thread, "");
             return status::success;
         }
     } catch (const std::bad_alloc& e) {
@@ -515,11 +515,11 @@ prediction(const context& ctx,
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce);
+            pre.run(callback, limit, 0.0, reduce, "");
             return status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, thread);
+            pre.run(callback, limit, 0.0, reduce, thread, "");
             return status::success;
         }
     } catch (const std::bad_alloc& e) {

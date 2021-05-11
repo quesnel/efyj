@@ -63,12 +63,15 @@ struct prediction_thread_evaluator
                int line_limit,
                double time_limit,
                int reduce_mode,
-               unsigned int threads);
+               unsigned int threads,
+               const std::string& output_directory);
 };
 
 class Results
 {
+    model_writer m_writer;
     const context& m_context;
+    const Model& m_model;
     std::mutex m_container_mutex;
 
     struct Result
@@ -84,12 +87,15 @@ class Results
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(const context& ctx, unsigned int threads);
+    Results(const context& ctx, const Model& mdl, unsigned int threads);
 
-    void emplace_result(int i,
-                        double kappa,
-                        unsigned long loop,
-                        const std::vector<std::tuple<int, int, int>>& updaters);
+    status init(const std::string& output_directory);
+
+    void emplace_result(
+      int i,
+      double kappa,
+      unsigned long loop,
+      const std::vector<std::tuple<int, int, int>>& updaters);
 
     void push(int step,
               double kappa,

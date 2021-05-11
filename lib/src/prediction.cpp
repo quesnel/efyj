@@ -19,6 +19,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <filesystem>
+
 #include "prediction.hpp"
 #include "utils.hpp"
 
@@ -47,9 +49,14 @@ status
 prediction_evaluator::run(const result_callback& cb,
                           int line_limit,
                           double time_limit,
-                          int reduce_mode)
+                          int reduce_mode,
+                          const std::string& output_directory)
 {
-    (void)time_limit;
+    model_writer writer;
+    if (auto ret = writer.init(output_directory); is_bad(ret))
+        return ret;
+
+    info(m_context, "[Output directory]\n{}\n", writer.directory.string());
 
     result ret;
 
@@ -98,6 +105,8 @@ prediction_evaluator::run(const result_callback& cb,
             return status::option_too_many;
 
         ret.function_computed = static_cast<unsigned long>(m_options.size());
+
+        writer.store(m_context, m_model, ret);
 
         if (!cb(ret))
             return status::success;
@@ -176,9 +185,22 @@ prediction_evaluator::run(const result_callback& cb,
         ret.function_computed = static_cast<unsigned long int>(0);
         ret.modifiers.clear();
 
-        for (const auto& elem : m_updaters)
+        info(
+          m_context, "| {} | {:13.10f} | {} | {} | ", step, ret.kappa, loop, time);
+
+        for (const auto& elem : m_updaters) {
             ret.modifiers.emplace_back(
               std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
+            info(m_context,
+                 "[{},{},{}] ",
+                 std::get<0>(elem),
+                 std::get<1>(elem),
+                 std::get<2>(elem));
+        }
+
+        info(m_context, "\n");
+
+        writer.store(m_context, m_model, ret);
 
         if (!cb(ret))
             break;

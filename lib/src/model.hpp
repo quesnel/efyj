@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <filesystem>
 #include <initializer_list>
 #include <limits>
 #include <optional>
@@ -197,6 +198,91 @@ struct Model
                 ret.emplace_back(&att);
 
         return ret;
+    }
+};
+
+struct model_writer
+{
+    std::filesystem::path directory;
+
+    status init(const std::string& output_directory)
+    {
+        directory = output_directory;
+        std::error_code ec;
+
+        if (!std::filesystem::is_directory(directory, ec))
+            directory = std::filesystem::current_path(ec);
+
+        return status::success;
+    }
+
+    status store(const context& ctx, const Model& model, const result& result)
+    {
+        Model copied_model(model);
+
+        const auto id = result.modifiers.size();
+        const auto filename = fmt::format("{}.dxi", id);
+        std::filesystem::path file = directory / filename;
+
+        for (const auto& elem : result.modifiers) {
+            assert(elem.attribute >= 0);
+            assert(static_cast<size_t>(elem.attribute) <
+                   copied_model.attributes.size());
+
+            auto& att = copied_model.attributes[elem.attribute];
+
+            assert(!att.functions.low.empty());
+            assert(elem.line >= 0);
+            assert(static_cast<size_t>(elem.line) < att.functions.low.size());
+            assert(elem.value >= 0);
+            assert(elem.value < att.scale_size());
+
+            char value = '0';
+            value += static_cast<char>(elem.value);
+
+            att.functions.low[elem.line] = value;
+        }
+
+        copied_model.write(ctx, output_file{ file.string().c_str() });
+
+        return status::success;
+    }
+
+    status store(const context& ctx,
+                 const Model& model,
+                 const std::vector<std::tuple<int, int, int>>& updaters)
+    {
+        Model copied_model(model);
+
+        const auto id = updaters.size();
+        const auto filename = fmt::format("{}.dxi", id);
+        std::filesystem::path file = directory / filename;
+
+        for (const auto& elem : updaters) {
+            const int attribute = std::get<0>(elem);
+            const int line = std::get<1>(elem);
+            const int value = std::get<2>(elem);
+
+            assert(attribute >= 0);
+            assert(static_cast<size_t>(attribute) < copied_model.attributes.size());
+
+            auto& att = copied_model.attributes[attribute];
+
+            assert(!att.functions.low.empty());
+            assert(line >= 0);
+            assert(static_cast<size_t>(line) < att.functions.low.size());
+            assert(value >= 0);
+            assert(value < att.scale_size());
+
+            char v = '0';
+            v += static_cast<char>(value);
+
+            att.functions.low[line] = v;
+        }
+
+        copied_model.write(ctx, output_file{ file.string().c_str() });
+
+        return status::success;
     }
 };
 

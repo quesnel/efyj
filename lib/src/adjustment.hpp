@@ -54,7 +54,8 @@ struct adjustment_evaluator
     status run(const result_callback& cb,
                int line_limit,
                double time_limit,
-               int reduce_mode);
+               int reduce_mode,
+               const std::string& output_directory);
 };
 
 } // namespace efyj
