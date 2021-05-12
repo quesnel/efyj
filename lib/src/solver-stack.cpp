@@ -147,8 +147,8 @@ aggregate_attribute::reduce(std::set<int>& whitelist)
         size_t i = walker.size() - 1;
         do {
             auto id = 0;
-            for (size_t i{ 0 }, e{ coeffs.size() }; i != e; ++i)
-                id += coeffs[i] * stack[i];
+            for (size_t j{ 0 }, e{ coeffs.size() }; j != e; ++j)
+                id += coeffs[j] * stack[j];
             whitelist.emplace(id);
 
             // whitelist.emplace(coeffs.dot(stack));

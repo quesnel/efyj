@@ -870,8 +870,8 @@ private:
         else
             write_Model_option(att.options);
 
-        for (const auto& child : att.children)
-            write_Model_attribute(child);
+        for (const auto& i : att.children)
+            write_Model_attribute(i);
 
         space -= 2;
         make_space();
