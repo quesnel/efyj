@@ -169,20 +169,20 @@ set_options_model(Model& mdl, const Options& opts)
 status
 information(const context& ctx,
             const std::string& model_file_path,
-            information_results& ret) noexcept
+            information_results& out) noexcept
 {
     try {
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
             return ret;
 
-        ret.basic_attribute_names.clear();
-        ret.basic_attribute_scale_value_numbers.clear();
+        out.basic_attribute_names.clear();
+        out.basic_attribute_scale_value_numbers.clear();
 
         for (const auto& att : model.attributes) {
             if (att.is_basic()) {
-                ret.basic_attribute_names.emplace_back(att.name);
-                ret.basic_attribute_scale_value_numbers.emplace_back(
+                out.basic_attribute_names.emplace_back(att.name);
+                out.basic_attribute_scale_value_numbers.emplace_back(
                   att.scale_size());
             }
         }
