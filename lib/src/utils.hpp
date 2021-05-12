@@ -32,82 +32,82 @@
 
 #include <efyj/efyj.hpp>
 
-#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__) &&         \
+#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__) &&        \
   __GNUC__ >= 2
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        __asm__ __volatile__("int $03");                                       \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        __asm__ __volatile__("int $03");                                      \
     } while (0)
 #elif (defined(_MSC_VER) || defined(__DMC__)) && defined(_M_IX86)
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        __asm int 3h                                                           \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        __asm int 3h                                                          \
     } while (0)
 #elif defined(_MSC_VER)
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        __debugbreak();                                                        \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        __debugbreak();                                                       \
     } while (0)
-#elif defined(__alpha__) && !defined(__osf__) && defined(__GNUC__) &&          \
+#elif defined(__alpha__) && !defined(__osf__) && defined(__GNUC__) &&         \
   __GNUC__ >= 2
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        __asm__ __volatile__("bpt");                                           \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        __asm__ __volatile__("bpt");                                          \
     } while (0)
 #elif defined(__APPLE__)
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        __builtin_trap();                                                      \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        __builtin_trap();                                                     \
     } while (0)
 #else /* !__i386__ && !__alpha__ */
-#define efyj_breakpoint()                                                      \
-    do {                                                                       \
-        raise(SIGTRAP);                                                        \
+#define efyj_breakpoint()                                                     \
+    do {                                                                      \
+        raise(SIGTRAP);                                                       \
     } while (0)
 #endif /* __i386__ */
 
 #ifndef NDEBUG
-#define efyj_bad_return(status__)                                              \
-    do {                                                                       \
-        efyj_breakpoint();                                                     \
-        return status__;                                                       \
+#define efyj_bad_return(status__)                                             \
+    do {                                                                      \
+        efyj_breakpoint();                                                    \
+        return status__;                                                      \
     } while (0)
 
-#define efyj_return_if_bad(expr__)                                             \
-    do {                                                                       \
-        auto status__ = (expr__);                                              \
-        if (status__ != status::success) {                                     \
-            efyj_breakpoint();                                                 \
-            return status__;                                                   \
-        }                                                                      \
+#define efyj_return_if_bad(expr__)                                            \
+    do {                                                                      \
+        auto status__ = (expr__);                                             \
+        if (status__ != status::success) {                                    \
+            efyj_breakpoint();                                                \
+            return status__;                                                  \
+        }                                                                     \
     } while (0)
 
-#define efyj_return_if_fail(expr__, status__)                                  \
-    do {                                                                       \
-        if (!(expr__)) {                                                       \
-            efyj_breakpoint();                                                 \
-            return status__;                                                   \
-        }                                                                      \
+#define efyj_return_if_fail(expr__, status__)                                 \
+    do {                                                                      \
+        if (!(expr__)) {                                                      \
+            efyj_breakpoint();                                                \
+            return status__;                                                  \
+        }                                                                     \
     } while (0)
 #else
-#define efyj_bad_return(status__)                                              \
-    do {                                                                       \
-        return status__;                                                       \
+#define efyj_bad_return(status__)                                             \
+    do {                                                                      \
+        return status__;                                                      \
     } while (0)
 
-#define efyj_return_if_bad(expr__)                                             \
-    do {                                                                       \
-        auto status__ = (expr__);                                              \
-        if (status__ != status::success) {                                     \
-            return status__;                                                   \
-        }                                                                      \
+#define efyj_return_if_bad(expr__)                                            \
+    do {                                                                      \
+        auto status__ = (expr__);                                             \
+        if (status__ != status::success) {                                    \
+            return status__;                                                  \
+        }                                                                     \
     } while (0)
 
-#define efyj_return_if_fail(expr__, status__)                                  \
-    do {                                                                       \
-        if (!(expr__)) {                                                       \
-            return status__;                                                   \
-        }                                                                      \
+#define efyj_return_if_fail(expr__, status__)                                 \
+    do {                                                                      \
+        if (!(expr__)) {                                                      \
+            return status__;                                                  \
+        }                                                                     \
     } while (0)
 #endif
 
@@ -301,12 +301,11 @@ is_numeric_castable(Source arg)
     static_assert(std::is_integral<Source>::value, "Integer required.");
     static_assert(std::is_integral<Target>::value, "Integer required.");
 
+    if constexpr (std::is_same_v<Target, Source>)
+        return true;
+
     using arg_traits = std::numeric_limits<Source>;
     using result_traits = std::numeric_limits<Target>;
-
-    if (result_traits::digits == arg_traits::digits &&
-        result_traits::is_signed == arg_traits::is_signed)
-        return true;
 
     if (result_traits::digits > arg_traits::digits)
         return result_traits::is_signed || arg >= 0;
