@@ -35,6 +35,11 @@ target_include_directories(libefyj PUBLIC
   $<INSTALL_INTERFACE:include>
   PRIVATE src ${CMAKE_BINARY_DIR})
 
+target_compile_options(libefyj PRIVATE  
+  $<$<CXX_COMPILER_ID:MSVC>:
+      /Zc:__cplusplus
+      $<$<CONFIG:Debug>:/Od /W3 /Zi /analyze>>)
+
 target_link_libraries(libefyj
   Threads::Threads expat::expat
   $<$<BOOL:${NLOPT_FOUND}>:nlopt>)
