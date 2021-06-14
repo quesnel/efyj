@@ -194,8 +194,7 @@ extract_to_file(const Rcpp::String& model, const Rcpp::String& options)
         efyj::context ctx;
         init_context(ctx);
 
-        if (const auto ret =
-              efyj::extract_options_to_file(ctx, model, options);
+        if (const auto ret = efyj::extract_options_to_file(ctx, model, options);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Extact-to-file failed: %s\n", msg);

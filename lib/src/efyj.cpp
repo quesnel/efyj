@@ -243,11 +243,11 @@ make_options(const context& ctx,
             return status::option_input_inconsistent;
 
         opt.options.init(rows, cols);
-        for (size_t i = 0, elem = 0; i != rows; ++i) {
-            for (size_t j = 0; j != cols; ++j, ++elem) {
-                const auto att = ordered_att[j];
-                const auto limit = model.attributes[att].scale_size();
+        for (size_t i = 0, elem = 0; i != cols; ++i) {
+            const auto att = ordered_att[i];
+            const auto limit = model.attributes[att].scale_size();
 
+            for (size_t j = 0; j != rows; ++j, ++elem) {
                 if (d.scale_values[elem] > limit) {
                     error(ctx,
                           "bad scale value: {} with a limit of {} for "
@@ -258,7 +258,7 @@ make_options(const context& ctx,
                     return status::scale_value_inconsistent;
                 }
 
-                opt.options(i, j) = d.scale_values[elem];
+                opt.options(j, i) = d.scale_values[elem];
             }
         }
 
