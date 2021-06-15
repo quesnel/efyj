@@ -113,6 +113,13 @@ enum class status : int
     unknown_error
 };
 
+template<typename T, typename... Args>
+constexpr bool
+match(const T& s, Args... args) noexcept
+{
+    return ((s == args) || ... || false);
+}
+
 inline bool
 is_bad(const status t) noexcept
 {
@@ -128,38 +135,36 @@ is_success(const status t) noexcept
 inline const char*
 get_error_message(const efyj::status s) noexcept
 {
-    const static char *ret[] = {
-        "success",
-        "not enough memory",
-        "numeric cast error",
-        "internal error",
-        "file error",
-        "solver error",
-        "unconsistent input vector",
-        "dexi parser scale definition error",
-        "dexi parser scale not found",
-        "dexi parser scale too big",
-        "dexi parser file format error",
-        "dexi parser not enough memory",
-        "dexi parser element unknown",
-        "dexi parser option conversion error",
-        "dexi writer error",
-        "csv parser file error",
-        "csv parser column number incorrect",
-        "csv parser scale value unknown",
-        "csv parser column conversion failure",
-        "csv parser basic attribute unknown",
-        "csv parser init dataset simulation empty",
-        "csv parser init dataset cast error",
-        "extract option same input files",
-        "extract option fail open file",
-        "merge option same inputoutput",
-        "merge option fail open file",
-        "option input inconsistent",
-        "scale value inconsistent",
-        "option too any",
-        "unknown error"
-    };
+    const static char* ret[] = { "success",
+                                 "not enough memory",
+                                 "numeric cast error",
+                                 "internal error",
+                                 "file error",
+                                 "solver error",
+                                 "unconsistent input vector",
+                                 "dexi parser scale definition error",
+                                 "dexi parser scale not found",
+                                 "dexi parser scale too big",
+                                 "dexi parser file format error",
+                                 "dexi parser not enough memory",
+                                 "dexi parser element unknown",
+                                 "dexi parser option conversion error",
+                                 "dexi writer error",
+                                 "csv parser file error",
+                                 "csv parser column number incorrect",
+                                 "csv parser scale value unknown",
+                                 "csv parser column conversion failure",
+                                 "csv parser basic attribute unknown",
+                                 "csv parser init dataset simulation empty",
+                                 "csv parser init dataset cast error",
+                                 "extract option same input files",
+                                 "extract option fail open file",
+                                 "merge option same inputoutput",
+                                 "merge option fail open file",
+                                 "option input inconsistent",
+                                 "scale value inconsistent",
+                                 "option too any",
+                                 "unknown error" };
 
     const auto elem = static_cast<int>(s);
     const auto max_elem = std::size(ret);
@@ -169,7 +174,7 @@ get_error_message(const efyj::status s) noexcept
     return ret[elem];
 }
 
-enum class log_level
+enum class log_level : int
 {
     emerg,   // system is unusable
     alert,   // action must be taken immediately
@@ -181,28 +186,15 @@ enum class log_level
     debug    // debug-level messages
 };
 
-using dexi_parser_callback = std::function<
-  void(const status s, int line, int column, const std::string_view tag)>;
-
-using csv_parser_callback =
-  std::function<void(const status s, int line, int column)>;
-
-using not_enough_memory_callback = std::function<void()>;
-using numeric_cast_error_callback = std::function<void()>;
-using internal_error_callback = std::function<void()>;
-using solver_error_callback = std::function<void()>;
-using file_error_callback =
-  std::function<void(const std::string_view file_name)>;
-
 struct context
 {
-    dexi_parser_callback dexi_cb;
-    csv_parser_callback csv_cb;
-    not_enough_memory_callback eov_cb;
-    numeric_cast_error_callback cast_cb;
-    solver_error_callback solver_cb;
-    file_error_callback file_cb;
-
+    std::ostream* out = nullptr;
+    std::ostream* err = nullptr;
+    int line = 0;
+    int column = 0;
+    size_t size = 0;
+    std::string data_1;
+    efyj::status status;
     log_level log_priority = log_level::info;
 };
 
@@ -317,26 +309,26 @@ using result_callback = std::function<bool(const result&)>;
 
 EFYJ_API
 status
-information(const context& ctx,
+information(context& ctx,
             const std::string& model_file_path,
             information_results& ret) noexcept;
 
 EFYJ_API
 status
-evaluate(const context& ctx,
+evaluate(context& ctx,
          const std::string& model_file_path,
          const data& d,
          evaluation_results& ret) noexcept;
 
 EFYJ_API
 status
-evaluate(const context& ctx,
+evaluate(context& ctx,
          const std::string& model_file_path,
          const std::string& options_file_path,
          evaluation_results& ret) noexcept;
 
 EFYJ_API status
-adjustment(const context& ctx,
+adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
@@ -345,7 +337,7 @@ adjustment(const context& ctx,
            unsigned int thread) noexcept;
 
 EFYJ_API status
-adjustment(const context& ctx,
+adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
@@ -354,7 +346,7 @@ adjustment(const context& ctx,
            unsigned int thread) noexcept;
 
 EFYJ_API status
-prediction(const context& ctx,
+prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
@@ -363,7 +355,7 @@ prediction(const context& ctx,
            unsigned int thread) noexcept;
 
 EFYJ_API status
-prediction(const context& ctx,
+prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
@@ -372,34 +364,34 @@ prediction(const context& ctx,
            unsigned int thread) noexcept;
 
 EFYJ_API status
-extract_options_to_file(const context& ctx,
+extract_options_to_file(context& ctx,
                         const std::string& model_file_path,
                         const std::string& output_file_path) noexcept;
 
 EFYJ_API status
-extract_options(const context& ctx,
+extract_options(context& ctx,
                 const std::string& model_file_path,
                 data& out) noexcept;
 
 EFYJ_API status
-extract_options(const context& ctx,
+extract_options(context& ctx,
                 const std::string& model_file_path,
                 const data& d) noexcept;
 
 EFYJ_API status
-extract_options(const context& ctx,
+extract_options(context& ctx,
                 const std::string& model_file_path,
                 const std::string& options_file_path,
                 data& out) noexcept;
 
 EFYJ_API status
-merge_options_to_file(const context& ctx,
+merge_options_to_file(context& ctx,
                       const std::string& model,
                       const std::string& options,
                       const std::string& output_file_path) noexcept;
 
 EFYJ_API status
-merge_options(const context& ctx,
+merge_options(context& ctx,
               const std::string& model_file_path,
               const std::string& output_file_path,
               const data& d) noexcept;

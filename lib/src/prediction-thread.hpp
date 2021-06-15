@@ -39,7 +39,7 @@ namespace efyj {
 
 struct prediction_thread_evaluator
 {
-    const context& m_context;
+    context& m_context;
     const Model& m_model;
     const Options& m_options;
 
@@ -53,7 +53,7 @@ struct prediction_thread_evaluator
     weighted_kappa_calculator kappa_c;
     unsigned long long int m_loop = 0;
 
-    prediction_thread_evaluator(const context& ctx,
+    prediction_thread_evaluator(context& ctx,
                                 const Model& model,
                                 const Options& options);
 
@@ -70,7 +70,7 @@ struct prediction_thread_evaluator
 class Results
 {
     model_writer m_writer;
-    const context& m_context;
+    context& m_context;
     const Model& m_model;
     std::mutex m_container_mutex;
 
@@ -87,15 +87,14 @@ class Results
     std::chrono::time_point<std::chrono::system_clock> m_start, m_end;
 
 public:
-    Results(const context& ctx, const Model& mdl, unsigned int threads);
+    Results(context& ctx, const Model& mdl, unsigned int threads);
 
     status init(const std::string& output_directory);
 
-    void emplace_result(
-      int i,
-      double kappa,
-      unsigned long loop,
-      const std::vector<std::tuple<int, int, int>>& updaters);
+    void emplace_result(int i,
+                        double kappa,
+                        unsigned long loop,
+                        const std::vector<std::tuple<int, int, int>>& updaters);
 
     void push(int step,
               double kappa,

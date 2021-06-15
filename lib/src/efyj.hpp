@@ -28,12 +28,10 @@
 namespace efyj {
 
 status
-make_model(const context& ctx,
-           const std::string& model_file_path,
-           Model& model);
+make_model(context& ctx, const std::string& model_file_path, Model& model);
 
 status
-make_options(const context& ctx,
+make_options(context& ctx,
              Model& model,
              const std::string& options_file_path,
              Options& options);

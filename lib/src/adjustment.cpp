@@ -24,7 +24,7 @@
 
 namespace efyj {
 
-adjustment_evaluator::adjustment_evaluator(const context& ctx,
+adjustment_evaluator::adjustment_evaluator(context& ctx,
                                            const Model& model,
                                            const Options& options)
   : m_context(ctx)

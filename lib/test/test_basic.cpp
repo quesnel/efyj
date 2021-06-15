@@ -626,39 +626,48 @@ check_the_efyj_set_function()
 static void
 init_context(efyj::context& ctx) noexcept
 {
-    ctx.dexi_cb = [](const efyj::status s,
-                     int line,
-                     int column,
-                     const std::string_view tag) {
-        fmt::print(stderr,
-                   "DEXi error: {} at line {} column {} with tag {}\n",
-                   efyj::get_error_message(s),
-                   line,
-                   column,
-                   tag);
-    };
+    ctx.out = nullptr;
+    ctx.err = nullptr;
+    ctx.line = 0;
+    ctx.column = 0;
+    ctx.size = 0;
+    ctx.data_1.reserve(256u);
+    ctx.status = efyj::status::success;
+    ctx.log_priority = efyj::log_level::info;
 
-    ctx.csv_cb = [](const efyj::status s, int line, int column) {
-        fmt::print(stderr,
-                   "CSV error: {} at line {} column {}\n",
-                   efyj::get_error_message(s),
-                   line,
-                   column);
-    };
+    // ctx.dexi_cb = [](const efyj::status s,
+    //                  int line,
+    //                  int column,
+    //                  const std::string_view tag) {
+    //     fmt::print(stderr,
+    //                "DEXi error: {} at line {} column {} with tag {}\n",
+    //                efyj::get_error_message(s),
+    //                line,
+    //                column,
+    //                tag);
+    // };
 
-    ctx.eov_cb = []() {
-        fmt::print(stderr, "Not enough memory to continue\n");
-    };
+    // ctx.csv_cb = [](const efyj::status s, int line, int column) {
+    //     fmt::print(stderr,
+    //                "CSV error: {} at line {} column {}\n",
+    //                efyj::get_error_message(s),
+    //                line,
+    //                column);
+    // };
 
-    ctx.cast_cb = []() {
-        fmt::print(stderr, "Internal error: cast failure\n");
-    };
+    // ctx.eov_cb = []() {
+    //     fmt::print(stderr, "Not enough memory to continue\n");
+    // };
 
-    ctx.solver_cb = []() { fmt::print(stderr, "Solver error\n"); };
+    // ctx.cast_cb = []() {
+    //     fmt::print(stderr, "Internal error: cast failure\n");
+    // };
 
-    ctx.file_cb = [](const std::string_view file_name) {
-        fmt::print(stderr, "Error to access file `{}'\n", file_name);
-    };
+    // ctx.solver_cb = []() { fmt::print(stderr, "Solver error\n"); };
+
+    // ctx.file_cb = [](const std::string_view file_name) {
+    //     fmt::print(stderr, "Error to access file `{}'\n", file_name);
+    // };
 }
 
 struct result_fn
@@ -721,11 +730,11 @@ test_adjustment_solver_for_Car()
     ret = efyj::adjustment(ctx, "Car.dxi", d, fn, true, 4, 1u);
     Ensures(is_success(ret));
 
-    const std::vector<int> to_compare = { 0, 0, 0, 0, 0, 0, 0, 4, 1,
-                                          0, 0, 0, 0, 4, 1, 0, 5, 1 };
+    const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1, 1, 0, 0,
+        1, 4, 1, 1, 5, 1 };
 
     Ensures(to_compare.size() == all_modifiers.size());
-    for (size_t i = 0, e = to_compare.size(); i != e; ++i)
+    for (size_t i = 0, e = to_compare.size(); i < e; ++i)
         Ensures(to_compare[i] == all_modifiers[i]);
 
     Ensures(all_kappa.size() == (size_t)4);
@@ -733,6 +742,36 @@ test_adjustment_solver_for_Car()
     Ensures(all_kappa[1] == 1.0);
     Ensures(all_kappa[2] == 1.0);
     Ensures(all_kappa[3] == 1.0);
+}
+
+void
+test_adjustment_solver_for_Car2()
+{
+    efyj::context ctx;
+    init_context(ctx);
+
+    efyj::data d;
+
+    auto ret = efyj::extract_options(ctx, "Car2.dxi", d);
+    Ensures(is_success(ret));
+
+    std::vector<int> all_modifiers;
+    std::vector<double> all_kappa;
+    std::vector<double> all_time;
+    result_fn fn(all_modifiers, all_kappa, all_time, 2);
+
+    ret = efyj::adjustment(ctx, "Car2.dxi", d, fn, true, 2, 1u);
+    Ensures(is_success(ret));
+
+    const std::vector<int> to_compare = { 4, 8, 3 };
+
+    Ensures(to_compare.size() == all_modifiers.size());
+    for (size_t i = 0, e = all_modifiers.size(); i < e; ++i)
+        Ensures(to_compare[i] == all_modifiers[i]);
+
+    Ensures(all_kappa.size() == (size_t)2);
+    Ensures(all_kappa[0] < 1.0);
+    Ensures(all_kappa[1] == 1.0);
 }
 
 void
@@ -765,8 +804,16 @@ test_prediction_solver_for_Car()
                                           0, 0, 0, 0, 4, 1, 0, 5, 1 };
 
     Ensures(to_compare.size() == all_modifiers.size());
-    for (size_t i = 0, e = to_compare.size(); i != e; ++i)
-        Ensures(to_compare[i] == all_modifiers[i]);
+    for (size_t i = 0, e = to_compare.size(); i < e; i += 3)
+        fmt::print("{}.{}.{} - {}.{}.{}\n",
+                   to_compare[i],
+                   to_compare[i + 1],
+                   to_compare[i + 2],
+                   all_modifiers[i],
+                   all_modifiers[i + 1],
+                   all_modifiers[i + 2]);
+
+    // Ensures(to_compare[i] == all_modifiers[i]);
 
     Ensures(all_kappa.size() == (size_t)4);
     Ensures(all_kappa[0] <= 1.0);
@@ -796,6 +843,7 @@ main()
     check_the_options_set_function();
     check_the_efyj_set_function();
     test_adjustment_solver_for_Car();
+    test_adjustment_solver_for_Car2();
     test_prediction_solver_for_Car();
 
     return unit_test::report_errors();

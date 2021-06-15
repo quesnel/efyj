@@ -35,12 +35,12 @@
 namespace efyj {
 
 status
-make_model(const context& ctx, const std::string& model_file_path, Model& model)
+make_model(context& ctx, const std::string& model_file_path, Model& model)
 {
     const auto ifs = input_file(model_file_path.c_str());
     if (!ifs.is_open()) {
-        error(ctx, "fail to open `{}'\n", model_file_path.c_str());
-        return status::file_error;
+        ctx.data_1 = model_file_path;
+        return ctx.status = status::file_error;
     }
 
     if (auto ret = model.read(ctx, ifs); is_bad(ret))
@@ -50,25 +50,22 @@ make_model(const context& ctx, const std::string& model_file_path, Model& model)
 }
 
 status
-make_options(const context& ctx,
+make_options(context& ctx,
              Model& model,
              const std::string& options_file_path,
              Options& options)
 {
     const auto ifs = input_file(options_file_path.c_str());
     if (!ifs.is_open()) {
-        error(ctx, "fail to open `{}'", options_file_path.c_str());
-        return status::file_error;
+        ctx.data_1 = options_file_path;
+        return ctx.status = status::file_error;
     }
 
     if (auto ret = options.read(ctx, ifs, model); is_bad(ret)) {
-        error(ctx,
-              "fail to read `{}' at line {} column {}",
-              options_file_path,
-              options.error_at_line,
-              options.error_at_column);
-
-        return ret;
+        ctx.data_1 = options_file_path;
+        ctx.line = static_cast<int>(options.error_at_line);
+        ctx.column = static_cast<int>(options.error_at_column);
+        return ctx.status = ret;
     }
 
     return status::success;
@@ -167,7 +164,7 @@ set_options_model(Model& mdl, const Options& opts)
 }
 
 status
-information(const context& ctx,
+information(context& ctx,
             const std::string& model_file_path,
             information_results& out) noexcept
 {
@@ -212,15 +209,12 @@ is_valid_input_size(const size_t simulation,
 }
 
 static status
-make_options(const context& ctx,
-             const Model& model,
-             const data& d,
-             Options& opt)
+make_options(context& ctx, const Model& model, const data& d, Options& opt)
 {
     try {
-        const auto rows = d.simulations.size();
+        const auto option_number = d.simulations.size();
 
-        if (!is_valid_input_size(rows,
+        if (!is_valid_input_size(option_number,
                                  d.places.size(),
                                  d.departments.size(),
                                  d.years.size(),
@@ -234,31 +228,37 @@ make_options(const context& ctx,
         opt.years = d.years;
         opt.observed = d.observed;
 
-        const auto cols = model.get_basic_attribute().size();
+        const auto attribute_number = model.get_basic_attribute().size();
 
         std::vector<size_t> ordered_att;
         reorder_basic_attribute(model, 0, ordered_att);
 
-        if (cols * rows != d.scale_values.size())
+        if (attribute_number * option_number != d.scale_values.size())
             return status::option_input_inconsistent;
 
-        opt.options.init(rows, cols);
-        for (size_t i = 0, elem = 0; i != cols; ++i) {
-            const auto att = ordered_att[i];
-            const auto limit = model.attributes[att].scale_size();
+        opt.options.init(option_number, attribute_number);
+        size_t optid = 0;
+        size_t attid = 0;
+        for (auto& elem : d.scale_values) {
+            const auto attribute = ordered_att[attid];
+            const auto limit = model.attributes[attribute].scale_size();
 
-            for (size_t j = 0; j != rows; ++j, ++elem) {
-                if (d.scale_values[elem] > limit) {
-                    error(ctx,
-                          "bad scale value: {} with a limit of {} for "
-                          "attribute {}\n",
-                          d.scale_values[elem],
-                          limit,
-                          model.attributes[att].name);
-                    return status::scale_value_inconsistent;
-                }
+            if (elem > limit) {
+                error(ctx,
+                        "bad scale value: {} with a limit of {} for "
+                        "attribute {}\n",
+                        elem,
+                        limit,
+                        model.attributes[attribute].name);
+                return status::scale_value_inconsistent;
+            }
 
-                opt.options(j, i) = d.scale_values[elem];
+            opt.options(optid, attid) = elem;
+            ++attid;
+
+            if (attid == attribute_number) {
+                ++optid;
+                attid = 0;
             }
         }
 
@@ -281,7 +281,7 @@ make_options(const context& ctx,
 }
 
 static void
-evaluate([[maybe_unused]] const context& ctx,
+evaluate([[maybe_unused]] context& ctx,
          Model& model,
          Options& options,
          evaluation_results& out)
@@ -312,7 +312,7 @@ evaluate([[maybe_unused]] const context& ctx,
 }
 
 status
-evaluate(const context& ctx,
+evaluate(context& ctx,
          const std::string& model_file_path,
          const data& d,
          evaluation_results& out) noexcept
@@ -344,7 +344,7 @@ evaluate(const context& ctx,
 }
 
 status
-evaluate(const context& ctx,
+evaluate(context& ctx,
          const std::string& model_file_path,
          const std::string& options_file_path,
          evaluation_results& out) noexcept
@@ -377,7 +377,7 @@ evaluate(const context& ctx,
 }
 
 status
-adjustment(const context& ctx,
+adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
@@ -414,7 +414,7 @@ adjustment(const context& ctx,
 }
 
 status
-adjustment(const context& ctx,
+adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
@@ -449,7 +449,7 @@ adjustment(const context& ctx,
 }
 
 status
-prediction(const context& ctx,
+prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
@@ -491,7 +491,7 @@ prediction(const context& ctx,
 }
 
 status
-prediction(const context& ctx,
+prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
@@ -535,7 +535,7 @@ prediction(const context& ctx,
 }
 
 status
-extract_options_to_file(const context& ctx,
+extract_options_to_file(context& ctx,
                         const std::string& model_file_path,
                         const std::string& output_file_path) noexcept
 {
@@ -546,10 +546,9 @@ extract_options_to_file(const context& ctx,
               output_file_path);
 
         if (model_file_path == output_file_path) {
-            if (ctx.file_cb)
-                ctx.file_cb(model_file_path);
-
-            return status::extract_option_same_input_files;
+            ctx.data_1 = model_file_path;
+            ctx.status = status::extract_option_same_input_files;
+            return ctx.status;
         }
 
         Model model;
@@ -558,10 +557,9 @@ extract_options_to_file(const context& ctx,
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
-            if (ctx.file_cb)
-                ctx.file_cb(output_file_path);
-
-            return status::merge_option_fail_open_file;
+            ctx.data_1 = output_file_path;
+            ctx.status = status::merge_option_fail_open_file;
+            return ctx.status;
         }
 
         return get_options_model(model, ofs);
@@ -578,7 +576,7 @@ extract_options_to_file(const context& ctx,
 }
 
 status
-extract_options(const context& ctx,
+extract_options(context& ctx,
                 const std::string& model_file_path,
                 data& out) noexcept
 {
@@ -622,7 +620,7 @@ extract_options(const context& ctx,
 }
 
 status
-extract_options(const context& ctx,
+extract_options(context& ctx,
                 const std::string& model_file_path,
                 const std::string& options_file_path,
                 data& out) noexcept
@@ -673,7 +671,7 @@ extract_options(const context& ctx,
 }
 
 status
-merge_options_to_file(const context& ctx,
+merge_options_to_file(context& ctx,
                       const std::string& model_file_path,
                       const std::string& options_file_path,
                       const std::string& output_file_path) noexcept
@@ -686,10 +684,8 @@ merge_options_to_file(const context& ctx,
               options_file_path);
 
         if (model_file_path == output_file_path) {
-            if (ctx.file_cb)
-                ctx.file_cb(model_file_path);
-
-            return status::merge_option_same_inputoutput;
+            ctx.data_1 = model_file_path;
+            return ctx.status = status::merge_option_same_inputoutput;
         }
 
         Model model;
@@ -703,10 +699,8 @@ merge_options_to_file(const context& ctx,
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
-            if (ctx.file_cb)
-                ctx.file_cb(output_file_path);
-
-            return status::merge_option_fail_open_file;
+            ctx.data_1 = output_file_path;
+            return ctx.status = status::merge_option_fail_open_file;
         }
 
         set_options_model(model, options);
@@ -725,7 +719,7 @@ merge_options_to_file(const context& ctx,
 }
 
 status
-merge_options(const context& ctx,
+merge_options(context& ctx,
               const std::string& model_file_path,
               const std::string& output_file_path,
               const data& d) noexcept
@@ -737,10 +731,8 @@ merge_options(const context& ctx,
                model_file_path);
 
         if (model_file_path == output_file_path) {
-            if (ctx.file_cb)
-                ctx.file_cb(model_file_path);
-
-            return status::merge_option_same_inputoutput;
+            ctx.data_1 = model_file_path;
+            return ctx.status = status::merge_option_same_inputoutput;
         }
 
         Model model;
@@ -753,10 +745,8 @@ merge_options(const context& ctx,
 
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
-            if (ctx.file_cb)
-                ctx.file_cb(output_file_path);
-
-            return status::merge_option_fail_open_file;
+            ctx.data_1 = output_file_path;
+            return ctx.status = status::merge_option_fail_open_file;
         }
 
         std::vector<size_t> ordered_att;
@@ -779,14 +769,12 @@ merge_options(const context& ctx,
 
         model.write(ctx, ofs);
         return status::success;
-    } catch (const std::bad_alloc& e) {
-        error(ctx, "c++ bad alloc: {}\n", e.what());
+    } catch (const std::bad_alloc& /*e*/) {
         return status::not_enough_memory;
     } catch (const std::exception& e) {
-        error(ctx, "c++ exception: {}\n", e.what());
+        ctx.data_1 = e.what();
         return status::unknown_error;
     } catch (...) {
-        error(ctx, "c++ unknown exception\n");
         return status::unknown_error;
     }
 }

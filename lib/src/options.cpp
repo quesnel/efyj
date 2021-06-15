@@ -195,7 +195,7 @@ Options::save(const char* filename) noexcept
 }
 
 status
-Options::read(const context& ctx, const input_file& is, const Model& model)
+Options::read(context& ctx, const input_file& is, const Model& model)
 {
     clear();
 

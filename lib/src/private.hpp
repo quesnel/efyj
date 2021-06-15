@@ -23,6 +23,7 @@
 #define ORG_VLEPROJECT_EFYJ_PRIVATE_HPP
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include <cassert>
 
@@ -36,36 +37,57 @@ is_loggable(log_level level, log_level current_level) noexcept
 
 template<typename... Args>
 void
-log(const context& ctx,
-    FILE* stream,
-    log_level level,
-    const char* fmt,
-    const Args&... args)
+log(context& ctx, log_level level, const char* fmt, const Args&... args)
 {
     if (!is_loggable(ctx.log_priority, level))
         return;
 
-    assert(stream);
-
-    fmt::print(stream, fmt, args...);
+    switch (level) {
+    case log_level::emerg:
+    case log_level::alert:
+    case log_level::crit:
+    case log_level::err:
+    case log_level::warning:
+        if (ctx.err)
+            fmt::print(*ctx.err, fmt, args...);
+        break;
+    case log_level::notice:
+    case log_level::info:
+    case log_level::debug:
+        if (ctx.out)
+            fmt::print(*ctx.out, fmt, args...);
+        break;
+    }
 }
 
 template<typename... Args>
 void
-log(const context& ctx, FILE* stream, log_level level, const char* msg)
+log(context& ctx, log_level level, const char* msg)
 {
     if (!is_loggable(ctx.log_priority, level))
         return;
 
-    assert(stream);
-
-    fmt::print(stream, msg);
+    switch (level) {
+    case log_level::emerg:
+    case log_level::alert:
+    case log_level::crit:
+    case log_level::err:
+    case log_level::warning:
+        if (ctx.err)
+            fmt::print(*ctx.err, "{}", msg);
+        break;
+    case log_level::notice:
+    case log_level::info:
+    case log_level::debug:
+        if (ctx.out)
+            fmt::print(*ctx.out, "{}", msg);
+        break;
+    }
 }
 
 template<typename... Args>
 void
-log_indent(const context& ctx,
-           FILE* stream,
+log_indent(context& ctx,
            unsigned indent,
            log_level level,
            const char* fmt,
@@ -74,27 +96,55 @@ log_indent(const context& ctx,
     if (!is_loggable(ctx.log_priority, level))
         return;
 
-    assert(stream);
-
-    fmt::print(stream, "{:{}}", "", indent);
-    fmt::print(stream, fmt, args...);
+    switch (level) {
+    case log_level::emerg:
+    case log_level::alert:
+    case log_level::crit:
+    case log_level::err:
+    case log_level::warning:
+        if (ctx.err) {
+            fmt::print(*ctx.err, "{:{}}", "", indent);
+            fmt::print(*ctx.err, fmt, args...);
+        }
+        break;
+    case log_level::notice:
+    case log_level::info:
+    case log_level::debug:
+        if (ctx.out) {
+            fmt::print(*ctx.out, "{:{}}", "", indent);
+            fmt::print(*ctx.out, fmt, args...);
+        }
+        break;
+    }
 }
 
 template<typename... Args>
 void
-log_indent(const context& ctx,
-           FILE* stream,
-           unsigned indent,
-           log_level level,
-           const char* msg)
+log_indent(context& ctx, unsigned indent, log_level level, const char* msg)
 {
     if (!is_loggable(ctx.log_priority, level))
         return;
 
-    assert(stream);
-
-    fmt::print(stream, "{:{}}", "", indent);
-    fmt::print(stream ? stream : stdout, msg);
+    switch (level) {
+    case log_level::emerg:
+    case log_level::alert:
+    case log_level::crit:
+    case log_level::err:
+    case log_level::warning:
+        if (ctx.err) {
+            fmt::print(*ctx.err, "{:{}}", "", indent);
+            fmt::print(*ctx.err, "{}", msg);
+        }
+        break;
+    case log_level::notice:
+    case log_level::info:
+    case log_level::debug:
+        if (ctx.out) {
+            fmt::print(*ctx.out, "{:{}}", "", indent);
+            fmt::print(*ctx.out, "{}", msg);
+        }
+        break;
+    }
 }
 
 struct sink_arguments
@@ -106,10 +156,10 @@ struct sink_arguments
 
 template<typename... Args>
 void
-emerg(const context& ctx, const char* fmt, const Args&... args)
+emerg(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::emerg, fmt, args...);
+    log(ctx, log_level::emerg, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -117,10 +167,10 @@ emerg(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-alert(const context& ctx, const char* fmt, const Args&... args)
+alert(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::alert, fmt, args...);
+    log(ctx, log_level::alert, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -128,10 +178,10 @@ alert(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-crit(const context& ctx, const char* fmt, const Args&... args)
+crit(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::crit, fmt, args...);
+    log(ctx, log_level::crit, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -139,10 +189,10 @@ crit(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-error(const context& ctx, const char* fmt, const Args&... args)
+error(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::err, fmt, args...);
+    log(ctx, log_level::err, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -150,10 +200,10 @@ error(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-warning(const context& ctx, const char* fmt, const Args&... args)
+warning(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::warning, fmt, args...);
+    log(ctx, log_level::warning, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -161,10 +211,10 @@ warning(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-notice(const context& ctx, const char* fmt, const Args&... args)
+notice(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::notice, fmt, args...);
+    log(ctx, log_level::notice, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -172,10 +222,10 @@ notice(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-info(const context& ctx, const char* fmt, const Args&... args)
+info(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stdout, log_level::info, fmt, args...);
+    log(ctx, log_level::info, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -183,11 +233,11 @@ info(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename... Args>
 void
-debug(const context& ctx, const char* fmt, const Args&... args)
+debug(context& ctx, const char* fmt, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
 #ifdef EFYJ_ENABLE_DEBUG
-    log(ctx, stdout, log_level::debug, fmt, args...);
+    log(ctx, log_level::debug, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -196,13 +246,10 @@ debug(const context& ctx, const char* fmt, const Args&... args)
 
 template<typename Arg1, typename... Args>
 void
-emerg(const context& ctx,
-      const char* fmt,
-      const Arg1& arg1,
-      const Args&... args)
+emerg(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::emerg, fmt, arg1, args...);
+    log(ctx, log_level::emerg, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -210,13 +257,10 @@ emerg(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-alert(const context& ctx,
-      const char* fmt,
-      const Arg1& arg1,
-      const Args&... args)
+alert(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::alert, fmt, arg1, args...);
+    log(ctx, log_level::alert, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -224,10 +268,10 @@ alert(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-crit(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
+crit(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::crit, fmt, arg1, args...);
+    log(ctx, log_level::crit, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -235,13 +279,10 @@ crit(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 
 template<typename Arg1, typename... Args>
 void
-error(const context& ctx,
-      const char* fmt,
-      const Arg1& arg1,
-      const Args&... args)
+error(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::err, fmt, arg1, args...);
+    log(ctx, log_level::err, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -249,13 +290,10 @@ error(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-warning(const context& ctx,
-        const char* fmt,
-        const Arg1& arg1,
-        const Args&... args)
+warning(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stderr, log_level::warning, fmt, arg1, args...);
+    log(ctx, log_level::warning, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -263,13 +301,10 @@ warning(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-notice(const context& ctx,
-       const char* fmt,
-       const Arg1& arg1,
-       const Args&... args)
+notice(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stdout, log_level::notice, fmt, arg1, args...);
+    log(ctx, log_level::notice, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -277,10 +312,10 @@ notice(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-info(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
+info(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log(ctx, stdout, log_level::info, fmt, arg1, args...);
+    log(ctx, log_level::info, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -288,14 +323,11 @@ info(const context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 
 template<typename Arg1, typename... Args>
 void
-debug(const context& ctx,
-      const char* fmt,
-      const Arg1& arg1,
-      const Args&... args)
+debug(context& ctx, const char* fmt, const Arg1& arg1, const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
 #ifdef EFYJ_ENABLE_DEBUG
-    log(ctx, stdout, log_level::debug, fmt, arg1, args...);
+    log(ctx, log_level::debug, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -308,13 +340,13 @@ debug(const context& ctx,
 
 template<typename... Args>
 void
-emerg(const context& ctx,
+emerg(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::emerg, fmt, args...);
+    log_indent(ctx, indent, log_level::emerg, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -322,13 +354,13 @@ emerg(const context& ctx,
 
 template<typename... Args>
 void
-alert(const context& ctx,
+alert(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::alert, fmt, args...);
+    log_indent(ctx, indent, log_level::alert, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -336,13 +368,13 @@ alert(const context& ctx,
 
 template<typename... Args>
 void
-crit(const context& ctx,
+crit(context& ctx,
      [[maybe_unused]] unsigned indent,
      const char* fmt,
      const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::crit, fmt, args...);
+    log_indent(ctx, indent, log_level::crit, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -350,13 +382,13 @@ crit(const context& ctx,
 
 template<typename... Args>
 void
-error(const context& ctx,
+error(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::err, fmt, args...);
+    log_indent(ctx, indent, log_level::err, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -364,13 +396,13 @@ error(const context& ctx,
 
 template<typename... Args>
 void
-warning(const context& ctx,
+warning(context& ctx,
         [[maybe_unused]] unsigned indent,
         const char* fmt,
         const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::warning, fmt, args...);
+    log_indent(ctx, indent, log_level::warning, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -378,13 +410,13 @@ warning(const context& ctx,
 
 template<typename... Args>
 void
-notice(const context& ctx,
+notice(context& ctx,
        [[maybe_unused]] unsigned indent,
        const char* fmt,
        const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::notice, fmt, args...);
+    log_indent(ctx, indent, log_level::notice, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -392,13 +424,13 @@ notice(const context& ctx,
 
 template<typename... Args>
 void
-info(const context& ctx,
+info(context& ctx,
      [[maybe_unused]] unsigned indent,
      const char* fmt,
      const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stdout, indent, log_level::info, fmt, args...);
+    log_indent(ctx, indent, log_level::info, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -406,14 +438,14 @@ info(const context& ctx,
 
 template<typename... Args>
 void
-debug(const context& ctx,
+debug(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
 #ifdef EFYJ_ENABLE_DEBUG
-    log_indent(ctx, stdout, indent, log_level::debug, fmt, args...);
+    log_indent(ctx, indent, log_level::debug, fmt, args...);
 #else
     sink_arguments(ctx, fmt, args...);
 #endif
@@ -422,14 +454,14 @@ debug(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-emerg(const context& ctx,
+emerg(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::emerg, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::emerg, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -437,14 +469,14 @@ emerg(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-alert(const context& ctx,
+alert(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::alert, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::alert, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -452,14 +484,14 @@ alert(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-crit(const context& ctx,
+crit(context& ctx,
      [[maybe_unused]] unsigned indent,
      const char* fmt,
      const Arg1& arg1,
      const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::crit, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::crit, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -467,14 +499,14 @@ crit(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-error(const context& ctx,
+error(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Arg1& arg1,
       const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::err, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::err, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -482,14 +514,14 @@ error(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-warning(const context& ctx,
+warning(context& ctx,
         [[maybe_unused]] unsigned indent,
         const char* fmt,
         const Arg1& arg1,
         const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stderr, indent, log_level::warning, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::warning, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -497,14 +529,14 @@ warning(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-notice(const context& ctx,
+notice(context& ctx,
        [[maybe_unused]] unsigned indent,
        const char* fmt,
        const Arg1& arg1,
        const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stdout, indent, log_level::notice, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::notice, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -512,14 +544,14 @@ notice(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-info(const context& ctx,
+info(context& ctx,
      [[maybe_unused]] unsigned indent,
      const char* fmt,
      const Arg1& arg1,
      const Args&... args)
 {
 #ifdef EFYJ_ENABLE_LOG
-    log_indent(ctx, stdout, indent, log_level::info, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::info, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif
@@ -527,7 +559,7 @@ info(const context& ctx,
 
 template<typename Arg1, typename... Args>
 void
-debug(const context& ctx,
+debug(context& ctx,
       [[maybe_unused]] unsigned indent,
       const char* fmt,
       const Arg1& arg1,
@@ -535,7 +567,7 @@ debug(const context& ctx,
 {
 #ifdef EFYJ_ENABLE_LOG
 #ifdef EFYJ_ENABLE_DEBUG
-    log_indent(ctx, stdout, indent, log_level::debug, fmt, arg1, args...);
+    log_indent(ctx, indent, log_level::debug, fmt, arg1, args...);
 #else
     sink_arguments(ctx, fmt, arg1, args...);
 #endif

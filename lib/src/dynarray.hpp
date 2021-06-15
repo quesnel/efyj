@@ -101,12 +101,22 @@ public:
     template<typename Integer>
     int operator()(Integer row, Integer col) const
     {
+        assert(row >= 0);
+        assert(row < m_size);
+        assert(col >= 0);
+        assert(col < m_line_size);
+
         return m_data[row * m_line_size + col];
     }
 
     template<typename Integer>
     int& operator()(Integer row, Integer col)
     {
+        assert(row >= 0);
+        assert(row < m_size);
+        assert(col >= 0);
+        assert(col < m_line_size);
+
         return m_data[row * m_line_size + col];
     }
 
@@ -163,6 +173,16 @@ public:
     value_type operator[](Integer i)
     {
         return *(m_first + i);
+    }
+
+    const_iterator begin() const
+    {
+        return m_first;
+    }
+
+    const_iterator end() const
+    {
+        return m_last;
     }
 };
 

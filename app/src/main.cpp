@@ -28,29 +28,109 @@
 #include <cstdio>
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <iostream>
+
+void
+show_context(const efyj::context& ctx) noexcept
+{
+    switch (ctx.status) {
+    case efyj::status::success:
+        break;
+    case efyj::status::not_enough_memory:
+        fmt::print(stderr, "{}: {}\n", get_error_message(ctx.status), ctx.size);
+        break;
+    case efyj::status::numeric_cast_error:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::internal_error:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::file_error:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::solver_error:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::unconsistent_input_vector:
+        break;
+    case efyj::status::dexi_parser_scale_definition_error:
+    case efyj::status::dexi_parser_scale_not_found:
+    case efyj::status::dexi_parser_scale_too_big:
+    case efyj::status::dexi_parser_file_format_error:
+    case efyj::status::dexi_parser_not_enough_memory:
+    case efyj::status::dexi_parser_element_unknown:
+    case efyj::status::dexi_parser_option_conversion_error:
+    case efyj::status::dexi_writer_error:
+        fmt::print(stderr,
+                   "dexi error {} - {} at line {} column {}\n",
+                   get_error_message(ctx.status),
+                   ctx.data_1,
+                   ctx.line,
+                   ctx.column);
+        break;
+    case efyj::status::csv_parser_file_error:
+    case efyj::status::csv_parser_column_number_incorrect:
+    case efyj::status::csv_parser_scale_value_unknown:
+    case efyj::status::csv_parser_column_conversion_failure:
+    case efyj::status::csv_parser_basic_attribute_unknown:
+    case efyj::status::csv_parser_init_dataset_simulation_empty:
+    case efyj::status::csv_parser_init_dataset_cast_error:
+        fmt::print(stderr,
+                   "csv error {} - {} at line {} column {}\n",
+                   get_error_message(ctx.status),
+                   ctx.data_1,
+                   ctx.line,
+                   ctx.column);
+        break;
+    case efyj::status::extract_option_same_input_files:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::extract_option_fail_open_file:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::merge_option_same_inputoutput:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::merge_option_fail_open_file:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::option_input_inconsistent:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::scale_value_inconsistent:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::option_too_many:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    case efyj::status::unknown_error:
+        fmt::print(stderr, "{}\n", get_error_message(ctx.status));
+        break;
+    }
+}
 
 static void
 usage()
 {
-    std::puts(
-      "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-      "Options:\n"
-      "    -h/--help            This help message\n"
-      "    -v/--version          Show efyj version\n"
-      "    -x/--extract         Extract the option from dexi files "
-      "into csv file (need 1 csv, 1 dexi)\n"
-      "    -m/--merge           Merge model and option file into a new "
-      "DEXi file (need 1 csv, 2 dexi\n"
-      "    -p/--prediction      Compute prediction\n"
-      "    -a/--adjustement     Compute adjustment\n"
-      "    -e/--evaluate        Compulte evalaution\n"
-      "    --without-reduce     Without the reduce models generator "
-      "algorithm\n"
-      "    -l/--limit integer   Limit of computation\n"
-      "    -j/--jobs thread     Use threads [int]\n"
-      "    ...                  DEXi and CSV files\n"
-      "\n");
+    std::puts("efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+              "Options:\n"
+              "    -h/--help            This help message\n"
+              "    -v/--version          Show efyj version\n"
+              "    -x/--extract         Extract the option from dexi files "
+              "into csv file (need 1 csv, 1 dexi)\n"
+              "    -m/--merge           Merge model and option file into a new "
+              "DEXi file (need 1 csv, 2 dexi\n"
+              "    -p/--prediction      Compute prediction\n"
+              "    -a/--adjustement     Compute adjustment\n"
+              "    -e/--evaluate        Compulte evalaution\n"
+              "    --without-reduce     Without the reduce models generator "
+              "algorithm\n"
+              "    -l/--limit integer   Limit of computation\n"
+              "    -j/--jobs thread     Use threads [int]\n"
+              "    ...                  DEXi and CSV files\n"
+              "\n");
 }
 
 static void
@@ -70,15 +150,15 @@ ends_with(const std::string_view str, const std::string_view suffix) noexcept
 }
 
 static int
-information(const efyj::context& ctx, const std::string& model_file_path)
+information(efyj::context& ctx, const std::string& model_file_path)
 {
     efyj::information_results out;
     if (const auto ret = efyj::information(ctx, model_file_path, out);
-        is_bad(ret)) {
+        efyj::is_bad(ret)) {
         fmt::print(stderr,
                    "Fail to extract information from file {}\n",
                    model_file_path);
-
+        show_context(ctx);
         return EXIT_FAILURE;
     }
 
@@ -92,29 +172,29 @@ information(const efyj::context& ctx, const std::string& model_file_path)
 }
 
 static int
-extract(const efyj::context& ctx,
-        const std::string& model,
-        const std::string& output)
+extract(efyj::context& ctx, const std::string& model, const std::string& output)
 {
     if (const auto ret = efyj::extract_options_to_file(ctx, model, output);
-        is_bad(ret)) {
+        efyj::is_bad(ret)) {
         fmt::print(
           stderr, "Fail to extract data trom file {} to {}\n", model, output);
+        show_context(ctx);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
 static int
-merge(const efyj::context& ctx,
+merge(efyj::context& ctx,
       const std::string& model,
       const std::string& option,
       const std::string& output)
 {
     if (const auto ret = merge_options_to_file(ctx, model, option, output);
-        is_bad(ret)) {
+        efyj::is_bad(ret)) {
         fmt::print(
           stderr, "Fail to merge {} with {} into {}\n", model, option, output);
+        show_context(ctx);
         return EXIT_FAILURE;
     }
 
@@ -122,14 +202,14 @@ merge(const efyj::context& ctx,
 }
 
 static int
-evaluate(const efyj::context& ctx,
+evaluate(efyj::context& ctx,
          const std::string& model,
          const std::string& option)
 {
     efyj::evaluation_results out;
-    if (const auto ret = efyj::evaluate(ctx, model, option, out);
-        is_bad(ret)) {
+    if (const auto ret = efyj::evaluate(ctx, model, option, out); is_bad(ret)) {
         fmt::print(stderr, "Fail to evaluate {} with {}\n", model, option);
+        show_context(ctx);
         return EXIT_FAILURE;
     }
 
@@ -162,7 +242,7 @@ struct fmt::formatter<efyj::modifier>
 };
 
 static int
-adjustment(const efyj::context& ctx,
+adjustment(efyj::context& ctx,
            const std::string& model,
            const std::string& option,
            bool reduce,
@@ -190,6 +270,7 @@ adjustment(const efyj::context& ctx,
     if (!efyj::is_success(ret)) {
         fmt::print(
           stderr, "Fail to adjust: {}\n", efyj::get_error_message(ret));
+        show_context(ctx);
 
         return EXIT_FAILURE;
     }
@@ -198,7 +279,7 @@ adjustment(const efyj::context& ctx,
 }
 
 static int
-prediction(const efyj::context& ctx,
+prediction(efyj::context& ctx,
            const std::string& model,
            const std::string& option,
            bool reduce,
@@ -226,6 +307,7 @@ prediction(const efyj::context& ctx,
     if (!efyj::is_success(ret)) {
         fmt::print(
           stderr, "Fail to prediction: {}\n", efyj::get_error_message(ret));
+        show_context(ctx);
 
         return EXIT_FAILURE;
     }
@@ -405,9 +487,9 @@ main(int argc, char* argv[])
                               std::optional<std::string_view>(argv[i + 1])))
                             ++i;
                     } else if (pos + 1 < arg.size())
-                        atts.parse_long_option(arg.substr(2),
-                                               std::optional<std::string_view>(
-                                                 arg.substr(pos + 1)));
+                        atts.parse_long_option(
+                          arg.substr(2),
+                          std::optional<std::string_view>(arg.substr(pos + 1)));
                     else
                         atts.parse_long_option(
                           arg.substr(2), std::optional<std::string_view>());
@@ -454,33 +536,14 @@ main(int argc, char* argv[])
     }
 
     efyj::context ctx;
-
-    ctx.dexi_cb = [](const efyj::status s,
-                     int line,
-                     int column,
-                     const std::string_view tag) {
-        fmt::print(stderr,
-                   "DEXi error: {} at line {} column {} with tag {}",
-                   get_error_message(s),
-                   line,
-                   column,
-                   tag);
-    };
-
-    ctx.csv_cb = [](const efyj::status s, int line, int column) {
-        fmt::print(stderr,
-                   "CSV error: {} at line {} column {}",
-                   get_error_message(s),
-                   line,
-                   column);
-    };
-
-    ctx.eov_cb = []() { fmt::print(stderr, "Not enough memory to continue"); };
-    ctx.cast_cb = []() { fmt::print(stderr, "Internal error: cast failure"); };
-    ctx.solver_cb = []() { fmt::print(stderr, "Solver error"); };
-    ctx.file_cb = [](const std::string_view file_name) {
-        fmt::print(stderr, "Error to access file `{}'", file_name);
-    };
+    ctx.out = &std::cout;
+    ctx.err = &std::cerr;
+    ctx.line = 0;
+    ctx.column = 0;
+    ctx.size = 0;
+    ctx.data_1.reserve(256u);
+    ctx.status = efyj::status::success;
+    ctx.log_priority = efyj::log_level::info;
 
     if (atts.show_help)
         ::usage();

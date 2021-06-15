@@ -241,8 +241,8 @@ struct solver_stack
         assert(atts.size() > 0 && atts.size() < INT_MAX);
         assert(attribute >= 0 && attribute < static_cast<int>(atts.size()));
         assert(atts[attribute].saved_functions.size() < INT_MAX);
-        assert(line >= 0 && line < static_cast<int>(
-                                     atts[attribute].saved_functions.size()));
+        assert(line >= 0 &&
+               line < static_cast<int>(atts[attribute].saved_functions.size()));
 
         return static_cast<int>(atts[attribute].saved_functions[line]);
     }
@@ -255,8 +255,7 @@ struct solver_stack
         assert(line >= 0 &&
                line < static_cast<int>(atts[attribute].functions.size()));
 
-        atts[attribute].functions[line] =
-          atts[attribute].saved_functions[line];
+        atts[attribute].functions[line] = atts[attribute].saved_functions[line];
     }
 
     inline void value_set(int attribute, int line, int scale_value) noexcept
@@ -314,7 +313,7 @@ struct solver_stack
 class for_each_model_solver
 {
 public:
-    const context& m_context;
+    context& m_context;
     solver_stack m_solver;
     std::vector<line_updater> m_updaters;
     std::vector<std::vector<int>> m_whitelist;
@@ -328,11 +327,9 @@ public:
     void detect_missing_scale_value();
 
 public:
-    for_each_model_solver(const context& ctx, const Model& model);
+    for_each_model_solver(context& ctx, const Model& model);
 
-    for_each_model_solver(const context& ctx,
-                          const Model& model,
-                          int walker_number);
+    for_each_model_solver(context& ctx, const Model& model, int walker_number);
 
     /** @e reduce is used to reduce the size of the problem. It removes
      * from the solver, all lines from the solver based on options.
@@ -372,10 +369,6 @@ public:
         return m_solver.string_functions();
     }
 };
-
-void
-print(const context& ctx,
-      const std::vector<std::tuple<int, int, int>>& updaters) noexcept;
 
 } // namespace efyj
 

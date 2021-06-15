@@ -30,6 +30,88 @@
 
 namespace py = pybind11;
 
+static void
+show_context(const efyj::context& ctx) noexcept
+{
+    switch (ctx.status) {
+    case efyj::status::success:
+        break;
+    case efyj::status::not_enough_memory:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::numeric_cast_error:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::internal_error:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::file_error:
+        py::print(
+          "File error: ", get_error_message(ctx.status), " at ", ctx.data_1);
+        break;
+    case efyj::status::solver_error:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::unconsistent_input_vector:
+        break;
+    case efyj::status::dexi_parser_scale_definition_error:
+    case efyj::status::dexi_parser_scale_not_found:
+    case efyj::status::dexi_parser_scale_too_big:
+    case efyj::status::dexi_parser_file_format_error:
+    case efyj::status::dexi_parser_not_enough_memory:
+    case efyj::status::dexi_parser_element_unknown:
+    case efyj::status::dexi_parser_option_conversion_error:
+    case efyj::status::dexi_writer_error:
+        py::print("DEXi error: ",
+                  get_error_message(ctx.status),
+                  " at line ",
+                  ctx.line,
+                  " column ",
+                  ctx.column,
+                  "with value: ",
+                  ctx.data_1);
+        break;
+    case efyj::status::csv_parser_file_error:
+    case efyj::status::csv_parser_column_number_incorrect:
+    case efyj::status::csv_parser_scale_value_unknown:
+    case efyj::status::csv_parser_column_conversion_failure:
+    case efyj::status::csv_parser_basic_attribute_unknown:
+    case efyj::status::csv_parser_init_dataset_simulation_empty:
+    case efyj::status::csv_parser_init_dataset_cast_error:
+        py::print("CSV error: ",
+                  get_error_message(ctx.status),
+                  " at line ",
+                  ctx.line,
+                  " column ",
+                  ctx.column);
+        break;
+    case efyj::status::extract_option_same_input_files:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::extract_option_fail_open_file:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::merge_option_same_inputoutput:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::merge_option_fail_open_file:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::option_input_inconsistent:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::scale_value_inconsistent:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::option_too_many:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    case efyj::status::unknown_error:
+        py::print("Error: ", get_error_message(ctx.status));
+        break;
+    }
+}
+
 PYBIND11_MODULE(pyefyj, m)
 {
     m.doc() = R"pbdoc(
@@ -76,36 +158,14 @@ PYBIND11_MODULE(pyefyj, m)
       .def_readwrite("scale_values", &efyj::data::scale_values);
 
     efyj::context ctx;
-
-    ctx.dexi_cb = [](const efyj::status s,
-                     int line,
-                     int column,
-                     const std::string_view tag) {
-        py::print("DEXi error: ",
-                  get_error_message(s),
-                  " at line ",
-                  line,
-                  " column ",
-                  column,
-                  "with value: ",
-                  tag);
-    };
-
-    ctx.csv_cb = [](const efyj::status s, int line, int column) {
-        py::print("CSV error: ",
-                  get_error_message(s),
-                  " at line ",
-                  line,
-                  " column ",
-                  column);
-    };
-
-    ctx.eov_cb = []() { py::print("Not enough memory to continue"); };
-    ctx.cast_cb = []() { py::print("Internal error: cast failure"); };
-    ctx.solver_cb = []() { py::print("Solver error"); };
-    ctx.file_cb = [](const std::string_view file_name) {
-        py::print("Error to access file `", file_name, "`");
-    };
+    ctx.out = &std::cout;
+    ctx.err = &std::cerr;
+    ctx.line = 0;
+    ctx.column = 0;
+    ctx.size = 0;
+    ctx.data_1.reserve(256u);
+    ctx.status = efyj::status::success;
+    ctx.log_priority = efyj::log_level::info;
 
     m.def(
       "information",

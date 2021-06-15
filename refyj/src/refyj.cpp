@@ -25,38 +25,77 @@
 #include <Rcpp.h>
 
 static void
-init_context(efyj::context& ctx) noexcept
+show_context(const efyj::context& ctx) noexcept
 {
-    ctx.log_priority = efyj::log_level::info;
-
-    ctx.dexi_cb = [](const efyj::status s,
-                     int line,
-                     int column,
-                     const std::string_view tag) {
-        const auto s_str = efyj::get_error_message(s);
-
-        Rprintf("DEXi error: %s at line %d column %d with tag %s\n",
-                s_str,
-                line,
-                column,
-                tag);
-    };
-
-    ctx.csv_cb = [](const efyj::status s, int line, int column) {
-        const auto s_str = efyj::get_error_message(s);
-
-        Rprintf("CSV error: %s at line %d column %d\n", s_str, line, column);
-    };
-
-    ctx.eov_cb = []() { Rprintf("Not enough memory to continue\n"); };
-
-    ctx.cast_cb = []() { Rprintf("Internal error: cast failure\n"); };
-
-    ctx.solver_cb = []() { Rprintf("Solver error\n"); };
-
-    ctx.file_cb = [](const std::string_view file_name) {
-        Rprintf("Error to access file `%s\n", file_name);
-    };
+    switch (ctx.status) {
+    case efyj::status::success:
+        break;
+    case efyj::status::not_enough_memory:
+        Rcpp::Rcerr << get_error_message(ctx.status) << ' ' << ctx.size << '\n';
+        break;
+    case efyj::status::numeric_cast_error:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::internal_error:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::file_error:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::solver_error:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::unconsistent_input_vector:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::dexi_parser_scale_definition_error:
+    case efyj::status::dexi_parser_scale_not_found:
+    case efyj::status::dexi_parser_scale_too_big:
+    case efyj::status::dexi_parser_file_format_error:
+    case efyj::status::dexi_parser_not_enough_memory:
+    case efyj::status::dexi_parser_element_unknown:
+    case efyj::status::dexi_parser_option_conversion_error:
+    case efyj::status::dexi_writer_error:
+        Rcpp::Rcerr << "dexi error {} - {} at line {} column {}\n"
+                    << get_error_message(ctx.status) << ctx.data_1 << ctx.line
+                    << ctx.column << '\n';
+        break;
+    case efyj::status::csv_parser_file_error:
+    case efyj::status::csv_parser_column_number_incorrect:
+    case efyj::status::csv_parser_scale_value_unknown:
+    case efyj::status::csv_parser_column_conversion_failure:
+    case efyj::status::csv_parser_basic_attribute_unknown:
+    case efyj::status::csv_parser_init_dataset_simulation_empty:
+    case efyj::status::csv_parser_init_dataset_cast_error:
+        Rcpp::Rcerr << "csv error {} - {} at line {} column {}\n"
+                    << get_error_message(ctx.status) << ctx.data_1 << ctx.line
+                    << ctx.column << '\n';
+        break;
+    case efyj::status::extract_option_same_input_files:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::extract_option_fail_open_file:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::merge_option_same_inputoutput:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::merge_option_fail_open_file:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::option_input_inconsistent:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::scale_value_inconsistent:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::option_too_many:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    case efyj::status::unknown_error:
+        Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
+        break;
+    }
 }
 
 //' Extract information from DEXi file.
@@ -78,11 +117,19 @@ information(const Rcpp::String& model)
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         efyj::information_results out;
 
         if (const auto ret = efyj::information(ctx, model, out); is_bad(ret)) {
+            show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Information failed: %s\n", msg);
             return R_NilValue;
@@ -135,7 +182,14 @@ evaluate(const Rcpp::String& model,
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
@@ -156,6 +210,7 @@ evaluate(const Rcpp::String& model,
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
         if (const auto ret = efyj::evaluate(ctx, model, d, out); is_bad(ret)) {
+            show_context(ctx);
             Rprintf("Evaluation failed: %s\n", efyj::get_error_message(ret));
             return R_NilValue;
         }
@@ -192,10 +247,18 @@ extract_to_file(const Rcpp::String& model, const Rcpp::String& options)
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         if (const auto ret = efyj::extract_options_to_file(ctx, model, options);
             is_bad(ret)) {
+            show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Extact-to-file failed: %s\n", msg);
         }
@@ -223,12 +286,20 @@ extract(const Rcpp::String& model)
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         efyj::data d;
 
         if (const auto ret = efyj::extract_options(ctx, model, d);
             is_bad(ret)) {
+            show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Extract failed: %s\n", msg);
             return R_NilValue;
@@ -335,7 +406,14 @@ adjustment(const Rcpp::String& model,
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         std::vector<int> all_modifiers;
         std::vector<double> all_kappa;
@@ -427,7 +505,14 @@ prediction(const Rcpp::String& model,
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         std::vector<int> all_modifiers;
         std::vector<double> all_kappa;
@@ -465,6 +550,7 @@ prediction(const Rcpp::String& model,
         if (const auto ret =
               efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
             is_bad(ret)) {
+            show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
             Rprintf("failed: %s\n", msg);
             return R_NilValue;
@@ -519,7 +605,14 @@ merge(const Rcpp::String& model,
 {
     try {
         efyj::context ctx;
-        init_context(ctx);
+        ctx.out = &Rcpp::Rcout;
+        ctx.err = &Rcpp::Rcerr;
+        ctx.line = 0;
+        ctx.column = 0;
+        ctx.size = 0;
+        ctx.data_1.reserve(256u);
+        ctx.status = efyj::status::success;
+        ctx.log_priority = efyj::log_level::info;
 
         if (simulations.length() != places.length() ||
             simulations.length() != departments.length() ||
@@ -546,6 +639,7 @@ merge(const Rcpp::String& model,
 
         if (const auto ret = efyj::merge_options(ctx, model, out, d);
             is_bad(ret)) {
+            show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
             Rprintf("failed: %s\n", msg);
             return R_NilValue;

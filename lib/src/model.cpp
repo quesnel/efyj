@@ -44,13 +44,10 @@ namespace efyj {
 
 struct Model_reader
 {
-    Model_reader(const context& ctx_,
-                 const input_file& is_,
-                 Model& dex_) noexcept
+    Model_reader(context& ctx_, const input_file& is_, Model& dex_) noexcept
       : ctx(ctx_)
       , is(is_)
       , dex(dex_)
-      , m_status(status::success)
     {}
 
     status read(int buffer_size)
@@ -74,7 +71,8 @@ struct Model_reader
                       "DExi fail to allocate expat buffer (size: {})",
                       buffer_size);
 
-                m_status = status::not_enough_memory;
+                ctx.size = static_cast<size_t>(buffer_size);
+                ctx.status = status::not_enough_memory;
                 break;
             }
 
@@ -84,8 +82,8 @@ struct Model_reader
             done = len < buffer_size;
 
             if (XML_ParseBuffer(parser, len, done) == XML_STATUS_ERROR) {
-                if (is_success(m_status))
-                    m_status = status::dexi_parser_file_format_error;
+                if (is_success(ctx.status))
+                    ctx.status = status::dexi_parser_file_format_error;
 
                 line = XML_GetCurrentLineNumber(parser);
                 column = XML_GetCurrentColumnNumber(parser);
@@ -93,22 +91,18 @@ struct Model_reader
             }
         } while (!done);
 
-        if (is_bad(m_status)) {
-            error_at_line = static_cast<size_t>(line);
-            error_at_column = static_cast<size_t>(column);
+        if (is_bad(ctx.status)) {
+            ctx.line = static_cast<int>(line);
+            ctx.column = static_cast<int>(column);
         }
 
-        return m_status;
+        return ctx.status;
     }
 
 private:
-    const context& ctx;
+    context& ctx;
     const input_file& is;
     Model& dex;
-
-    status m_status{ status::success };
-    size_t error_at_line;
-    size_t error_at_column;
 
     enum class stack_identifier
     {
@@ -187,26 +181,26 @@ private:
 
     struct parser_data
     {
-        parser_data(const context& ctx_, XML_Parser parser_, Model& data_)
+        parser_data(context& ctx_, XML_Parser parser_, Model& data_)
           : ctx(ctx_)
           , parser(parser_)
           , model(data_)
-          , m_status(status::success)
-        {}
+        {
+            ctx.status = status::success;
+        }
 
-        const context& ctx;
+        context& ctx;
         XML_Parser parser;
         Model& model;
         std::stack<stack_identifier> stack;
         std::stack<attribute*> attributes_stack;
         std::string char_data;
-        status m_status;
 
         void stop_parser(const status t)
         {
             error(ctx, "DEXi failed to read file\n");
             XML_StopParser(parser, XML_FALSE);
-            m_status = t;
+            ctx.status = t;
         }
 
         bool is_parent(::std::initializer_list<stack_identifier> list)
@@ -662,7 +656,7 @@ struct to_xml
 
 struct Model_writer
 {
-    Model_writer(const context& ctx_,
+    Model_writer(context& ctx_,
                  const output_file& os_,
                  const Model& Model_data_) noexcept
       : ctx(ctx_)
@@ -724,7 +718,7 @@ struct Model_writer
     }
 
 private:
-    const context& ctx;
+    context& ctx;
     const output_file& os;
     const Model& dex;
     int space;
@@ -892,7 +886,7 @@ reorder_basic_attribute(const Model& model,
 }
 
 status
-Model::read(const context& ctx, const input_file& is)
+Model::read(context& ctx, const input_file& is)
 {
     Model_reader dr(ctx, is, *this);
 
@@ -904,7 +898,7 @@ Model::read(const context& ctx, const input_file& is)
 }
 
 status
-Model::write(const context& ctx, const output_file& os)
+Model::write(context& ctx, const output_file& os)
 {
     Model_writer dw(ctx, os, *this);
     return dw.write();
@@ -932,4 +926,84 @@ Model::clear_options()
         att.options.clear();
 }
 
+status
+model_writer::store(context& ctx, const Model& model, const result& result)
+{
+    Model copied_model(model);
+
+    const auto id = result.modifiers.size();
+    const auto filename = fmt::format("{}.dxi", id);
+    std::filesystem::path file = directory / filename;
+
+    for (const auto& elem : result.modifiers) {
+        assert(elem.attribute >= 0);
+        assert(static_cast<size_t>(elem.attribute) <
+               copied_model.attributes.size());
+
+        auto& att = copied_model.attributes[elem.attribute];
+        fmt::print("[{}, {}, {}] \n",
+                   copied_model.attributes[elem.attribute].name,
+                   elem.line,
+                   elem.value);
+
+        assert(!att.functions.low.empty());
+        assert(elem.line >= 0);
+        assert(static_cast<size_t>(elem.line) < att.functions.low.size());
+        assert(elem.value >= 0);
+        assert(elem.value < att.scale_size());
+
+        char value = '0';
+        value += static_cast<char>(elem.value);
+
+        att.functions.low[elem.line] = value;
+    }
+    fmt::print("\n");
+
+    copied_model.write(ctx, output_file{ file.string().c_str() });
+
+    return status::success;
+}
+
+status
+model_writer::store(context& ctx,
+                    const Model& model,
+                    const std::vector<std::tuple<int, int, int>>& updaters)
+{
+    Model copied_model(model);
+
+    const auto id = updaters.size();
+    const auto filename = fmt::format("{}.dxi", id);
+    std::filesystem::path file = directory / filename;
+
+    for (const auto& elem : updaters) {
+        const int attribute = std::get<0>(elem);
+        const int line = std::get<1>(elem);
+        const int value = std::get<2>(elem);
+
+        assert(attribute >= 0);
+        assert(static_cast<size_t>(attribute) < copied_model.attributes.size());
+
+        auto& att = copied_model.attributes[attribute];
+        fmt::print("[{}, {}, {}] \n",
+                   copied_model.attributes[attribute].name,
+                   line,
+                   value);
+
+        assert(!att.functions.low.empty());
+        assert(line >= 0);
+        assert(static_cast<size_t>(line) < att.functions.low.size());
+        assert(value >= 0);
+        assert(value < att.scale_size());
+
+        char v = '0';
+        v += static_cast<char>(value);
+
+        att.functions.low[line] = v;
+    }
+    fmt::print("\n");
+
+    copied_model.write(ctx, output_file{ file.string().c_str() });
+
+    return status::success;
+}
 } // namespace efyj

@@ -127,7 +127,8 @@ aggregate_attribute::reduce(std::set<int>& whitelist)
     std::vector<walker> walker;
     for (size_t i = 0, e = stack.size(); i != e; ++i) {
         if (stack[i] == -1) {
-            walker.emplace_back(static_cast<int>(i), 0, static_cast<int>(m_scale_size[i]));
+            walker.emplace_back(
+              static_cast<int>(i), 0, static_cast<int>(m_scale_size[i]));
             stack[i] = 0;
         }
     }
@@ -203,8 +204,7 @@ solver_stack::recursive_fill(const Model& model, size_t att, int& value_id)
 }
 
 void
-solver_stack::set_functions(
-  const std::vector<std::vector<scale_id>>& functions)
+solver_stack::set_functions(const std::vector<std::vector<scale_id>>& functions)
 {
     assert(functions.size() == atts.size() && "incoherent: internal error");
 
@@ -304,8 +304,7 @@ for_each_model_solver::detect_missing_scale_value()
             size_t x, endx;
 
             for (x = 0, endx = m_whitelist[i].size(); x != endx; ++x) {
-                if (m_solver.value(static_cast<int>(i), m_whitelist[i][x]) ==
-                    j)
+                if (m_solver.value(static_cast<int>(i), m_whitelist[i][x]) == j)
                     break;
             }
 
@@ -316,8 +315,7 @@ for_each_model_solver::detect_missing_scale_value()
     }
 }
 
-for_each_model_solver::for_each_model_solver(const context& ctx,
-                                             const Model& model)
+for_each_model_solver::for_each_model_solver(context& ctx, const Model& model)
   : m_context(ctx)
   , m_solver(model)
 {
@@ -335,7 +333,7 @@ for_each_model_solver::for_each_model_solver(const context& ctx,
              model.attributes[m_solver.atts[i].att].name.c_str());
 }
 
-for_each_model_solver::for_each_model_solver(const context& ctx,
+for_each_model_solver::for_each_model_solver(context& ctx,
                                              const Model& model,
                                              int walker_number)
   : m_context(ctx)
@@ -539,8 +537,10 @@ for_each_model_solver::updaters() const
     for (size_t i = 0, e = m_updaters.size(); i != e; ++i) {
         const int attribute = m_updaters[i].attribute;
         const int line = m_whitelist[attribute][m_updaters[i].line];
-
-        ret.emplace_back(attribute, line, m_solver.value(attribute, line));
+        // ret.emplace_back(attribute, line, m_solver.value(attribute, line));
+        ret.emplace_back(m_solver.atts[m_updaters[i].attribute].att,
+                         line,
+                         m_solver.value(attribute, line));
     }
 
     return ret;
@@ -558,7 +558,7 @@ for_each_model_solver::get_attribute_line_tuple_limit() const
 }
 
 void
-print(const context& ctx,
+print(context& ctx,
       const std::vector<std::tuple<int, int, int>>& updaters) noexcept
 {
     for (const auto& elem : updaters)

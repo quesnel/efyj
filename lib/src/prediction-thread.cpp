@@ -49,7 +49,7 @@ init_worker(Solver& solver, const int thread_id)
 }
 
 static void
-parallel_prediction_worker(const context& ctx,
+parallel_prediction_worker(context& ctx,
                            const Model& model,
                            const Options& options,
                            const unsigned int thread_id,
@@ -89,8 +89,7 @@ parallel_prediction_worker(const context& ctx,
 
             std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
 
-            for (auto opt = 0, endopt = length(options); opt != endopt;
-                 ++opt) {
+            for (auto opt = 0, endopt = length(options); opt != endopt; ++opt) {
                 double kappa = 0.;
 
                 solver.init_next_value();
@@ -112,8 +111,7 @@ parallel_prediction_worker(const context& ctx,
                 } while (solver.next_value() == true);
 
                 solver.set_functions(m_functions);
-                m_globalsimulated[opt] =
-                  solver.solve(options.options.row(opt));
+                m_globalsimulated[opt] = solver.solve(options.options.row(opt));
             }
 
             // We need to send results here.
@@ -143,10 +141,9 @@ parallel_prediction_worker(const context& ctx,
     }
 }
 
-prediction_thread_evaluator::prediction_thread_evaluator(
-  const context& ctx,
-  const Model& model,
-  const Options& options)
+prediction_thread_evaluator::prediction_thread_evaluator(context& ctx,
+                                                         const Model& model,
+                                                         const Options& options)
   : m_context(ctx)
   , m_model(model)
   , m_options(options)
@@ -184,7 +181,7 @@ prediction_thread_evaluator::run(
 
     for (auto i = 0u; i != threads; ++i) {
         workers[i] = std::thread(parallel_prediction_worker,
-                                 m_context,
+                                 std::ref(m_context),
                                  std::cref(m_model),
                                  std::cref(m_options),
                                  i,
@@ -205,7 +202,7 @@ prediction_thread_evaluator::run(
     return status::success;
 }
 
-Results::Results(const context& ctx, const Model& mdl, unsigned int threads)
+Results::Results(context& ctx, const Model& mdl, unsigned int threads)
   : m_context(ctx)
   , m_model(mdl)
   , m_threads(threads)
@@ -280,7 +277,7 @@ Results::push(int step,
          duration);
 
     m_writer.store(m_context, m_model, m_results[step - 1].updaters);
-    print(m_context, m_results[step - 1].updaters);
+    // print(m_context, m_results[step - 1].updaters);
     info(m_context, "\n");
 }
 

@@ -26,7 +26,7 @@
 
 namespace efyj {
 
-prediction_evaluator::prediction_evaluator(const context& ctx,
+prediction_evaluator::prediction_evaluator(context& ctx,
                                            const Model& model,
                                            const Options& options)
   : m_context(ctx)
@@ -185,8 +185,12 @@ prediction_evaluator::run(const result_callback& cb,
         ret.function_computed = static_cast<unsigned long int>(0);
         ret.modifiers.clear();
 
-        info(
-          m_context, "| {} | {:13.10f} | {} | {} | ", step, ret.kappa, loop, time);
+        info(m_context,
+             "| {} | {:13.10f} | {} | {} | ",
+             step,
+             ret.kappa,
+             loop,
+             time);
 
         for (const auto& elem : m_updaters) {
             ret.modifiers.emplace_back(

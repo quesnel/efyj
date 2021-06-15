@@ -100,7 +100,7 @@ public:
      *
      * @return status of the read operation.
      */
-    status read(const context& ctx, const input_file& is, const Model& model);
+    status read(context& ctx, const input_file& is, const Model& model);
 
     bool have_subdataset() const
     {
