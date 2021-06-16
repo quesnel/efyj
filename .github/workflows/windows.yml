@@ -29,7 +29,7 @@ jobs:
         useVcpkgToolchainFile: true
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE="c:\vcpkg\scripts\buildsystems\vcpkg.cmake" -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
