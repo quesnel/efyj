@@ -19,13 +19,12 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Prepare vcpkg
+    - name: Restore from cache and install vcpkg
       uses: lukka/run-vcpkg@v6
-      id: runvcpkg
       with:
-        vcpkgArguments: expat
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-        vcpkgTriplet: x64-windows
+        setupOnly: true
+    - run: |
+        $VCPKG_ROOT/vcpkg install expat:windows-x64
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
