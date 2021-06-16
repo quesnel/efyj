@@ -800,20 +800,12 @@ test_prediction_solver_for_Car()
     ret = efyj::prediction(ctx, "Car.dxi", d, fn, true, 4, 1u);
     Ensures(is_success(ret));
 
-    const std::vector<int> to_compare = { 0, 0, 0, 0, 0, 0, 0, 4, 1,
-                                          0, 0, 0, 0, 4, 1, 0, 5, 1 };
+    const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,
+                                          1, 0, 0, 1, 4, 1, 1, 5, 1 };
 
     Ensures(to_compare.size() == all_modifiers.size());
     for (size_t i = 0, e = to_compare.size(); i < e; i += 3)
-        fmt::print("{}.{}.{} - {}.{}.{}\n",
-                   to_compare[i],
-                   to_compare[i + 1],
-                   to_compare[i + 2],
-                   all_modifiers[i],
-                   all_modifiers[i + 1],
-                   all_modifiers[i + 2]);
-
-    // Ensures(to_compare[i] == all_modifiers[i]);
+        Ensures(to_compare[i] == all_modifiers[i]);
 
     Ensures(all_kappa.size() == (size_t)4);
     Ensures(all_kappa[0] <= 1.0);
