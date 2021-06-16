@@ -623,9 +623,11 @@ check_the_efyj_set_function()
     // Ensures(options_old == options);
 }
 
-static void
-init_context(efyj::context& ctx) noexcept
+static efyj::context
+make_context() noexcept
 {
+    efyj::context ctx;
+
     ctx.out = nullptr;
     ctx.err = nullptr;
     ctx.line = 0;
@@ -635,39 +637,7 @@ init_context(efyj::context& ctx) noexcept
     ctx.status = efyj::status::success;
     ctx.log_priority = efyj::log_level::info;
 
-    // ctx.dexi_cb = [](const efyj::status s,
-    //                  int line,
-    //                  int column,
-    //                  const std::string_view tag) {
-    //     fmt::print(stderr,
-    //                "DEXi error: {} at line {} column {} with tag {}\n",
-    //                efyj::get_error_message(s),
-    //                line,
-    //                column,
-    //                tag);
-    // };
-
-    // ctx.csv_cb = [](const efyj::status s, int line, int column) {
-    //     fmt::print(stderr,
-    //                "CSV error: {} at line {} column {}\n",
-    //                efyj::get_error_message(s),
-    //                line,
-    //                column);
-    // };
-
-    // ctx.eov_cb = []() {
-    //     fmt::print(stderr, "Not enough memory to continue\n");
-    // };
-
-    // ctx.cast_cb = []() {
-    //     fmt::print(stderr, "Internal error: cast failure\n");
-    // };
-
-    // ctx.solver_cb = []() { fmt::print(stderr, "Solver error\n"); };
-
-    // ctx.file_cb = [](const std::string_view file_name) {
-    //     fmt::print(stderr, "Error to access file `{}'\n", file_name);
-    // };
+    return ctx;
 }
 
 struct result_fn
@@ -714,8 +684,7 @@ public:
 void
 test_adjustment_solver_for_Car()
 {
-    efyj::context ctx;
-    init_context(ctx);
+    auto ctx = make_context();
 
     efyj::data d;
 
@@ -730,8 +699,8 @@ test_adjustment_solver_for_Car()
     ret = efyj::adjustment(ctx, "Car.dxi", d, fn, true, 4, 1u);
     Ensures(is_success(ret));
 
-    const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1, 1, 0, 0,
-        1, 4, 1, 1, 5, 1 };
+    const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,
+                                          1, 0, 0, 1, 4, 1, 1, 5, 1 };
 
     Ensures(to_compare.size() == all_modifiers.size());
     for (size_t i = 0, e = to_compare.size(); i < e; ++i)
@@ -747,8 +716,7 @@ test_adjustment_solver_for_Car()
 void
 test_adjustment_solver_for_Car2()
 {
-    efyj::context ctx;
-    init_context(ctx);
+    auto ctx = make_context();
 
     efyj::data d;
 
@@ -777,8 +745,7 @@ test_adjustment_solver_for_Car2()
 void
 test_prediction_solver_for_Car()
 {
-    efyj::context ctx;
-    init_context(ctx);
+    auto ctx = make_context();
 
     efyj::data d;
 
