@@ -91,7 +91,7 @@ test_that("adjustment Car.dxi and Car.csv", {
                                 4,
                                 1)
 
-    expect_equal(ret_adj$modifiers, c(0,0,0,0,0,0,0,4,1,0,0,0,0,4,1,0,5,1))
+    expect_equal(ret_adj$modifiers, c(1, 0, 0, 1, 0, 0, 1, 4, 1, 1, 0, 0, 1, 4, 1, 1, 5, 1 ));
     expect_equal(ret_adj$kappa, c(1,1,1,1))
 })
 
@@ -115,7 +115,7 @@ test_that("prediction Car.dxi and Car.csv", {
                                 4,
                                 1)
 
-    expect_equal(ret_pred$modifiers, c(0,0,0,0,0,0,0,4,1,0,0,0,0,4,1,0,5,1))
+    expect_equal(ret_pred$modifiers, c(1, 0, 0, 1, 0, 0, 1, 4, 1, 1, 0, 0, 1, 4, 1, 1, 5, 1));
     expect_lte(ret_pred$kappa[1], 1)
     expect_lte(ret_pred$kappa[2], 1)
     expect_lte(ret_pred$kappa[3], 1)
