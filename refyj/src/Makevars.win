@@ -1,4 +1,4 @@
 PKG_CPPFLAGS = -I../../lib/include -I../../external/fmt/include -I$(MINGW_PREFIX)/include -DFMT_HEADER_ONLY -std=c++17
-PKG_LIBS = -Llibexpat -lexpat
+PKG_LIBS = -Llibexpat -lexpat -lstdc++fs
 SOURCES = ../../lib/src/adjustment.cpp ../../lib/src/efyj.cpp ../../lib/src/model.cpp ../../lib/src/options.cpp ../../lib/src/prediction.cpp ../../lib/src/prediction-thread.cpp ../../lib/src/solver-stack.cpp refyj.cpp RcppExports.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
