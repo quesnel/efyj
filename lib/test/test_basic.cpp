@@ -36,7 +36,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #elif defined(_WIN32)
 #include <direct.h>
@@ -47,7 +47,7 @@
 static inline bool
 change_pwd()
 {
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
     int ret = ::chdir(EXAMPLES_DIR);
 #else
     int ret = _chdir(EXAMPLES_DIR);
@@ -68,7 +68,7 @@ make_temporary(std::string name)
             ret = ::getenv(names[i]);
 
     if (ret.empty())
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
         ret = "/tmp/";
 #else
         ret = "./";
@@ -314,7 +314,7 @@ test_car_dxi_load_save_load_via_file()
         EnsuresNotThrow(car2.read(ctx, is), std::exception);
     }
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
     unlink(tmp.c_str());
 #else
     _unlink(tmp.c_str());
