@@ -46,7 +46,8 @@ prediction_evaluator::is_valid() const noexcept
 }
 
 status
-prediction_evaluator::run(const result_callback& cb,
+prediction_evaluator::run(result_callback callback,
+                          void* user_data_callback,
                           int line_limit,
                           double time_limit,
                           int reduce_mode,
@@ -108,7 +109,7 @@ prediction_evaluator::run(const result_callback& cb,
 
         writer.store(m_context, m_model, ret);
 
-        if (!cb(ret))
+        if (!callback(ret, user_data_callback))
             return status::success;
     }
 
@@ -206,7 +207,7 @@ prediction_evaluator::run(const result_callback& cb,
 
         writer.store(m_context, m_model, ret);
 
-        if (!cb(ret))
+        if (!callback(ret, user_data_callback))
             break;
     }
 
@@ -216,7 +217,8 @@ prediction_evaluator::run(const result_callback& cb,
 status
 prediction_evaluator::run(check_user_interrupt_callback interrupt,
                           void* user_data_interrupt,
-                          const result_callback& cb,
+                          result_callback callback,
+                          void* user_data_callback,
                           int line_limit,
                           double time_limit,
                           int reduce_mode,
@@ -278,7 +280,7 @@ prediction_evaluator::run(check_user_interrupt_callback interrupt,
 
         writer.store(m_context, m_model, ret);
 
-        if (!cb(ret))
+        if (!callback(ret, user_data_callback))
             return status::success;
     }
 
@@ -390,7 +392,7 @@ prediction_evaluator::run(check_user_interrupt_callback interrupt,
 
         writer.store(m_context, m_model, ret);
 
-        if (!cb(ret))
+        if (!callback(ret, user_data_callback))
             break;
     }
 

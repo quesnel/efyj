@@ -59,7 +59,8 @@ struct prediction_thread_evaluator
 
     bool is_valid() const noexcept;
 
-    status run(const result_callback& cb,
+    status run(result_callback callback,
+               void* user_data_callback,
                int line_limit,
                double time_limit,
                int reduce_mode,

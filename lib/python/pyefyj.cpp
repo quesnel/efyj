@@ -119,6 +119,19 @@ check_user_interrupt(void* /*user_data*/)
         throw py::error_already_set();
 }
 
+static bool
+update_result(const efyj::result& r, void* user_data)
+{
+    auto* ret = reinterpret_cast<efyj::result*>(user_data);
+
+    try {
+        *ret = r;
+        return true;
+    } catch (...) {
+        return false;
+    }
+};
+
 PYBIND11_MODULE(pyefyj, m)
 {
     m.doc() = R"pbdoc(
@@ -210,23 +223,16 @@ PYBIND11_MODULE(pyefyj, m)
       [&ctx](const std::string& model_file_path,
              const efyj::data& d) -> efyj::result {
           efyj::result out;
-          const auto ret = efyj::adjustment(
-            ctx,
-            model_file_path,
-            d,
-            [&out](const efyj::result& r) {
-                try {
-                    out = r;
-                    return true;
-                } catch (...) {
-                    return false;
-                }
-            },
-            check_user_interrupt,
-            nullptr,
-            true,
-            0,
-            1u);
+          const auto ret = efyj::adjustment(ctx,
+                                            model_file_path,
+                                            d,
+                                            update_result,
+                                            &out,
+                                            check_user_interrupt,
+                                            nullptr,
+                                            true,
+                                            0,
+                                            1u);
 
           if (is_bad(ret))
               py::print("adjustment failed");
@@ -242,23 +248,16 @@ PYBIND11_MODULE(pyefyj, m)
       [&ctx](const std::string& model_file_path,
              const efyj::data& d) -> efyj::result {
           efyj::result out;
-          const auto ret = efyj::prediction(
-            ctx,
-            model_file_path,
-            d,
-            [&out](const efyj::result& r) {
-                try {
-                    out = r;
-                    return true;
-                } catch (...) {
-                    return false;
-                }
-            },
-            check_user_interrupt,
-            nullptr,
-            true,
-            0,
-            1u);
+          const auto ret = efyj::prediction(ctx,
+                                            model_file_path,
+                                            d,
+                                            update_result,
+                                            &out,
+                                            check_user_interrupt,
+                                            nullptr,
+                                            true,
+                                            0,
+                                            1u);
 
           if (is_bad(ret))
               py::print("adjustment failed");

@@ -642,14 +642,12 @@ make_context() noexcept
 
 struct result_fn
 {
-private:
     std::vector<int>& all_modifiers;
     std::vector<double>& all_kappa;
     std::vector<double>& all_time;
     const int limit = 0;
     int current_limit = 0;
 
-public:
     result_fn(std::vector<int>& all_modifiers_,
               std::vector<double>& all_kappa_,
               std::vector<double>& all_time_,
@@ -659,27 +657,30 @@ public:
       , all_time(all_time_)
       , limit(limit_)
     {}
-
-    bool operator()(const efyj::result& r)
-    {
-        try {
-            for (const auto& elem : r.modifiers) {
-                all_modifiers.emplace_back(elem.attribute);
-                all_modifiers.emplace_back(elem.line);
-                all_modifiers.emplace_back(elem.value);
-            }
-
-            all_kappa.emplace_back(r.kappa);
-            all_time.emplace_back(r.time);
-
-            ++current_limit;
-
-            return current_limit < limit;
-        } catch (...) {
-            return false;
-        }
-    }
 };
+
+bool
+update_result(const efyj::result& r, void* user_data)
+{
+    auto* result = reinterpret_cast<result_fn*>(user_data);
+
+    try {
+        for (const auto& elem : r.modifiers) {
+            result->all_modifiers.emplace_back(elem.attribute);
+            result->all_modifiers.emplace_back(elem.line);
+            result->all_modifiers.emplace_back(elem.value);
+        }
+
+        result->all_kappa.emplace_back(r.kappa);
+        result->all_time.emplace_back(r.time);
+
+        ++result->current_limit;
+
+        return result->current_limit < result->limit;
+    } catch (...) {
+        return false;
+    }
+}
 
 void
 test_adjustment_solver_for_Car()
@@ -696,8 +697,8 @@ test_adjustment_solver_for_Car()
     std::vector<double> all_time;
     result_fn fn(all_modifiers, all_kappa, all_time, 4);
 
-    ret =
-      efyj::adjustment(ctx, "Car.dxi", d, fn, nullptr, nullptr, true, 4, 1u);
+    ret = efyj::adjustment(
+      ctx, "Car.dxi", d, update_result, &fn, nullptr, nullptr, true, 4, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,
@@ -729,8 +730,8 @@ test_adjustment_solver_for_Car2()
     std::vector<double> all_time;
     result_fn fn(all_modifiers, all_kappa, all_time, 2);
 
-    ret =
-      efyj::adjustment(ctx, "Car2.dxi", d, fn, nullptr, nullptr, true, 2, 1u);
+    ret = efyj::adjustment(
+      ctx, "Car2.dxi", d, update_result, &fn, nullptr, nullptr, true, 2, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 4, 8, 3 };
@@ -766,8 +767,8 @@ test_prediction_solver_for_Car()
     d.places[0] = "Auzeville";
     d.places[1] = "Auzeville";
 
-    ret =
-      efyj::prediction(ctx, "Car.dxi", d, fn, nullptr, nullptr, true, 4, 1u);
+    ret = efyj::prediction(
+      ctx, "Car.dxi", d, update_result, &fn, nullptr, nullptr, true, 4, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,

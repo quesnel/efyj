@@ -55,7 +55,8 @@ struct prediction_evaluator
 
     bool is_valid() const noexcept;
 
-    status run(const result_callback& cb,
+    status run(result_callback callback,
+               void* user_data_callback,
                int line_limit,
                double time_limit,
                int reduce_mode,
@@ -63,7 +64,8 @@ struct prediction_evaluator
 
     status run(check_user_interrupt_callback interrupt,
                void* user_data_interrupt,
-               const result_callback& cb,
+               result_callback callback,
+               void* user_data_callback,
                int line_limit,
                double time_limit,
                int reduce_mode,

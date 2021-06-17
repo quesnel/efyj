@@ -37,7 +37,8 @@ adjustment_evaluator::adjustment_evaluator(context& ctx,
 {}
 
 status
-adjustment_evaluator::run(const result_callback& cb,
+adjustment_evaluator::run(result_callback callback,
+                          void* user_data_callback,
                           int line_limit,
                           [[maybe_unused]] double time_limit,
                           int reduce_mode,
@@ -99,7 +100,7 @@ adjustment_evaluator::run(const result_callback& cb,
 
         writer.store(m_context, m_model, ret);
 
-        if (cb(ret) == false)
+        if (!callback(ret, user_data_callback))
             return status::success;
     }
 
@@ -156,7 +157,7 @@ adjustment_evaluator::run(const result_callback& cb,
         info(m_context, "\n");
         writer.store(m_context, m_model, ret);
 
-        if (cb(ret) == false)
+        if (!callback(ret, user_data_callback))
             break;
     }
 
@@ -166,7 +167,8 @@ adjustment_evaluator::run(const result_callback& cb,
 status
 adjustment_evaluator::run(check_user_interrupt_callback interrupt,
                           void* user_data_interrupt,
-                          const result_callback& cb,
+                          result_callback callback,
+                          void* user_data_callback,
                           int line_limit,
                           double time_limit,
                           int reduce_mode,
@@ -228,7 +230,7 @@ adjustment_evaluator::run(check_user_interrupt_callback interrupt,
 
         writer.store(m_context, m_model, ret);
 
-        if (cb(ret) == false)
+        if (!callback(ret, user_data_callback))
             return status::success;
     }
 
@@ -298,7 +300,7 @@ adjustment_evaluator::run(check_user_interrupt_callback interrupt,
         info(m_context, "\n");
         writer.store(m_context, m_model, ret);
 
-        if (cb(ret) == false)
+        if (!callback(ret, user_data_callback))
             break;
     }
 

@@ -162,16 +162,14 @@ prediction_thread_evaluator::is_valid() const noexcept
 
 status
 prediction_thread_evaluator::run(
-  const result_callback& cb,
+  result_callback /*callback*/,
+  void* /*user_data_callback*/,
   [[maybe_unused]] int line_limit,
   [[maybe_unused]] double time_limit,
   [[maybe_unused]] int reduce_mode,
   unsigned int threads,
   [[maybe_unused]] const std::string& output_directory)
 {
-    (void)cb;
-    (void)time_limit;
-
     info(m_context, "[Computation starts with %u thread(s)]\n", threads);
 
     Results results(m_context, m_model, threads);

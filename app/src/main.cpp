@@ -246,6 +246,19 @@ struct fmt::formatter<efyj::modifier>
     }
 };
 
+static bool
+update_result(const efyj::result& r, void* /*user_data*/)
+{
+    fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
+                r.kappa,
+                r.time,
+                r.kappa_computed,
+                r.function_computed,
+                r.modifiers);
+
+    return true;
+}
+
 static int
 adjustment(efyj::context& ctx,
            const std::string& model,
@@ -254,25 +267,16 @@ adjustment(efyj::context& ctx,
            int limit,
            unsigned int thread)
 {
-    const auto ret = efyj::adjustment(
-      ctx,
-      model,
-      option,
-      [](const auto& r) {
-          fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
-                      r.kappa,
-                      r.time,
-                      r.kappa_computed,
-                      r.function_computed,
-                      r.modifiers);
-
-          return true;
-      },
-      nullptr,
-      nullptr,
-      reduce,
-      limit,
-      thread);
+    const auto ret = efyj::adjustment(ctx,
+                                      model,
+                                      option,
+                                      update_result,
+                                      nullptr,
+                                      nullptr,
+                                      nullptr,
+                                      reduce,
+                                      limit,
+                                      thread);
 
     if (!efyj::is_success(ret)) {
         fmt::print(
@@ -293,25 +297,16 @@ prediction(efyj::context& ctx,
            int limit,
            unsigned int thread)
 {
-    const auto ret = efyj::prediction(
-      ctx,
-      model,
-      option,
-      [](const auto& r) {
-          fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
-                      r.kappa,
-                      r.time,
-                      r.kappa_computed,
-                      r.function_computed,
-                      r.modifiers);
-
-          return true;
-      },
-      nullptr,
-      nullptr,
-      reduce,
-      limit,
-      thread);
+    const auto ret = efyj::prediction(ctx,
+                                      model,
+                                      option,
+                                      update_result,
+                                      nullptr,
+                                      nullptr,
+                                      nullptr,
+                                      reduce,
+                                      limit,
+                                      thread);
 
     if (!efyj::is_success(ret)) {
         fmt::print(

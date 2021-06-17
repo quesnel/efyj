@@ -380,7 +380,8 @@ status
 adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -400,14 +401,17 @@ adjustment(context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        return interrupt ? adj.run(interrupt,
-                                   user_data_interrupt,
-                                   callback,
-                                   limit,
-                                   0.0,
-                                   reduce,
-                                   "")
-                         : adj.run(callback, limit, 0.0, reduce, "");
+        return interrupt
+                 ? adj.run(interrupt,
+                           user_data_interrupt,
+                           callback,
+                           user_data_callback,
+                           limit,
+                           0.0,
+                           reduce,
+                           "")
+                 : adj.run(
+                     callback, user_data_callback, limit, 0.0, reduce, "");
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
         return ctx.status = status::not_enough_memory;
@@ -426,7 +430,8 @@ status
 adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -445,14 +450,17 @@ adjustment(context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        return interrupt ? adj.run(interrupt,
-                                   user_data_interrupt,
-                                   callback,
-                                   limit,
-                                   0.0,
-                                   reduce,
-                                   "")
-                         : adj.run(callback, limit, 0.0, reduce, "");
+        return interrupt
+                 ? adj.run(interrupt,
+                           user_data_interrupt,
+                           callback,
+                           user_data_callback,
+                           limit,
+                           0.0,
+                           reduce,
+                           "")
+                 : adj.run(
+                     callback, user_data_callback, limit, 0.0, reduce, "");
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
         return ctx.status = status::not_enough_memory;
@@ -469,7 +477,8 @@ status
 prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -490,11 +499,12 @@ prediction(context& ctx,
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, "");
+            pre.run(callback, user_data_callback, limit, 0.0, reduce, "");
             return ctx.status = status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, thread, "");
+            pre.run(
+              callback, user_data_callback, limit, 0.0, reduce, thread, "");
             return ctx.status = status::success;
         }
     } catch (const std::bad_alloc& e) {
@@ -513,7 +523,8 @@ status
 prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -536,11 +547,12 @@ prediction(context& ctx,
 
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, "");
+            pre.run(callback, user_data_callback, limit, 0.0, reduce, "");
             return ctx.status = status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
-            pre.run(callback, limit, 0.0, reduce, thread, "");
+            pre.run(
+              callback, user_data_callback, limit, 0.0, reduce, thread, "");
             return ctx.status = status::success;
         }
     } catch (const std::bad_alloc& e) {

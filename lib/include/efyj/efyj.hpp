@@ -26,14 +26,9 @@
 #define EFYJ_MINOR_VERSION 6
 #define EFYJ_PATCH_VERSION 0
 
-#include <functional>
-#include <map>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <stdexcept>
 
 #include <efyj/matrix.hpp>
 
@@ -305,7 +300,7 @@ struct data
  *
  * @todo Replace with a function_ref or function_view.
  */
-using result_callback = std::function<bool(const result&)>;
+using result_callback = bool (*)(const result&, void* user_data_result);
 
 using check_user_interrupt_callback = void (*)(void* user_data_interrupt);
 
@@ -333,7 +328,8 @@ EFYJ_API status
 adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -344,7 +340,8 @@ EFYJ_API status
 adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -355,7 +352,8 @@ EFYJ_API status
 prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
@@ -366,7 +364,8 @@ EFYJ_API status
 prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
-           const result_callback& callback,
+           result_callback callback,
+           void* user_data_callback,
            check_user_interrupt_callback interrupt,
            void* user_data_interrupt,
            bool reduce,
