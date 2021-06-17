@@ -60,6 +60,14 @@ struct prediction_evaluator
                double time_limit,
                int reduce_mode,
                const std::string& output_directory);
+
+    status run(check_user_interrupt_callback interrupt,
+               void* user_data_interrupt,
+               const result_callback& cb,
+               int line_limit,
+               double time_limit,
+               int reduce_mode,
+               const std::string& output_directory);
 };
 
 } // namespace efyj

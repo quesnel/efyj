@@ -112,6 +112,13 @@ show_context(const efyj::context& ctx) noexcept
     }
 }
 
+static void
+check_user_interrupt(void* /*user_data*/)
+{
+    if (PyErr_CheckSignals() != 0)
+        throw py::error_already_set();
+}
+
 PYBIND11_MODULE(pyefyj, m)
 {
     m.doc() = R"pbdoc(
@@ -215,6 +222,8 @@ PYBIND11_MODULE(pyefyj, m)
                     return false;
                 }
             },
+            check_user_interrupt,
+            nullptr,
             true,
             0,
             1u);
@@ -245,6 +254,8 @@ PYBIND11_MODULE(pyefyj, m)
                     return false;
                 }
             },
+            check_user_interrupt,
+            nullptr,
             true,
             0,
             1u);

@@ -696,7 +696,8 @@ test_adjustment_solver_for_Car()
     std::vector<double> all_time;
     result_fn fn(all_modifiers, all_kappa, all_time, 4);
 
-    ret = efyj::adjustment(ctx, "Car.dxi", d, fn, true, 4, 1u);
+    ret =
+      efyj::adjustment(ctx, "Car.dxi", d, fn, nullptr, nullptr, true, 4, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,
@@ -728,7 +729,8 @@ test_adjustment_solver_for_Car2()
     std::vector<double> all_time;
     result_fn fn(all_modifiers, all_kappa, all_time, 2);
 
-    ret = efyj::adjustment(ctx, "Car2.dxi", d, fn, true, 2, 1u);
+    ret =
+      efyj::adjustment(ctx, "Car2.dxi", d, fn, nullptr, nullptr, true, 2, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 4, 8, 3 };
@@ -764,7 +766,8 @@ test_prediction_solver_for_Car()
     d.places[0] = "Auzeville";
     d.places[1] = "Auzeville";
 
-    ret = efyj::prediction(ctx, "Car.dxi", d, fn, true, 4, 1u);
+    ret =
+      efyj::prediction(ctx, "Car.dxi", d, fn, nullptr, nullptr, true, 4, 1u);
     Ensures(is_success(ret));
 
     const std::vector<int> to_compare = { 1, 0, 0, 1, 0, 0, 1, 4, 1,

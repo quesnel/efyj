@@ -187,13 +187,13 @@ information(context& ctx,
         return status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -245,12 +245,12 @@ make_options(context& ctx, const Model& model, const data& d, Options& opt)
 
             if (elem > limit) {
                 error(ctx,
-                        "bad scale value: {} with a limit of {} for "
-                        "attribute {}\n",
-                        elem,
-                        limit,
-                        model.attributes[attribute].name);
-                return status::scale_value_inconsistent;
+                      "bad scale value: {} with a limit of {} for "
+                      "attribute {}\n",
+                      elem,
+                      limit,
+                      model.attributes[attribute].name);
+                return ctx.status = status::scale_value_inconsistent;
             }
 
             opt.options(optid, attid) = elem;
@@ -265,18 +265,18 @@ make_options(context& ctx, const Model& model, const data& d, Options& opt)
         opt.init_dataset();
 
         if (!opt.check())
-            return status::option_input_inconsistent;
+            return ctx.status = status::option_input_inconsistent;
 
         return status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -330,16 +330,16 @@ evaluate(context& ctx,
 
         out.clear();
         evaluate(ctx, model, options, out);
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -363,16 +363,16 @@ evaluate(context& ctx,
 
         out.clear();
         evaluate(ctx, model, options, out);
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -381,6 +381,8 @@ adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            [[maybe_unused]] unsigned int thread) noexcept
@@ -398,16 +400,23 @@ adjustment(context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        adj.run(callback, limit, 0.0, reduce, "");
+        return interrupt ? adj.run(interrupt,
+                                   user_data_interrupt,
+                                   callback,
+                                   limit,
+                                   0.0,
+                                   reduce,
+                                   "")
+                         : adj.run(callback, limit, 0.0, reduce, "");
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 
     return status::success;
@@ -418,6 +427,8 @@ adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            [[maybe_unused]] unsigned int thread) noexcept
@@ -434,17 +445,23 @@ adjustment(context& ctx,
             return ret;
 
         efyj::adjustment_evaluator adj(ctx, model, options);
-        adj.run(callback, limit, 0.0, reduce, "");
-        return status::success;
+        return interrupt ? adj.run(interrupt,
+                                   user_data_interrupt,
+                                   callback,
+                                   limit,
+                                   0.0,
+                                   reduce,
+                                   "")
+                         : adj.run(callback, limit, 0.0, reduce, "");
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -453,6 +470,8 @@ prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept
@@ -472,21 +491,21 @@ prediction(context& ctx,
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
             pre.run(callback, limit, 0.0, reduce, "");
-            return status::success;
+            return ctx.status = status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
             pre.run(callback, limit, 0.0, reduce, thread, "");
-            return status::success;
+            return ctx.status = status::success;
         }
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -495,6 +514,8 @@ prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept
@@ -516,21 +537,21 @@ prediction(context& ctx,
         if (thread <= 1) {
             efyj::prediction_evaluator pre(ctx, model, options);
             pre.run(callback, limit, 0.0, reduce, "");
-            return status::success;
+            return ctx.status = status::success;
         } else {
             efyj::prediction_thread_evaluator pre(ctx, model, options);
             pre.run(callback, limit, 0.0, reduce, thread, "");
-            return status::success;
+            return ctx.status = status::success;
         }
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -547,8 +568,7 @@ extract_options_to_file(context& ctx,
 
         if (model_file_path == output_file_path) {
             ctx.data_1 = model_file_path;
-            ctx.status = status::extract_option_same_input_files;
-            return ctx.status;
+            return ctx.status = status::extract_option_same_input_files;
         }
 
         Model model;
@@ -558,20 +578,19 @@ extract_options_to_file(context& ctx,
         const auto ofs = output_file(output_file_path.c_str());
         if (!ofs.is_open()) {
             ctx.data_1 = output_file_path;
-            ctx.status = status::merge_option_fail_open_file;
-            return ctx.status;
+            return ctx.status = status::merge_option_fail_open_file;
         }
 
         return get_options_model(model, ofs);
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -581,7 +600,8 @@ extract_options(context& ctx,
                 data& out) noexcept
 {
     try {
-        debug(ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+        debug(
+          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
@@ -606,16 +626,16 @@ extract_options(context& ctx,
             for (size_t j = 0; j != cols; ++j)
                 out.scale_values.emplace_back(opts.options(i, j));
 
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -626,7 +646,8 @@ extract_options(context& ctx,
                 data& out) noexcept
 {
     try {
-        debug(ctx, "[efyj] extract options from DEXi file {}", model_file_path);
+        debug(
+          ctx, "[efyj] extract options from DEXi file {}", model_file_path);
 
         Model model;
         if (auto ret = make_model(ctx, model_file_path, model); is_bad(ret))
@@ -642,12 +663,7 @@ extract_options(context& ctx,
         out.departments = std::move(options.departments);
         out.years = std::move(options.years);
         out.observed = std::move(options.observed);
-#if 0
-        out.scale_values.clear();
-        std::copy_n(options.options.data(),
-                    options.options.size(),
-                    std::back_inserter(out.scale_values));
-#endif
+
         const auto rows = out.simulations.size();
         const auto cols = model.get_basic_attribute().size();
 
@@ -657,16 +673,16 @@ extract_options(context& ctx,
             for (size_t j = 0; j != cols; ++j)
                 out.scale_values.emplace_back(options.options(i, j));
 
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -705,16 +721,16 @@ merge_options_to_file(context& ctx,
 
         set_options_model(model, options);
         model.write(ctx, ofs);
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& e) {
         error(ctx, "c++ bad alloc: {}\n", e.what());
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         error(ctx, "c++ exception: {}\n", e.what());
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
         error(ctx, "c++ unknown exception\n");
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 
@@ -768,14 +784,14 @@ merge_options(context& ctx,
         model.options = options.simulations;
 
         model.write(ctx, ofs);
-        return status::success;
+        return ctx.status = status::success;
     } catch (const std::bad_alloc& /*e*/) {
-        return status::not_enough_memory;
+        return ctx.status = status::not_enough_memory;
     } catch (const std::exception& e) {
         ctx.data_1 = e.what();
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     } catch (...) {
-        return status::unknown_error;
+        return ctx.status = status::unknown_error;
     }
 }
 

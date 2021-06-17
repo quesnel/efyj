@@ -307,6 +307,8 @@ struct data
  */
 using result_callback = std::function<bool(const result&)>;
 
+using check_user_interrupt_callback = void (*)(void* user_data_interrupt);
+
 EFYJ_API
 status
 information(context& ctx,
@@ -332,6 +334,8 @@ adjustment(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept;
@@ -341,6 +345,8 @@ adjustment(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept;
@@ -350,6 +356,8 @@ prediction(context& ctx,
            const std::string& model_file_path,
            const data& d,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept;
@@ -359,6 +367,8 @@ prediction(context& ctx,
            const std::string& model_file_path,
            const std::string& options_file_path,
            const result_callback& callback,
+           check_user_interrupt_callback interrupt,
+           void* user_data_interrupt,
            bool reduce,
            int limit,
            unsigned int thread) noexcept;

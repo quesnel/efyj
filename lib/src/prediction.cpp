@@ -213,4 +213,188 @@ prediction_evaluator::run(const result_callback& cb,
     return status::success;
 }
 
+status
+prediction_evaluator::run(check_user_interrupt_callback interrupt,
+                          void* user_data_interrupt,
+                          const result_callback& cb,
+                          int line_limit,
+                          double time_limit,
+                          int reduce_mode,
+                          const std::string& output_directory)
+{
+    model_writer writer;
+    if (auto ret = writer.init(output_directory); is_bad(ret))
+        return ret;
+
+    info(m_context, "[Output directory]\n{}\n", writer.directory.string());
+
+    result ret;
+
+    info(m_context, "[Computation starts]\n");
+
+    if (reduce_mode)
+        solver.reduce(m_options);
+
+    solver.get_functions(m_globalfunctions);
+    assert(!m_globalfunctions.empty() &&
+           "prediction can not determine function");
+
+    const size_t max_step =
+      max_value(line_limit, solver.get_attribute_line_tuple_limit());
+    const size_t max_opt = m_options.simulations.size();
+
+    assert(max_step > 0 && "prediction: can not determine limit");
+
+    info(m_context, "[Computation starts 1/{}]\n", max_step);
+
+    {
+        m_start = std::chrono::system_clock::now();
+        for (size_t opt = 0; opt != m_options.size(); ++opt)
+            m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
+
+        auto kappa = kappa_c.squared(m_options.observed, m_globalsimulated);
+
+        m_end = std::chrono::system_clock::now();
+
+        info(m_context,
+             "| line updated | kappa | kappa computed "
+             "| time (s) | tuple (attribute, line, value) updated |\n");
+
+        info(m_context,
+             "| {} | {:13.10f} | {} | {} | [] |\n",
+             0,
+             kappa,
+             1,
+             std::chrono::duration<double>(m_end - m_start).count());
+
+        ret.kappa = kappa;
+        ret.time = std::chrono::duration<double>(m_end - m_start).count();
+        ret.kappa_computed = 1;
+
+        if (!is_numeric_castable<unsigned long>(m_options.size()))
+            return status::option_too_many;
+
+        ret.function_computed = static_cast<unsigned long>(m_options.size());
+
+        writer.store(m_context, m_model, ret);
+
+        if (!cb(ret))
+            return status::success;
+    }
+
+    interrupt(user_data_interrupt);
+    std::chrono::time_point<std::chrono::system_clock> int_start, int_now;
+
+    for (size_t step = 1; step <= max_step; ++step) {
+        m_start = std::chrono::system_clock::now();
+        int_start = m_start;
+
+        long int loop = 0;
+
+        std::fill(m_globalsimulated.begin(), m_globalsimulated.end(), 0);
+
+        // This cache stores best function found for the same
+        // subdataset. This cache drastically improves computation time if
+        // their is few subdataset.
+        std::map<size_t, std::vector<std::vector<scale_id>>> cache;
+
+        for (int opt = 0, e = static_cast<int>(max_opt); opt != e; ++opt) {
+
+            {
+                auto it = cache.find(m_options.identifier(opt));
+                if (it != cache.end()) {
+                    solver.set_functions(it->second);
+                    m_globalsimulated[opt] =
+                      solver.solve(m_options.options.row(opt));
+                    continue;
+                }
+            }
+
+            solver.set_functions(m_globalfunctions);
+            solver.init_walkers(step);
+            double kappa = 0;
+
+            do {
+                solver.init_next_value();
+
+                do {
+                    const auto size = m_options.get_subdataset(opt).size();
+                    simulated.resize(size, 0);
+                    observed.resize(size, 0);
+                    assert(size > 0);
+
+                    for (size_t i = 0; i != size; ++i) {
+                        auto id = m_options.get_subdataset(opt)[i];
+                        observed[i] = m_options.observed[id];
+                        simulated[i] = solver.solve(m_options.options.row(id));
+                    }
+
+                    auto localkappa = kappa_c.squared(observed, simulated);
+                    loop++;
+
+                    if (localkappa > kappa) {
+                        solver.get_functions(m_functions);
+                        m_updaters = solver.updaters();
+                        kappa = localkappa;
+                    }
+
+                    int_now = std::chrono::system_clock::now();
+                    auto time =
+                      std::chrono::duration<double>(int_now - int_start)
+                        .count();
+                    if (time > 4.) {
+                        interrupt(user_data_interrupt);
+                        int_now = int_start = std::chrono::system_clock::now();
+                    }
+
+                } while (solver.next_value() == true);
+            } while (solver.next_line() == true);
+
+            solver.set_functions(m_functions);
+            m_globalsimulated[opt] = solver.solve(m_options.options.row(opt));
+
+            cache[m_options.identifier(opt)] = m_functions;
+        }
+
+        auto line_kappa =
+          kappa_c.squared(m_options.observed, m_globalsimulated);
+        m_end = std::chrono::system_clock::now();
+
+        auto time = std::chrono::duration<double>(m_end - m_start).count();
+        loop++;
+
+        ret.kappa = line_kappa;
+        ret.time = time;
+        ret.kappa_computed = static_cast<unsigned long int>(loop);
+        ret.function_computed = static_cast<unsigned long int>(0);
+        ret.modifiers.clear();
+
+        info(m_context,
+             "| {} | {:13.10f} | {} | {} | ",
+             step,
+             ret.kappa,
+             loop,
+             time);
+
+        for (const auto& elem : m_updaters) {
+            ret.modifiers.emplace_back(
+              std::get<0>(elem), std::get<1>(elem), std::get<2>(elem));
+            info(m_context,
+                 "[{},{},{}] ",
+                 std::get<0>(elem),
+                 std::get<1>(elem),
+                 std::get<2>(elem));
+        }
+
+        info(m_context, "\n");
+
+        writer.store(m_context, m_model, ret);
+
+        if (!cb(ret))
+            break;
+    }
+
+    return status::success;
+}
+
 } // namespace efyj

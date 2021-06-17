@@ -39,7 +39,8 @@ show_context(const efyj::context& ctx) noexcept
     case efyj::status::success:
         break;
     case efyj::status::not_enough_memory:
-        fmt::print(stderr, "{}: {}\n", get_error_message(ctx.status), ctx.size);
+        fmt::print(
+          stderr, "{}: {}\n", get_error_message(ctx.status), ctx.size);
         break;
     case efyj::status::numeric_cast_error:
         fmt::print(stderr, "{}\n", get_error_message(ctx.status));
@@ -114,23 +115,24 @@ show_context(const efyj::context& ctx) noexcept
 static void
 usage()
 {
-    std::puts("efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
-              "Options:\n"
-              "    -h/--help            This help message\n"
-              "    -v/--version          Show efyj version\n"
-              "    -x/--extract         Extract the option from dexi files "
-              "into csv file (need 1 csv, 1 dexi)\n"
-              "    -m/--merge           Merge model and option file into a new "
-              "DEXi file (need 1 csv, 2 dexi\n"
-              "    -p/--prediction      Compute prediction\n"
-              "    -a/--adjustement     Compute adjustment\n"
-              "    -e/--evaluate        Compulte evalaution\n"
-              "    --without-reduce     Without the reduce models generator "
-              "algorithm\n"
-              "    -l/--limit integer   Limit of computation\n"
-              "    -j/--jobs thread     Use threads [int]\n"
-              "    ...                  DEXi and CSV files\n"
-              "\n");
+    std::puts(
+      "efyj [-h][-m file.dexi][-o file.csv][...]\n\n"
+      "Options:\n"
+      "    -h/--help            This help message\n"
+      "    -v/--version          Show efyj version\n"
+      "    -x/--extract         Extract the option from dexi files "
+      "into csv file (need 1 csv, 1 dexi)\n"
+      "    -m/--merge           Merge model and option file into a new "
+      "DEXi file (need 1 csv, 2 dexi\n"
+      "    -p/--prediction      Compute prediction\n"
+      "    -a/--adjustement     Compute adjustment\n"
+      "    -e/--evaluate        Compulte evalaution\n"
+      "    --without-reduce     Without the reduce models generator "
+      "algorithm\n"
+      "    -l/--limit integer   Limit of computation\n"
+      "    -j/--jobs thread     Use threads [int]\n"
+      "    ...                  DEXi and CSV files\n"
+      "\n");
 }
 
 static void
@@ -172,7 +174,9 @@ information(efyj::context& ctx, const std::string& model_file_path)
 }
 
 static int
-extract(efyj::context& ctx, const std::string& model, const std::string& output)
+extract(efyj::context& ctx,
+        const std::string& model,
+        const std::string& output)
 {
     if (const auto ret = efyj::extract_options_to_file(ctx, model, output);
         efyj::is_bad(ret)) {
@@ -207,7 +211,8 @@ evaluate(efyj::context& ctx,
          const std::string& option)
 {
     efyj::evaluation_results out;
-    if (const auto ret = efyj::evaluate(ctx, model, option, out); is_bad(ret)) {
+    if (const auto ret = efyj::evaluate(ctx, model, option, out);
+        is_bad(ret)) {
         fmt::print(stderr, "Fail to evaluate {} with {}\n", model, option);
         show_context(ctx);
         return EXIT_FAILURE;
@@ -263,6 +268,8 @@ adjustment(efyj::context& ctx,
 
           return true;
       },
+      nullptr,
+      nullptr,
       reduce,
       limit,
       thread);
@@ -300,6 +307,8 @@ prediction(efyj::context& ctx,
 
           return true;
       },
+      nullptr,
+      nullptr,
       reduce,
       limit,
       thread);
@@ -487,9 +496,9 @@ main(int argc, char* argv[])
                               std::optional<std::string_view>(argv[i + 1])))
                             ++i;
                     } else if (pos + 1 < arg.size())
-                        atts.parse_long_option(
-                          arg.substr(2),
-                          std::optional<std::string_view>(arg.substr(pos + 1)));
+                        atts.parse_long_option(arg.substr(2),
+                                               std::optional<std::string_view>(
+                                                 arg.substr(pos + 1)));
                     else
                         atts.parse_long_option(
                           arg.substr(2), std::optional<std::string_view>());
