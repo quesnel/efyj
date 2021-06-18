@@ -323,16 +323,20 @@ extract(const Rcpp::String& model)
     return R_NilValue;
 }
 
+static void
+check_user_interrupt(void* /*user_data*/)
+{
+    Rcpp::checkUserInterrupt();
+}
+
 struct result_fn
 {
-private:
     std::vector<int>& all_modifiers;
     std::vector<double>& all_kappa;
     std::vector<double>& all_time;
     const int limit = 0;
     int current_limit = 0;
 
-public:
     result_fn(std::vector<int>& all_modifiers_,
               std::vector<double>& all_kappa_,
               std::vector<double>& all_time_,
@@ -342,35 +346,37 @@ public:
       , all_time(all_time_)
       , limit(limit_)
     {}
-
-    bool operator()(const efyj::result& r)
-    {
-        try {
-            for (const auto& elem : r.modifiers) {
-                Rprintf("[%d %d %d] ", elem.attribute, elem.line, elem.value);
-
-                all_modifiers.emplace_back(elem.attribute);
-                all_modifiers.emplace_back(elem.line);
-                all_modifiers.emplace_back(elem.value);
-            }
-
-            Rprintf("%.10g %.10gs %d %d\n",
-                    r.kappa,
-                    r.time,
-                    r.kappa_computed,
-                    r.function_computed);
-
-            all_kappa.emplace_back(r.kappa);
-            all_time.emplace_back(r.time);
-
-            ++current_limit;
-
-            return current_limit < limit;
-        } catch (...) {
-            return false;
-        }
-    }
 };
+
+static bool
+update_result(const efyj::result& r, void* user_data)
+{
+    auto* result = reinterpret_cast<result_fn*>(user_data);
+
+    try {
+        for (const auto& elem : r.modifiers) {
+            Rprintf("[%d %d %d] ", elem.attribute, elem.line, elem.value);
+            result->all_modifiers.emplace_back(elem.attribute);
+            result->all_modifiers.emplace_back(elem.line);
+            result->all_modifiers.emplace_back(elem.value);
+        }
+
+        Rprintf("%.10g %.10gs %d %d\n",
+                r.kappa,
+                r.time,
+                r.kappa_computed,
+                r.function_computed);
+
+        result->all_kappa.emplace_back(r.kappa);
+        result->all_time.emplace_back(r.time);
+
+        ++result->current_limit;
+
+        return result->current_limit < result->limit;
+    } catch (...) {
+        return false;
+    }
+}
 
 //' Adjustment for all options for a DExi file.
 //'
@@ -449,7 +455,7 @@ adjustment(const Rcpp::String& model,
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
         if (const auto ret =
-              efyj::adjustment(ctx, model, d, fn, reduce, limit, thread);
+              efyj::adjustment(ctx, model, d, update_result, &fn, check_user_interrupt, nullptr, reduce, limit, thread);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Adjustment failed: %s\n", msg);
@@ -548,7 +554,7 @@ prediction(const Rcpp::String& model,
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
         if (const auto ret =
-              efyj::prediction(ctx, model, d, fn, reduce, limit, thread);
+              efyj::prediction(ctx, model, d, update_result, &fn, check_user_interrupt, nullptr, reduce, limit, thread);
             is_bad(ret)) {
             show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
