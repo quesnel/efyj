@@ -192,8 +192,10 @@ PYBIND11_MODULE(pyefyj, m)
       [&ctx](const std::string& s) -> efyj::information_results {
           efyj::information_results out;
 
-          if (const auto ret = efyj::information(ctx, s, out); is_bad(ret))
+          if (const auto ret = efyj::information(ctx, s, out); is_bad(ret)) {
               py::print("information(...) failed");
+	      show_context(ctx);
+	  }
 
           return out;
       },
@@ -210,6 +212,7 @@ PYBIND11_MODULE(pyefyj, m)
 
           if (const auto ret = efyj::evaluate(ctx, s, d, out); is_bad(ret)) {
               py::print("evaluation(...) failed");
+	      show_context(ctx);
           }
 
           return out;
@@ -234,8 +237,10 @@ PYBIND11_MODULE(pyefyj, m)
                                             0,
                                             1u);
 
-          if (is_bad(ret))
+          if (is_bad(ret)) {
               py::print("adjustment failed");
+	      show_context(ctx);
+	  }
 
           return out;
       },
@@ -259,8 +264,10 @@ PYBIND11_MODULE(pyefyj, m)
                                             0,
                                             1u);
 
-          if (is_bad(ret))
+          if (is_bad(ret)) {
               py::print("adjustment failed");
+	      show_context(ctx);
+	  }
 
           return out;
       },
@@ -277,6 +284,7 @@ PYBIND11_MODULE(pyefyj, m)
                 efyj::merge_options(ctx, model_file_path, output_file_path, d);
               efyj::is_bad(ret)) {
               py::print("merge failed\n");
+	      show_context(ctx);
               return false;
           }
 
