@@ -249,12 +249,16 @@ struct fmt::formatter<efyj::modifier>
 static bool
 update_result(const efyj::result& r, void* /*user_data*/)
 {
-    fmt::format("{:13.10g};{:13.10g};{};{};{}\n",
+    fmt::print("{:13.10g};{:13.10g};{};{};\n",
                 r.kappa,
                 r.time,
                 r.kappa_computed,
-                r.function_computed,
-                r.modifiers);
+                r.function_computed);
+
+    for (auto& elem : r.modifiers)
+	fmt::print("{}-{}-{};", elem.attribute, elem.line, elem.value);
+
+    fmt::print("\n");
 
     return true;
 }
