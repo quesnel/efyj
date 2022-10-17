@@ -49,7 +49,7 @@ status
 prediction_evaluator::run(result_callback callback,
                           void* user_data_callback,
                           int line_limit,
-                          double time_limit,
+                          double /*time_limit*/,
                           int reduce_mode,
                           const std::string& output_directory)
 {
@@ -220,7 +220,7 @@ prediction_evaluator::run(check_user_interrupt_callback interrupt,
                           result_callback callback,
                           void* user_data_callback,
                           int line_limit,
-                          double time_limit,
+                          double /*time_limit*/,
                           int reduce_mode,
                           const std::string& output_directory)
 {
