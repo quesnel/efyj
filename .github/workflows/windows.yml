@@ -18,15 +18,18 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: recursive
-    
+
+    - name: Install cmake
+      uses: lukka/get-cmake@latest
+
     - name: Prepare vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       id: runvcpkg
       with:
-        vcpkgArguments: expat:x64-windows
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgTriplet: x64-windows
-        vcpkgGitCommitId: 7bc5b8cdfaf35329c1520b2af8d368e2b1cb78e6
+        vcpkgGitCommitId: 06b5f4a769d848d1a20fa0acd556019728b56273
+        vcpkgJsonGlob: 'vcpkg.json'
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
