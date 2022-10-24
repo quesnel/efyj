@@ -25,7 +25,9 @@ apt-get install build-essential cmake libexpat1-dev g++ python r-base r-base-dev
 
 On Windows
 
-* [Visual Studio 2017 or newer](https://visualstudio.microsoft.com/fr/downloads/) for command line interface and python package
+Only necessary if you want to use the command line interface and/or the python package.
+
+* [Visual Studio 2017 or newer](https://visualstudio.microsoft.com/fr/downloads/)
 * cmake (≥ 3.10)
 * [vcpkg](https://github.com/microsoft/vcpkg)
 * [vcpkg expat](https://github.com/microsoft/vcpkg/tree/master/ports/expat)
@@ -57,11 +59,12 @@ pip install ./efyj
 
 ## R package installation
 
-On Windows, make sur you installed R, Rtools in version 4.0 or better. Then
+On Windows, make sur you installed R 4.2.1, Rtools 4.2 or better. Then
 starts `rtools bash` from the start menu and type the following commands:
 
 ````bash
 pacman -Sy
+pacman -S git
 pacman -S mingw-w64-i686-expat
 pacman -S mingw-w64-x86_64-expat
 ````
@@ -75,6 +78,7 @@ both the [pybind11](https://github.com/pybind/pybind11) and
 [fmtlib](https://github.com/fmtlib/fmt) submodules:
 
 ````bash
+cd /c/users/XXXXXX/             # move to the right directory path
 git clone --recursive https://github.com/quesnel/efyj.git
 ````
 
@@ -97,7 +101,7 @@ install.packages("Rcpp")
 library(Rcpp)
 detach("package:Rcpp", unload = TRUE)
 install.packages("devtools")
-library(devtools)
+library(devtools)			# accept installation from source if required
 setwd("C:/Users/XXXXXXXX/efyj/refyj")	# use the right directory path
 load_all(".")
 devtools::test()
