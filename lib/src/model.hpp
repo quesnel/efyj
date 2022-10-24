@@ -62,7 +62,8 @@ struct scalevalue
     scalevalue(const std::string& name_)
       : name(name_)
       , group(-1)
-    {}
+    {
+    }
 
     std::string name;
     std::string description;
@@ -85,7 +86,8 @@ struct scales
 {
     scales()
       : order(true)
-    {}
+    {
+    }
 
     bool order;
     std::vector<scalevalue> scale;
@@ -115,7 +117,8 @@ struct attribute
 {
     attribute(const std::string& name_)
       : name(name_)
-    {}
+    {
+    }
 
     size_t children_size() const noexcept
     {
@@ -155,6 +158,7 @@ struct Model
     std::string name;
     std::string version;
     std::string created;
+    std::string pagebreak = "True";
     std::string reports = "6";
     std::string optdatatype;
     std::string optlevels;

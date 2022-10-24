@@ -48,7 +48,8 @@ struct Model_reader
       : ctx(ctx_)
       , is(is_)
       , dex(dex_)
-    {}
+    {
+    }
 
     status read(int buffer_size)
     {
@@ -113,6 +114,7 @@ private:
         OPTION,
         SETTINGS,
         FONTSIZE,
+        PAGEBREAK,
         REPORTS,
         ATTRIBUTE,
         NAME,
@@ -151,6 +153,7 @@ private:
                 { "OPTION", stack_identifier::OPTION },
                 { "SETTINGS", stack_identifier::SETTINGS },
                 { "FONTSIZE", stack_identifier::FONTSIZE },
+                { "PAGEBREAK", stack_identifier::PAGEBREAK },
                 { "REPORTS", stack_identifier::REPORTS },
                 { "ATTRIBUTE", stack_identifier::ATTRIBUTE },
                 { "NAME", stack_identifier::NAME },
@@ -279,6 +282,14 @@ private:
             break;
 
         case stack_identifier::FONTSIZE:
+            if (!pd->is_parent({ stack_identifier::SETTINGS })) {
+                pd->stop_parser(status::dexi_parser_file_format_error);
+                break;
+            }
+            pd->stack.push(id);
+            break;
+
+        case stack_identifier::PAGEBREAK:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
@@ -479,6 +490,11 @@ private:
             pd->stack.pop();
             break;
 
+        case stack_identifier::PAGEBREAK:
+            pd->model.pagebreak.assign(pd->char_data);
+            pd->stack.pop();
+            break;
+
         case stack_identifier::REPORTS:
             pd->model.reports.assign(pd->char_data);
             pd->stack.pop();
@@ -663,7 +679,8 @@ struct Model_writer
       , os(os_)
       , dex(Model_data_)
       , space(0)
-    {}
+    {
+    }
 
     status write()
     {
@@ -696,6 +713,11 @@ struct Model_writer
             os.print("    <REPORTS>{}</REPORTS>\n", escape(dex.reports));
         else
             os.print("    <REPORTS>6</REPORTS>\n", escape(dex.reports));
+
+        if (!dex.pagebreak.empty())
+            os.print("    <PAGEBREAK>{}</PAGEBREAK>\n", escape(dex.reports));
+        else
+            os.print("    <PAGEBREAK>True</PAGEBREAK>\n", escape(dex.reports));
 
         if (!dex.optdatatype.empty())
             os.print("    <OPTDATATYPE>{}</OPTDATATYPE>\n",
@@ -981,7 +1003,8 @@ model_writer::store(context& ctx,
         const int value = std::get<2>(elem);
 
         assert(attribute >= 0);
-        assert(static_cast<size_t>(attribute) < copied_model.attributes.size());
+        assert(static_cast<size_t>(attribute) <
+               copied_model.attributes.size());
 
         auto& att = copied_model.attributes[attribute];
         fmt::print("[{}, {}, {}] \n",
