@@ -19,6 +19,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <RcppCommon.h>
+
 #include "../../lib/src/utils.hpp"
 #include <efyj/efyj.hpp>
 
@@ -31,7 +33,8 @@ show_context(const efyj::context& ctx) noexcept
     case efyj::status::success:
         break;
     case efyj::status::not_enough_memory:
-        Rcpp::Rcerr << get_error_message(ctx.status) << ' ' << ctx.size << '\n';
+        Rcpp::Rcerr << get_error_message(ctx.status) << ' ' << ctx.size
+                    << '\n';
         break;
     case efyj::status::numeric_cast_error:
         Rcpp::Rcerr << get_error_message(ctx.status) << '\n';
@@ -256,7 +259,8 @@ extract_to_file(const Rcpp::String& model, const Rcpp::String& options)
         ctx.status = efyj::status::success;
         ctx.log_priority = efyj::log_level::info;
 
-        if (const auto ret = efyj::extract_options_to_file(ctx, model, options);
+        if (const auto ret =
+              efyj::extract_options_to_file(ctx, model, options);
             is_bad(ret)) {
             show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
@@ -345,7 +349,8 @@ struct result_fn
       , all_kappa(all_kappa_)
       , all_time(all_time_)
       , limit(limit_)
-    {}
+    {
+    }
 };
 
 static bool
@@ -454,8 +459,16 @@ adjustment(const Rcpp::String& model,
         d.observed = Rcpp::as<std::vector<int>>(observed);
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
-        if (const auto ret =
-              efyj::adjustment(ctx, model, d, update_result, &fn, check_user_interrupt, nullptr, reduce, limit, thread);
+        if (const auto ret = efyj::adjustment(ctx,
+                                              model,
+                                              d,
+                                              update_result,
+                                              &fn,
+                                              check_user_interrupt,
+                                              nullptr,
+                                              reduce,
+                                              limit,
+                                              thread);
             is_bad(ret)) {
             const auto msg = efyj::get_error_message(ret);
             Rprintf("Adjustment failed: %s\n", msg);
@@ -553,8 +566,16 @@ prediction(const Rcpp::String& model,
         d.observed = Rcpp::as<std::vector<int>>(observed);
         d.scale_values = Rcpp::as<std::vector<int>>(scale_values);
 
-        if (const auto ret =
-              efyj::prediction(ctx, model, d, update_result, &fn, check_user_interrupt, nullptr, reduce, limit, thread);
+        if (const auto ret = efyj::prediction(ctx,
+                                              model,
+                                              d,
+                                              update_result,
+                                              &fn,
+                                              check_user_interrupt,
+                                              nullptr,
+                                              reduce,
+                                              limit,
+                                              thread);
             is_bad(ret)) {
             show_context(ctx);
             const auto msg = efyj::get_error_message(ret);
