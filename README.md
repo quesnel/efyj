@@ -102,8 +102,11 @@ library(Rcpp)
 detach("package:Rcpp", unload = TRUE)
 install.packages("devtools")
 library(devtools)			# accept installation from source if required
+install.packages("waldo")
 setwd("C:/Users/XXXXXXXX/efyj/refyj")	# use the right directory path
-load_all(".")
+library(roxygen2)
+roxygen2::roxygenise()
+# load_all(".")
 devtools::test()
 ````
 
