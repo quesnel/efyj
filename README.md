@@ -106,7 +106,7 @@ install.packages("waldo")
 setwd("C:/Users/XXXXXXXX/efyj/refyj")	# use the right directory path
 library(roxygen2)
 roxygen2::roxygenise()
-# load_all(".")
+load_all(".")
 devtools::test()
 ````
 
