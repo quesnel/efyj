@@ -487,6 +487,7 @@ private:
             break;
 
         case stack_identifier::FONTSIZE:
+            pd->model.fontsize.assign(pd->char_data);
             pd->stack.pop();
             break;
 
@@ -607,9 +608,24 @@ private:
                 pd->model.attributes.back().functions.consist = pd->char_data;
 
             break;
+
         case stack_identifier::WEIGHTS:
+            if (pd->stack.top() == stack_identifier::FUNCTION)
+                pd->model.attributes.back().functions.weights = pd->char_data;
+
+            break;
         case stack_identifier::LOCWEIGHTS:
+            if (pd->stack.top() == stack_identifier::FUNCTION)
+                pd->model.attributes.back().functions.locweights =
+                  pd->char_data;
+
+            break;
         case stack_identifier::NORMLOCWEIGHTS:
+            if (pd->stack.top() == stack_identifier::FUNCTION)
+                pd->model.attributes.back().functions.normlocweights =
+                  pd->char_data;
+
+            break;
         case stack_identifier::ROUNDING:
         case stack_identifier::HIGH:
             break;
@@ -691,20 +707,24 @@ struct Model_writer
                  "<DEXi>\n"
                  "  <VERSION>{}</VERSION>\n"
                  "  <CREATED>{}</CREATED>\n"
-                 "  <NAME>{}</NAME>\n"
-                 "  <DESCRIPTION>\n",
+                 "  <NAME>{}</NAME>\n",
                  escape(dex.version),
                  escape(dex.created),
                  escape(dex.name));
 
-        for (const auto& desc : dex.description) {
-            if (desc.empty())
-                os.print("    <LINE/>\n");
-            else
-                os.print("    <LINE>{}</LINE>\n", escape(desc));
+        if (!dex.description.empty()) {
+            os.print("  <DESCRIPTION>\n");
+
+            for (const auto& desc : dex.description) {
+                if (desc.empty())
+                    os.print("    <LINE/>\n");
+                else
+                    os.print("    <LINE>{}</LINE>\n", escape(desc));
+            }
+
+            os.print("  </DESCRIPTION>\n");
         }
 
-        os.print("  </DESCRIPTION>\n");
         space = 2;
         write_Model_option(dex.options);
 
@@ -712,12 +732,15 @@ struct Model_writer
         if (!dex.reports.empty())
             os.print("    <REPORTS>{}</REPORTS>\n", escape(dex.reports));
         else
-            os.print("    <REPORTS>6</REPORTS>\n", escape(dex.reports));
+            os.print("    <REPORTS>6</REPORTS>\n");
 
         if (!dex.pagebreak.empty())
-            os.print("    <PAGEBREAK>{}</PAGEBREAK>\n", escape(dex.reports));
+            os.print("    <PAGEBREAK>{}</PAGEBREAK>\n", escape(dex.pagebreak));
         else
-            os.print("    <PAGEBREAK>True</PAGEBREAK>\n", escape(dex.reports));
+            os.print("    <PAGEBREAK>True</PAGEBREAK>\n");
+
+        if (!dex.fontsize.empty())
+            os.print("    <FONTSIZE>{}</FONTSIZE>\n", escape(dex.fontsize));
 
         if (!dex.optdatatype.empty())
             os.print("    <OPTDATATYPE>{}</OPTDATATYPE>\n",
@@ -822,8 +845,12 @@ private:
         make_space();
         os.print("<NAME>{}</NAME>\n", escape(att.name));
         make_space();
-        os.print("<DESCRIPTION>{}</DESCRIPTION>\n", escape(att.description));
-        make_space();
+        if (!att.description.empty()) {
+            os.print("<DESCRIPTION>{}</DESCRIPTION>\n",
+                     escape(att.description));
+            make_space();
+        }
+
         os.print("<SCALE>\n");
 
         space += 2;
@@ -870,6 +897,23 @@ private:
             if (!att.functions.entered.empty()) {
                 make_space(2);
                 os.print("<ENTERED>{}</ENTERED>\n", att.functions.entered);
+            }
+
+            if (!att.functions.weights.empty()) {
+                make_space(2);
+                os.print("<WEIGHTS>{}</WEIGHTS>\n", att.functions.weights);
+            }
+
+            if (!att.functions.locweights.empty()) {
+                make_space(2);
+                os.print("<LOCWEIGHTS>{}</LOCWEIGHTS>\n",
+                         att.functions.locweights);
+            }
+
+            if (!att.functions.normlocweights.empty()) {
+                make_space(2);
+                os.print("<NORMLOCWEIGHTS>{}</NORMLOCWEIGHTS>\n",
+                         att.functions.normlocweights);
             }
 
             if (!att.functions.consist.empty()) {

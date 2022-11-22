@@ -75,6 +75,9 @@ struct function
     std::string low;
     std::string entered;
     std::string consist;
+    std::string weights;
+    std::string locweights;
+    std::string normlocweights;
 
     bool empty() const noexcept
     {
@@ -159,6 +162,7 @@ struct Model
     std::string version;
     std::string created;
     std::string pagebreak = "True";
+    std::string fontsize;
     std::string reports = "6";
     std::string optdatatype;
     std::string optlevels;
