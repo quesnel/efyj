@@ -155,7 +155,7 @@ set_options_model(Model& mdl, const Options& opts)
         const auto att = ordered_att[i];
 
         for (size_t row = 0; row != rows; ++row)
-            mdl.attributes[att].options[row] = opts.options(rows, i);
+            mdl.attributes[att].options[row] = opts.options(row, i);
     }
 
     mdl.options = opts.simulations;
