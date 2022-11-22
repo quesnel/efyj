@@ -59,7 +59,8 @@ struct line_reader
 {
     line_reader(FILE* is_)
       : is(is_)
-    {}
+    {
+    }
 
     bool is_end() const
     {
@@ -232,11 +233,13 @@ Options::read(context& ctx, const input_file& is, const Model& model)
     }
 
     for (size_t i = 0, e = atts.size(); i != e; ++i)
-        info(ctx, "column {} {}\n", i, columns[i].c_str());
+        debug(ctx, "column {} {}\n", i, columns[i].c_str());
 
     for (size_t i = id, e = id + atts.size(); i != e; ++i) {
-        info(
-          ctx, "try to get_basic_atribute_id {} : {}\n", i, columns[i].c_str());
+        debug(ctx,
+              "try to get_basic_atribute_id {} : {}\n",
+              i,
+              columns[i].c_str());
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
@@ -275,6 +278,7 @@ Options::read(context& ctx, const input_file& is, const Model& model)
             continue;
         }
 
+        debug(ctx, "try to found scale-value: {}\n", columns.back());
         auto opt_obs =
           model.attributes[0].scale.find_scale_value(columns.back());
 
@@ -294,6 +298,10 @@ Options::read(context& ctx, const input_file& is, const Model& model)
         int department, year;
 
         {
+            debug(ctx,
+                  "read year `{}` and department `{}`\n",
+                  columns[id - 1],
+                  columns[id - 2]);
             auto len1 = sscanf(columns[id - 1].c_str(), "%d", &year);
             auto len2 = sscanf(columns[id - 1].c_str(), "%d", &department);
 
@@ -314,9 +322,14 @@ Options::read(context& ctx, const input_file& is, const Model& model)
         years.push_back(year);
         observed.push_back(obs);
 
+        debug(ctx, "read loop {} to {}\n", id, id + atts.size());
         for (size_t i = id, e = id + atts.size(); i != e; ++i) {
             size_t attid = convertheader[i - id];
 
+            debug(ctx,
+                  "  attribute: `{}` columns: `{}`\n",
+                  atts[attid]->name,
+                  columns[i]);
             auto opt_option = atts[attid]->scale.find_scale_value(columns[i]);
             if (!opt_option) {
                 error(ctx,
