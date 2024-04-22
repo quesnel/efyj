@@ -207,13 +207,13 @@ Options::read(context& ctx, const input_file& is, const Model& model)
     size_t id;
 
     line_reader ls(is.get());
+    error_at_line = 0;
+    error_at_column = 0;
 
     {
         auto opt_line = ls.getline();
         if (!opt_line) {
             info(ctx, "Fail to read header\n");
-            error_at_line = 0;
-            error_at_column = columns.size();
             return status::csv_parser_file_error;
         }
 
@@ -226,26 +226,21 @@ Options::read(context& ctx, const input_file& is, const Model& model)
         } else if (columns.size() == atts.size() + 5) {
             id = 4;
         } else {
-            error_at_line = 0;
-            error_at_column = columns.size();
             return status::csv_parser_column_number_incorrect;
         }
     }
 
-    for (size_t i = 0, e = atts.size(); i != e; ++i)
-        debug(ctx, "column {} {}\n", i, columns[i].c_str());
-
     for (size_t i = id, e = id + atts.size(); i != e; ++i) {
         debug(ctx,
-              "try to get_basic_atribute_id {} : {}\n",
+              "Try to get_basic_atribute_id column index: {} string: `{}`\n",
               i,
-              columns[i].c_str());
+              columns[i]);
 
         auto opt_att_id = get_basic_attribute_id(atts, columns[i]);
         if (!opt_att_id) {
-            error(ctx, "Fail to found attribute for `{}'\n", columns[i]);
-            error_at_line = 0;
-            error_at_column = columns.size();
+            error(
+              ctx, "Fail to found attribute `{}' in DExi file\n", columns[i]);
+            error_at_column = static_cast<int>(i);
             return status::csv_parser_basic_attribute_unknown;
         }
 
@@ -290,7 +285,7 @@ Options::read(context& ctx, const input_file& is, const Model& model)
               columns.back());
 
             error_at_line = line_number;
-            error_at_column = columns.size();
+            error_at_column = static_cast<int>(columns.size());
             return status::csv_parser_scale_value_unknown;
         }
 
@@ -340,7 +335,7 @@ Options::read(context& ctx, const input_file& is, const Model& model)
                       atts[attid]->name.c_str());
 
                 error_at_line = line_number;
-                error_at_column = columns.size();
+                error_at_column = static_cast<int>(i);
                 return status::csv_parser_scale_value_unknown;
             }
 
