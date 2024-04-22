@@ -11,33 +11,30 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        BUILD_TYPE: [Debug, Release]
+	BUILD_TYPE: [Debug, Release]
 
     steps:
-    - name: Checkout repository and submodules
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+      - name: Checkout repository and submodules
+	uses: actions/checkout@v4
+	with:
+	  submodules: recursive
 
-    - name: Install cmake
-      uses: lukka/get-cmake@latest
+      - name: Install cmake
+        uses: lukka/get-cmake@latest
 
-    - name: Prepare vcpkg
-      uses: lukka/run-vcpkg@v10
-      id: runvcpkg
-      with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-        vcpkgTriplet: x64-windows
-        vcpkgGitCommitId: 06b5f4a769d848d1a20fa0acd556019728b56273
-        vcpkgJsonGlob: 'vcpkg.json'
+      - name: Prepare vcpkg
+        uses: lukka/run-vcpkg@v11
+        id: runvcpkg
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgJsonGlob: 'vcpkg.json'
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
-
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.BUILD_TYPE}} --rerun-failed --output-on-failure
-      
+      - name: Run CMake consuming CMakePreset.json and run vcpkg to build packages
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=17']"
+          buildPreset: 'ninja-multi-vcpkg'
+          buildPresetAdditionalArgs: "['--config Release']"
+          testPreset: 'ninja-multi-vcpkg'
+          testPresetAdditionalArgs: "['--config Release']"
