@@ -2,9 +2,9 @@ name: MacOS
 
 on:
   push:
-    branches: [ master, test ]
+    branches: [ master, test, macos ]
   pull_request:
-    branches: [ master, test ]
+    branches: [ master, test, macos ]
 
 env:
   CC: clang
@@ -24,7 +24,7 @@ jobs:
         submodules: recursive
 
     - name: Install dependencies
-      run: brew install expat
+      run: brew install expat fmt
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}

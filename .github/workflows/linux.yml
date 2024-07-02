@@ -2,9 +2,9 @@ name: Linux
 
 on:
   push:
-    branches: [ master, test ]
+    branches: [ master, test, linux ]
   pull_request:
-    branches: [ master, test ]
+    branches: [ master, test, linux ]
 
 env:
   CC: gcc-10
@@ -24,7 +24,7 @@ jobs:
         submodules: recursive
     
     - name: Install expat
-      run: sudo apt-get install libexpat-dev
+      run: sudo apt-get install libexpat-dev libfmt-dev
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
