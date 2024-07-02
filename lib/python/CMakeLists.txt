@@ -3,11 +3,12 @@ pybind11_add_module(pyefyj MODULE pyefyj.cpp)
 target_include_directories(pyefyj PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
   $<INSTALL_INTERFACE:lib/include>
-  PRIVATE expat::expat lib/src ${CMAKE_BINARY_DIR})
+  PRIVATE expat::expat fmt::fmt lib/src ${CMAKE_BINARY_DIR})
 
 target_link_libraries(pyefyj  PRIVATE libefyj
   Threads::Threads 
   expat::expat
+  fmt::fmt
   pybind11::module
   pybind11::lto
   pybind11::windows_extras)

@@ -2,39 +2,41 @@ name: Windows
 
 on:
   push:
-    branches: [ master, test ]
+    branches: [ master, test, win32 ]
   pull_request:
-    branches: [ master, test ]
+    branches: [ master, test, win32 ]
 
 jobs:
-  build:
+  job:
     runs-on: windows-latest
     strategy:
       matrix:
-	BUILD_TYPE: [Debug, Release]
+        BUILD_TYPE: [Debug, Release]
 
     steps:
-      - name: Checkout repository and submodules
-	uses: actions/checkout@v4
-	with:
-	  submodules: recursive
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-      - name: Install cmake
-        uses: lukka/get-cmake@latest
+    - name: Install CMake
+      uses: lukka/get-cmake@latest
 
-      - name: Prepare vcpkg
-        uses: lukka/run-vcpkg@v11
-        id: runvcpkg
-        with:
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgJsonGlob: 'vcpkg.json'
+    - name: Prepare vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'f7423ee180c4b7f40d43402c2feb3859161ef625'
+        vcpkgTriplet: x64-windows
+        vcpkgJsonGlob: 'vcpkg.json'
+        runVcpkgInstall: false
 
-      - name: Run CMake consuming CMakePreset.json and run vcpkg to build packages
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ninja-multi-vcpkg'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=17']"
-          buildPreset: 'ninja-multi-vcpkg'
-          buildPresetAdditionalArgs: "['--config Release']"
-          testPreset: 'ninja-multi-vcpkg'
-          testPresetAdditionalArgs: "['--config Release']"
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: 'ninja-multi-vcpkg'
+        buildPreset: 'ninja-vcpkg-release'
+        testPreset: 'test-release'
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_DEFAULT_HOST_TRIPLET: x64-windows

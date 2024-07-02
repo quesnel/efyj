@@ -41,7 +41,7 @@ target_compile_options(libefyj PRIVATE
       $<$<CONFIG:Debug>:/Od /W3 /Zi /analyze>>)
 
 target_link_libraries(libefyj
-  Threads::Threads expat::expat
+  Threads::Threads expat::expat fmt::fmt
   $<$<BOOL:${NLOPT_FOUND}>:nlopt>)
 
 set_target_properties(libefyj PROPERTIES
@@ -73,7 +73,7 @@ export(TARGETS libefyj FILE LibEFYjConfig.cmake)
 
 add_executable(testlib test/test_basic.cpp)
 
-target_link_libraries(testlib libefyj Threads::Threads expat::expat)
+target_link_libraries(testlib libefyj Threads::Threads expat::expat fmt::fmt)
 
 set_property(TARGET testlib PROPERTY CXX_STANDARD 17)
 
