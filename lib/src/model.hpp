@@ -87,12 +87,10 @@ struct function
 
 struct scales
 {
-    scales()
-      : order(true)
-    {
-    }
+    scales() = default;
 
-    bool order;
+    bool order = true;
+    bool interval = false;
     std::vector<scalevalue> scale;
 
     std::optional<scale_id> find_scale_value(const std::string& name) const
@@ -163,6 +161,7 @@ struct Model
     std::string created;
     std::string pagebreak = "True";
     std::string fontsize;
+    std::string fontname;
     std::string reports = "6";
     std::string optdatatype;
     std::string optlevels;
@@ -270,7 +269,8 @@ operator==(const scalevalue& lhs, const scalevalue& rhs)
 inline bool
 operator==(const scales& lhs, const scales& rhs)
 {
-    return lhs.order == rhs.order && lhs.scale == rhs.scale;
+    return lhs.order == rhs.order && lhs.interval == rhs.interval &&
+           lhs.scale == rhs.scale;
 }
 
 inline bool

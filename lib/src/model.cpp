@@ -114,12 +114,14 @@ private:
         OPTION,
         SETTINGS,
         FONTSIZE,
+        FONTNAME,
         PAGEBREAK,
         REPORTS,
         ATTRIBUTE,
         NAME,
         DESCRIPTION,
         SCALE,
+        INTERVAL,
         ORDER,
         SCALEVALUE,
         GROUP,
@@ -153,12 +155,14 @@ private:
                 { "OPTION", stack_identifier::OPTION },
                 { "SETTINGS", stack_identifier::SETTINGS },
                 { "FONTSIZE", stack_identifier::FONTSIZE },
+                { "FONTNAME", stack_identifier::FONTNAME },
                 { "PAGEBREAK", stack_identifier::PAGEBREAK },
                 { "REPORTS", stack_identifier::REPORTS },
                 { "ATTRIBUTE", stack_identifier::ATTRIBUTE },
                 { "NAME", stack_identifier::NAME },
                 { "DESCRIPTION", stack_identifier::DESCRIPTION },
                 { "SCALE", stack_identifier::SCALE },
+                { "INTERVAL", stack_identifier::INTERVAL },
                 { "ORDER", stack_identifier::ORDER },
                 { "SCALEVALUE", stack_identifier::SCALEVALUE },
                 { "GROUP", stack_identifier::GROUP },
@@ -289,6 +293,14 @@ private:
             pd->stack.push(id);
             break;
 
+        case stack_identifier::FONTNAME:
+            if (!pd->is_parent({ stack_identifier::SETTINGS })) {
+                pd->stop_parser(status::dexi_parser_file_format_error);
+                break;
+            }
+            pd->stack.push(id);
+            break;
+
         case stack_identifier::PAGEBREAK:
             if (!pd->is_parent({ stack_identifier::SETTINGS })) {
                 pd->stop_parser(status::dexi_parser_file_format_error);
@@ -375,6 +387,13 @@ private:
             break;
 
         case stack_identifier::ORDER:
+            if (!pd->is_parent({ stack_identifier::SCALE })) {
+                pd->stop_parser(status::dexi_parser_file_format_error);
+                break;
+            }
+            break;
+
+        case stack_identifier::INTERVAL:
             if (!pd->is_parent({ stack_identifier::SCALE })) {
                 pd->stop_parser(status::dexi_parser_file_format_error);
                 break;
@@ -491,6 +510,11 @@ private:
             pd->stack.pop();
             break;
 
+        case stack_identifier::FONTNAME:
+            pd->model.fontname.assign(pd->char_data);
+            pd->stack.pop();
+            break;
+
         case stack_identifier::PAGEBREAK:
             pd->model.pagebreak.assign(pd->char_data);
             pd->stack.pop();
@@ -567,7 +591,11 @@ private:
         case stack_identifier::ORDER:
             if (pd->char_data == "NONE")
                 pd->model.attributes.back().scale.order = false;
+            break;
 
+        case stack_identifier::INTERVAL:
+            pd->model.attributes.back().scale.interval =
+              (pd->char_data != "False");
             break;
 
         case stack_identifier::SCALEVALUE:
@@ -742,6 +770,9 @@ struct Model_writer
         if (!dex.fontsize.empty())
             os.print("    <FONTSIZE>{}</FONTSIZE>\n", escape(dex.fontsize));
 
+        if (!dex.fontname.empty())
+            os.print("    <FONTNAME>{}</FONTNAME>\n", escape(dex.fontname));
+
         if (!dex.optdatatype.empty())
             os.print("    <OPTDATATYPE>{}</OPTDATATYPE>\n",
                      escape(dex.optdatatype));
@@ -858,6 +889,11 @@ private:
         if (!att.scale.scale.empty() && !att.scale.order) {
             make_space();
             os.print("<ORDER>NONE</ORDER>\n");
+        }
+
+        if (!att.scale.interval) {
+            make_space();
+            os.print("<INTERVAL>False</INTERVAL>\n");
         }
 
         for (const auto& sv : att.scale.scale) {
