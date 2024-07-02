@@ -11,7 +11,14 @@ if (UNIX)
   set(BUILD_SHARED_LIBS ON)
 endif()
 
-find_package(expat CONFIG REQUIRED)
+if (WIN32)
+  find_package(expat CONFIG REQUIRED)
+else ()
+  find_package(EXPAT REQUIRED)
+  add_library(expat::expat INTERFACE IMPORTED)
+  target_link_libraries(expat::expat INTERFACE EXPAT::EXPAT)
+endif ()
+
 find_package(fmt CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
